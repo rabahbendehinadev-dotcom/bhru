@@ -1,0 +1,1 @@
+- [BHRU product boundaries](bhru-product-boundaries.md) — Separate platform subscribers from their customers; demo-only first phase; stop for review; licence blocks never delete data.

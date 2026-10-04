@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "BHRU"
+description = "A demo-only BHRU SaaS application separating platform subscribers from their own unlock server customers. Includes registration, platform subscriber and licence management, editable plans, and a subscriber business dashboard."
+version = "1.0.0"
+id = "artifacts/bhru"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21252
+
+[services.development]
+run = "pnpm --filter @workspace/bhru run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bhru", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/bhru/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21252"
+BASE_PATH = "/"
