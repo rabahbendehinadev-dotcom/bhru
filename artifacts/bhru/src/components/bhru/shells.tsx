@@ -10,6 +10,7 @@ import { Logo, Btn, Badge } from './ui';
 import { accessCheck, logout, previewAs, returnToAdmin, useStore, fmtDate, fmtTime, verifyPanelAccess, refreshState, errorMessage } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import AccountStatus from '@/pages/account-status';
+import { useAdminPath } from '@/lib/admin-entry';
 
 export const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
@@ -39,18 +40,18 @@ const SUB_NAV: NavGroup[] = [
 // extra quick-action modules
 ['Add Customer', 'Manage Services', 'Manage APIs', 'Sync Services'].forEach((l) => { MODULES[l.toLowerCase().replace(/[^a-z0-9]+/g, '-')] = l; });
 
-const ADMIN_NAV: NavGroup[] = [
-  { items: [{ label: 'Dashboard', href: '/admin', icon: <LayoutDashboard size={i} /> }] },
+const ADMIN_NAV = (base: string): NavGroup[] => [
+  { items: [{ label: 'Dashboard', href: base, icon: <LayoutDashboard size={i} /> }] },
   { title: 'SUBSCRIPTIONS', items: [
-    { label: 'Subscribers', href: '/admin/subscribers', icon: <Users size={i} /> },
-    { label: 'Plans', href: '/admin/plans', icon: <CreditCard size={i} /> },
-    { label: 'Licences', href: '/admin/licences', icon: <KeyRound size={i} /> },
-    { label: 'Activations', href: '/admin/activations', icon: <Zap size={i} /> },
+    { label: 'Subscribers', href: `${base}/subscribers`, icon: <Users size={i} /> },
+    { label: 'Plans', href: `${base}/plans`, icon: <CreditCard size={i} /> },
+    { label: 'Licences', href: `${base}/licences`, icon: <KeyRound size={i} /> },
+    { label: 'Activations', href: `${base}/activations`, icon: <Zap size={i} /> },
   ] },
   { title: 'PLATFORM', items: [
-    { label: 'Admin Users', href: '/admin/users', icon: <ShieldCheck size={i} /> },
-    { label: 'Activity Logs', href: '/admin/logs', icon: <ListChecks size={i} /> },
-    { label: 'Platform Settings', href: '/admin/settings', icon: <Settings size={i} /> },
+    { label: 'Admin Users', href: `${base}/users`, icon: <ShieldCheck size={i} /> },
+    { label: 'Activity Logs', href: `${base}/logs`, icon: <ListChecks size={i} /> },
+    { label: 'Platform Settings', href: `${base}/settings`, icon: <Settings size={i} /> },
   ] },
 ];
 
@@ -66,7 +67,7 @@ function Sidebar({ groups, logoSub, open, onClose, footer }: { groups: NavGroup[
             <div key={gi} className="mb-2">
               {g.title && <div className="px-2 pb-1 pt-2 text-[10px] font-semibold tracking-wider text-muted-foreground">{g.title}</div>}
               {g.items.map((it) => {
-                const active = it.href === '/' || it.href === '/admin' ? loc === it.href || (it.href === '/' && loc === '/dashboard') : loc.startsWith(it.href);
+                const active = it.label === 'Dashboard' ? loc === it.href || (it.href === '/' && loc === '/dashboard') : loc.startsWith(it.href);
                 return (
                   <Link key={it.href} href={it.href} onClick={onClose} data-testid={`nav-${it.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
                     className={cn('mb-px flex items-center gap-2.5 rounded-md px-2.5 py-[6px] text-[12.5px] transition-colors', active ? 'bg-primary text-white' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground')}>
@@ -93,6 +94,8 @@ function AccessBar({ children }: { children?: ReactNode }) {
 }
 
 function Header({ onMenu, name, role, chip, right }: { onMenu: () => void; name: string; role: string; chip?: ReactNode; right?: ReactNode }) {
+  const st = useStore();
+  const adminPath = useAdminPath();
   const now = useClock();
   const [, nav] = useLocation();
   const { toast } = useToast();
@@ -115,7 +118,7 @@ function Header({ onMenu, name, role, chip, right }: { onMenu: () => void; name:
         <div className="flex items-center gap-2">
           <div className="grid h-8 w-8 place-items-center rounded-full bg-violet/70 text-[11px] font-bold">{initials(name)}</div>
           <div className="hidden text-[12px] leading-tight sm:block"><div className="font-semibold">{name}</div><div className="text-[10.5px] text-muted-foreground">{role}</div></div>
-          <button className="btn btn-sm" onClick={async () => { try { await logout(); nav('/login'); } catch (e) { toast({ title: 'Sign out failed', description: errorMessage(e), variant: 'destructive' }); } }} data-testid="button-signout"><LogOut size={13} /> <span className="hidden md:inline">Sign out</span></button>
+          <button className="btn btn-sm" onClick={async () => { try { await logout(); nav(st.session.role === 'admin' ? adminPath : '/login'); } catch (e) { toast({ title: 'Sign out failed', description: errorMessage(e), variant: 'destructive' }); } }} data-testid="button-signout"><LogOut size={13} /> <span className="hidden md:inline">Sign out</span></button>
         </div>
       </div>
     </header>
@@ -123,11 +126,12 @@ function Header({ onMenu, name, role, chip, right }: { onMenu: () => void; name:
 }
 
 export function AdminShell({ children }: { children: ReactNode }) {
+  const adminPath = useAdminPath();
   const st = useStore();
   const [, nav] = useLocation();
   const [open, setOpen] = useState(false);
   const ok = st.session.role === 'admin';
-  useEffect(() => { if (!ok) nav(st.session.role ? '/' : '/login'); }, [ok, nav, st.session.role]);
+  useEffect(() => { if (!ok) nav(st.session.role ? '/' : adminPath || '/login'); }, [ok, nav, st.session.role, adminPath]);
   if (!ok) return null;
   const firstActive = st.subscribers.find((s) => s.status === 'ACTIVE');
   return (
@@ -136,7 +140,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <Btn sm v="primary" disabled={!st.subscribers.length} data-testid="button-preview-subscriber" onClick={() => { const selected = firstActive || st.subscribers[0]; if (selected) { previewAs(selected.id); nav('/'); } }}><Eye size={12} /> Preview as subscriber</Btn>
       </AccessBar>
       <div className="flex flex-1">
-        <Sidebar groups={ADMIN_NAV} logoSub="SaaS Management" open={open} onClose={() => setOpen(false)} />
+        <Sidebar groups={ADMIN_NAV(adminPath)} logoSub="SaaS Management" open={open} onClose={() => setOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header onMenu={() => setOpen((o) => !o)} name={st.session.name} role="Platform Admin" />
           <main className="min-w-0 flex-1 p-4">{children}</main>
@@ -147,6 +151,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 }
 
 export function SubscriberShell({ children }: { children: ReactNode }) {
+  const adminPath = useAdminPath();
   const st = useStore();
   const [, nav] = useLocation();
   const [open, setOpen] = useState(false);
@@ -162,7 +167,7 @@ export function SubscriberShell({ children }: { children: ReactNode }) {
     }).catch(error => { if (!cancelled) { setGateError(errorMessage(error)); void refreshState(); } });
     return () => { cancelled = true; };
   }, [sub?.id, sub?.allowed, sub?.status, sub?.expiresAt]);
-  const redirect = !role ? '/login' : role === 'admin' && !subscriberId ? '/admin' : !sub ? '/login' : null;
+  const redirect = !role ? '/login' : role === 'admin' && !subscriberId ? adminPath : !sub ? '/login' : null;
   useEffect(() => { if (redirect) nav(redirect); }, [redirect, nav]);
   if (redirect || !sub) return null;
   const preview = role === 'admin';
@@ -175,7 +180,7 @@ export function SubscriberShell({ children }: { children: ReactNode }) {
         {preview ? (
           <>
             <span className="text-muted-foreground">Previewing as subscriber</span>
-            <Btn sm v="warn" data-testid="button-return-admin" onClick={() => { returnToAdmin(); nav('/admin/subscribers'); }}><ArrowLeftRight size={12} /> Return to admin</Btn>
+            <Btn sm v="warn" data-testid="button-return-admin" onClick={() => { returnToAdmin(); nav(`${adminPath}/subscribers`); }}><ArrowLeftRight size={12} /> Return to admin</Btn>
           </>
         ) : null}
       </AccessBar>}

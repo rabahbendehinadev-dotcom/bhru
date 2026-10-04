@@ -1,4 +1,5 @@
 import { useLocation } from 'wouter';
+import { useAdminPath } from '@/lib/admin-entry';
 import { Clock, PauseCircle, CalendarX, Ban, CheckCircle2, ArrowLeftRight, LogOut } from 'lucide-react';
 import { Logo, Card, Btn, StatusBadge, Badge } from '@/components/bhru/ui';
 import { accessCheck, effectiveStatus, fmtDate, fmtDateTime, logout, returnToAdmin, type Subscriber } from '@/lib/store';
@@ -11,6 +12,7 @@ const COPY: Record<string, { icon: typeof Clock; title: string; tone: string; ne
 };
 
 export default function AccountStatus({ sub, preview }: { sub: Subscriber; preview: boolean }) {
+  const adminPath = useAdminPath();
   const [, nav] = useLocation();
   const a = accessCheck(sub);
   const eff = effectiveStatus(sub);
@@ -52,7 +54,7 @@ export default function AccountStatus({ sub, preview }: { sub: Subscriber; previ
           </ol>
           <div className="mt-5 flex gap-2">
             {preview ? (
-              <Btn v="warn" className="flex-1" data-testid="button-return-admin" onClick={() => { returnToAdmin(); nav('/admin/subscribers'); }}><ArrowLeftRight size={14} /> Return to admin</Btn>
+              <Btn v="warn" className="flex-1" data-testid="button-return-admin" onClick={() => { returnToAdmin(); nav(`${adminPath}/subscribers`); }}><ArrowLeftRight size={14} /> Return to admin</Btn>
             ) : (
               <Btn className="flex-1" data-testid="button-signout" onClick={async () => { try { await logout(); nav('/login'); } catch { alert('Sign out failed. Please retry.'); } }}><LogOut size={14} /> Sign out</Btn>
             )}

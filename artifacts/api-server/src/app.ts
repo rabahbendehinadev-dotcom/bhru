@@ -6,6 +6,7 @@ import { loadSession, csrfProtection, HttpError } from "./lib/auth";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { adminPath, isAdminEntry } from "./lib/admin-entry";
 
 const app: Express = express();
 app.disable("x-powered-by");
@@ -49,16 +50,25 @@ app.use("/api", (_req, res) => { res.status(404).json({ error: "Endpoint not fou
 
 if (process.env.NODE_ENV === "production") {
   const root = resolve(import.meta.dirname, "public");
-  app.get(/^\/admin(?:\/|$)/, (req, res, next) => {
-    if (!req.auth) { res.redirect("/login"); return; }
+  app.use((req, res, next) => {
+    if (req.path === "/admin" || req.path.startsWith("/admin/")) {
+      res.status(404).send("Page not found."); return;
+    }
+    if (!isAdminEntry(req.path)) { next(); return; }
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    if (!req.auth) {
+      if (req.path !== adminPath) { res.redirect(adminPath); return; }
+      next(); return; // Independent administrator login, never public /login.
+    }
     if (!req.auth.admin) { res.status(403).send("Access denied."); return; }
     next();
   });
   app.use(express.static(root, { index: false, dotfiles: "deny", setHeaders(res, file) {
     res.setHeader("Cache-Control", file.includes("/assets/") ? "public, max-age=31536000, immutable" : "no-cache");
   } }));
-  app.get("/{*splat}", (_req, res) => {
-    res.setHeader("Cache-Control", "no-cache");
+  app.get("/{*splat}", (req, res) => {
+    res.setHeader("Cache-Control", isAdminEntry(req.path) ? "no-store" : "no-cache");
     res.sendFile(resolve(root, "index.html"));
   });
 }

@@ -5,6 +5,8 @@ import { randomBytes } from "node:crypto";
 import assert from "node:assert/strict";
 if (process.env.NODE_ENV === "production") throw new Error("Invoke from the Development environment only.");
 const port = "3010";
+assert(process.env.PLATFORM_ADMIN_PATH, "Set PLATFORM_ADMIN_PATH for Development verification.");
+const adminEntry = `/${process.env.PLATFORM_ADMIN_PATH}`;
 const child = spawn(process.execPath, ["artifacts/api-server/dist/index.mjs"], {
   env: { ...process.env, NODE_ENV: "production", PORT: port },
   stdio: ["ignore", "pipe", "pipe"],
@@ -30,9 +32,15 @@ try {
   assert(asset); assert.equal((await fetch(base + asset)).status, 200);
   assert.equal((await fetch(base + "/register")).status, 200);
   console.log("PASS: Static frontend, hashed assets and SPA deep links served.");
-  const anon = await fetch(base + "/admin/subscribers", { redirect: "manual" });
-  assert.equal(anon.status, 302); assert.equal(anon.headers.get("location"), "/login");
-  console.log("PASS: Anonymous admin page redirects server-side.");
+  assert.equal((await fetch(base + "/admin")).status, 404);
+  assert.equal((await fetch(base + adminEntry)).status, 200);
+  const anon = await fetch(base + adminEntry + "/subscribers", { redirect: "manual" });
+  assert.equal(anon.status, 302); assert.equal(anon.headers.get("location"), adminEntry);
+  const publicContext = await (await fetch(base + "/api/auth/entry?path=/login")).json();
+  assert.equal(publicContext.adminPath, null);
+  const privateContext = await (await fetch(base + "/api/auth/entry?path=" + adminEntry)).json();
+  assert.equal(privateContext.adminPath, adminEntry);
+  console.log("PASS: Runtime private entry and independent login; legacy /admin removed; public context reveals no private path.");
   const tag = randomBytes(6).toString("hex");
   const registered = await fetch(base + "/api/auth/register", { method: "POST",
     headers: { "Content-Type": "application/json", "X-BHRU-Request": "1", Origin: base },
@@ -44,7 +52,9 @@ try {
   assert(/HttpOnly/i.test(header)); assert(/SameSite=Lax/i.test(header)); assert(/;\s*Secure/i.test(header));
   cookie = header.split(";")[0];
   console.log("PASS: Production cookies are HttpOnly, Secure, SameSite=Lax.");
-  assert.equal((await fetch(base + "/admin/subscribers", { headers: { Cookie: cookie }, redirect: "manual" })).status, 403);
+  assert.equal((await fetch(base + adminEntry, { headers: { Cookie: cookie }, redirect: "manual" })).status, 403);
+  assert.equal((await fetch(base + adminEntry + "/subscribers", { headers: { Cookie: cookie }, redirect: "manual" })).status, 403);
+  assert.equal((await fetch(base + "/api/auth/entry?path=" + adminEntry, { headers: { Cookie: cookie } })).status, 403);
   console.log("PASS: Authenticated ordinary subscriber gets HTTP 403 on admin page.");
   const unknown = await fetch(base + "/api/nonexistent");
   assert.equal(unknown.status, 404); assert((unknown.headers.get("content-type") || "").includes("application/json"));

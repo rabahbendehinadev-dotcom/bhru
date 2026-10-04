@@ -5,6 +5,27 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface AuthEntry {
+  /** @nullable */
+  adminPath: string | null;
+  isAdminEntry: boolean;
+}
+
+export interface AdminCredentialsInput {
+  /**
+     * @minLength 1
+     * @maxLength 254
+     */
+  identifier: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  password: string;
+  /** @maxLength 97 */
+  entryPath: string;
+}
+
 export interface AccountInput {
   /**
      * @minLength 2
@@ -229,4 +250,11 @@ export interface Success {
 export interface HealthStatus {
   status: string;
 }
+
+export type ResolveAuthEntryParams = {
+/**
+ * @maxLength 512
+ */
+path: string;
+};
 

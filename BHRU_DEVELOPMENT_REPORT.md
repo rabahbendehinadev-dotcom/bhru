@@ -71,7 +71,8 @@
 
 ## Environment / commands
 
-مطلوب: `DATABASE_URL`, `SESSION_SECRET` عشوائي لا يقل عن 32 حرفًا.
+مطلوب: `DATABASE_URL`, `SESSION_SECRET` عشوائي لا يقل عن 32 حرفًا،
+و`PLATFORM_ADMIN_PATH` كـURL segment دون `/` لمدخل الإدارة.
 للإنتاج: `NODE_ENV=production`. `PORT=3000` افتراضيًا.
 لا أسرار إضافية أو أسرار frontend، ولا اعتماد VPS على Replit.
 
@@ -90,7 +91,8 @@ pnpm start
 pnpm admin:promote -- --email your-registered-email@example.com
 ```
 
-ثم سجّل الدخول مجددًا بكلمة المرور الخاصة بك.
+ثم افتح `/<PLATFORM_ADMIN_PATH>` وسجّل الدخول بكلمة المرور الخاصة بك.
+`/login` مخصص للمشتركين؛ الحساب الإداري لا يدخل منه.
 
 Migration source: `lib/db/src/migrations/001_platform.sql`.
 الملفات المطبقة محمية بـchecksums، والتنفيذ متسلسل بـadvisory lock وtransaction لكل ملف.
@@ -157,3 +159,31 @@ Dockerfile الحالي حُدث للبناء متعدد المراحل للوا
 لا password recovery أو email delivery أو إدارة staff أو business tables في هذه المرحلة.
 
 التطبيق جاهز لمراجعة صاحب المشروع في Development؛ لا انتقال إلى مرحلة لاحقة دون موافقته.
+
+## تحديث فصل Authentication UX
+
+- `/login`: نفس الهوية الداكنة، شعار BHRU وعنوان الدخول والحقول والزر وCreate an account فقط؛
+  لا Demo، حسابات جاهزة، badge، روابط إدارة، أو نصوص الإدارة.
+- `/register`: التسجيل الحقيقي الحالي دون تعديل تصميمه؛ ينشئ مشتركًا PENDING لا Admin.
+- Development: `PLATFORM_ADMIN_PATH=bhru-ctrl-x7k9m2`، والمدخل `/bhru-ctrl-x7k9m2`.
+  هذه قيمة البيئة الحالية وليست قيمة hardcoded في frontend أو backend.
+  تغييرها يحتاج restart فقط، دون إعادة بناء الواجهة.
+- صفحة Admin Login مستقلة بنفس هوية BHRU دون Create account.
+  التحقق من password وعضوية الإدارة الفعالة يحصل على السيرفر قبل إنشاء session.
+- `/admin` القديم لم يعد مدخل إدارة. الروابط الداخلية الإدارية فقط تستعمل المسار الجديد؛
+  شكل Dashboard وSidebar وSubscriber Panel لم يتغير.
+- المشترك المسجل يحصل على 403 من السيرفر عند محاولة مدخل الإدارة،
+  أو تسجيل الدخول الإداري بكلمة مروره الصحيحة، أو استدعاء API إدارية.
+  معرفة الرابط أو تزوير role لا يمنح الإدارة.
+- نجح TypeScript للمكتبات والـAPI والواجهة، وBuild موحّد.
+  نجحت ستة فحوص للتشغيل المجمّع على Development PostgreSQL:
+  صفحة Admin Login المستقلة، حذف `/admin` القديم، runtime route resolution،
+  رفض المشترك على المسار الخاص وsubroutes وentry API، إضافة لفحوص cookies وSPA/assets.
+- نجح فحص مستقل بتغيير `PLATFORM_ADMIN_PATH` لعملية تحقق مؤقتة مع **نفس البناء**:
+  المدخل الجديد يعمل والقديم لم يعد يُحل كإدارة، دون أي mutation لقاعدة البيانات.
+- نجحت اختبارات الواجهة لهذه المرحلة: `/login` و`/register` دون روابط إدارة،
+  إنشاء حسابات حقيقية PENDING، رفض Admin من دخول المشتركين، دخول Admin من مدخله الخاص،
+  التنقل عبر Subscribers وPlans، وعودة logout إلى Admin Login الخاصة.
+  محاولة المشترك للمسار الخاص وsubroute تعرض `403 — Access denied`؛
+  محاولة Admin Login بكلمة مرور مشترك صحيحة أعادت 403 دون Set-Cookie.
+  عطلت الاختبارات عضوية المسؤول المؤقت فقط، واحتفظت بالحسابات والسجلات.

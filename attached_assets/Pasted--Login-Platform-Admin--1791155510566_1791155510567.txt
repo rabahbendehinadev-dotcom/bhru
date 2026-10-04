@@ -1,0 +1,107 @@
+أريد الآن تنظيف صفحة Login الحالية وفصل دخول Platform Admin عن دخول المشتركين.
+
+لا تغيّر تصميم صفحة Login الحالية. التصميم يعجبني وأريد الاحتفاظ به.
+
+1) صفحة دخول المشتركين
+
+المسار:
+ /login
+
+أزل نهائيًا من الصفحة:
+
+- Demo simulation
+- Sign-in is simulated
+- Password (not verified in demo)
+- Sign in (demo)
+- Demo access
+- Platform Admin
+- Fast Unlock DZ
+- 12 demo accounts in this browser
+- Demo sandbox
+- وأي نص أو Badge متعلق بـ Demo
+
+أريد الصفحة بسيطة واحترافية وتحتوي فقط على:
+
+- شعار BHRU
+- Sign in to BHRU
+- Email or username
+- Password
+- زر Sign in
+- Create an account
+
+حافظ على نفس Dark Design الحالي.
+
+مهم:
+لا أريد أي حساب جاهز مثل Fast Unlock DZ.
+أي مشترك يريد الدخول يجب أن يكون قد أنشأ حسابًا فعليًا من Create account.
+
+2) تسجيل المشترك
+
+Create an account يجب أن يكون هو الطريق لإنشاء حساب جديد.
+
+بعد التسجيل يصبح للمشترك حساب خاص به، ولا تستخدم أي Demo account أو predefined subscriber.
+
+لاحقًا Platform Admin هو الذي يتحكم في حالة الاشتراك وتفعيله.
+
+3) فصل Platform Admin بالكامل
+
+لا أريد زر Platform Admin ظاهرًا في /login.
+
+ولا أريد رابط الإدارة ظاهرًا في:
+- Login
+- Register
+- Subscriber Panel
+- Navigation
+- Footer
+- HTML links الموجهة للمستخدم
+
+أريد مدخل Platform Admin مستقل.
+
+استخدم حاليًا Route configurable عبر Environment Variable، وليس قيمة hardcoded، مثلاً:
+
+PLATFORM_ADMIN_PATH=bhru-ctrl-x7k9m2
+
+فيصبح مثال الدخول:
+
+https://bhru.net/bhru-ctrl-x7k9m2
+
+لكن لا تعتمد على سرية الرابط كحماية أمنية.
+
+هذا Route يجب أن يتطلب:
+- Authentication حقيقية عندما ننفذ Backend الحقيقي
+- Platform Admin role
+- Server-side authorization
+
+أي Subscriber عادي يحاول الدخول إليه يجب أن يُرفض حتى لو عرف الرابط.
+
+لا تجعل معرفة الرابط كافية للدخول إلى الإدارة.
+
+4) Platform Admin Login
+
+عند فتح رابط Platform Admin أريد صفحة دخول Admin مستقلة بنفس هوية BHRU البصرية.
+
+لا تعرض Create account فيها.
+
+لا يستطيع أي مستخدم إنشاء Platform Admin من الواجهة.
+
+Platform Admin accounts يتم إنشاؤها/منحها بطريقة إدارية آمنة فقط.
+
+5) مهم جدًا
+
+لا تغيّر Dashboard.
+لا تغيّر Sidebar.
+لا تغيّر تصميم Subscriber Panel.
+لا تضف Features جديدة.
+لا تعمل Deploy.
+لا تعمل GitHub push.
+
+نفذ فقط فصل وتنظيف Authentication UX كما شرحت.
+
+بعد الانتهاء أرني:
+
+1. /login
+2. /register
+3. Platform Admin private entry
+4. ماذا يحدث إذا حاول Subscriber الوصول إلى Admin route
+
+ثم توقف لأراجع النتيجة.

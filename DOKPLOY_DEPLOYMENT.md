@@ -9,7 +9,8 @@
 - PostgreSQL خارج الحاوية، من `DATABASE_URL`؛ لا اعتماد على Replit عند تشغيل VPS.
 - جلسات وحسابات وخطط واشتراكات وسجلات حقيقية مشتركة بين المتصفحات.
 - خادم واحد على `0.0.0.0:PORT`؛ افتراضيًا `3000`. لا Vite dev/preview في الإنتاج.
-- مسارات الواجهة المباشرة تعمل. `/admin` محمي من السيرفر: الزائر يُحوّل للدخول والمشترك العادي يحصل على `403`.
+- مسارات الواجهة المباشرة تعمل. مدخل الإدارة من `PLATFORM_ADMIN_PATH` وقت التشغيل:
+  الزائر يرى صفحة Admin Login مستقلة، والمشترك العادي يحصل على `403`. المسار القديم `/admin` غير مستخدم.
 - صورة متعددة المراحل، بحساب `node` غير root، دون Source أو node_modules أو credentials في الصورة النهائية.
 - Linux amd64 مع Debian/glibc؛ إعداد native dependencies الحالي ليس جاهزًا لـAlpine أو ARM.
 
@@ -19,10 +20,11 @@
 |---|---|---|
 | `DATABASE_URL` | نعم | اتصال PostgreSQL الخارجية؛ يُمرَّر وقت التشغيل فقط |
 | `SESSION_SECRET` | نعم | سر عشوائي بطول 32 حرفًا على الأقل لتوقيع cookie؛ يُمرَّر وقت التشغيل فقط |
+| `PLATFORM_ADMIN_PATH` | نعم | URL segment خاص بمدخل الإدارة، دون `/`؛ مثال `bhru-ctrl-x7k9m2`، قيمة Runtime وليست Build Arg |
 | `NODE_ENV` | نعم للإنتاج | `production`؛ موجود افتراضيًا في Dockerfile |
 | `PORT` | اختياري | `3000` افتراضيًا؛ يجب أن يطابق Container Port في Dokploy |
 
-لا أسرار أخرى مطلوبة. لا Clerk، Redis، SMTP، Payments أو Replit runtime credentials.
+لا أسرار أخرى مطلوبة؛ `PLATFORM_ADMIN_PATH` إعداد مسار وليس بديلًا عن الحماية. لا Clerk، Redis، SMTP، Payments أو Replit runtime credentials.
 لا تضع `DATABASE_URL` أو `SESSION_SECRET` في Git أو Dockerfile أو متغيرات `VITE_*` أو Build Args.
 `BASE_PATH=/` مضبوط وقت البناء للنشر عند جذر Domain؛ ليس متغير تشغيل لتغيير المسار.
 
@@ -70,11 +72,12 @@ pnpm start
 pnpm admin:promote -- --email your-registered-email@example.com
 ```
 
-3. سجّل الدخول مجددًا بكلمة المرور نفسها؛ الآن `/admin` متاح.
+3. افتح `/<PLATFORM_ADMIN_PATH>` وسجّل الدخول بكلمة المرور نفسها؛ هذا هو المدخل الوحيد للواجهة الإدارية.
+   `/login` للمشتركين فقط، ولا يعرض رابط الإدارة؛ صفحة Admin Login لا تعرض Create account.
 
 لا كلمة مرور افتراضية، لا ترقيات تلقائية، ولا زر Admin عام. CLI تُسجّل الترقية في audit
 وتبطل جلسات الحساب القديمة. لا يوجد HTTP endpoint لترقية الأدوار.
-أنشئ خططك من `/admin/plans`؛ لا خطط أو أسعار وهمية مزروعة.
+أنشئ خططك من `/<PLATFORM_ADMIN_PATH>/plans`؛ لا خطط أو أسعار وهمية مزروعة.
 
 ## إعداد Dokploy المستقبلي
 
@@ -86,7 +89,7 @@ pnpm admin:promote -- --email your-registered-email@example.com
 3. في Dokploy: Application → Source GitHub → branch `main`.
 4. Build Path `/`، Build Type `Dockerfile`، Dockerfile Path `Dockerfile`، Context `.`,
    وBuild Stage فارغ لاستخدام `runtime`.
-5. اضبط `DATABASE_URL` و`SESSION_SECRET` في Runtime Environment، لا أثناء البناء.
+5. اضبط `DATABASE_URL` و`SESSION_SECRET` و`PLATFORM_ADMIN_PATH` في Runtime Environment، لا أثناء البناء.
 6. جهّز PostgreSQL الخارجية وخذ نسخة احتياطية قبل migrations المستقبلية.
 7. نفّذ migration مرة صراحةً **قبل تشغيل أول نسخة**، باستخدام البيئة نفسها:
 

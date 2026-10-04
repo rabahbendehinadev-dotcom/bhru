@@ -12,7 +12,7 @@ A PostgreSQL-backed SaaS foundation for unlock server owners, with separate plat
 - `pnpm db:migrate` — explicitly apply reviewed SQL migrations after building
 - `pnpm start` — unified Express/static production-mode runtime
 - `pnpm admin:promote -- --email EXISTING_EMAIL` — promote an existing registered account from a trusted CLI; sign in again afterward
-- Required env: `DATABASE_URL`, `SESSION_SECRET` (at least 32 random characters); runtime `PORT`, production `NODE_ENV=production`
+- Required env: `DATABASE_URL`, `SESSION_SECRET` (at least 32 random characters), `PLATFORM_ADMIN_PATH` (unique URL segment, no slash); runtime `PORT`, production `NODE_ENV=production`
 
 ## Stack
 

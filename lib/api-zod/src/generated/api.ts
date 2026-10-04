@@ -8,6 +8,99 @@
 import * as zod from 'zod';
 
 
+export const resolveAuthEntryQueryPathMax = 512;
+
+
+
+export const ResolveAuthEntryQueryParams = zod.object({
+  "path": zod.coerce.string().max(resolveAuthEntryQueryPathMax)
+})
+
+export const ResolveAuthEntryResponse = zod.object({
+  "adminPath": zod.string().nullable(),
+  "isAdminEntry": zod.boolean()
+})
+
+
+export const loginAdministratorBodyIdentifierMax = 254;
+
+export const loginAdministratorBodyPasswordMax = 128;
+
+export const loginAdministratorBodyEntryPathMax = 97;
+
+
+
+export const LoginAdministratorBody = zod.object({
+  "identifier": zod.string().min(1).max(loginAdministratorBodyIdentifierMax),
+  "password": zod.string().min(1).max(loginAdministratorBodyPasswordMax),
+  "entryPath": zod.string().max(loginAdministratorBodyEntryPathMax)
+})
+
+export const loginAdministratorResponsePlansItemOneNameMax = 100;
+
+export const loginAdministratorResponsePlansItemOnePriceMin = 0;
+export const loginAdministratorResponsePlansItemOnePriceMax = 9999999999.99;
+
+export const loginAdministratorResponsePlansItemOneDescriptionMax = 2000;
+
+export const loginAdministratorResponsePlansItemOneHighlightsMax = 2000;
+
+
+
+export const LoginAdministratorResponse = zod.object({
+  "session": zod.object({
+  "role": zod.union([zod.literal('admin'),zod.literal('subscriber'),zod.literal(null)]).nullable(),
+  "subscriberId": zod.string().nullable(),
+  "origin": zod.union([zod.literal('login'),zod.literal('register'),zod.literal(null)]).nullable(),
+  "name": zod.string()
+}),
+  "subscribers": zod.array(zod.object({
+  "id": zod.string(),
+  "business": zod.string(),
+  "owner": zod.string(),
+  "username": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string(),
+  "country": zod.string(),
+  "plan": zod.string(),
+  "planId": zod.string().nullable(),
+  "status": zod.enum(['PENDING', 'TRIAL', 'ACTIVE', 'SUSPENDED', 'EXPIRED', 'REVOKED']),
+  "registeredAt": zod.string(),
+  "expiresAt": zod.string().nullable(),
+  "lastLogin": zod.string().nullable(),
+  "domain": zod.string(),
+  "domainStatus": zod.string(),
+  "verification": zod.string(),
+  "notes": zod.string(),
+  "licenceKey": zod.string().nullable(),
+  "activatedAt": zod.string().nullable(),
+  "allowed": zod.boolean(),
+  "accessReason": zod.string()
+})),
+  "plans": zod.array(zod.object({
+  "name": zod.string().min(1).max(loginAdministratorResponsePlansItemOneNameMax),
+  "price": zod.number().min(loginAdministratorResponsePlansItemOnePriceMin).max(loginAdministratorResponsePlansItemOnePriceMax),
+  "description": zod.string().max(loginAdministratorResponsePlansItemOneDescriptionMax),
+  "highlights": zod.string().max(loginAdministratorResponsePlansItemOneHighlightsMax),
+  "enabled": zod.boolean()
+}).and(zod.object({
+  "id": zod.string()
+}))),
+  "logs": zod.array(zod.object({
+  "id": zod.string(),
+  "at": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string(),
+  "target": zod.string()
+})),
+  "admins": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string()
+}))
+})
+
+
 export const registerAccountBodyOwnerMin = 2;
 export const registerAccountBodyOwnerMax = 150;
 

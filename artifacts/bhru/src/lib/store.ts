@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import {
-  getPlatformState, registerAccount, loginAccount, logoutAccount, manageSubscription,
+  getPlatformState, registerAccount, loginAccount, loginAdministrator, logoutAccount, manageSubscription,
   editSubscriber, createPlan as createPlanRequest, editPlan, getSubscriberPanel,
   type PlatformState, type Subscriber, type Plan, type SessionState, type LogEntry,
   type AccountInput, type PlanInput, type SubscriberUpdate, type SubscriptionAction,
@@ -69,8 +69,10 @@ export const toInput = (v: string | null) => { if (!v) return ''; const d = new 
 export const fromInput = (v: string) => new Date(v + 'T23:59:00').toISOString();
 export const daysLeft = (v: string | null) => v ? Math.ceil((+new Date(v) - Date.now()) / DAY) : null;
 
-export async function login(identifier: string, password: string) {
-  await mutation(() => loginAccount({ identifier, password }, options));
+export async function login(identifier: string, password: string, entryPath?: string) {
+  await mutation(() => entryPath
+    ? loginAdministrator({ identifier, password, entryPath }, options)
+    : loginAccount({ identifier, password }, options));
   return state.session.role;
 }
 export async function registerSubscriber(input: AccountInput) {

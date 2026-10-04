@@ -11,6 +11,35 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /auth/entry:
+    get:
+      operationId: resolveAuthEntry
+      parameters:
+        - { name: path, in: query, required: true, schema: { type: string, maxLength: 512 } }
+      responses:
+        "200":
+          description: Runtime entry context; private path returned only at that entry or to an administrator
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthEntry" }
+        "403":
+          description: Subscriber cannot access the admin entry
+  /auth/admin-login:
+    post:
+      operationId: loginAdministrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminCredentialsInput" }
+      responses:
+        "200":
+          description: Authenticated platform administrator; session rotated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformState" }
+        "403":
+          description: Account has no platform administrator membership
   /auth/register:
     post:
       operationId: registerAccount
@@ -158,6 +187,19 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    AuthEntry:
+      type: object
+      required: [adminPath, isAdminEntry]
+      properties:
+        adminPath: { type: ["string", "null"] }
+        isAdminEntry: { type: boolean }
+    AdminCredentialsInput:
+      type: object
+      required: [identifier, password, entryPath]
+      properties:
+        identifier: { type: string, minLength: 1, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+        entryPath: { type: string, maxLength: 97 }
     AccountInput:
       type: object
       additionalProperties: false

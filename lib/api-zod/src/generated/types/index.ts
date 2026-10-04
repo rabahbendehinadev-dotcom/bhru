@@ -8,6 +8,8 @@
 
 export * from './accountInput';
 export * from './adminAccount';
+export * from './adminCredentialsInput';
+export * from './authEntry';
 export * from './credentialsInput';
 export * from './healthStatus';
 export * from './logEntry';
@@ -15,6 +17,7 @@ export * from './panelAccess';
 export * from './plan';
 export * from './planInput';
 export * from './platformState';
+export * from './resolveAuthEntryParams';
 export * from './sessionState';
 export * from './sessionStateOrigin';
 export * from './sessionStateRole';

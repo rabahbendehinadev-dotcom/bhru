@@ -14,3 +14,17 @@ mtime_ms = 1791145195063
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/f3aab694-6230-4b56-a672-27806807dce0/1564e790-dca4-498f-96d5-5af0e2009b36"
 storage_version_token = "1791145215262903"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "S0mrsYVGEERfYwzZn7MTn"
+uri = "file://reports/auth-ux/login.jpg"
+type = "image"
+title = "BHRU — صفحة دخول المشتركين"
+description = "صفحة /login النظيفة في Development بنفس التصميم الداكن، دون Demo أو مدخل الإدارة."
+logical_id = "95d94e12-ef38-4ed3-b501-46970a2bb522"
+content_hash = "sha256:41b3c1974392040eb338d9e6f094abe37928bf2f5203ddcfa9df3665b36961f7"
+size = 17617
+mtime_ms = 1791155852399
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/95d94e12-ef38-4ed3-b501-46970a2bb522/869e247e-9d76-4fb1-b5b2-eed3e276f722"
+storage_version_token = "1791156217510350"
+content_type = "image/jpeg"

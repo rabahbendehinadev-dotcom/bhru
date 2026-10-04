@@ -8,6 +8,8 @@ const { Pool } = require("pg");
 if (process.env.NODE_ENV === "production") throw new Error("Run verification in Development only.");
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const base = "http://localhost:80";
+const adminEntry = `/${process.env.PLATFORM_ADMIN_PATH}`;
+assert(process.env.PLATFORM_ADMIN_PATH, "Set PLATFORM_ADMIN_PATH for Development verification.");
 const tag = randomBytes(6).toString("hex");
 const password = randomBytes(24).toString("base64url");
 const actors = [{ jar: "" }, { jar: "" }, { jar: "" }];
@@ -59,7 +61,7 @@ try {
   assert.equal(promoted.status, 0, `Trusted admin promotion CLI failed: ${promoted.stderr}`);
   promotedId = ids[0];
   check(await call(actors[0], "/state"), 401); pass("CLI promotion invalidates earlier sessions");
-  const adminLogin = await call(actors[0], "/auth/login", "POST", { identifier: account("0").email, password });
+  const adminLogin = await call(actors[0], "/auth/admin-login", "POST", { identifier: account("0").email, password, entryPath: adminEntry });
   check(adminLogin, 200); assert.equal(adminLogin.data.session.role, "admin");
   assert(ids.every(id => adminLogin.data.subscribers.some(s => s.id === id))); pass("Admin sees registered subscribers across independent sessions");
   const plan = { name: `Verification ${tag}`, price: 17.25, description: "Verification only", highlights: "No business limits enabled", enabled: true };

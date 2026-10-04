@@ -1,10 +1,12 @@
 import { Link } from 'wouter';
+import { useAdminPath } from '@/lib/admin-entry';
 import { AdminShell } from '@/components/bhru/shells';
 import { Card, CardHead, PlanBadge, SubStatus } from '@/components/bhru/ui';
 import { StatCards } from './subscribers';
 import { effectiveStatus, fmtDateTime, useStore, fmtDate, daysLeft } from '@/lib/store';
 
 function Page() {
+  const adminPath = useAdminPath();
   const { subscribers, plans } = useStore();
   const recent = [...subscribers].sort((a, b) => +new Date(b.registeredAt) - +new Date(a.registeredAt)).slice(0, 6);
   const expiring = subscribers.filter((s) => ['ACTIVE', 'TRIAL'].includes(effectiveStatus(s)) && daysLeft(s.expiresAt)! <= 30).sort((a, b) => +new Date(a.expiresAt!) - +new Date(b.expiresAt!));
@@ -16,7 +18,7 @@ function Page() {
       <StatCards />
       <div className="grid gap-3 xl:grid-cols-[1.6fr_1fr]">
         <Card className="pb-1">
-          <CardHead title="Recent registrations" right={<Link href="/admin/subscribers" className="link">View all</Link>} />
+          <CardHead title="Recent registrations" right={<Link href={`${adminPath}/subscribers`} className="link">View all</Link>} />
           <div className="scroll-thin mt-1 overflow-x-auto"><table className="tbl"><thead><tr><th>Business</th><th>Owner</th><th>Country</th><th>Plan</th><th>Status</th><th>Registered</th></tr></thead>
             <tbody>{recent.map((s) => <tr key={s.id} data-testid={`row-recent-${s.id}`}><td className="font-semibold">{s.business}</td><td>{s.owner}</td><td>{s.country}</td><td><PlanBadge plan={s.plan} /></td><td><SubStatus sub={s} /></td><td>{fmtDateTime(s.registeredAt)}</td></tr>)}</tbody></table></div>
         </Card>
