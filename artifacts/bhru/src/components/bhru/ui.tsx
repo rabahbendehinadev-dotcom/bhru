@@ -6,14 +6,15 @@ import { type Status, effectiveStatus, type Subscriber } from '@/lib/store';
 export function Logo({ sub = 'Unlock Server Panel', size = 30 }: { sub?: string; size?: number }) {
   return (
     <div className="flex items-center gap-2">
-      <div
-        className="grid place-items-center rounded-md bg-brand font-extrabold text-white"
-        style={{ width: size, height: size, fontSize: size * 0.58 }}
-      >
-        B
-      </div>
+      <img
+        src={`${import.meta.env.BASE_URL}brand/bhru-icon.png`}
+        alt=""
+        className="shrink-0 rounded-md object-contain"
+        width={size}
+        height={size}
+      />
       <div className="leading-tight">
-        <div className="text-[15px] font-bold tracking-wide">BHRU</div>
+        <img src={`${import.meta.env.BASE_URL}brand/bhru-wordmark.png`} alt="BHRU" width={78} height={18} className="mb-0.5 object-contain" />
         <div className="text-[9.5px] text-muted-foreground">{sub}</div>
       </div>
     </div>
