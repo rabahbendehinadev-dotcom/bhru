@@ -1,0 +1,106 @@
+الآن أريد تجهيز مشروع BHRU الحالي للنشر لاحقًا على VPS الخاص بي عن طريق Dokploy.
+
+مهم جدًا:
+لا تغيّر أي شيء في التصميم الحالي أو UX أو الصفحات أو منطق الـPrototype.
+لا تبدأ المرحلة التالية من تطوير BHRU.
+لا تضف Database حقيقية أو Authentication جديدة الآن.
+الهدف في هذه الخطوة فقط هو تجهيز المشروع الحالي ليعمل داخل Docker بشكل صحيح.
+
+أريد منك القيام بالتالي:
+
+1. افحص المشروع الحالي أولًا وحدد:
+   - Framework المستخدم
+   - طريقة Build الصحيحة
+   - أمر التشغيل الصحيح في Production
+   - Port الذي يجب أن يستمع عليه التطبيق
+
+2. أنشئ Dockerfile احترافي ومناسب فعليًا للمشروع الحالي.
+
+يفضل استخدام Multi-stage build إذا كان مناسبًا للـStack الحالي.
+
+3. يجب أن يكون التطبيق داخل Docker:
+   - يعمل بـ NODE_ENV=production
+   - يستمع على 0.0.0.0 وليس localhost فقط
+   - يستخدم PORT من Environment Variable
+   - يكون مناسبًا للعمل خلف Traefik / Dokploy
+   - لا يعتمد على Replit-specific runtime في Production
+
+4. أنشئ .dockerignore مناسبًا لاستبعاد الأشياء غير الضرورية مثل:
+   - node_modules
+   - .git
+   - logs
+   - development cache
+   - الملفات المؤقتة
+   - secrets المحلية
+
+ولا تستبعد أي ملف ضروري للـBuild.
+
+5. راجع package.json scripts.
+
+يجب أن توجد أوامر واضحة ومناسبة مثل:
+   - build
+   - start
+
+ولا تغيّر Stack المشروع بدون سبب.
+
+6. اختبر Dockerfile فعليًا إن كانت البيئة تسمح بذلك:
+
+docker build
+
+ثم تشغيل Container والتأكد أن التطبيق يفتح ويعمل.
+
+إذا Docker غير متاح داخل بيئة Replit، قم على الأقل بفحص Build الإنتاجي وتشغيله بالطريقة التي سيستخدمها Container.
+
+7. جهز ملف:
+
+DOKPLOY_DEPLOYMENT.md
+
+يشرح لي ببساطة:
+
+- كيفية رفع المشروع إلى GitHub لاحقًا
+- اختيار branch: main
+- كيفية إنشاء Application في Dokploy
+- اختيار Dockerfile deployment
+- Environment Variables المطلوبة
+- Internal/Application Port
+- كيفية ربط Domain
+- Health check المقترح إن كان مطلوبًا
+
+8. لا تضع أي Password أو Secret حقيقي داخل:
+   Dockerfile
+   Git
+   Source Code
+
+كل الأسرار المستقبلية يجب أن تأتي من Environment Variables.
+
+9. لا تنشئ الآن PostgreSQL أو Redis أو أي Infrastructure إضافية.
+
+النسخة الحالية ما زالت Prototype ببيانات المتصفح، وأنا أعرف ذلك.
+
+هدفي حاليًا فقط:
+BHRU current prototype
+→ GitHub main
+→ Dokploy
+→ Docker
+→ VPS
+→ Domain
+
+حتى أستطيع فتح النسخة الحالية من الإنترنت وتجربتها على VPS أثناء استمرار التطوير.
+
+10. بعد الانتهاء:
+
+أعطني:
+- الملفات التي أنشأتها أو عدلتها
+- Build command
+- Start command
+- Port
+- Environment Variables المطلوبة
+- هل Production build نجح أم لا
+
+ثم توقف.
+
+لا تعمل Deploy بنفسك.
+لا تعمل GitHub push.
+لا تغيّر أي واجهة.
+لا تبدأ Backend الحقيقي.
+انتظر موافقتي.

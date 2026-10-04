@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "dv77p6_-vkp30NJWRh21p"
+uri = "file://DOKPLOY_DEPLOYMENT.md"
+type = "text"
+title = "دليل نشر BHRU على Dokploy"
+description = "إعداد GitHub main وDockerfile والمنفذ والمتغيرات والدومين وفحص الصحة، مع نتائج التحقق."
+logical_id = "f3aab694-6230-4b56-a672-27806807dce0"
+content_hash = "sha256:a223926f01552c52ac80e779b74436a0710d80c262c492357c331f2c73aec51d"
+size = 12798
+mtime_ms = 1791145195063
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/f3aab694-6230-4b56-a672-27806807dce0/1564e790-dca4-498f-96d5-5af0e2009b36"
+storage_version_token = "1791145215262903"
+content_type = "text/markdown"

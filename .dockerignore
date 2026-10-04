@@ -1,0 +1,42 @@
+# Dependency/build artifacts must be installed/built inside the image.
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/*.tsbuildinfo
+**/.vite
+**/.turbo
+**/.pnpm-store
+
+# Version control, Replit/agent runtime, editors, and caches.
+.git
+.agents
+.local
+.cache
+.config
+.replit
+.replitignore
+**/.replit-artifact
+**/.vscode
+**/.idea
+**/.DS_Store
+
+# Local configuration and credentials must never enter the build context.
+**/.env
+**/.env.*
+**/.npmrc
+**/.ssh
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+
+# Logs and temporary files.
+**/logs
+**/*.log
+**/*.tmp
+**/*.temp
+**/*~
+tmp
+temp
+out-tsc

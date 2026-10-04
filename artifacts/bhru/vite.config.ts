@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
-import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
+export default defineConfig(async ({ command }) => {
 
-const rawPort = process.env.PORT;
+const rawPort = process.env.PORT || (command === 'build' ? '3000' : undefined);
 
 if (!rawPort) {
   throw new Error(
@@ -19,7 +19,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
+const basePath = process.env.BASE_PATH || (command === 'build' ? '/' : undefined);
 
 if (!basePath) {
   throw new Error(
@@ -27,15 +27,19 @@ if (!basePath) {
   );
 }
 
-export default defineConfig({
+const replitDevelopment = command === 'serve' &&
+  process.env.NODE_ENV !== 'production' && process.env.REPL_ID !== undefined;
+
+return {
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== 'production' &&
-    process.env.REPL_ID !== undefined
+    ...(replitDevelopment
       ? [
+          await import('@replit/vite-plugin-runtime-error-modal').then((m) =>
+            m.default(),
+          ),
           await import('@replit/vite-plugin-cartographer').then((m) =>
             m.cartographer({
               root: path.resolve(import.meta.dirname, '..'),
@@ -78,4 +82,5 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: true,
   },
+};
 });
