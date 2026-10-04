@@ -11,6 +11,138 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /auth/register:
+    post:
+      operationId: registerAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountInput" }
+      responses:
+        "201":
+          description: Registered as pending; authenticated owner session created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformState" }
+  /auth/login:
+    post:
+      operationId: loginAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CredentialsInput" }
+      responses:
+        "200":
+          description: Authenticated; session rotated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformState" }
+  /auth/logout:
+    post:
+      operationId: logoutAccount
+      responses:
+        "200":
+          description: Session invalidated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+  /state:
+    get:
+      operationId: getPlatformState
+      responses:
+        "200":
+          description: Admin data or only the authenticated subscriber's own metadata
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformState" }
+  /admin/plans:
+    post:
+      operationId: createPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PlanInput" }
+      responses:
+        "200":
+          description: Plan created; admin only
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformState" }
+  /admin/plans/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: editPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PlanInput" }
+      responses:
+        "200":
+          description: Plan updated including enable/disable; admin only
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformState" }
+  /admin/subscribers/{id}/actions:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: manageSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubscriptionAction" }
+      responses:
+        "200":
+          description: Transactional licence change and audit event; admin only
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformState" }
+  /admin/subscribers/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: editSubscriber
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubscriberUpdate" }
+      responses:
+        "200":
+          description: Subscriber details updated; admin only
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformState" }
+  /subscribers/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getSubscriber
+      responses:
+        "200":
+          description: Owner's own subscriber or admin only
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Subscriber" }
+  /subscribers/{id}/panel:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getSubscriberPanel
+      responses:
+        "200":
+          description: Tenant checked and licence allowed; business modules remain deferred
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PanelAccess" }
+        "403":
+          description: Tenant mismatch or pending/suspended/expired/revoked licence
   /healthz:
     get:
       operationId: healthCheck
@@ -26,6 +158,131 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    AccountInput:
+      type: object
+      additionalProperties: false
+      required: [owner, business, username, email, phone, country, password]
+      properties:
+        owner: { type: string, minLength: 2, maxLength: 150 }
+        business: { type: string, minLength: 2, maxLength: 150 }
+        username: { type: string, pattern: "^[a-zA-Z0-9_.-]{3,50}$" }
+        email: { type: string, format: email, maxLength: 254 }
+        phone: { type: string, minLength: 6, maxLength: 50 }
+        country: { type: string, minLength: 2, maxLength: 100 }
+        password: { type: string, minLength: 12, maxLength: 128 }
+    CredentialsInput:
+      type: object
+      additionalProperties: false
+      required: [identifier, password]
+      properties:
+        identifier: { type: string, minLength: 1, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+    PlanInput:
+      type: object
+      additionalProperties: false
+      required: [name, price, description, highlights, enabled]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        price: { type: number, minimum: 0, maximum: 9999999999.99 }
+        description: { type: string, maxLength: 2000 }
+        highlights: { type: string, maxLength: 2000 }
+        enabled: { type: boolean }
+    SubscriptionAction:
+      type: object
+      additionalProperties: false
+      required: [action]
+      properties:
+        action: { type: string, enum: [approve, activate, plan, extend, suspend, reactivate, revoke] }
+        planId: { type: string, format: uuid }
+        expiresAt: { type: string, format: date-time }
+    SubscriberUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        owner: { type: string, minLength: 2, maxLength: 150 }
+        business: { type: string, minLength: 2, maxLength: 150 }
+        username: { type: string, pattern: "^[a-zA-Z0-9_.-]{3,50}$" }
+        email: { type: string, format: email, maxLength: 254 }
+        phone: { type: string, minLength: 6, maxLength: 50 }
+        country: { type: string, minLength: 2, maxLength: 100 }
+        notes: { type: string, maxLength: 5000 }
+        expiresAt: { type: ["string", "null"], format: date-time }
+    Plan:
+      allOf:
+        - { $ref: "#/components/schemas/PlanInput" }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string }
+    Subscriber:
+      type: object
+      required: [id, business, owner, username, email, phone, country, plan, planId, status, registeredAt, expiresAt, lastLogin, domain, domainStatus, verification, notes, licenceKey, activatedAt, allowed, accessReason]
+      properties:
+        id: { type: string }
+        business: { type: string }
+        owner: { type: string }
+        username: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        country: { type: string }
+        plan: { type: string }
+        planId: { type: ["string", "null"] }
+        status: { type: string, enum: [PENDING, TRIAL, ACTIVE, SUSPENDED, EXPIRED, REVOKED] }
+        registeredAt: { type: string }
+        expiresAt: { type: ["string", "null"] }
+        lastLogin: { type: ["string", "null"] }
+        domain: { type: string }
+        domainStatus: { type: string }
+        verification: { type: string }
+        notes: { type: string }
+        licenceKey: { type: ["string", "null"] }
+        activatedAt: { type: ["string", "null"] }
+        allowed: { type: boolean }
+        accessReason: { type: string }
+    SessionState:
+      type: object
+      required: [role, subscriberId, origin, name]
+      properties:
+        role: { type: ["string", "null"], enum: [admin, subscriber, null] }
+        subscriberId: { type: ["string", "null"] }
+        origin: { type: ["string", "null"], enum: [login, register, null] }
+        name: { type: string }
+    LogEntry:
+      type: object
+      required: [id, at, actor, action, target]
+      properties:
+        id: { type: string }
+        at: { type: string }
+        actor: { type: string }
+        action: { type: string }
+        target: { type: string }
+    AdminAccount:
+      type: object
+      required: [id, name, email]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+    PlatformState:
+      type: object
+      required: [session, subscribers, plans, logs, admins]
+      properties:
+        session: { $ref: "#/components/schemas/SessionState" }
+        subscribers: { type: array, items: { $ref: "#/components/schemas/Subscriber" } }
+        plans: { type: array, items: { $ref: "#/components/schemas/Plan" } }
+        logs: { type: array, items: { $ref: "#/components/schemas/LogEntry" } }
+        admins: { type: array, items: { $ref: "#/components/schemas/AdminAccount" } }
+    PanelAccess:
+      type: object
+      required: [subscriberId, allowed]
+      properties:
+        subscriberId: { type: string }
+        allowed: { type: boolean }
+    Success:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
     HealthStatus:
       type: object
       properties:

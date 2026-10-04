@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import { ShoppingCart, Smartphone, Server, Monitor, Users, TrendingUp, Database, CircleDollarSign, UserPlus, Layers, Plug, RefreshCw, LayoutGrid, Tags, BarChart3, CalendarDays } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { SubscriberShell } from '@/components/bhru/shells';
-import { Card, CardHead, Metric, Badge, DemoTag } from '@/components/bhru/ui';
+import { Card, CardHead, Metric, Badge } from '@/components/bhru/ui';
 import { useStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -30,39 +30,39 @@ function Dash() {
     const days = 30; const out = [];
     for (let k = days - 1; k >= 0; k--) {
       const d = new Date(Date.now() - k * 86400000);
-      const w = Math.sin(k / 3.2) * 18;
-      out.push({ day: dm(d), IMEI: Math.round(95 + w + (k % 5) * 6), Server: Math.round(52 + w * 0.6 + (k % 4) * 5), Remote: Math.round(24 + w * 0.3 + (k % 3) * 4), Retail: Math.round(12 + (k % 6) * 2) });
+      out.push({ day: dm(d), IMEI: 0, Server: 0, Remote: 0, Retail: 0 });
     }
     return out;
   }, []);
-  const status = [{ n: 'Completed', v: 62, c: COLORS.c }, { n: 'Processing', v: 18, c: COLORS.p }, { n: 'Pending', v: 12, c: COLORS.w }, { n: 'Rejected', v: 8, c: COLORS.r }];
-  const top = [['IMEI Check', 450, 'bg-primary'], ['FRP Remove', 320, 'bg-violet'], ['iCloud Clean', 280, 'bg-warn'], ['Read Info', 190, 'bg-ok'], ['Network Unlock', 140, 'bg-danger']] as const;
-  const orders = [['#10058', 'client123', 'iPhone 14 GSX Check', '$4.00', 'Completed', 3], ['#10057', 'ahmed', 'Samsung FRP', '$2.50', 'Processing', 5], ['#10056', 'techdz', 'Xiaomi Account Remove', '$6.00', 'Pending', 9], ['#10055', 'mobilepro', 'Huawei ID Remove', '$4.50', 'Completed', 21], ['#10054', 'gsmstore', 'OPPO Network Unlock', '$3.00', 'Rejected', 33]] as const;
-  const custs = [['Karim Pro', 'VIP', '$250.00', 48, 120], ['Ahmed Pro', 'Reseller', '$120.00', 36, 400], ['Mobile Store', 'Basic', '$45.00', 12, 1500], ['Tech DZ', 'VIP', '$320.00', 75, 2900], ['GSM World', 'Basic', '$60.00', 18, 4300]] as const;
-  const sup = [['API-1 (Source A)', '$520.00', 'Online', 0, 0], ['API-2 (Official)', '$120.50', 'Online', 1, 0], ['API-3 (Backup)', '$0.00', 'Offline', 4, 3], ['API-4 (Server)', '$310.00', 'Online', 0, 1], ['API-5 (Remote)', '$75.20', 'Online', 0, 0]] as const;
-  const tx = [['#TRX458', 'Credit', 'Customer Payment', '+$100.00', 14], ['#TRX457', 'Debit', 'API Cost - API-2', '-$42.50', 36], ['#TRX456', 'Credit', 'Customer Payment', '+$50.00', 80], ['#TRX455', 'Debit', 'API Cost - API-1', '-$25.00', 125], ['#TRX454', 'Debit', 'Refund to Customer', '-$10.00', 190]] as const;
-  const logs = [[2, 'API-1', 'Order sent successfully', 'Success'], [14, 'API-1', 'Invalid IMEI format', 'Error'], [26, 'API-3', 'Connection timeout', 'Error'], [41, 'API-1', 'Order completed', 'Success'], [58, 'API-4', 'Insufficient balance', 'Error']] as const;
+  const status = [{ n: 'Completed', v: 0, c: COLORS.c }, { n: 'Processing', v: 0, c: COLORS.p }, { n: 'Pending', v: 0, c: COLORS.w }, { n: 'Rejected', v: 0, c: COLORS.r }];
+  const top: [string, number, string][] = [];
+  const orders: [string, string, string, string, string, number][] = [];
+  const custs: [string, string, string, number, number][] = [];
+  const sup: [string, string, string, number, number][] = [];
+  const tx: [string, string, string, string, number][] = [];
+  const logs: [number, string, string, string][] = [];
   const qa = [['Add Customer', UserPlus, 'bg-ok', 'add-customer'], ['Manage Services', Layers, 'bg-primary', 'manage-services'], ['Manage APIs', Plug, 'bg-warn', 'manage-apis'], ['Sync Services', RefreshCw, 'bg-violet', 'sync-services'], ['Categories', LayoutGrid, 'bg-primary/80', 'categories'], ['Pricing', Tags, 'bg-secondary', 'pricing'], ['Reports', BarChart3, 'bg-primary', 'reports-graphs']] as const;
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <div className="flex items-center gap-2"><h1 className="text-[20px] font-semibold">Dashboard</h1><DemoTag>Synthetic demo data</DemoTag></div>
+          <div className="flex items-center gap-2"><h1 className="text-[20px] font-semibold">Dashboard</h1></div>
           <p className="text-[12.5px] text-muted-foreground">Welcome back, {sub.business}. Here is your server overview.</p>
+          <p className="text-[11px] text-muted-foreground">Business modules are not enabled yet. No orders, services or financial data are available.</p>
         </div>
         <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 text-[12px]"><CalendarDays size={13} className="text-muted-foreground" />{month}</div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Total Orders" value="1,248" delta={12} icon={<ShoppingCart size={18} />} tone="bg-primary" />
-        <Metric label="IMEI Orders" value="856" delta={8} icon={<Smartphone size={18} />} tone="bg-ok" />
-        <Metric label="Server Orders" value="245" delta={6} icon={<Server size={18} />} tone="bg-violet" />
-        <Metric label="Remote Orders" value="96" delta={-4} icon={<Monitor size={18} />} tone="bg-warn" />
-        <Metric label="Total Customers" value="356" delta={15} icon={<Users size={18} />} tone="bg-primary" />
-        <Metric label="Revenue" value="$1,850" delta={8} icon={<TrendingUp size={18} />} tone="bg-ok" />
-        <Metric label="Supplier Cost" value="$1,230" delta={6} icon={<Database size={18} />} tone="bg-danger" />
-        <Metric label="Estimated Profit" value="$620" delta={11} icon={<CircleDollarSign size={18} />} tone="bg-ok" />
+        <Metric label="Total Orders" value="—" delta={0} icon={<ShoppingCart size={18} />} tone="bg-primary" />
+        <Metric label="IMEI Orders" value="—" delta={0} icon={<Smartphone size={18} />} tone="bg-ok" />
+        <Metric label="Server Orders" value="—" delta={0} icon={<Server size={18} />} tone="bg-violet" />
+        <Metric label="Remote Orders" value="—" delta={0} icon={<Monitor size={18} />} tone="bg-warn" />
+        <Metric label="Total Customers" value="—" delta={0} icon={<Users size={18} />} tone="bg-primary" />
+        <Metric label="Revenue" value="—" delta={0} icon={<TrendingUp size={18} />} tone="bg-ok" />
+        <Metric label="Supplier Cost" value="—" delta={0} icon={<Database size={18} />} tone="bg-danger" />
+        <Metric label="Estimated Profit" value="—" delta={0} icon={<CircleDollarSign size={18} />} tone="bg-ok" />
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1.7fr_1fr_1fr]">
@@ -90,7 +90,7 @@ function Dash() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart><Pie data={status} dataKey="v" innerRadius={48} outerRadius={70} paddingAngle={2} stroke="none" isAnimationActive={false}>{status.map((s) => <Cell key={s.n} fill={s.c} />)}</Pie></PieChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 grid place-items-center text-center"><div><div className="text-[18px] font-semibold leading-none">1,248</div><div className="text-[10px] text-muted-foreground">Orders</div></div></div>
+              <div className="absolute inset-0 grid place-items-center text-center"><div><div className="text-[18px] font-semibold leading-none">—</div><div className="text-[10px] text-muted-foreground">Orders</div></div></div>
             </div>
             <ul className="flex-1 space-y-2 text-[12px]">{status.map((s) => <li key={s.n} className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-sm" style={{ background: s.c }} />{s.n}<b className="ml-auto font-medium">{s.v}%</b></li>)}</ul>
           </div>
@@ -124,7 +124,7 @@ function Dash() {
           <CardHead title="Supplier / API Status" demo right={<span className="link">View all</span>} />
           <table className="tbl mt-1"><thead><tr><th>Supplier</th><th>Balance</th><th>Status</th><th>Errors</th><th>Stuck</th></tr></thead>
             <tbody>{sup.map((s) => <tr key={s[0]}><td>{s[0]}</td><td>{s[1]}</td><td><span className="flex items-center gap-1.5"><i className={cn('h-1.5 w-1.5 rounded-full', s[2] === 'Online' ? 'bg-ok' : 'bg-danger')} />{s[2]}</span></td><td className={s[3] ? 'text-warn' : 'text-muted-foreground'}>{s[3]}</td><td className={s[4] ? 'text-danger' : 'text-muted-foreground'}>{s[4]}</td></tr>)}</tbody></table>
-          <p className="px-3.5 pb-2 pt-1 text-[10.5px] text-muted-foreground">Simulated statuses. No supplier connection exists in this demo.</p>
+          <p className="px-3.5 pb-2 pt-1 text-[10.5px] text-muted-foreground">Supplier connections are planned for a later stage.</p>
         </Card>
       </div>
 

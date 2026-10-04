@@ -24,7 +24,7 @@ export default function AccountStatus({ sub, preview }: { sub: Subscriber; previ
   return (
     <div className="grid min-h-[100dvh] place-items-center p-4" data-testid="screen-account-status">
       <div className="w-full max-w-[460px]">
-        <div className="mb-4 flex items-center justify-between"><Logo sub="SaaS for Unlock Servers" size={34} /><Badge tone="violet">DEMO MODE</Badge></div>
+        <div className="mb-4 flex items-center justify-between"><Logo sub="SaaS for Unlock Servers" size={34} /></div>
         <Card className="p-5">
           <div className="flex items-start gap-3">
             <Icon size={26} className={c.tone} />
@@ -54,11 +54,11 @@ export default function AccountStatus({ sub, preview }: { sub: Subscriber; previ
             {preview ? (
               <Btn v="warn" className="flex-1" data-testid="button-return-admin" onClick={() => { returnToAdmin(); nav('/admin/subscribers'); }}><ArrowLeftRight size={14} /> Return to admin</Btn>
             ) : (
-              <Btn className="flex-1" data-testid="button-signout" onClick={() => { logout(); nav('/login'); }}><LogOut size={14} /> Sign out</Btn>
+              <Btn className="flex-1" data-testid="button-signout" onClick={async () => { try { await logout(); nav('/login'); } catch { alert('Sign out failed. Please retry.'); } }}><LogOut size={14} /> Sign out</Btn>
             )}
           </div>
         </Card>
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">Demo only: access is simulated from data stored in this browser.</p>
+        <p className="mt-3 text-center text-[11px] text-muted-foreground">Your subscription status is verified by BHRU. This page updates automatically.</p>
       </div>
     </div>
   );

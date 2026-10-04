@@ -6,8 +6,9 @@ import {
   Clock, LogOut, ShieldCheck, KeyRound, Zap, CreditCard, ListChecks, Eye, ArrowLeftRight, ChevronDown, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Logo, Btn, Badge, DemoTag } from './ui';
-import { accessCheck, loginAdminDemo, logout, previewAs, returnToAdmin, useStore, fmtDate, fmtTime } from '@/lib/store';
+import { Logo, Btn, Badge } from './ui';
+import { accessCheck, logout, previewAs, returnToAdmin, useStore, fmtDate, fmtTime, verifyPanelAccess, refreshState, errorMessage } from '@/lib/store';
+import { useToast } from '@/hooks/use-toast';
 import AccountStatus from '@/pages/account-status';
 
 export const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -82,10 +83,10 @@ function Sidebar({ groups, logoSub, open, onClose, footer }: { groups: NavGroup[
   );
 }
 
-function DemoBar({ children }: { children?: ReactNode }) {
+function AccessBar({ children }: { children?: ReactNode }) {
   return (
-    <div className="flex min-h-8 flex-wrap items-center justify-between gap-2 border-b border-violet/30 bg-violet/10 px-4 py-1 text-[11.5px]" data-testid="banner-demo-mode">
-      <span className="flex items-center gap-2"><Badge tone="violet">DEMO MODE</Badge><span className="text-muted-foreground">Simulated access with synthetic data stored in this browser. No real authentication.</span></span>
+    <div className="flex min-h-8 flex-wrap items-center justify-between gap-2 border-b border-violet/30 bg-violet/10 px-4 py-1 text-[11.5px]">
+      <span className="flex items-center gap-2"><Badge tone="violet">BHRU</Badge><span className="text-muted-foreground">Platform administration</span></span>
       <span className="flex items-center gap-2">{children}</span>
     </div>
   );
@@ -94,13 +95,14 @@ function DemoBar({ children }: { children?: ReactNode }) {
 function Header({ onMenu, name, role, chip, right }: { onMenu: () => void; name: string; role: string; chip?: ReactNode; right?: ReactNode }) {
   const now = useClock();
   const [, nav] = useLocation();
+  const { toast } = useToast();
   return (
     <header className="flex h-14 items-center gap-3 border-b bg-background px-4">
       <button className="btn h-8 w-8 px-0" onClick={onMenu} aria-label="Menu" data-testid="button-menu"><Menu size={16} /></button>
       {chip}
       <div className="relative hidden max-w-[360px] flex-1 md:block">
         <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
-        <input className="input pl-8" placeholder="Search (demo)" aria-label="Search" />
+        <input className="input pl-8" placeholder="Search (not enabled yet)" aria-label="Search" disabled />
         <span className="absolute right-2 top-2 rounded border px-1 text-[10px] text-muted-foreground">Ctrl + K</span>
       </div>
       <div className="ml-auto flex items-center gap-3">
@@ -113,7 +115,7 @@ function Header({ onMenu, name, role, chip, right }: { onMenu: () => void; name:
         <div className="flex items-center gap-2">
           <div className="grid h-8 w-8 place-items-center rounded-full bg-violet/70 text-[11px] font-bold">{initials(name)}</div>
           <div className="hidden text-[12px] leading-tight sm:block"><div className="font-semibold">{name}</div><div className="text-[10.5px] text-muted-foreground">{role}</div></div>
-          <button className="btn btn-sm" onClick={() => { logout(); nav('/login'); }} data-testid="button-signout"><LogOut size={13} /> <span className="hidden md:inline">Sign out</span></button>
+          <button className="btn btn-sm" onClick={async () => { try { await logout(); nav('/login'); } catch (e) { toast({ title: 'Sign out failed', description: errorMessage(e), variant: 'destructive' }); } }} data-testid="button-signout"><LogOut size={13} /> <span className="hidden md:inline">Sign out</span></button>
         </div>
       </div>
     </header>
@@ -125,19 +127,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [, nav] = useLocation();
   const [open, setOpen] = useState(false);
   const ok = st.session.role === 'admin';
-  useEffect(() => { if (!ok) nav('/login'); }, [ok, nav]);
+  useEffect(() => { if (!ok) nav(st.session.role ? '/' : '/login'); }, [ok, nav, st.session.role]);
   if (!ok) return null;
   const firstActive = st.subscribers.find((s) => s.status === 'ACTIVE');
   return (
     <div className="flex min-h-[100dvh] flex-col">
-      <DemoBar>
-        <span className="text-muted-foreground">Platform Admin demo</span>
-        <Btn sm v="primary" data-testid="button-preview-subscriber" onClick={() => { previewAs((st.subscribers.find((s) => s.id === 'sub-1') || firstActive || st.subscribers[0]).id); nav('/'); }}><Eye size={12} /> Preview as subscriber</Btn>
-      </DemoBar>
+      <AccessBar>
+        <Btn sm v="primary" disabled={!st.subscribers.length} data-testid="button-preview-subscriber" onClick={() => { const selected = firstActive || st.subscribers[0]; if (selected) { previewAs(selected.id); nav('/'); } }}><Eye size={12} /> Preview as subscriber</Btn>
+      </AccessBar>
       <div className="flex flex-1">
         <Sidebar groups={ADMIN_NAV} logoSub="SaaS Management" open={open} onClose={() => setOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <Header onMenu={() => setOpen((o) => !o)} name="BHRU Super Admin" role="Platform Admin (demo)" />
+          <Header onMenu={() => setOpen((o) => !o)} name={st.session.name} role="Platform Admin" />
           <main className="min-w-0 flex-1 p-4">{children}</main>
         </div>
       </div>
@@ -149,33 +150,42 @@ export function SubscriberShell({ children }: { children: ReactNode }) {
   const st = useStore();
   const [, nav] = useLocation();
   const [open, setOpen] = useState(false);
-  const { role, subscriberId, origin } = st.session;
+  const [checked, setChecked] = useState<string | null>(null);
+  const [gateError, setGateError] = useState('');
+  const { role, subscriberId } = st.session;
   const sub = st.subscribers.find((s) => s.id === subscriberId);
+  useEffect(() => {
+    let cancelled = false;
+    setChecked(null); setGateError('');
+    if (sub?.allowed) verifyPanelAccess(sub.id).then(() => {
+      if (!cancelled) setChecked(sub.id);
+    }).catch(error => { if (!cancelled) { setGateError(errorMessage(error)); void refreshState(); } });
+    return () => { cancelled = true; };
+  }, [sub?.id, sub?.allowed, sub?.status, sub?.expiresAt]);
   const redirect = !role ? '/login' : role === 'admin' && !subscriberId ? '/admin' : !sub ? '/login' : null;
   useEffect(() => { if (redirect) nav(redirect); }, [redirect, nav]);
   if (redirect || !sub) return null;
   const preview = role === 'admin';
   const access = accessCheck(sub);
   if (!access.allowed) return <AccountStatus sub={sub} preview={preview} />;
+  if (checked !== sub.id) return <div className="grid min-h-screen place-items-center text-muted-foreground">{gateError || 'Checking panel access...'}</div>;
   return (
     <div className="flex min-h-[100dvh] flex-col">
-      <DemoBar>
+      {preview && <AccessBar>
         {preview ? (
           <>
             <span className="text-muted-foreground">Previewing as subscriber</span>
             <Btn sm v="warn" data-testid="button-return-admin" onClick={() => { returnToAdmin(); nav('/admin/subscribers'); }}><ArrowLeftRight size={12} /> Return to admin</Btn>
           </>
-        ) : origin === 'demo' ? (
-          <Btn sm v="primary" data-testid="button-switch-admin" onClick={() => { loginAdminDemo(); nav('/admin'); }}><ShieldCheck size={12} /> Platform Admin</Btn>
         ) : null}
-      </DemoBar>
+      </AccessBar>}
       <div className="flex flex-1">
         <Sidebar groups={SUB_NAV} logoSub="Unlock Server Panel" open={open} onClose={() => setOpen(false)}
-          footer={<div className="m-2.5 flex items-center gap-2 rounded-md bg-sidebar-accent px-2.5 py-2 text-[12px]"><span className="h-2 w-2 rounded-full bg-ok" />Online Staff<span className="ml-auto rounded bg-ok px-1.5 text-[10px] font-bold text-white">2</span></div>} />
+          footer={<div className="m-2.5 flex items-center gap-2 rounded-md bg-sidebar-accent px-2.5 py-2 text-[12px]"><span className="h-2 w-2 rounded-full bg-muted" />Online Staff<span className="ml-auto rounded bg-muted px-1.5 text-[10px] font-bold">0</span></div>} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header onMenu={() => setOpen((o) => !o)} name={sub.owner} role="Owner"
             chip={<div className="hidden items-center gap-2 rounded-md border bg-card px-2.5 py-1 md:flex" data-testid="text-business-name"><span className="text-[10px] text-muted-foreground">Server</span><span className="text-[12.5px] font-semibold">{sub.business}</span><ChevronDown size={12} className="text-muted-foreground" /></div>}
-            right={<DemoTag>Demo</DemoTag>} />
+             />
           <main className="min-w-0 flex-1 p-4">{children}</main>
         </div>
       </div>

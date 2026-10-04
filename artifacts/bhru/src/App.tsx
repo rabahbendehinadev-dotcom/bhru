@@ -15,6 +15,7 @@ import Subscribers from '@/pages/admin/subscribers';
 import Plans from '@/pages/admin/plans';
 import { Licences, Activations } from '@/pages/admin/licences';
 import { AdminUsers, ActivityLogs, PlatformSettings } from '@/pages/admin/misc';
+import { useStore, refreshState } from '@/lib/store';
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,9 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 }
 
 function App() {
+  const state = useStore();
+  if (state.loading) return <div className="grid min-h-screen place-items-center text-muted-foreground">Loading account...</div>;
+  if (state.error) return <div className="grid min-h-screen place-items-center p-4"><div className="card max-w-md space-y-3 p-5"><h1>Connection unavailable</h1><p className="text-sm text-muted-foreground">{state.error}</p><button className="btn btn-primary" onClick={() => void refreshState()}>Retry</button></div></div>;
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

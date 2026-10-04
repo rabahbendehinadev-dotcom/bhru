@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Card, Btn, Field } from '@/components/bhru/ui';
 import { AuthFrame } from './login';
-import { COUNTRIES, registerSubscriber, usernameTaken } from '@/lib/store';
+import { COUNTRIES, registerSubscriber, errorMessage } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 export default function Register() {
@@ -11,27 +11,31 @@ export default function Register() {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({ owner: '', username: '', email: '', password: '', confirm: '', business: '', country: 'Algeria', phone: '' });
   const [errs, setErrs] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   const v1 = () => {
     const e: Record<string, string> = {};
     if (f.owner.trim().length < 2) e.owner = 'Enter your full name.';
     if (!/^[a-z0-9_.-]{3,}$/i.test(f.username)) e.username = 'At least 3 letters, numbers, dots or dashes.';
     if (!/^\S+@\S+\.\S+$/.test(f.email)) e.email = 'Enter a valid email address.';
-    if (usernameTaken(f.username, f.email) && !e.username && !e.email) e.username = 'Username or email already registered in this demo.';
-    if (f.password.length < 8) e.password = 'Minimum 8 characters.';
+    if (f.password.length < 12 || f.password.length > 128) e.password = 'Use 12 to 128 characters.';
     if (f.confirm !== f.password) e.confirm = 'Passwords do not match.';
     setErrs(e);
     return !Object.keys(e).length;
   };
-  const submit = () => {
+  const submit = async () => {
+    if (busy) return;
     const e: Record<string, string> = {};
     if (f.business.trim().length < 2) e.business = 'Enter your business or server name.';
     if (f.phone.trim().length < 6) e.phone = 'Enter a phone number.';
     setErrs(e);
     if (Object.keys(e).length) return;
-    // password is validated only; never stored
-    registerSubscriber({ owner: f.owner.trim(), business: f.business.trim(), username: f.username.trim(), email: f.email.trim(), phone: f.phone.trim(), country: f.country });
-    nav('/');
+    setBusy(true);
+    try {
+      await registerSubscriber({ owner: f.owner.trim(), business: f.business.trim(), username: f.username.trim(), email: f.email.trim(), phone: f.phone.trim(), country: f.country, password: f.password });
+      nav('/');
+    } catch (error) { setErrs({ business: errorMessage(error) }); }
+    finally { setBusy(false); }
   };
   const strength = Math.min(4, Math.floor(f.password.length / 3));
   return (
@@ -43,7 +47,7 @@ export default function Register() {
       </div>
       <Card className="p-5">
         <h1 className="text-[17px] font-semibold">{step === 1 ? 'Create your account' : 'Business information'}</h1>
-        <p className="mb-4 text-[12.5px] text-muted-foreground">{step === 1 ? 'Owner account for your BHRU server. Demo: the password is validated but never saved.' : 'Used for your server and panel. Your account starts as Pending until approved.'}</p>
+        <p className="mb-4 text-[12.5px] text-muted-foreground">{step === 1 ? 'Owner account for your BHRU server. Use a strong, unique password.' : 'Used for your server and panel. Your account starts as Pending until approved.'}</p>
         {step === 1 ? (
           <div className="space-y-3">
             <Field label="Full name" error={errs.owner}><input className="input" value={f.owner} onChange={set('owner')} data-testid="input-fullname" /></Field>
@@ -61,7 +65,7 @@ export default function Register() {
             <Field label="Business / server name" error={errs.business}><input className="input" value={f.business} onChange={set('business')} data-testid="input-business" /></Field>
             <Field label="Country"><select className="input" value={f.country} onChange={set('country')} data-testid="select-country">{COUNTRIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
             <Field label="Phone number" error={errs.phone}><input className="input" value={f.phone} onChange={set('phone')} placeholder="+213 555 000 000" data-testid="input-phone" /></Field>
-            <div className="grid grid-cols-2 gap-2"><Btn onClick={() => setStep(1)}><ArrowLeft size={14} /> Back</Btn><Btn v="brand" onClick={submit} data-testid="button-create-account">Create account</Btn></div>
+            <div className="grid grid-cols-2 gap-2"><Btn disabled={busy} onClick={() => setStep(1)}><ArrowLeft size={14} /> Back</Btn><Btn v="brand" disabled={busy} onClick={submit} data-testid="button-create-account">{busy ? 'Creating...' : 'Create account'}</Btn></div>
           </div>
         )}
         <p className="mt-4 text-center text-[12px] text-muted-foreground">Already have an account? <Link href="/login" className="font-medium text-brand">Sign in</Link></p>

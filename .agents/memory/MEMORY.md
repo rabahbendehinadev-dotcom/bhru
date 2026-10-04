@@ -1,2 +1,2 @@
-- [BHRU product boundaries](bhru-product-boundaries.md) — Separate platform subscribers from their customers; demo-only first phase; stop for review; licence blocks never delete data.
+- [BHRU product boundaries](bhru-product-boundaries.md) — Separate subscribers from their customers; real backend in Development only; stop for review; licence blocks never delete data.
 - [Docker sandbox verification](docker-sandbox-verification.md) — Builds and initial processes can work while exec-based health checks fail due to sandbox restrictions.

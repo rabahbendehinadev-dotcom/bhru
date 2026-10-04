@@ -1,4 +1,4 @@
-import { type ButtonHTMLAttributes, type ReactNode, useEffect } from 'react';
+import { type ButtonHTMLAttributes, type ReactNode, useEffect, useState } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Status, effectiveStatus, type Subscriber } from '@/lib/store';
@@ -29,7 +29,7 @@ export function CardHead({ title, right, demo }: { title: string; right?: ReactN
     <div className="card-h">
       <span className="flex items-center gap-2">
         {title}
-        {demo && <span className="rounded bg-violet/15 px-1.5 text-[9px] font-semibold uppercase text-violet">Demo</span>}
+        {demo && <span className="rounded bg-violet/15 px-1.5 text-[9px] font-semibold uppercase text-violet">Not enabled</span>}
       </span>
       {right}
     </div>
@@ -109,7 +109,8 @@ export function Modal({ open, onClose, title, children, footer, width = 440 }: {
   );
 }
 
-export function ConfirmDialog({ open, title, body, confirmLabel, danger, onConfirm, onClose }: { open: boolean; title: string; body: ReactNode; confirmLabel: string; danger?: boolean; onConfirm: () => void; onClose: () => void }) {
+export function ConfirmDialog({ open, title, body, confirmLabel, danger, onConfirm, onClose }: { open: boolean; title: string; body: ReactNode; confirmLabel: string; danger?: boolean; onConfirm: () => void | boolean | Promise<void | boolean>; onClose: () => void }) {
+  const [busy, setBusy] = useState(false);
   return (
     <Modal
       open={open}
@@ -118,7 +119,7 @@ export function ConfirmDialog({ open, title, body, confirmLabel, danger, onConfi
       footer={
         <>
           <Btn onClick={onClose} data-testid="button-confirm-cancel">Cancel</Btn>
-          <Btn v={danger ? 'danger' : 'primary'} onClick={() => { onConfirm(); onClose(); }} data-testid="button-confirm-ok">{confirmLabel}</Btn>
+          <Btn disabled={busy} v={danger ? 'danger' : 'primary'} onClick={async () => { setBusy(true); try { if (await onConfirm() !== false) onClose(); } finally { setBusy(false); } }} data-testid="button-confirm-ok">{busy ? 'Saving...' : confirmLabel}</Btn>
         </>
       }
     >
@@ -155,6 +156,6 @@ export function Pager({ page, pages, onPage }: { page: number; pages: number; on
   );
 }
 
-export function DemoTag({ children = 'Synthetic demo data' }: { children?: ReactNode }) {
+export function DeferredTag({ children = 'Not enabled' }: { children?: ReactNode }) {
   return <span className="rounded border border-violet/30 bg-violet/10 px-1.5 py-0.5 text-[10px] font-medium text-violet">{children}</span>;
 }

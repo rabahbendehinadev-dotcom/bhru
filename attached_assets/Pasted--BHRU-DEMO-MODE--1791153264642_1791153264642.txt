@@ -1,0 +1,367 @@
+الآن أريد إخراج BHRU من DEMO MODE وتحويل الأساس الحالي إلى نظام حقيقي قابل للتجربة.
+
+أنا صاحب المشروع وأنا الذي سأقوم بالاختبارات بنفسي.
+
+مهم جدًا:
+لا تغيّر التصميم الحالي.
+لا تعيد تصميم Dashboard.
+لا تغيّر Navigation.
+لا تضف Modules جديدة.
+لا تبدأ Services أو Orders أو Supplier APIs الآن.
+
+الهدف في هذه المرحلة فقط:
+تحويل النظام الحالي من بيانات وهمية داخل المتصفح إلى Backend حقيقي + PostgreSQL حقيقية.
+
+==================================================
+1. إزالة DEMO MODE
+==================================================
+
+أزل اعتماد التطبيق على:
+- localStorage كقاعدة بيانات
+- synthetic/demo accounts
+- simulated login
+- simulated subscribers
+- simulated licences
+
+أزل من الواجهة النصوص الخاصة بـ:
+- DEMO MODE
+- Demo simulation
+- Synthetic demo data
+- Demo access
+- demo accounts in this browser
+
+لكن حافظ على نفس التصميم الحالي قدر الإمكان.
+
+==================================================
+2. POSTGRESQL حقيقية
+==================================================
+
+أريد PostgreSQL حقيقية.
+
+مهم:
+قاعدة البيانات ستكون خارج Replit عند التشغيل على VPS/Dokploy.
+
+لذلك التطبيق يجب أن يعتمد على Environment Variable مثل:
+
+DATABASE_URL
+
+ولا تضع معلومات قاعدة البيانات داخل Source Code.
+
+أريد migrations واضحة وقابلة لإعادة التشغيل بأمان.
+
+==================================================
+3. البيانات الأساسية
+==================================================
+
+أنشئ Data Model حقيقي للمرحلة الحالية على الأقل لـ:
+
+Platform Admin Users
+Subscribers
+Subscriber Accounts / Owners
+Plans
+Subscriptions / Licences
+Activations
+Sessions
+Audit Logs
+
+صمم العلاقات بشكل نظيف وقابل للتوسع لاحقًا.
+
+==================================================
+4. التسجيل الحقيقي
+==================================================
+
+صفحة Create Account الحالية يجب أن تصبح حقيقية.
+
+عندما يسجل شخص:
+
+Full Name
+Business / Server Name
+Username
+Email
+Phone
+Country
+Password
+
+يجب أن يتم إنشاء الحساب فعليًا في PostgreSQL.
+
+الحالة الافتراضية:
+
+PENDING
+
+بعد التسجيل لا تعطه صلاحيات Platform Admin.
+
+ولا تجعله Active تلقائيًا إلا إذا كان ذلك مطلوبًا بوضوح في منطق الاختبار.
+
+المشترك الجديد يجب أن يظهر مباشرة عندي في:
+
+Platform Admin → Subscribers
+
+حتى لو فتحت الإدارة من جهاز أو Browser آخر.
+
+==================================================
+5. AUTHENTICATION حقيقية
+==================================================
+
+استبدل simulated login بـAuthentication حقيقية.
+
+أريد:
+
+- Password hashing آمن
+- Login حقيقي
+- Logout حقيقي
+- Server-side session
+- Protected routes
+- Authorization حقيقي
+
+لا تخزن Password كنص عادي.
+
+لا تعتمد على Client-side state لتحديد هوية المستخدم أو صلاحياته.
+
+المستخدم لا يستطيع تغيير دوره أو subscriber ID من Browser للوصول إلى حساب آخر.
+
+==================================================
+6. PLATFORM ADMIN
+==================================================
+
+Platform Admin يجب أن يكون Role حقيقي ومحمي من السيرفر.
+
+لا تجعل أول شخص يسجل يصبح Admin.
+
+أنشئ طريقة آمنة وواضحة لإنشاء أول Platform Admin أو ترقيته يدويًا.
+
+Platform Admin فقط يستطيع الوصول إلى:
+
+/platform-admin
+
+أو Route الإدارة الحالي إن كان مختلفًا.
+
+المشترك العادي يجب أن يحصل على 403/redirect إذا حاول الدخول إليه.
+
+==================================================
+7. SUBSCRIBERS
+==================================================
+
+صفحة Subscribers الحالية يجب أن تقرأ الآن من PostgreSQL.
+
+أي مستخدم جديد يسجل يجب أن يظهر فعليًا هنا.
+
+أريد أن أستطيع من Platform Admin:
+
+- View subscriber
+- Approve
+- Activate
+- Assign Plan
+- Set expiration date
+- Extend subscription
+- Suspend
+- Reactivate
+- Revoke
+
+وكل تعديل يُحفظ في قاعدة البيانات.
+
+==================================================
+8. LICENCE ENFORCEMENT
+==================================================
+
+حالات الاشتراك:
+
+PENDING
+TRIAL
+ACTIVE
+SUSPENDED
+EXPIRED
+REVOKED
+
+يجب أن يتم التحقق منها من Backend وليس فقط من Frontend.
+
+TRIAL وACTIVE:
+يسمح بالدخول حسب شروط الاشتراك.
+
+PENDING:
+لا يدخل إلى Server Panel الكامل.
+
+SUSPENDED:
+يمنع من العمل.
+
+EXPIRED:
+يمنع من العمل.
+
+REVOKED:
+يمنع من العمل.
+
+مهم جدًا:
+Suspend / Expire / Revoke لا يحذف حساب أو بيانات المشترك.
+
+Reactivate يعيد له الوصول.
+
+==================================================
+9. PLANS
+==================================================
+
+حوّل Plans الحالية إلى بيانات حقيقية في PostgreSQL.
+
+أريد Platform Admin يستطيع:
+
+- Create Plan
+- Edit Plan
+- Enable / Disable Plan
+
+ولا تجعل الأسعار أو الخصائص المهمة hardcoded داخل الواجهة.
+
+==================================================
+10. AUDIT LOG
+==================================================
+
+سجل العمليات الإدارية المهمة.
+
+مثال:
+
+Subscriber registered
+Subscriber activated
+Plan changed
+Subscription extended
+Subscriber suspended
+Subscriber reactivated
+Licence revoked
+
+سجل:
+
+- actor
+- action
+- target
+- timestamp
+
+حتى نستطيع لاحقًا معرفة من قام بأي تعديل.
+
+==================================================
+11. عزل المشتركين
+==================================================
+
+من الآن حضّر Backend بطريقة تمنع أي Subscriber من الوصول إلى بيانات Subscriber آخر.
+
+حتى لو عدّل URL أو Request يدويًا.
+
+كل Request متعلق ببيانات Business يجب أن يتحقق Server-side من هوية المشترك.
+
+في هذه المرحلة لا نحتاج بعد إلى بناء كل Business tables أو إنشاء database-per-subscriber.
+
+لا توسع Infrastructure من نفسك.
+
+فقط اجعل الأساس الحالي آمنًا وقابلًا للتوسع، وسنتخذ قرار البنية الخاصة ببيانات كل Server في مرحلة منفصلة.
+
+==================================================
+12. VPS / DOKPLOY
+==================================================
+
+حافظ على Dockerfile الحالي.
+
+التطبيق يجب أن يبقى قابلًا للنشر عن طريق:
+
+GitHub main
+→ Dokploy
+→ Docker
+→ VPS
+→ bhru.net
+
+لا تضع أي credentials داخل Git.
+
+استعمل Environment Variables.
+
+حدّث DOKPLOY_DEPLOYMENT.md بالمعلومات الجديدة المطلوبة، مثل:
+
+DATABASE_URL
+SESSION_SECRET
+وأي Environment Variables أخرى ضرورية فعليًا.
+
+لا تخترع Secrets غير مستخدمة.
+
+==================================================
+13. MIGRATIONS
+==================================================
+
+أريد طريقة واضحة لتطبيق Database migrations عند النشر.
+
+لا تجعل كل Restart يحذف أو يعيد إنشاء البيانات.
+
+ممنوع:
+
+DROP DATABASE
+reset database
+delete production data
+automatic destructive seed
+
+اجعل migrations آمنة.
+
+==================================================
+14. لا تنفذ الآن
+==================================================
+
+لا تنفذ:
+
+- DHRU legacy import
+- GAB database import
+- Supplier APIs
+- Service synchronization
+- IMEI Orders
+- Server Orders
+- Remote Orders
+- Payments
+- Customer balances
+- Accounting
+- Custom-domain automation
+- White label
+- Database per subscriber provisioning
+- Redis إلا إذا كان ضروريًا فعليًا وشرحت السبب قبل إضافته
+
+هذه مراحل لاحقة.
+
+==================================================
+15. الاختبارات المطلوبة
+==================================================
+
+قبل أن تقول إن المرحلة انتهت، اختبر على الأقل:
+
+1. Register new subscriber
+2. Subscriber محفوظ في PostgreSQL
+3. يظهر في Platform Admin
+4. Login بكلمة مرور صحيحة يعمل
+5. Password خاطئة تُرفض
+6. Subscriber لا يستطيع دخول Platform Admin
+7. Admin يستطيع Activate
+8. Active subscriber يستطيع دخول Panel
+9. Suspend يمنع الوصول
+10. Reactivate يعيد الوصول
+11. Expired يمنع الوصول
+12. Revoked يمنع الوصول
+13. Logout يبطل Session
+14. إعادة تشغيل التطبيق لا تحذف البيانات
+15. Subscriber A لا يستطيع الوصول إلى بيانات Subscriber B
+
+==================================================
+16. مهم قبل أي Deploy
+==================================================
+
+نفذ هذا أولًا في Development.
+
+لا تعمل Push إلى GitHub.
+لا تعمل Deploy على VPS.
+لا تعدل Production database.
+
+عندما تنتهي:
+
+أعطني تقريرًا واضحًا يحتوي:
+
+- ماذا تغير
+- Database schema
+- Authentication method
+- Session method
+- Password hashing method
+- Environment Variables المطلوبة
+- Migration command
+- Build command
+- Start command
+- نتائج الاختبارات
+
+ثم توقف.
+
+أنا سأراجع النسخة وأجربها بنفسي قبل أن نرفعها إلى bhru.net.

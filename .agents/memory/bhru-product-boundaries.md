@@ -1,6 +1,6 @@
 ---
 name: BHRU product boundaries
-description: User-directed scope, tenant distinction, demo-only first iteration, and subscription access rules.
+description: User-directed scope, tenant distinction, Development-only real backend phase, and subscription access rules.
 ---
 
 BHRU serves unlock and digital-services server owners. A BHRU Subscriber is the platform owner's customer; a Subscriber Customer belongs only to that subscriber's server. Never mix these two levels.
@@ -15,11 +15,17 @@ The user directs development screen by screen. Build only the requested iteratio
 
 **How to apply:** Do not proactively implement deferred sidebar modules, real supplier APIs, payments, production domains, deployment, imports, or infrastructure.
 
-The first iteration uses mock/synthetic data only and allows testing both Super Admin and Subscriber roles. Suspension, expiration, and revocation deny server-panel access but never delete subscriber data.
+The current phase replaces the original demo with real PostgreSQL-backed registration, password authentication, sessions, protected admin, plans, licences and audit logs in Development only. Preserve the existing design and navigation. No GitHub push, VPS deployment, Production database changes or deferred business modules.
 
-**Why:** The user needs to experience the activate → subscriber access → suspend → blocked access → reactivate sequence before later development.
+**Why:** The user explicitly requested leaving DEMO MODE and reviewing the real foundation personally before publishing to bhru.net.
 
-**How to apply:** Treat this as a demo, not production authentication; preserve subscriber business data across all licence state changes.
+**How to apply:** New registrations stay PENDING and never automatically become admin. Administrative promotion requires trusted manual action. Suspension, expiration and revocation deny panel access server-side without deleting accounts or data. Deliver a schema/auth/session/env/migration/build/start/test report, then stop.
+
+Disabling a plan prevents new assignments, but preserves existing licences on that plan. No synthetic plans or prices are seeded; the platform owner creates them.
+
+**Why:** Plan availability should not silently cancel customers' existing access; licence suspension and revocation are separate explicit actions.
+
+**How to apply:** Check plan availability during assignment, not when validating an already-issued licence. Keep future business-module limits and billing out of this phase.
 
 Subscriber dashboard primary actions manage the server's business, not purchase services from itself. Do not make Add Funds or New Order primary quick actions.
 

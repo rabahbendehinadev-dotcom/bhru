@@ -5,11 +5,12 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./security": "./src/security.ts"
   },
   "scripts": {
-    "push": "drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts"
+    "push": "node -e \"console.error('BHRU uses explicit SQL migrations. Run pnpm db:migrate after building; schema push is disabled to protect data.'); process.exit(1)\"",
+    "push-force": "pnpm run push"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",

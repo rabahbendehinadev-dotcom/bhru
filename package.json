@@ -5,6 +5,10 @@
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "build:bhru": "pnpm --filter @workspace/bhru run build && pnpm --filter @workspace/api-server run build && node scripts/prepare-production.mjs",
+    "start": "NODE_ENV=production node artifacts/api-server/dist/index.mjs",
+    "db:migrate": "pnpm --filter @workspace/api-server run db:migrate",
+    "admin:promote": "pnpm --filter @workspace/api-server run admin:promote",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },

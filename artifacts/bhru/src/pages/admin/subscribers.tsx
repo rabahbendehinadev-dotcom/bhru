@@ -7,7 +7,7 @@ import { COUNTRIES, STATUSES, daysLeft, effectiveStatus, fmtDate, fmtDateTime, u
 import { cn } from '@/lib/utils';
 
 export function StatCards() {
-  const { subscribers } = useStore();
+  const { subscribers, plans } = useStore();
   const c = (s: string) => subscribers.filter((x) => effectiveStatus(x) === s).length;
   const items = [
     ['Total', subscribers.length, Users, 'bg-primary/20 text-[hsl(217_95%_72%)]'], ['Active', c('ACTIVE'), UserCheck, 'bg-ok/20 text-[hsl(152_60%_58%)]'],
@@ -58,7 +58,7 @@ function Detail({ sub, onClose }: { sub: Subscriber; onClose: () => void }) {
 }
 
 function Page() {
-  const { subscribers } = useStore();
+  const { subscribers, plans } = useStore();
   const [q, setQ] = useState('');
   const [plan, setPlan] = useState('');
   const [status, setStatus] = useState('');
@@ -86,7 +86,7 @@ function Page() {
         <Card>
           <div className="flex flex-wrap items-center gap-2 border-b p-3">
             <div className="relative min-w-[200px] flex-1"><Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" /><input className="input pl-8" placeholder="Search business, owner, email, username..." value={q} onChange={(e) => reset(setQ)(e.target.value)} data-testid="input-search" /></div>
-            <select className="input w-auto" value={plan} onChange={(e) => reset(setPlan)(e.target.value)} data-testid="filter-plan"><option value="">All plans</option>{['Trial', 'Basic', 'Pro', 'Business'].map((p) => <option key={p}>{p}</option>)}</select>
+            <select className="input w-auto" value={plan} onChange={(e) => reset(setPlan)(e.target.value)} data-testid="filter-plan"><option value="">All plans</option>{plans.map((p) => <option key={p.id}>{p.name}</option>)}</select>
             <select className="input w-auto" value={status} onChange={(e) => reset(setStatus)(e.target.value)} data-testid="filter-status"><option value="">All statuses</option>{STATUSES.map((s) => <option key={s} value={s}>{s[0] + s.slice(1).toLowerCase()}</option>)}</select>
             <select className="input w-auto" value={country} onChange={(e) => reset(setCountry)(e.target.value)} data-testid="filter-country"><option value="">All countries</option>{COUNTRIES.map((c) => <option key={c}>{c}</option>)}</select>
           </div>
