@@ -37,7 +37,7 @@ router.post("/admin/plans", async (req, res) => {
   await transaction(async client => {
     await client.query(`INSERT INTO plans(id,name,price,description,highlights,enabled) VALUES($1,$2,$3,$4,$5,$6)`,
       [id, input.name.trim(), input.price, input.description, input.highlights, input.enabled]);
-    await audit(client, user.id, "Plan created", "plan", id, input.name.trim());
+    await audit(client, user, "Plan created", "plan", id, input.name.trim());
   });
   res.json(await platformState(user));
 });
@@ -49,7 +49,7 @@ router.patch("/admin/plans/:id", async (req, res) => {
     const updated = await client.query(`UPDATE plans SET name=$2,price=$3,description=$4,highlights=$5,enabled=$6 WHERE id=$1 RETURNING id`,
       [id, input.name.trim(), input.price, input.description, input.highlights, input.enabled]);
     if (!updated.rowCount) throw new HttpError(404, "Plan not found.");
-    await audit(client, user.id, input.enabled ? "Plan updated/enabled" : "Plan disabled", "plan", id, input.name.trim());
+    await audit(client, user, input.enabled ? "Plan updated/enabled" : "Plan disabled", "plan", id, input.name.trim());
   });
   res.json(await platformState(user));
 });
@@ -96,14 +96,14 @@ router.post("/admin/subscribers/:id/actions", async (req, res) => {
     if (["approve", "activate", "reactivate"].includes(input.action)) {
       key ||= "BHRU-" + randomBytes(24).toString("hex").toUpperCase();
       activatedAt ||= new Date();
-      await client.query(`INSERT INTO activations(id,subscription_id,actor_id,action) VALUES($1,$2,$3,$4)`,
+      await client.query(`INSERT INTO activations(id,subscription_id,admin_actor_id,action) VALUES($1,$2,$3,$4)`,
         [randomUUID(), old.id, user.id, input.action]);
     }
     await client.query(`UPDATE subscriptions SET status=$2,plan_id=$3,expires_at=$4,licence_key=$5,activated_at=$6,
       approved_at=$7,updated_at=now() WHERE subscriber_id=$1`, [id, status, planId, expiry, key, activatedAt, approvedAt]);
     const actions: Record<string, string> = { approve: "Subscriber approved as trial", activate: "Subscriber activated", plan: "Plan changed",
       extend: "Subscription extended", suspend: "Subscriber suspended", reactivate: "Subscriber reactivated", revoke: "Licence revoked" };
-    await audit(client, user.id, actions[input.action]!, "subscriber", id, old.business);
+    await audit(client, user, actions[input.action]!, "subscriber", id, old.business);
   });
   res.json(await platformState(user));
 });
@@ -123,7 +123,7 @@ router.patch("/admin/subscribers/:id", async (req, res) => {
     if (Object.hasOwn(input, "expiresAt")) {
       await client.query("UPDATE subscriptions SET expires_at=$2,updated_at=now() WHERE subscriber_id=$1", [id, input.expiresAt]);
     }
-    await audit(client, user.id, Object.hasOwn(input, "expiresAt") ? "Subscriber updated / expiration changed" : "Subscriber details updated",
+    await audit(client, user, Object.hasOwn(input, "expiresAt") ? "Subscriber updated / expiration changed" : "Subscriber details updated",
       "subscriber", id, next.business);
   });
   res.json(await platformState(user));

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import {
-  getPlatformState, registerAccount, loginAccount, loginAdministrator, logoutAccount, manageSubscription,
+  getPlatformState, resolveAuthEntry, registerAccount, loginAccount, loginAdministrator, logoutAccount, manageSubscription,
   editSubscriber, createPlan as createPlanRequest, editPlan, getSubscriberPanel,
   type PlatformState, type Subscriber, type Plan, type SessionState, type LogEntry,
   type AccountInput, type PlanInput, type SubscriberUpdate, type SubscriptionAction,
@@ -16,7 +16,9 @@ const empty: PlatformState = { subscribers: [], plans: [], logs: [], admins: [],
 let state: State = { ...empty, loading: true, error: '' };
 let epoch = 0, refreshing = false;
 const listeners = new Set<() => void>();
-const options = { credentials: 'same-origin' as const, headers: { 'X-BHRU-Request': '1' } };
+const options = (admin = state.session.role === 'admin') => ({
+  credentials: 'same-origin' as const, headers: { 'X-BHRU-Request': '1', 'X-BHRU-Auth': admin ? 'admin' : 'subscriber' },
+});
 const emit = () => listeners.forEach(l => l());
 export const errorMessage = (e: unknown) => e instanceof Error ? e.message : 'Request failed. Please try again.';
 function receive(data: PlatformState) {
@@ -29,7 +31,14 @@ export async function refreshState() {
   refreshing = true;
   const version = epoch;
   try {
-    const data = await getPlatformState(options);
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+    const entry = state.loading ? await resolveAuthEntry({ path: window.location.pathname.slice(base.length) || '/' }, options()).catch(error => {
+      // Let Router render the subscriber's explicit 403 page; this is not a
+      // lost database connection and must not block initial account loading.
+      if (error.status === 403) return null;
+      throw error;
+    }) : null;
+    const data = await getPlatformState(options(entry?.isAdminEntry || state.session.role === 'admin'));
     if (version === epoch) receive(data);
   } catch (error) {
     if (version !== epoch) return;
@@ -60,7 +69,7 @@ export const effectiveStatus = (sub: Subscriber): Status => sub.status;
 export const accessCheck = (sub: Subscriber | undefined) => ({
   allowed: !!sub?.allowed, status: sub?.status ?? null, reason: sub?.accessReason || 'Account not found.',
 });
-export const verifyPanelAccess = (id: string) => getSubscriberPanel(id, options);
+export const verifyPanelAccess = (id: string) => getSubscriberPanel(id, options());
 const p2 = (n: number) => String(n).padStart(2, '0');
 export const fmtDate = (v: string | null) => { if (!v) return '-'; const d = new Date(v); return `${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()}`; };
 export const fmtTime = (v: string | null) => { if (!v) return ''; const d = new Date(v); return `${p2(d.getHours())}:${p2(d.getMinutes())}`; };
@@ -71,16 +80,16 @@ export const daysLeft = (v: string | null) => v ? Math.ceil((+new Date(v) - Date
 
 export async function login(identifier: string, password: string, entryPath?: string) {
   await mutation(() => entryPath
-    ? loginAdministrator({ identifier, password, entryPath }, options)
-    : loginAccount({ identifier, password }, options));
+    ? loginAdministrator({ email: identifier, password, entryPath }, options(true))
+    : loginAccount({ identifier, password }, options(false)));
   return state.session.role;
 }
 export async function registerSubscriber(input: AccountInput) {
-  await mutation(() => registerAccount(input, options));
+  await mutation(() => registerAccount(input, options(false)));
 }
 export async function logout() {
   epoch++;
-  await logoutAccount(options);
+  await logoutAccount(options());
   state = { ...empty, loading: false, error: '' };
   emit();
 }
@@ -99,7 +108,7 @@ const planId = (name: string) => {
   if (!plan) throw new Error('Select an available plan.');
   return plan.id;
 };
-const action = (id: string, data: SubscriptionAction) => mutation(() => manageSubscription(id, data, options));
+const action = (id: string, data: SubscriptionAction) => mutation(() => manageSubscription(id, data, options()));
 export function approve(id: string) {
   const available = state.plans.filter(p => p.enabled);
   const plan = available.find(p => p.name.toLowerCase() === 'trial') || available[0];
@@ -112,6 +121,6 @@ export const extend = (id: string, expiresAt: string) => action(id, { action: 'e
 export const suspend = (id: string) => action(id, { action: 'suspend' });
 export const reactivate = (id: string) => action(id, { action: 'reactivate' });
 export const revoke = (id: string) => action(id, { action: 'revoke' });
-export const editSub = (id: string, input: SubscriberUpdate) => mutation(() => editSubscriber(id, input, options));
-export const updatePlan = (id: string, input: PlanInput) => mutation(() => editPlan(id, input, options));
-export const createPlan = (input: PlanInput) => mutation(() => createPlanRequest(input, options));
+export const editSub = (id: string, input: SubscriberUpdate) => mutation(() => editSubscriber(id, input, options()));
+export const updatePlan = (id: string, input: PlanInput) => mutation(() => editPlan(id, input, options()));
+export const createPlan = (input: PlanInput) => mutation(() => createPlanRequest(input, options()));

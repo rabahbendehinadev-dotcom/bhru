@@ -28,3 +28,17 @@ mtime_ms = 1791155852399
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/95d94e12-ef38-4ed3-b501-46970a2bb522/869e247e-9d76-4fb1-b5b2-eed3e276f722"
 storage_version_token = "1791156217510350"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "MIQEFlNQMOWSnl2igG33A"
+uri = "file://screenshots/bhru-platform-administration.jpg"
+type = "image"
+title = "BHRU Platform Administration"
+description = "صفحة دخول مدير المنصة المستقلة في Replit Preview، دون إنشاء حساب مشترك."
+logical_id = "0da79457-b31d-485c-b288-5ed26c0e4662"
+content_hash = "sha256:76d9fc2a564f177adb895108160f5d6ddeef5f26f0f5435f831e27fff50a6ca7"
+size = 17901
+mtime_ms = 1791159920291
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/0da79457-b31d-485c-b288-5ed26c0e4662/97cb02f0-2f0e-473e-bbf7-51a4f18878a8"
+storage_version_token = "1791160194460906"
+content_type = "image/jpeg"

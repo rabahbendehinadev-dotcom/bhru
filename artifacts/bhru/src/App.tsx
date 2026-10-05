@@ -31,7 +31,7 @@ function Router() {
   useEffect(() => {
     if (!needsContext) return;
     let cancelled = false;
-    resolveAuthEntry({ path: location }, { credentials: 'same-origin' }).then(data => {
+    resolveAuthEntry({ path: location }, { credentials: 'same-origin', headers: { 'X-BHRU-Auth': session.role === 'admin' ? 'admin' : 'subscriber' } }).then(data => {
       if (!cancelled) setEntry({ key, data });
     }).catch(error => {
       if (!cancelled) setEntry({ key, denied: error.status === 403, error: error.message });

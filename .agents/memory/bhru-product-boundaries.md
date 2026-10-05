@@ -19,7 +19,7 @@ The current phase replaces the original demo with real PostgreSQL-backed registr
 
 **Why:** The user explicitly requested leaving DEMO MODE and reviewing the real foundation personally before publishing to bhru.net.
 
-**How to apply:** New registrations stay PENDING and never automatically become admin. Administrative promotion requires trusted manual action. Suspension, expiration and revocation deny panel access server-side without deleting accounts or data. Deliver a schema/auth/session/env/migration/build/start/test report, then stop.
+**How to apply:** Subscriber registrations stay PENDING and never become admin. Administrator creation requires trusted bootstrap of an independent identity, never subscriber promotion. Administrators have no subscriber status, subscription, plan or licence. Suspension, expiration and revocation deny subscriber panel access server-side without deleting accounts or data. Deliver the requested report, then stop.
 
 Disabling a plan prevents new assignments, but preserves existing licences on that plan. No synthetic plans or prices are seeded; the platform owner creates them.
 

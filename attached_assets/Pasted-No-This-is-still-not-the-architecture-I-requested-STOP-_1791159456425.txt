@@ -1,0 +1,59 @@
+No. This is still not the architecture I requested.
+
+STOP requiring the Platform Admin to register through /register.
+
+The Platform Admin must NEVER be created as a subscriber first.
+
+I need a completely independent Platform Admin authentication system.
+
+Required behavior:
+
+1. /login and /register are ONLY for subscribers/customers.
+2. PLATFORM_ADMIN_PATH is ONLY for Platform Administration.
+3. When I open PLATFORM_ADMIN_PATH while logged out, show a dedicated:
+   "BHRU Platform Administration"
+   login form with:
+   - Admin email
+   - Admin password
+   - Sign in
+
+4. There must be NO Create Account button on the Admin login.
+5. There must be NO Pending status, subscription, plan or licence for an Admin.
+6. Platform Admin accounts must live only in platform_admin_users.
+7. Do NOT require an account to exist in account_users/subscribers before creating an Admin.
+8. Remove any hardcoded/default Admin email and password from the application code.
+
+Create a dedicated bootstrap CLI for the FIRST Platform Admin.
+
+I want a command similar to:
+
+node admin-promote.mjs --email "admin@domain.com" --password "SECURE_PASSWORD"
+
+Despite the old filename, this command must CREATE a Platform Admin directly in platform_admin_users if one does not exist.
+
+It must:
+- securely hash the password using the same secure password hashing mechanism used by the application;
+- create only a Platform Admin record;
+- NOT create a subscriber;
+- NOT create a subscription;
+- NOT create a licence;
+- NOT create Pending approval;
+- refuse unsafe/empty passwords;
+- never print the plaintext password.
+
+After creating the admin, I must be able to open PLATFORM_ADMIN_PATH and log in directly using that Admin email/password.
+
+Subscriber authentication and Admin authentication must use separate authorization/session checks.
+
+IMPORTANT:
+Do not tell me to register the Admin through /register again.
+Do not use the bhruadmin subscriber I created as the solution.
+Do not deploy anything.
+Implement this in Replit Preview first.
+
+When finished, show me:
+1. A screenshot/preview of the dedicated Admin login page.
+2. The exact CLI command syntax for creating the first Admin.
+3. Which database table stores the Admin.
+4. Which files you changed.
+5. Any migration added.

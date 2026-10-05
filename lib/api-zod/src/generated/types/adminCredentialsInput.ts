@@ -7,11 +7,8 @@
  */
 
 export interface AdminCredentialsInput {
-  /**
-     * @minLength 1
-     * @maxLength 254
-     */
-  identifier: string;
+  /** @maxLength 254 */
+  email: string;
   /**
      * @minLength 1
      * @maxLength 128

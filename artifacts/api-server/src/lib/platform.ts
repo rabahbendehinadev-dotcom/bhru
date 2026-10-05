@@ -36,10 +36,11 @@ export async function platformState(user: AuthUser) {
   const plans = await pool.query(`SELECT id,name,price::float8 AS price,description,highlights,enabled FROM plans
     ${user.admin ? "" : "WHERE enabled OR id IN(SELECT plan_id FROM subscriptions WHERE subscriber_id=$1)"} ORDER BY price,name`,
     user.admin ? [] : [user.subscriber_id]);
-  const logs = user.admin ? (await pool.query(`SELECT l.id,l.created_at AS at,u.full_name AS actor,l.action,l.target_label AS target
-    FROM audit_logs l JOIN account_users u ON u.id=l.actor_id ORDER BY l.created_at DESC LIMIT 500`)).rows : [];
-  const admins = user.admin ? (await pool.query(`SELECT u.id,u.full_name AS name,u.email FROM platform_admin_users a
-    JOIN account_users u ON u.id=a.user_id WHERE a.enabled ORDER BY a.created_at`)).rows : [];
+  const logs = user.admin ? (await pool.query(`SELECT l.id,l.created_at AS at,COALESCE(a.full_name,u.full_name) AS actor,l.action,l.target_label AS target
+    FROM audit_logs l LEFT JOIN account_users u ON u.id=l.actor_id
+    LEFT JOIN platform_admin_users a ON a.id=l.admin_actor_id ORDER BY l.created_at DESC LIMIT 500`)).rows : [];
+  const admins = user.admin ? (await pool.query(`SELECT id,full_name AS name,email FROM platform_admin_users
+    WHERE enabled AND email IS NOT NULL ORDER BY created_at`)).rows : [];
   return GetPlatformStateResponse.parse({
     session: { role: user.admin ? "admin" : "subscriber", subscriberId: user.admin ? null : user.subscriber_id, origin: "login", name: user.full_name },
     subscribers: subscribers.rows.map(serializeSubscriber), plans: plans.rows,
@@ -58,7 +59,9 @@ export async function transaction<T>(work: (client: PoolClient) => Promise<T>): 
     throw error;
   } finally { client.release(); }
 }
-export async function audit(client: PoolClient, actor: string, action: string, targetType: string, id: string, label: string) {
-  await client.query(`INSERT INTO audit_logs(id,actor_id,action,target_type,target_id,target_label)
-    VALUES($1,$2,$3,$4,$5,$6)`, [randomUUID(), actor, action, targetType, id, label]);
+export async function audit(client: PoolClient, actor: AuthUser | string, action: string, targetType: string, id: string, label: string) {
+  const subscriberActor = typeof actor === "string" ? actor : actor.admin ? null : actor.id;
+  const adminActor = typeof actor !== "string" && actor.admin ? actor.id : null;
+  await client.query(`INSERT INTO audit_logs(id,actor_id,admin_actor_id,action,target_type,target_id,target_label)
+    VALUES($1,$2,$3,$4,$5,$6,$7)`, [randomUUID(), subscriberActor, adminActor, action, targetType, id, label]);
 }

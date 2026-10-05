@@ -11,7 +11,7 @@ A PostgreSQL-backed SaaS foundation for unlock server owners, with separate plat
 - `pnpm build:bhru` — build the frontend plus API and prepare the unified production runtime
 - `pnpm db:migrate` — explicitly apply reviewed SQL migrations after building
 - `pnpm start` — unified Express/static production-mode runtime
-- `pnpm admin:promote -- --email EXISTING_EMAIL` — promote an existing registered account from a trusted CLI; sign in again afterward
+- `node artifacts/api-server/dist/admin-promote.mjs --email ADMIN_EMAIL --password-stdin` — bootstrap the first independent administrator; never register/promote a subscriber. Docker runtime: `node /app/admin-promote.mjs ...`.
 - Required env: `DATABASE_URL`, `SESSION_SECRET` (at least 32 random characters), `PLATFORM_ADMIN_PATH` (unique URL segment, no slash); runtime `PORT`, production `NODE_ENV=production`
 
 ## Stack
@@ -33,7 +33,7 @@ A PostgreSQL-backed SaaS foundation for unlock server owners, with separate plat
 ## Architecture decisions
 
 - SQL migrations are manual, transactional, non-destructive and rerunnable. Never use Drizzle schema push against this schema; those scripts are intentionally disabled.
-- PostgreSQL-backed opaque sessions, signed HttpOnly cookies, password scrypt, and server-derived admin membership.
+- Independent administrator identities in `platform_admin_users`, sessions in `platform_admin_sessions` and domain-separated `bhru_admin_session` cookies; subscribers remain in `account_users`/`sessions` with `bhru_session`. Passwords use scrypt. No admin registration, subscriber status, plan or licence.
 - Docker runs the API and static frontend in one non-root Node process; no automatic startup migrations.
 
 ## Product

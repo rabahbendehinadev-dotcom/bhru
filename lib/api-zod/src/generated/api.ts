@@ -22,7 +22,7 @@ export const ResolveAuthEntryResponse = zod.object({
 })
 
 
-export const loginAdministratorBodyIdentifierMax = 254;
+export const loginAdministratorBodyEmailMax = 254;
 
 export const loginAdministratorBodyPasswordMax = 128;
 
@@ -31,7 +31,7 @@ export const loginAdministratorBodyEntryPathMax = 97;
 
 
 export const LoginAdministratorBody = zod.object({
-  "identifier": zod.string().min(1).max(loginAdministratorBodyIdentifierMax),
+  "email": zod.string().email().max(loginAdministratorBodyEmailMax),
   "password": zod.string().min(1).max(loginAdministratorBodyPasswordMax),
   "entryPath": zod.string().max(loginAdministratorBodyEntryPathMax)
 })

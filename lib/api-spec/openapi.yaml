@@ -195,9 +195,10 @@ components:
         isAdminEntry: { type: boolean }
     AdminCredentialsInput:
       type: object
-      required: [identifier, password, entryPath]
+      additionalProperties: false
+      required: [email, password, entryPath]
       properties:
-        identifier: { type: string, minLength: 1, maxLength: 254 }
+        email: { type: string, format: email, maxLength: 254 }
         password: { type: string, minLength: 1, maxLength: 128 }
         entryPath: { type: string, maxLength: 97 }
     AccountInput:

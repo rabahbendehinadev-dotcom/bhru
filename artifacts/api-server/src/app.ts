@@ -57,11 +57,11 @@ if (process.env.NODE_ENV === "production") {
     if (!isAdminEntry(req.path)) { next(); return; }
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Robots-Tag", "noindex, nofollow");
-    if (!req.auth) {
+    if (!req.adminAuth) {
+      if (req.subscriberAuth) { res.status(403).send("Access denied."); return; }
       if (req.path !== adminPath) { res.redirect(adminPath); return; }
       next(); return; // Independent administrator login, never public /login.
     }
-    if (!req.auth.admin) { res.status(403).send("Access denied."); return; }
     next();
   });
   app.use(express.static(root, { index: false, dotfiles: "deny", setHeaders(res, file) {

@@ -36,12 +36,12 @@ export default function Login({ adminPath }: { adminPath?: string }) {
   return (
     <AuthFrame minimal>
       <Card className="p-5">
-        <div className="mb-4 flex items-center gap-2"><h1 className="text-[17px] font-semibold">{adminPath ? 'Platform Admin sign in' : 'Sign in to BHRU'}</h1></div>
+        <div className="mb-4 flex items-center gap-2"><h1 className="text-[17px] font-semibold">{adminPath ? 'BHRU Platform Administration' : 'Sign in to BHRU'}</h1></div>
         <form onSubmit={submit} className="space-y-3">
-          <Field label="Email or username" error={err}>
-            <div className="relative"><User size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" /><input className="input pl-8" value={q} onChange={(e) => { setQ(e.target.value); setErr(''); }} placeholder="Email or username" required autoComplete="username" data-testid="input-login-id" /></div>
+          <Field label={adminPath ? 'Admin email' : 'Email or username'} error={err}>
+            <div className="relative"><User size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" /><input className="input pl-8" type={adminPath ? 'email' : 'text'} value={q} onChange={(e) => { setQ(e.target.value); setErr(''); }} placeholder={adminPath ? 'Admin email' : 'Email or username'} required autoComplete="username" data-testid="input-login-id" /></div>
           </Field>
-          <Field label="Password">
+          <Field label={adminPath ? 'Admin password' : 'Password'}>
             <div className="relative"><Lock size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
               <input className="input px-8" type={show ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)} required autoComplete="current-password" data-testid="input-login-password" />
               <button type="button" onClick={() => setShow(!show)} className="absolute right-2.5 top-2.5 text-muted-foreground" aria-label="Toggle password">{show ? <EyeOff size={14} /> : <Eye size={14} />}</button></div>
