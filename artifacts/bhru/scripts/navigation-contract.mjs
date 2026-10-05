@@ -1,7 +1,10 @@
 // Independent acceptance contract from the approved subscriber structure brief.
 // This is test data, not a second application navigation definition.
 export const contract = [
-  { label: 'Dashboard', items: ['Dashboard', 'System Summary', 'Credit Summary', 'Pending Collections', 'Income Summary', 'Login Log', 'Customer Reviews', 'Users Waiting For Activation', 'Find Discounted Users', 'IP Search', 'Price Check', 'API Status'] },
+  { label: 'Dashboard', columns: [
+    ['Dashboard', 'Verify Payment', 'Credit Summary', 'Pending Collections', 'Close Account Request', 'System Summary', 'New Blog Comments', 'Customer Review', 'New Testimonial', 'Login Log', 'Users Waiting For Activation', 'ID (KYC) For Verification'],
+    ['Reseller Store', 'Income Summary', 'Find Discounted Users By Service', 'Quick Checkout Pending Orders', 'Quick Checkout Pending Refund', 'User Withdrawal Request', 'IMEI Direct Order', 'IP Search', 'Price Check', 'APi Status'],
+  ] },
   { label: 'Clients/Suppliers', groups: {
     Clients: ['View / Search Clients', '+ Add New Client', '+ Add Bulk Client', 'Client Group', 'Update Multiple Account', 'Block Multiple Account', 'Checkout as Guest'],
     Suppliers: ['View / Search Suppliers', '+ Add New Supplier'],

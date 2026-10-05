@@ -36,12 +36,12 @@ for (const expected of contract) {
   assert(actual.icon, `${expected.label} needs its existing BHRU navigation icon`);
 }
 const destinations = NAV.flatMap(entry => [entry, ...entry.items.filter(item => item.href !== '/')]);
-assert.equal(NAV.reduce((sum, entry) => sum + entry.items.length, 0), 138);
-assert.equal(destinations.length, 152);
+assert.equal(NAV.reduce((sum, entry) => sum + entry.items.length, 0), 148);
+assert.equal(destinations.length, 162);
 assert.equal(new Set(destinations.map(item => item.href)).size, destinations.length, 'Every destination needs a unique route');
 assert.equal(new Set(destinations.map(item => item.id)).size, destinations.length, 'Every destination needs a unique identity');
 assert.equal(SEARCH_INDEX.length, destinations.length, 'Search must include all main and child destinations');
-assert.equal(ROUTES.size, 151);
+assert.equal(ROUTES.size, 161);
 for (const destination of destinations) {
   assert(destination.href === '/' || /^\/m\/[a-z0-9-]+$/.test(destination.href));
   assert(SEARCH_INDEX.some(item => item.href === destination.href && item.label === destination.label));
@@ -60,7 +60,7 @@ assert.notEqual(serverRepeats[0].href, serverRepeats[1].href);
 assert.notEqual(serverRepeats[0].context, serverRepeats[1].context);
 assert.equal(resolveSlug('a-page-that-was-never-defined'), undefined);
 assert(entryIsActive(NAV.find(entry => entry.id === 'settings'), '/settings'), 'Existing Settings URL remains recognized');
-console.log('PASS: 15 main entries, 138 child entries, 152 unique destinations; exact labels/groups/columns, breadcrumbs, search and route lookup.');
+console.log('PASS: Dashboard matches all 22 entries in exact 12/10 columns; 15 main entries, 148 child entries, 162 unique destinations; exact labels/groups/columns, breadcrumbs, search and route lookup.');
 
 // Optional read-only smoke check: every canonical destination must survive a direct HTTP request.
 if (process.argv.includes('--http')) {
@@ -72,5 +72,5 @@ if (process.argv.includes('--http')) {
       assert((await response.text()).includes('id="root"'), `SPA shell at ${item.href}`);
     }));
   }
-  console.log('PASS: all 152 destinations return the application shell on direct HTTP GET (no login or data writes).');
+  console.log('PASS: all 162 destinations return the application shell on direct HTTP GET (no login or data writes).');
 }

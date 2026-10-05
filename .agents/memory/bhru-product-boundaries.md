@@ -33,8 +33,8 @@ Subscriber dashboard primary actions manage the server's business, not purchase 
 
 **How to apply:** Use the requested management actions, and keep unbuilt modules clearly marked as deferred.
 
-Keep subscriber main navigation as one continuous menu in the user's approved order. Do not regroup it into category sections or invent additional pages.
+Keep subscriber main navigation as one continuous menu in the user's approved order. Do not regroup it into category sections or invent additional pages. Preserve approved child labels exactly, including capitalization and legacy terminology.
 
-**Why:** The user explicitly rejected category-based regrouping in the subscriber structure brief.
+**Why:** The user explicitly rejected category-based regrouping and repeated that Dashboard entries must not be renamed, reordered, merged or removed.
 
 **How to apply:** Preserve the approved navigation when implementing individual modules; ask before changing its scope or organization.

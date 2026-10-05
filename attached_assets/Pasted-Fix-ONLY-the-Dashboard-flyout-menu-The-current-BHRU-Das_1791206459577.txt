@@ -1,0 +1,100 @@
+Fix ONLY the Dashboard flyout menu.
+
+The current BHRU Dashboard flyout is incomplete compared with the DHRU reference I provided.
+
+DO NOT modify:
+- sidebar main menu
+- any other flyout
+- routes outside Dashboard
+- UI theme
+- authentication
+- Platform Admin
+- database
+- backend
+- deployment configuration
+
+I want the Dashboard flyout to contain the COMPLETE structure below.
+
+==================================================
+DASHBOARD — EXACT STRUCTURE
+==================================================
+
+Desktop: use TWO columns exactly like the reference.
+
+LEFT COLUMN — exact order:
+
+1. Dashboard
+2. Verify Payment
+3. Credit Summary
+4. Pending Collections
+5. Close Account Request
+6. System Summary
+7. New Blog Comments
+8. Customer Review
+9. New Testimonial
+10. Login Log
+11. Users Waiting For Activation
+12. ID (KYC) For Verification
+
+RIGHT COLUMN — exact order:
+
+1. Reseller Store
+2. Income Summary
+3. Find Discounted Users By Service
+4. Quick Checkout Pending Orders
+5. Quick Checkout Pending Refund
+6. User Withdrawal Request
+7. IMEI Direct Order
+8. IP Search
+9. Price Check
+10. APi Status
+
+IMPORTANT:
+Preserve the labels exactly as written above for now.
+
+Do NOT remove an item because its functionality does not exist yet.
+
+Every item must exist in the navigation architecture.
+
+If a module is not implemented yet, clicking it should open its own BHRU placeholder page instead of removing it from the menu.
+
+The placeholder can show:
+- Page title
+- Breadcrumb
+- "Module not enabled yet"
+
+==================================================
+DESKTOP
+==================================================
+
+The Dashboard flyout must visually use two columns.
+
+Do not display all Dashboard children as one long narrow column.
+
+It should remain compact and similar in information density to the reference, while keeping the current BHRU design language.
+
+==================================================
+MOBILE
+==================================================
+
+Keep ALL the same Dashboard entries on mobile.
+
+Do not remove items for mobile.
+
+Since mobile has no hover:
+- open Dashboard children by tap
+- use a clean touch-friendly layout
+- allow vertical scrolling
+- do not create horizontal overflow
+
+==================================================
+IMPORTANT
+==================================================
+
+Do not invent, rename, reorder, merge, or remove Dashboard entries.
+
+After changing it, compare the resulting Dashboard menu item-by-item against the structure above and confirm that no item is missing.
+
+Do not push to GitHub.
+Do not deploy.
+I will verify it in Replit Preview first.

@@ -12,9 +12,13 @@ const grp = (group: string, items: (string | NavChildDef)[]): NavChildDef[] =>
 
 export const NAV_DATA: NavEntryDef[] = [
   { id: 'dashboard', label: 'Dashboard', href: '/', children: [
-    { label: 'Dashboard', href: '/' },
-    ...['System Summary', 'Credit Summary', 'Pending Collections', 'Income Summary', 'Login Log', 'Customer Reviews',
-      'Users Waiting For Activation', 'Find Discounted Users', 'IP Search', 'Price Check', 'API Status'].map((label) => ({ label })),
+    { label: 'Dashboard', href: '/', column: 1 },
+    ...col(1, ['Verify Payment', 'Credit Summary', 'Pending Collections', 'Close Account Request', 'System Summary', 'New Blog Comments']),
+    { label: 'Customer Review', slug: 'customer-reviews', column: 1 },
+    ...col(1, ['New Testimonial', 'Login Log', 'Users Waiting For Activation', 'ID (KYC) For Verification']),
+    ...col(2, ['Reseller Store', 'Income Summary']),
+    { label: 'Find Discounted Users By Service', slug: 'find-discounted-users', column: 2 },
+    ...col(2, ['Quick Checkout Pending Orders', 'Quick Checkout Pending Refund', 'User Withdrawal Request', 'IMEI Direct Order', 'IP Search', 'Price Check', 'APi Status']),
   ] },
   { id: 'clients-suppliers', label: 'Clients/Suppliers', children: [
     ...grp('Clients', ['View / Search Clients', '+ Add New Client', '+ Add Bulk Client', 'Client Group', 'Update Multiple Account', 'Block Multiple Account', 'Checkout as Guest']),
