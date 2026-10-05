@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { SubscriberShell } from '@/components/bhru/shells';
 import { Card, CardHead, Btn, Field, Badge } from '@/components/bhru/ui';
 import { useStore, fmtDate } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
@@ -37,4 +36,4 @@ function Inner() {
     </div>
   );
 }
-export default function Settings() { return <SubscriberShell><Inner /></SubscriberShell>; }
+export default function Settings() { return <Inner />; }

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2, ChevronDown, FileText, Monitor, Server, Smartphone, Info } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { SubscriberShell } from '@/components/bhru/shells';
 import { PageHeader } from '@/components/subscriber/PageHeader';
 
 const RANGES = [3, 6, 12, 24] as const;
@@ -111,4 +110,4 @@ function Dash() {
     </div>
   );
 }
-export default function Dashboard() { return <SubscriberShell><Dash /></SubscriberShell>; }
+export default function Dashboard() { return <Dash />; }

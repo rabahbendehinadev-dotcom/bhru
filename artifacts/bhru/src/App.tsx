@@ -7,9 +7,8 @@ import NotFound from '@/pages/not-found';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import Login from '@/pages/login';
 import Register from '@/pages/register';
-import Dashboard from '@/pages/dashboard';
-import Module from '@/pages/module';
-import Settings from '@/pages/settings';
+import SubscriberWorkspace from '@/components/subscriber/workspace/SubscriberWorkspace';
+import { isWorkspacePath } from '@/components/subscriber/workspace/workspace-pages';
 import Overview from '@/pages/admin/overview';
 import Subscribers from '@/pages/admin/subscribers';
 import Plans from '@/pages/admin/plans';
@@ -50,19 +49,19 @@ function Router() {
   return (
     <AdminEntryContext.Provider value={adminPath}>
     <RoutedErrorBoundary>
+      {isWorkspacePath(location) ? (
+        <SubscriberWorkspace key={session.subscriberId ?? 'anonymous'} />
+      ) : (
       <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/dashboard" component={Dashboard} />
         <Route path="/login"><Login /></Route>
         <Route path="/register" component={Register} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/m/:slug" component={Module} />
         {adminPath && session.role === 'admin' && [
           ['', Overview], ['/subscribers', Subscribers], ['/plans', Plans], ['/licences', Licences],
           ['/activations', Activations], ['/users', AdminUsers], ['/logs', ActivityLogs], ['/settings', PlatformSettings],
         ].map(([suffix, Component]) => <Route key={suffix as string} path={`${adminPath}${suffix}`} component={Component as typeof Overview} />)}
         <Route component={NotFound} />
       </Switch>
+      )}
     </RoutedErrorBoundary>
     </AdminEntryContext.Provider>
   );

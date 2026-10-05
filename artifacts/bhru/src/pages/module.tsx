@@ -1,7 +1,6 @@
-import { Fragment, useEffect } from 'react';
+import { Fragment } from 'react';
 import { useRoute, Link } from 'wouter';
 import { ChevronRight, Construction, SearchX } from 'lucide-react';
-import { SubscriberShell } from '@/components/bhru/shells';
 import { Btn } from '@/components/bhru/ui';
 import { resolveSlug } from '@/components/subscriber/nav-catalog';
 import { OnlineStaffList, useOnlineStaff } from '@/components/subscriber/OnlineStaff';
@@ -24,24 +23,19 @@ export default function Module() {
   const [, p] = useRoute('/m/:slug');
   const r = p ? resolveSlug(p.slug) : undefined;
   const staff = useOnlineStaff();
-  useEffect(() => {
-    const previous = document.title;
-    document.title = `${r?.title ?? 'Page not found'} | BHRU`;
-    return () => { document.title = previous; };
-  }, [r?.title]);
 
   if (!r) return (
-    <SubscriberShell>
+    <>
       <div className="sl-surface mx-auto mt-10 max-w-md" data-testid="module-not-found">
         <EmptyState icon={<SearchX size={18} />} title="Page not found" description="This address does not match any page in the BHRU menu."
           action={<Link href="/"><Btn data-testid="button-back-dashboard">Back to dashboard</Btn></Link>} />
       </div>
-    </SubscriberShell>
+    </>
   );
 
   const isStaff = r.entry.id === 'online-staff' && !r.child;
   return (
-    <SubscriberShell>
+    <>
       <Crumbs items={r.crumbs} />
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
@@ -57,6 +51,6 @@ export default function Module() {
           <EmptyState icon={<Construction size={18} />} title="Module not enabled yet" description="This page is part of the BHRU structure and will be connected in a later stage." />
         )}
       </div>
-    </SubscriberShell>
+    </>
   );
 }

@@ -1,0 +1,191 @@
+I want to add an important navigation behavior to the BHRU Subscriber Panel based on the DHRU reference images I provided.
+
+IMPORTANT:
+This is NOT about implementing the business modules yet.
+We are still building the navigation/page architecture first.
+
+Do NOT modify Platform Admin.
+Do NOT modify authentication.
+Do NOT modify database/API/subscription/licence logic.
+Do NOT deploy or push.
+Work in Replit Preview only.
+
+==================================================
+FEATURE: INTERNAL WORKSPACE TABS
+==================================================
+
+DHRU has an important behavior that I want BHRU to reproduce in a modern way.
+
+When the subscriber opens pages/modules from the sidebar or flyout menus, do NOT replace the entire application shell.
+
+The BHRU shell must remain persistent:
+- sidebar stays mounted
+- top header stays mounted
+- theme stays unchanged
+- user session stays unchanged
+
+Pages must open inside the main workspace.
+
+At the top of the workspace, create a TAB BAR for opened pages.
+
+Example:
+
+[ Digital Inventory × ] [ Top User by Income × ] [ Today's 10 Service by Revenue × ]
+
+If I open another page, add another tab.
+
+==================================================
+TAB BEHAVIOR
+==================================================
+
+1. Clicking a menu/flyout item:
+   - opens that page in the main content area
+   - creates a tab for it
+
+2. If that page is already open:
+   - DO NOT create a duplicate tab
+   - simply activate its existing tab
+
+3. Clicking another tab:
+   - instantly switches to that opened page
+
+4. Each closable tab has an × button.
+
+5. Clicking ×:
+   - closes only that tab
+   - does not log out
+   - does not reload the entire BHRU application
+
+6. If the active tab is closed:
+   - activate the nearest previously opened tab.
+
+7. Keep a permanent Dashboard/Home workspace available so the user cannot end up with an empty application.
+
+==================================================
+IMPORTANT: PRESERVE PAGE STATE
+==================================================
+
+Switching between tabs should preserve page state whenever practical.
+
+Example:
+
+I open:
+Digital Inventory
+
+Then:
+Top User by Income
+
+Then:
+Today's 10 Service by Revenue
+
+When I return to Digital Inventory, it should still be the same opened workspace rather than behaving like a completely new application load.
+
+Later this is important for:
+- forms
+- filters
+- searches
+- order pages
+- customers
+- reports
+
+Do not intentionally reset page state just because the user changes tabs.
+
+==================================================
+DESKTOP DESIGN
+==================================================
+
+Place the workspace tabs horizontally below/inside the top application header, similar to the concept visible in the DHRU reference.
+
+But use the current modern BHRU visual design.
+
+Requirements:
+- compact tabs
+- active tab clearly visible
+- inactive tabs visually quieter
+- close × button
+- horizontal scrolling when many tabs are open
+- no page-level horizontal overflow
+- sidebar remains independent
+
+Do NOT copy the old DHRU visual styling exactly.
+Only reproduce the navigation behavior.
+
+==================================================
+MOBILE / PWA
+==================================================
+
+This system must also work professionally on iPhone and Android.
+
+Do NOT attempt to show 6 tiny desktop tabs across the phone screen.
+
+On mobile:
+
+Show the current page clearly and provide a compact opened-pages control.
+
+The user must be able to:
+- see current page
+- view opened pages
+- switch page
+- close opened page
+- return to Dashboard
+
+It must be touch-friendly.
+
+No hover dependency on mobile.
+
+This architecture must also be compatible with the future BHRU PWA.
+
+==================================================
+ROUTING
+==================================================
+
+Each real workspace page must still have its own route/URL.
+
+Browser refresh on an opened page must NOT produce 404.
+
+Browser Back/Forward navigation must behave correctly.
+
+Do not build the tab system as fake visual buttons disconnected from routing.
+
+==================================================
+CURRENT PHASE
+==================================================
+
+We are currently defining the BHRU page/navigation architecture.
+
+Therefore:
+
+Use the existing implemented pages where available.
+
+For menu pages that are not implemented yet, opening them may display the existing BHRU placeholder:
+
+Page title
+Breadcrumb
+"Module not enabled yet"
+
+BUT the page must still open as a proper workspace tab.
+
+Do not invent business functionality yet.
+
+==================================================
+CRITICAL
+==================================================
+
+Do not rename or reorganize the sidebar/menu structure while implementing this.
+
+The menu/page list is being defined separately from the DHRU references.
+
+This task is ONLY to create the reusable workspace-tab navigation architecture that all those pages will use later.
+
+Test in Replit Preview with at least:
+
+Dashboard
+Digital Inventory
+Top User by Income
+Today's 10 Service by Revenue
+
+Demonstrate that I can open them, switch between them, close them, and reopen them without duplicate tabs.
+
+Do not push.
+Do not deploy.
+Wait for my visual verification.
