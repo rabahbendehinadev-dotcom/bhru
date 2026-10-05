@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import {
   LayoutDashboard, ShoppingCart, Smartphone, Server, Monitor, ShoppingBag, History, Users, UsersRound, Plug, Boxes, Tags, BadgeDollarSign,
   Layers, Package, BarChart3, Receipt, TrendingUp, LifeBuoy, Megaphone, UserCog, Settings, ScrollText, HelpCircle, Menu, Search, Bell,
-  Clock, LogOut, ShieldCheck, KeyRound, Zap, CreditCard, ListChecks, Eye, ArrowLeftRight, ChevronDown, X,
+  Clock, LogOut, ShieldCheck, KeyRound, Zap, CreditCard, ListChecks, Eye, ArrowLeftRight, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo, Btn, Badge } from './ui';
@@ -11,6 +11,9 @@ import { accessCheck, logout, previewAs, returnToAdmin, useStore, fmtDate, fmtTi
 import { useToast } from '@/hooks/use-toast';
 import AccountStatus from '@/pages/account-status';
 import { useAdminPath } from '@/lib/admin-entry';
+import { SubscriberLayout } from '@/components/subscriber/SubscriberLayout';
+import { SubscriberThemeProvider } from '@/components/subscriber/theme';
+import { CATALOG_LABELS } from '@/components/subscriber/nav-catalog';
 
 export const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
@@ -37,6 +40,10 @@ const SUB_NAV: NavGroup[] = [
   { title: 'COMMUNICATION', items: [mod('Support Tickets', <LifeBuoy size={i} />), mod('Announcements', <Megaphone size={i} />)] },
   { title: 'SYSTEM', items: [mod('Users / Staff', <UserCog size={i} />), { label: 'Settings', href: '/settings', icon: <Settings size={i} /> }, mod('Logs / Activity', <ScrollText size={i} />), mod('Help', <HelpCircle size={i} />)] },
 ];
+// Deferred labels from the subscriber catalog (old names/slugs kept)
+Object.entries(CATALOG_LABELS).forEach(([k, v]) => { if (!(k in MODULES)) MODULES[k] = v; });
+/** Legacy subscriber nav, retained only so existing module slugs stay registered. */
+export const LEGACY_SUB_NAV = SUB_NAV;
 // extra quick-action modules
 ['Add Customer', 'Manage Services', 'Manage APIs', 'Sync Services'].forEach((l) => { MODULES[l.toLowerCase().replace(/[^a-z0-9]+/g, '-')] = l; });
 
@@ -154,7 +161,6 @@ export function SubscriberShell({ children }: { children: ReactNode }) {
   const adminPath = useAdminPath();
   const st = useStore();
   const [, nav] = useLocation();
-  const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState<string | null>(null);
   const [gateError, setGateError] = useState('');
   const { role, subscriberId } = st.session;
@@ -173,27 +179,20 @@ export function SubscriberShell({ children }: { children: ReactNode }) {
   const preview = role === 'admin';
   const access = accessCheck(sub);
   if (!access.allowed) return <AccountStatus sub={sub} preview={preview} />;
-  if (checked !== sub.id) return <div className="grid min-h-screen place-items-center text-muted-foreground">{gateError || 'Checking panel access...'}</div>;
+  if (checked !== sub.id) return (
+    <SubscriberThemeProvider subscriberId={sub.id}>
+      {theme => <div className="sub-layout grid min-h-screen place-items-center text-muted-foreground" data-theme={theme}>{gateError || 'Checking panel access...'}</div>}
+    </SubscriberThemeProvider>
+  );
   return (
-    <div className="flex min-h-[100dvh] flex-col">
-      {preview && <AccessBar>
-        {preview ? (
-          <>
-            <span className="text-muted-foreground">Previewing as subscriber</span>
-            <Btn sm v="warn" data-testid="button-return-admin" onClick={() => { returnToAdmin(); nav(`${adminPath}/subscribers`); }}><ArrowLeftRight size={12} /> Return to admin</Btn>
-          </>
-        ) : null}
-      </AccessBar>}
-      <div className="flex flex-1">
-        <Sidebar groups={SUB_NAV} logoSub="Unlock Server Panel" open={open} onClose={() => setOpen(false)}
-          footer={<div className="m-2.5 flex items-center gap-2 rounded-md bg-sidebar-accent px-2.5 py-2 text-[12px]"><span className="h-2 w-2 rounded-full bg-muted" />Online Staff<span className="ml-auto rounded bg-muted px-1.5 text-[10px] font-bold">0</span></div>} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Header onMenu={() => setOpen((o) => !o)} name={sub.owner} role="Owner"
-            chip={<div className="hidden items-center gap-2 rounded-md border bg-card px-2.5 py-1 md:flex" data-testid="text-business-name"><span className="text-[10px] text-muted-foreground">Server</span><span className="text-[12.5px] font-semibold">{sub.business}</span><ChevronDown size={12} className="text-muted-foreground" /></div>}
-             />
-          <main className="min-w-0 flex-1 p-4">{children}</main>
-        </div>
-      </div>
-    </div>
+    <SubscriberLayout subscriberId={sub.id} business={sub.business} owner={sub.owner}
+      banner={preview ? (
+        <AccessBar>
+          <span className="text-muted-foreground">Previewing as subscriber</span>
+          <Btn sm v="warn" data-testid="button-return-admin" onClick={() => { returnToAdmin(); nav(`${adminPath}/subscribers`); }}><ArrowLeftRight size={12} /> Return to admin</Btn>
+        </AccessBar>
+      ) : undefined}>
+      {children}
+    </SubscriberLayout>
   );
 }

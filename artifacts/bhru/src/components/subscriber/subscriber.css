@@ -1,0 +1,56 @@
+@layer theme, base, components, utilities;
+
+.sub-layout{
+  --background:220 33% 97%;--surface:40 20% 99.5%;--surface-secondary:220 30% 95%;
+  --text-primary:222 40% 11%;--text-secondary:220 12% 40%;--border:220 18% 89%;
+  --brand:24 96% 50%;--hover:24 100% 95%;--shadow:222 40% 20%;--shadow-alpha:.10;
+  --c-imei:24 96% 53%;--c-server:214 88% 54%;--c-remote:160 84% 39%;--c-retail:272 80% 52%;
+  --foreground:var(--text-primary);--card:var(--surface);--card-foreground:var(--text-primary);--card-border:var(--border);
+  --popover:var(--surface);--popover-foreground:var(--text-primary);
+  --muted:var(--surface-secondary);--muted-foreground:var(--text-secondary);
+  --secondary:var(--surface-secondary);--secondary-foreground:var(--text-primary);
+  --accent:24 80% 95%;--accent-foreground:var(--text-primary);
+  --input:220 16% 82%;--primary:var(--brand);--ring:var(--brand);
+  --sidebar:var(--surface);--sidebar-foreground:var(--text-primary);--sidebar-accent:var(--hover);
+  --ok:152 60% 36%;--warn:30 95% 48%;--danger:0 72% 50%;--violet:272 70% 52%;
+  color-scheme:light;background:hsl(var(--background));color:hsl(var(--text-primary));
+}
+.sub-layout[data-theme=dark]{
+  --background:222 40% 6%;--surface:222 36% 9%;--surface-secondary:222 30% 12%;
+  --text-primary:214 30% 92%;--text-secondary:218 15% 64%;--border:222 24% 18%;
+  --brand:24 96% 53%;--hover:24 45% 14%;--shadow:0 0% 0%;--shadow-alpha:.5;
+  --c-imei:24 96% 56%;--c-server:214 92% 60%;--c-remote:156 70% 45%;--c-retail:276 85% 62%;
+  --accent:222 30% 16%;--input:222 24% 24%;
+  --ok:152 60% 46%;--warn:30 95% 58%;--danger:0 72% 58%;--violet:272 80% 68%;
+  color-scheme:dark;
+}
+.sub-layout .btn-primary:hover{background:hsl(var(--brand)/.88)}
+.sub-layout .btn-ok{color:hsl(var(--ok))}.sub-layout .btn-warn{color:hsl(var(--warn))}.sub-layout .btn-danger{color:hsl(var(--danger))}
+.sub-layout .bg-warn\/10,.sub-layout .badge{color:hsl(var(--text-primary))}
+/* Component defaults must not override Tailwind's responsive visibility utilities. */
+@layer components {
+.sl-surface{background:hsl(var(--surface));border:1px solid hsl(var(--border));border-radius:12px;box-shadow:0 1px 2px hsl(var(--shadow)/calc(var(--shadow-alpha)*.5)),0 6px 18px -8px hsl(var(--shadow)/var(--shadow-alpha))}
+.sl-topbar{background:hsl(var(--surface));border-bottom:1px solid hsl(var(--border))}
+.sl-aside{background:hsl(var(--surface));border-right:1px solid hsl(var(--border))}
+.sl-icon-btn{display:inline-grid;place-items:center;flex-shrink:0;height:32px;width:32px;border-radius:8px;border:1px solid hsl(var(--border));background:hsl(var(--surface));color:hsl(var(--text-secondary));cursor:pointer;transition:background .12s,color .12s}
+.sl-icon-btn:hover{background:hsl(var(--hover));color:hsl(var(--brand))}
+.sl-icon-btn:focus-visible,.sl-nav:focus-visible,.sl-fly-item:focus-visible{outline:2px solid hsl(var(--brand));outline-offset:1px}
+.sl-nav{display:flex;width:100%;align-items:center;gap:10px;border-radius:8px;padding:7px 10px;font-size:12.5px;font-weight:500;color:hsl(var(--text-primary));transition:background .12s,color .12s}
+.sl-nav:hover,.sl-nav[data-open=true]{background:hsl(var(--hover));color:hsl(var(--brand))}
+.sl-nav[data-active=true]{background:hsl(var(--brand));color:#fff}
+.sl-nav .sl-chev{margin-left:auto;opacity:.55}
+.sl-fly{background:hsl(var(--surface));border:1px solid hsl(var(--border));border-radius:12px;box-shadow:0 18px 40px -12px hsl(var(--shadow)/calc(var(--shadow-alpha)*2.2));color:hsl(var(--text-primary))}
+.sl-fly-item{display:flex;gap:10px;align-items:flex-start;border-radius:8px;padding:7px 8px;break-inside:avoid;transition:background .12s}
+.sl-fly-item:hover{background:hsl(var(--hover))}
+.sl-fly-item:hover .sl-fly-label{color:hsl(var(--brand))}
+.sl-fly-tile{display:grid;place-items:center;height:28px;width:28px;flex:none;border-radius:7px;background:hsl(var(--brand)/.14);color:hsl(var(--brand))}
+.sl-pop{background:hsl(var(--surface));border:1px solid hsl(var(--border));border-radius:10px;box-shadow:0 14px 34px -10px hsl(var(--shadow)/calc(var(--shadow-alpha)*2))}
+.sl-field{display:flex;align-items:center;gap:8px;height:34px;border-radius:8px;border:1px solid hsl(var(--border));background:hsl(var(--surface-secondary));color:hsl(var(--text-secondary));font-size:12.5px;padding:0 10px}
+.sl-kbd{border:1px solid hsl(var(--border));border-radius:5px;padding:0 5px;font-size:10px;background:hsl(var(--surface));color:hsl(var(--text-secondary))}
+.sl-chart .recharts-cartesian-grid line{stroke:hsl(var(--border))}
+.sl-chart .recharts-text{fill:hsl(var(--text-secondary));font-size:11px}
+.sl-chart .recharts-cartesian-axis-line{stroke:hsl(var(--border))}
+.sl-skel{background:linear-gradient(90deg,hsl(var(--surface-secondary)),hsl(var(--border)),hsl(var(--surface-secondary)));background-size:200% 100%;animation:sl-sk 1.2s linear infinite;border-radius:6px}
+@keyframes sl-sk{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.sl-skel{animation:none}}
+}

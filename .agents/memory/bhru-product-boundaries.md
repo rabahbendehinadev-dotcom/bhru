@@ -15,7 +15,7 @@ The user directs development screen by screen. Build only the requested iteratio
 
 **How to apply:** Do not proactively implement deferred sidebar modules, real supplier APIs, payments, production domains, deployment, imports, or infrastructure.
 
-The current phase replaces the original demo with real PostgreSQL-backed registration, password authentication, sessions, protected admin, plans, licences and audit logs in Development only. Preserve the existing design and navigation. No GitHub push, VPS deployment, Production database changes or deferred business modules.
+Keep the real account/licence foundation in Development Preview for review. Do not push to GitHub, deploy to VPS, change Production databases or build deferred business modules without explicit approval. Subscriber presentation follows the final light-first visual standard; Platform Admin and authentication appearance remain unchanged.
 
 **Why:** The user explicitly requested leaving DEMO MODE and reviewing the real foundation personally before publishing to bhru.net.
 

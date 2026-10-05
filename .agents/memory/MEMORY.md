@@ -1,3 +1,5 @@
 - [BHRU product boundaries](bhru-product-boundaries.md) — Separate subscribers from their customers; real backend in Development only; stop for review; licence blocks never delete data.
 - [BHRU authentication boundaries](bhru-authentication-boundaries.md) — Separate subscriber/admin entry, no user-facing admin links; retain existing designs and require server authorization.
 - [Docker sandbox verification](docker-sandbox-verification.md) — Builds and initial processes can work while exec-based health checks fail due to sandbox restrictions.
+- [Subscriber visual standard](subscriber-visual-standard.md) — Final light-first reference supersedes dark-only requests; future subscriber pages share both themes, without affecting Platform Admin.
+- [Frontend cascade](frontend-cascade.md) — Declare Tailwind layer order before component-imported styles; otherwise responsive visibility or component padding can silently break.
