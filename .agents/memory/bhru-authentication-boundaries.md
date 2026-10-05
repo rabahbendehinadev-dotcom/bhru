@@ -8,3 +8,9 @@ Keep subscriber sign-in and administrator sign-in separate. Do not expose the ad
 **Why:** The owner explicitly corrected subscriber-backed promotion and requires completely independent administrator authentication while retaining the existing dark design.
 
 **How to apply:** Keep the private runtime administrator entry and account-creation-free administrative login. Knowing the path never grants access. Bootstrap the first independent administrator through a trusted CLI only; do not copy existing subscriber credentials or rely on subscriber sessions. Never tell the owner to register an administrator through /register.
+
+Do not rename or regenerate the established private administrator URL during subscriber/theme work or a routing repair. Do not add an alternate administrator route. Public `/login` remains the subscriber entry.
+
+**Why:** The owner explicitly requires the existing private entry to survive subscriber refactors, without recreating the administrator account.
+
+**How to apply:** Preserve the owner's established URL in runtime configuration. Correct configuration mismatches rather than introducing a new route or changing account/session logic.
