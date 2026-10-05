@@ -1,0 +1,292 @@
+أريد إعادة تصميم واجهة Dashboard الخاصة بالمشترك في BHRU لتطابق الصورة المرجعية التي سأرفقها مع هذا الطلب.
+
+مهم جداً:
+- التعديل الآن يخص واجهة المشترك Subscriber Dashboard فقط.
+- لا تعدّل Platform Admin.
+- لا تغيّر نظام Login أو Authentication أو Database أو API الحالي.
+- لا تحذف أي Backend functionality موجودة.
+- حافظ على هوية BHRU والـ Logo الحالي.
+- استخدم الصورة المرفقة كمرجع أساسي ودقيق للتصميم.
+
+========================================
+1. GENERAL LAYOUT
+========================================
+
+أريد Dashboard احترافي Dark Mode ومضغوط مثل الصورة المرجعية:
+
+- Sidebar ثابت على اليسار.
+- Top bar أفقي في الأعلى.
+- مساحة المحتوى الرئيسية كبيرة ونظيفة.
+- لا أريد Dashboard مليء بعشرات الـ cards.
+- التصميم يجب أن يكون Desktop-first وResponsive.
+- حافظ على أسلوب BHRU الحديث:
+  - خلفية dark navy/black.
+  - borders خفيفة.
+  - Orange كلون BHRU الأساسي.
+  - Blue / Green / Purple فقط لتمييز أنواع الطلبات.
+  - typography واضحة ومضغوطة.
+
+========================================
+2. LEFT SIDEBAR
+========================================
+
+رتّب القائمة الرئيسية بهذا الشكل:
+
+Dashboard
+
+Clients / Suppliers
+
+Products / Services
+
+Orders
+
+Retail Orders (Cart)
+
+Inventory
+
+CMS / Blog
+
+Reports / Graphs
+
+Utilities
+
+Support
+
+Online Users / Live Chat
+
+Settings
+
+Store
+
+Help
+
+Online Staff
+
+لا تعرض عشرات الصفحات مباشرة داخل Sidebar.
+
+كل عنصر رئيسي يمكن أن يحتوي صفحات فرعية تظهر في Flyout Menu عند Hover.
+
+========================================
+3. HOVER / FLYOUT MENUS
+========================================
+
+هذا جزء أساسي جداً من التصميم.
+
+عندما يضع المستخدم الفأرة فوق عنصر مثل:
+
+Dashboard
+
+يجب أن تفتح قائمة Flyout كبيرة بجانب Sidebar مثل الصورة المرجعية.
+
+لا يحتاج المستخدم إلى الضغط.
+
+القائمة تبقى مفتوحة عندما تنتقل الفأرة من Sidebar إلى Flyout حتى يستطيع الضغط على أحد الخيارات.
+
+استخدم transition بسيط وسريع بدون animation مبالغ فيها.
+
+مثال Dashboard Flyout:
+
+LEFT COLUMN:
+- Dashboard
+- System Summary
+- Credit Summary
+- Pending Collections
+- Income Summary
+- Login Log
+- Customer Reviews
+- Users Waiting For Activation
+
+RIGHT COLUMN:
+- Reseller Store
+- Find Discounted Users
+- Quick Checkout (Pending Orders)
+- Quick Checkout (Pending Refund)
+- User Withdrawal Requests
+- IMEI Direct Order
+- IP Search
+- Price Check
+- API Status
+
+كل عنصر:
+- Icon صغير
+- Title
+- Optional short subtitle
+
+Flyout:
+- Dark background
+- subtle shadow
+- thin BHRU orange border/accent
+- two-column layout
+- يظهر بجانب Sidebar وليس فوقه.
+
+طبّق نفس architecture لاحقاً على بقية الأقسام:
+Clients / Suppliers
+Products / Services
+Orders
+Inventory
+Reports
+Utilities
+Support
+Settings
+etc.
+
+========================================
+4. TOP BAR
+========================================
+
+Top bar مثل الصورة المرجعية ويحتوي:
+
+- Sidebar collapse button
+- Server selector
+- اسم السيرفر الحالي
+- Search field
+- Keyboard shortcut Ctrl + K
+- Server Time
+- Notification icon
+- User avatar
+- Owner/User name
+- Role
+- Sign out
+
+حافظ على التصميم compact.
+
+========================================
+5. DASHBOARD CONTENT
+========================================
+
+أريد الصفحة الرئيسية بسيطة جداً.
+
+في الأعلى:
+
+Title:
+Last 12 Months Orders
+
+مع Date Range selector في اليمين.
+
+بعدها Chart كبير بعرض الصفحة تقريباً.
+
+الـ Chart يعرض:
+
+- IMEI Orders
+- Server Orders
+- Remote Orders
+- Retail Orders
+
+استخدم smooth line/area chart.
+
+ألوان مختلفة وواضحة:
+IMEI = Orange
+Server = Blue
+Remote = Green
+Retail = Purple
+
+مع legend واضح.
+
+البيانات يجب أن تأتي من البيانات الحقيقية الموجودة في النظام عندما تصبح متوفرة، ولا تضع أرقام Demo ثابتة داخل production logic.
+
+========================================
+6. ORDER SUMMARY
+========================================
+
+أسفل الرسم مباشرة أريد فقط 3 Cards رئيسية:
+
+IMEI ORDER
+SERVER ORDER
+REMOTE ORDER
+
+كل Card تعرض:
+
+New
+Accepted
+
+مثال:
+
+IMEI ORDER
+0 New | 6 Accepted
+
+SERVER ORDER
+0 New | 0 Accepted
+
+REMOTE ORDER
+0 New | 0 Accepted
+
+اجعلها كبيرة وواضحة مثل الصورة المرجعية.
+
+لا أريد الـ Dashboard الحالية التي تحتوي:
+Total Orders
+Total Customers
+Revenue
+Supplier Cost
+Estimated Profit
+Recent Customers
+Recent API Logs
+Quick Actions
+وعدد كبير من الـ cards.
+
+انقل هذه الوظائف لاحقاً إلى صفحاتها أو Flyout menus.
+
+Dashboard الرئيسية يجب أن تبقى نظيفة.
+
+========================================
+7. IMPORTANT UX RULE
+========================================
+
+الفكرة الأساسية:
+
+Sidebar = الأقسام الرئيسية فقط.
+
+Hover على القسم = تظهر الصفحات والوظائف التابعة له.
+
+Dashboard = Overview فقط.
+
+لا نريد تحويل Sidebar أو Dashboard إلى قائمة ضخمة بكل وظائف النظام.
+
+أريد تجربة استخدام قريبة جداً من الصورة المرجعية من حيث:
+- hierarchy
+- density
+- sidebar behavior
+- flyout behavior
+- chart placement
+- order cards placement
+
+لكن استخدم BHRU branding بالكامل ولا تنسخ أي اسم أو Logo أو Branding من النظام المرجعي.
+
+========================================
+8. CURRENT SYSTEM SAFETY
+========================================
+
+مهم جداً:
+
+- لا تكسر النظام الحالي.
+- لا تغيّر Authentication.
+- لا تغيّر Platform Admin.
+- لا تغيّر Database schema.
+- لا تغيّر subscription/licence logic.
+- لا تحذف routes الحالية.
+- لا تعمل mock authentication.
+- لا تعيد إنشاء المشروع من الصفر.
+
+اعمل Refactor للـ Subscriber UI فقط.
+
+إذا كانت بعض الصفحات الموجودة حالياً غير جاهزة، احتفظ بالـ route أو أنشئ placeholder page نظيفة بدلاً من حذف الوظيفة.
+
+========================================
+9. FIRST IMPLEMENTATION
+========================================
+
+في هذه المرحلة:
+
+1. نفّذ التصميم الجديد للـ Subscriber Dashboard.
+2. نفّذ Sidebar الجديد.
+3. نفّذ Dashboard Hover Flyout.
+4. نفّذ Top Bar.
+5. نفّذ Last 12 Months Orders chart.
+6. نفّذ IMEI / Server / Remote summary cards.
+7. حافظ على الصفحات والـ routes الحالية بدون حذفها.
+
+بعد التنفيذ، شغّل المشروع في Replit Preview وأرني النتيجة.
+
+لا تعمل Deploy.
+لا تعمل Git push.
+لا تعدّل Dokploy.
+سأراجع التصميم في Preview أولاً قبل أي نشر.

@@ -1,0 +1,320 @@
+I am attaching the FINAL visual reference for the BHRU Subscriber Panel.
+
+IMPORTANT:
+Ignore the previous dark-only dashboard design request.
+Use THIS attached image as the primary visual reference.
+
+I want BHRU to support BOTH Light Mode and Dark Mode.
+
+LIGHT MODE MUST BE THE DEFAULT THEME.
+
+The idea is similar to modern platforms such as Facebook, Instagram and AliExpress:
+- normal/default interface = Light Mode
+- user can manually switch to Dark Mode
+- selected theme is remembered for that user/browser
+
+Do NOT modify Platform Admin.
+Do NOT modify authentication.
+Do NOT modify database/subscription/licence logic.
+Do NOT deploy or push.
+Work in Replit Preview only.
+
+==================================================
+1. DEFAULT LIGHT MODE
+==================================================
+
+The subscriber panel must open in LIGHT MODE by default.
+
+Follow the attached reference:
+
+- White main background
+- Very light gray secondary backgrounds
+- White cards
+- Light subtle borders
+- Soft shadows
+- Dark readable text
+- Clean modern SaaS appearance
+- BHRU orange as the main brand/accent color
+
+Avoid excessive gray/dark areas in Light Mode.
+
+The interface should feel clean, bright and professional.
+
+==================================================
+2. DARK MODE TOGGLE
+==================================================
+
+Add a Light / Dark theme toggle in the TOP BAR.
+
+Use a professional icon control:
+Sun = Light
+Moon = Dark
+
+The user must be able to switch instantly without reloading the page.
+
+When Dark Mode is enabled:
+- background becomes dark navy/black
+- cards become dark
+- borders adapt
+- text becomes light
+- charts and menus remain readable
+- BHRU orange accent remains
+
+IMPORTANT:
+Persist the selected theme.
+
+If the user selects Dark Mode and refreshes/reopens the panel, keep Dark Mode.
+
+If the user has never selected a theme, use LIGHT MODE by default.
+
+Avoid flashes where Dark Mode briefly appears before Light Mode or vice versa.
+
+==================================================
+3. SIDEBAR
+==================================================
+
+Use the sidebar structure shown in the attached image.
+
+Keep it compact:
+
+Dashboard
+Clients / Suppliers
+Products / Services
+Orders
+Retail Orders (Cart)
+Inventory
+CMS / Blog
+Reports / Graphs
+Utilities
+Support
+Online Users / Live Chat
+Settings
+Store
+Help
+Online Staff
+
+In Light Mode:
+- sidebar should also be light/white
+- dark icons/text
+- subtle separators
+- selected item uses BHRU orange
+- hover uses a very light orange background
+
+In Dark Mode:
+adapt the same component automatically.
+
+Do not maintain two separate sidebar implementations.
+
+==================================================
+4. HOVER FLYOUT NAVIGATION
+==================================================
+
+The sidebar must NOT contain all sub-pages permanently.
+
+When the mouse is placed over a main menu item, open a Flyout / Mega Menu to the RIGHT of the sidebar.
+
+Example:
+
+Hover Dashboard
+→ show its related pages.
+
+The flyout must:
+- overlay the content
+- not push content
+- remain open while the pointer is over the sidebar item or flyout
+- close when leaving both
+- support multiple columns
+- use the current Light/Dark theme automatically
+
+In Light Mode:
+white flyout
+subtle shadow
+light border
+dark text
+orange hover/accent
+
+In Dark Mode:
+dark flyout
+light text
+subtle dark border
+orange accent
+
+Build this as a reusable navigation component because later Clients, Services, Orders, Reports, Settings, etc. will use the same system.
+
+==================================================
+5. TOP BAR
+==================================================
+
+Follow the attached reference.
+
+Include:
+
+- Sidebar collapse button
+- Current server selector/name
+- Search
+- Ctrl + K shortcut
+- LIGHT/DARK toggle
+- Server Time
+- Notifications
+- User avatar
+- User name
+- Role
+- Sign out
+
+Keep the top bar compact.
+
+Do not make it oversized.
+
+==================================================
+6. DASHBOARD
+==================================================
+
+Keep the Dashboard SIMPLE.
+
+Do not restore the old dashboard containing many cards and tables.
+
+Main content:
+
+Dashboard
+Overview of your business and orders
+
+Then:
+
+Last 12 Months Orders
+
+Large chart with:
+
+- IMEI Orders
+- Server Orders
+- Remote Orders
+- Retail Orders
+
+Use a smooth professional area/line chart.
+
+Use colors similar to the attached reference:
+
+IMEI = Orange
+Server = Blue
+Remote = Green
+Retail = Purple
+
+Include a Date Range selector.
+
+Do NOT generate fake production data.
+If the subscriber has no data, display proper zero/empty state.
+
+==================================================
+7. ORDER CARDS
+==================================================
+
+Under the chart show ONLY:
+
+IMEI ORDER
+- New
+- Accepted
+
+SERVER ORDER
+- New
+- Accepted
+
+REMOTE ORDER
+- New
+- Accepted
+
+Use the attached image as the visual reference.
+
+Keep these cards clean and horizontally aligned on desktop.
+
+Do not add Revenue, Profit, Customers, Supplier Cost, API Logs, Quick Actions, etc. to the home Dashboard.
+
+Those features will have their own pages later.
+
+==================================================
+8. DESIGN SYSTEM
+==================================================
+
+Create a proper reusable theme system.
+
+Do NOT hardcode separate colors individually across every page.
+
+Use shared theme tokens / CSS variables for things such as:
+
+--background
+--surface
+--surface-secondary
+--text-primary
+--text-secondary
+--border
+--brand
+--hover
+--shadow
+
+Both Light and Dark themes must use the same components.
+
+This is important because ALL future BHRU subscriber pages must automatically support Light and Dark Mode.
+
+==================================================
+9. FUTURE INTERNAL PAGES
+==================================================
+
+This visual system will become the standard for ALL subscriber pages:
+
+Clients / Suppliers
+Products / Services
+Orders
+Inventory
+Reports
+Utilities
+Support
+Settings
+etc.
+
+Therefore build the layout as reusable components:
+
+SubscriberLayout
+TopBar
+Sidebar
+FlyoutMenu
+ThemeToggle
+PageHeader
+ManagementTable
+StatusBadge
+EmptyState
+
+Do not build all business modules now.
+
+First establish the correct UI foundation.
+
+==================================================
+10. DO NOT BREAK CURRENT SYSTEM
+==================================================
+
+Very important:
+
+Keep the currently working subscriber account and session.
+
+Do NOT change:
+- authentication
+- subscriber registration
+- Platform Admin
+- licences
+- subscription status
+- API behavior
+- production database schema
+
+This task is primarily a Subscriber UI/UX refactor.
+
+Do NOT deploy.
+Do NOT push to GitHub.
+
+Run it in Replit Preview first.
+
+When finished show me:
+
+1. Dashboard in DEFAULT LIGHT MODE.
+2. Same Dashboard in DARK MODE.
+3. Dashboard sidebar hover/flyout in LIGHT MODE.
+4. Dashboard sidebar hover/flyout in DARK MODE.
+5. Tell me which frontend files were modified.
+
+Wait for my approval before deployment.
