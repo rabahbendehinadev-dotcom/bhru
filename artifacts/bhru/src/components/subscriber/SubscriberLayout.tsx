@@ -6,6 +6,7 @@ import { TopBar, SearchPalette } from './TopBar';
 import { MobileHeader } from './MobileHeader';
 import { MobileDrawer } from './MobileDrawer';
 import { PwaThemeColor } from './PwaInstall';
+import { isDesktopNav } from './nav-catalog';
 
 interface Props { subscriberId: string; business: string; owner: string; banner?: ReactNode; children: ReactNode }
 
@@ -20,7 +21,7 @@ export function SubscriberLayout({ subscriberId, business, owner, banner, childr
     return () => window.removeEventListener('keydown', k);
   }, []);
   const toggleSidebar = () => {
-    if (window.matchMedia('(min-width: 1024px)').matches) setCollapsed((c) => !c); else setMobileOpen((o) => !o);
+    if (isDesktopNav()) setCollapsed((c) => !c); else setMobileOpen((o) => !o);
   };
   return (
     <SubscriberThemeProvider subscriberId={subscriberId}>

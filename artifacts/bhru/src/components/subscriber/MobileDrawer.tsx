@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { CATALOG, itemHref, slugify } from './nav-catalog';
+import { NAV, entryIsActive, hasFlyout, isDesktopNav } from './nav-catalog';
+import { NavItemList } from './NavItemList';
 import { Wordmark } from './Wordmark';
+import { OnlineStaffBadge, useOnlineStaff } from './OnlineStaff';
 
 interface Props { open: boolean; onClose: () => void; returnFocus: React.RefObject<HTMLElement | null> }
 
@@ -14,6 +16,7 @@ export function MobileDrawer({ open, onClose, returnFocus }: Props) {
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const first = useRef(true);
+  const staff = useOnlineStaff();
 
   useEffect(() => { if (!first.current) closeRef.current(); first.current = false; }, [loc]);
   useEffect(() => {
@@ -38,7 +41,7 @@ export function MobileDrawer({ open, onClose, returnFocus }: Props) {
       if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
       else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
     };
-    const resize = () => { if (window.matchMedia('(min-width: 1024px)').matches) closeRef.current(); };
+    const resize = () => { if (isDesktopNav()) closeRef.current(); };
     window.addEventListener('keydown', key); window.addEventListener('resize', resize);
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', key); window.removeEventListener('resize', resize); target?.focus(); };
   }, [open, returnFocus]);
@@ -46,8 +49,7 @@ export function MobileDrawer({ open, onClose, returnFocus }: Props) {
   useEffect(() => { if (open) panel.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus(); }, [view, open, visible]);
 
   if (!open && !visible) return null;
-  const cat = CATALOG.find((c) => c.label === view);
-  const isActive = (c: (typeof CATALOG)[number]) => c.href === '/' ? loc === '/' || loc === '/dashboard' : loc === c.href || c.items.some((it) => itemHref(it) === loc);
+  const cat = NAV.find((c) => c.id === view);
 
   return (
     <div className="sl-drawer-root lg:hidden" data-testid="mobile-drawer" data-open={open} aria-hidden={!open} inert={!open}>
@@ -61,23 +63,28 @@ export function MobileDrawer({ open, onClose, returnFocus }: Props) {
         </div>
         {cat ? (
           <nav className="scroll-thin sl-drawer-scroll" aria-label={cat.label}>
-            <div className="px-3 pb-2 pt-1 text-[12px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{cat.label}</div>
-            {cat.items.map((it) => (
-              <Link key={it.label} href={itemHref(it)} onClick={onClose} className="sl-drow" data-testid={`drawer-link-${slugify(cat.label)}-${slugify(it.label)}`}>
-                <span className="sl-fly-tile">{cat.icon}</span>
-                <span className="min-w-0"><span className="block text-[14px] font-semibold leading-tight">{it.label}</span><span className="block text-[12px] leading-tight text-[hsl(var(--text-secondary))]">{it.desc}</span></span>
-              </Link>
-            ))}
+            <Link href={cat.href} onClick={onClose} className="sl-dhead" data-testid={`drawer-main-${cat.id}`}>
+              <span className="sl-fly-tile">{cat.icon}</span><span className="flex-1 truncate">{cat.label}</span>
+            </Link>
+            <NavItemList items={cat.items} variant="drawer" onNavigate={onClose} activeHref={loc} />
           </nav>
         ) : (
           <nav className="scroll-thin sl-drawer-scroll" aria-label="Main">
-            {CATALOG.map((c) => (
-              <button key={c.label} type="button" className="sl-drow" data-active={isActive(c)} onClick={() => setView(c.label)} data-testid={`drawer-nav-${slugify(c.label)}`}>
-                <span className="sl-fly-tile">{c.icon}</span>
-                <span className="flex-1 text-left text-[14px] font-semibold">{c.label}</span>
-                <ChevronRight size={16} className="opacity-60" />
-              </button>
-            ))}
+            {NAV.map((c) => {
+              const inner = (
+                <>
+                  <span className="sl-fly-tile">{c.icon}</span>
+                  <span className="flex-1 truncate text-left text-[14px] font-semibold">{c.label}</span>
+                  {c.badge === 'online-staff' && <OnlineStaffBadge count={staff.count} />}
+                  {hasFlyout(c) && <ChevronRight size={16} className="opacity-60" />}
+                </>
+              );
+              return hasFlyout(c) ? (
+                <button key={c.id} type="button" className="sl-drow" data-active={entryIsActive(c, loc)} onClick={() => setView(c.id)} data-testid={`drawer-nav-${c.id}`}>{inner}</button>
+              ) : (
+                <Link key={c.id} href={c.href} onClick={onClose} className="sl-drow" data-active={entryIsActive(c, loc)} data-testid={`drawer-nav-${c.id}`}>{inner}</Link>
+              );
+            })}
           </nav>
         )}
       </div>

@@ -1,0 +1,449 @@
+We are now starting the BHRU Subscriber Panel structure phase.
+
+IMPORTANT:
+Do NOT redesign the project from scratch.
+Do NOT modify Platform Admin.
+Do NOT modify authentication.
+Do NOT modify login/register.
+Do NOT modify database, subscription, licence, or tenant logic.
+Do NOT deploy.
+Do NOT push to GitHub.
+I will test everything in Replit Preview first.
+
+The current BHRU visual identity must remain:
+- BHRU branding
+- Light Mode as default
+- Dark Mode available
+- Current responsive/mobile direction
+- Existing top navigation/header
+
+==================================================
+GOAL
+==================================================
+
+I want to organize the BHRU Subscriber Panel before implementing the actual business functionality.
+
+For now, build the subscriber navigation/page structure and routes.
+
+We will implement and connect the real functionality of each module later, one module at a time.
+
+Do not invent extra modules or pages.
+
+The sidebar must use this EXACT main order:
+
+1. Dashboard
+2. Clients/Suppliers
+3. Products/Services
+4. Orders
+5. Retail Orders (Cart)
+6. Inventory
+7. CMS / Blog
+8. Reports/Graphs
+9. Utilities
+10. Support
+11. Online User / Live Chat
+12. Settings
+13. Store
+14. Help
+15. Online Staff
+
+Do not reorganize these items into categories such as Orders, Management, Reports, Communication, System, etc.
+
+I want one continuous menu in exactly the order above.
+
+==================================================
+NAVIGATION BEHAVIOR
+==================================================
+
+DESKTOP:
+
+When the mouse hovers over a main sidebar item that contains child pages, open a flyout menu to the RIGHT of the sidebar.
+
+The user must be able to move the mouse from the sidebar item into the flyout without the flyout disappearing.
+
+Large menus can use two columns.
+
+Do NOT put all child pages permanently inside the sidebar.
+
+MOBILE / TABLET:
+
+There is no hover.
+
+The sidebar must open as a mobile drawer.
+
+Tapping a main item with children must open its child-page menu in a touch-friendly way.
+
+The mobile menu must be clean, compact, scrollable, and optimized for iPhone and Android.
+
+==================================================
+DASHBOARD FLYOUT
+==================================================
+
+Use the Dashboard child structure already implemented/defined in the current project.
+
+Keep its current BHRU version unless an item conflicts with the finalized structure.
+
+Do not add random dashboard pages.
+
+==================================================
+CLIENTS/SUPPLIERS
+==================================================
+
+Create this flyout structure:
+
+Clients
+- View / Search Clients
+- + Add New Client
+- + Add Bulk Client
+- Client Group
+- Update Multiple Account
+- Block Multiple Account
+- Checkout as Guest
+
+Suppliers
+- View / Search Suppliers
+- + Add New Supplier
+
+Keep "Clients" and "Suppliers" as section labels inside the flyout.
+
+==================================================
+PRODUCTS/SERVICES
+==================================================
+
+Exact order:
+
+- IMEI Service
+- File Service
+- Server Service
+- Remote Service
+- Catalog / Cart
+
+==================================================
+ORDERS
+==================================================
+
+Use the finalized Orders child-page structure already supplied in our current work/reference.
+
+Do not invent additional order pages.
+
+==================================================
+RETAIL ORDERS (CART)
+==================================================
+
+Use these groups and exact ordering:
+
+IMEI / Server Order
+- Accepted IMEI Orders
+- IMEI Orders History
+
+File Orders
+- Accepted File Orders
+- File Orders History
+
+Server Orders With API
+- Accepted Server Orders
+- Server Orders History
+
+Server Orders
+- Accepted Server Orders
+- Server Orders History
+
+Remote Service
+- Accepted Remote Orders
+- Remote Orders History
+
+The group names are section labels.
+
+==================================================
+INVENTORY
+==================================================
+
+- Digital Inventory
+
+==================================================
+CMS / BLOG
+==================================================
+
+Exact order:
+
+- Menu Manager
+- Custom Pages
+- Index Banner
+- Page Content
+- Testimonial
+- Gallery
+- Announcements
+- Blog
+- Flash Popup
+
+==================================================
+REPORTS/GRAPHS
+==================================================
+
+This is a large flyout. Use two columns on desktop.
+
+Column 1, exact order:
+
+- Top User by Income
+- Todays 10 Service by Revenue
+- Todays 10 Service by Orders
+- Top 10 Service by Revenue
+- Top 10 Service by Orders
+- Most Viewable Products
+- Sales by Services
+- Monthly Orders
+- Order Summary ( Retail Shop )
+- Graph
+- Net Profit
+- Profit Graph
+- Stock Report
+- Promotion Usage
+- User Statement
+- Add Fund Report
+- Fund Transfer Report
+
+Column 2, exact order:
+
+- Credit Report
+- Invoice Summary
+- Invoice Report
+- Service Status
+- Refund Report
+- Suppliers Order
+- Store Product Selling
+- Staff Summary
+- Auto Reply Report
+- Transaction Report
+- Client Credit/Debit
+- Merchant Orders
+
+==================================================
+UTILITIES
+==================================================
+
+Use two columns on desktop.
+
+Column 1:
+
+- Email Campaign
+- Mass Mail
+- Mass SMS
+- Mass GCM
+- Database Status
+- System Cleanup
+- Online User
+- IP Manager
+- Import Script
+- E-mail Black List
+- Api Log
+- Gateway Log
+
+Column 2:
+
+- SMS Log
+- Download Log
+- Activity Log
+- Newsletter Subscriber
+- SEO Functions
+- Language Editor
+- Optimise API
+- Survey
+- Fraud Cage
+- Messenger Notification
+- Blacklist IMEI
+
+==================================================
+SUPPORT
+==================================================
+
+Use "Ticket" as a section label, followed by:
+
+- Create Ticket
+- Waiting Ticket
+- Open Tickets
+- Customer-reply
+- Answered Ticket
+- Closed
+- Ticket / Live Help Settings
+- Knowledge Base
+- Download s
+
+==================================================
+ONLINE USER / LIVE CHAT
+==================================================
+
+This is a direct main page.
+
+Do not create fake child pages.
+
+==================================================
+SETTINGS
+==================================================
+
+Use two columns on desktop.
+
+Column 1:
+
+- General Settings
+- E-Mail Settings
+- Security
+- Automation
+- Currencies
+- Payment Gateways
+- Shipping Gateway
+- SMS Gateway
+- API Settings
+- System Administrator
+- Product Feature
+
+Column 2:
+
+- Field Settings
+- Country - Provider
+- Brand - Model
+- MEP
+- Manufacture - Warehouse
+- Provider - Model - MEP
+- PRD
+- Recharge Voucher
+- Promotion Codes
+- Site Notification
+
+==================================================
+STORE
+==================================================
+
+Store is a direct main page.
+
+Do not create fake child pages.
+
+==================================================
+HELP
+==================================================
+
+Exact order:
+
+- Self Update
+- License Information
+- General FAQ
+- Dhru Customer Hub
+- PHP Information
+
+==================================================
+ONLINE STAFF
+==================================================
+
+Online Staff is dynamic.
+
+Do NOT hardcode a specific staff username.
+
+Eventually it will show currently online staff members and a badge with the online count.
+
+For this structure phase, create the UI/component architecture required for dynamic online staff data later.
+
+If there is no real staff-presence backend yet, use an empty state/count of 0 rather than inventing staff accounts.
+
+==================================================
+ROUTES / PLACEHOLDER PAGES
+==================================================
+
+Every menu destination must have its own stable route.
+
+For pages whose business functionality does not exist yet:
+
+Create a clean BHRU placeholder page containing:
+- page title
+- breadcrumb
+- module name
+- a subtle "Module not enabled yet" / "Coming later" state
+
+Do NOT implement fake business logic.
+Do NOT generate fake customers, orders, revenue, transactions, suppliers, tickets, inventory, etc.
+
+The purpose is to make the complete navigation architecture testable before we implement modules.
+
+Direct URL refresh must work for every route.
+
+==================================================
+SEARCH
+==================================================
+
+Prepare the sidebar/menu search so it can search navigation pages.
+
+It should be able to find child pages as well as main modules.
+
+Do not implement database/business-data search yet.
+
+==================================================
+RESPONSIVE REQUIREMENTS
+==================================================
+
+Test the complete navigation at:
+
+- Desktop
+- Tablet
+- iPhone-sized viewport
+- Android-sized viewport
+
+On desktop:
+- compact sidebar
+- flyouts open to the right
+- large flyouts may use two columns
+
+On mobile:
+- drawer navigation
+- no desktop-hover dependency
+- child menus accessible by tap
+- no horizontal overflow
+- long menus must scroll correctly
+- touch targets must be comfortable
+- opening a submenu must not cover the screen in an unusable way
+
+Preserve Light Mode and Dark Mode support on all pages and menus.
+
+==================================================
+IMPORTANT ARCHITECTURE RULE
+==================================================
+
+Create the navigation definition from a centralized configuration/data structure rather than duplicating menu names manually throughout components.
+
+Each entry should be able to define things such as:
+- label
+- route
+- icon
+- children
+- group/section
+- column where needed
+
+This is important because later we will connect:
+- permissions
+- enabled modules
+- tenant configuration
+- search
+- localization
+
+to the same navigation structure.
+
+Do NOT implement those future systems now.
+
+==================================================
+FINAL VERIFICATION
+==================================================
+
+Before reporting completion:
+
+1. Verify every main menu item exists in the exact required order.
+2. Verify every supplied child page exists.
+3. Verify desktop flyouts.
+4. Verify mobile navigation.
+5. Verify Light Mode.
+6. Verify Dark Mode.
+7. Verify direct URL refresh on child routes.
+8. Verify subscriber authentication still works.
+9. Verify Platform Admin remains completely unchanged.
+10. Verify no existing account/database/subscription/licence data was modified.
+
+Do NOT push to GitHub.
+Do NOT deploy.
+
+Stop when the complete navigation/page skeleton works in Replit Preview and report exactly what was created.

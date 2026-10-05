@@ -32,3 +32,9 @@ Subscriber dashboard primary actions manage the server's business, not purchase 
 **Why:** Orders are submitted by the subscriber's customers; the server owner manages incoming orders and supplier connections.
 
 **How to apply:** Use the requested management actions, and keep unbuilt modules clearly marked as deferred.
+
+Keep subscriber main navigation as one continuous menu in the user's approved order. Do not regroup it into category sections or invent additional pages.
+
+**Why:** The user explicitly rejected category-based regrouping in the subscriber structure brief.
+
+**How to apply:** Preserve the approved navigation when implementing individual modules; ask before changing its scope or organization.

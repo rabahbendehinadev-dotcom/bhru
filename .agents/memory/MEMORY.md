@@ -6,3 +6,4 @@
 - [Subscriber PWA safety](subscriber-pwa-safety.md) — Offline is a neutral connection notice, not cached account access; installation stays user-initiated and platform-aware.
 - [Viewport gutters](responsive-viewport-gutters.md) — Check overlay edges against layout width; 100vw can include scrollbar gutters and hide negative-left overflow.
 - [PWA offline testing](pwa-offline-testing.md) — CDP offline flags can leave worker fetch online; verify the real failure path before changing fallback logic.
+- [Browser input testing](browser-input-testing.md) — Desktop viewport width does not guarantee hover support in the remote test browser.

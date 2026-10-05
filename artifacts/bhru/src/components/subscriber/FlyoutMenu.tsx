@@ -1,30 +1,33 @@
-import { Link } from 'wouter';
-import type { ReactNode } from 'react';
-import { itemHref, type CatalogItem } from './nav-catalog';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { useLocation } from 'wouter';
+import { columnsOf, isTwoColumn, type NavEntry } from './nav-catalog';
+import { NavItemList } from './NavItemList';
 
-interface Props {
-  id: string; title: string; items: CatalogItem[]; icon: ReactNode;
-  left: number; top: number; onEnter: () => void; onLeave: () => void; onNavigate: () => void;
-}
+interface Props { id: string; entry: NavEntry; left: number; top: number; onEnter: () => void; onLeave: () => void; onNavigate: () => void }
 
-/** Reusable right-side multi-column flyout. Overlays content (fixed), never pushes it. */
-export function FlyoutMenu({ id, title, items, icon, left, top, onEnter, onLeave, onNavigate }: Props) {
-  const wide = items.length > 5;
-  const flyoutLeft = window.innerWidth < 640 ? 8 : left;
+/** Right-side flyout. Explicit columns from config; fixed overlay, scrolls within the viewport. */
+export function FlyoutMenu({ id, entry, left, top, onEnter, onLeave, onNavigate }: Props) {
+  const [loc] = useLocation();
+  const ref = useRef<HTMLDivElement>(null);
+  const [y, setY] = useState(top);
+  useLayoutEffect(() => {
+    const h = ref.current?.offsetHeight ?? 0;
+    setY(Math.max(8, Math.min(top, window.innerHeight - 8 - h)));
+  }, [top, entry.id]);
+  const two = isTwoColumn(entry);
+  const cols = columnsOf(entry);
   return (
-    <div id={id} role="menu" aria-label={title} data-testid={`flyout-${id}`} className="sl-fly scroll-thin fixed z-[60] overflow-y-auto p-2"
-      style={{ left: flyoutLeft, top, width: wide ? 540 : 290, maxWidth: `calc(100vw - ${flyoutLeft + 8}px)`, maxHeight: `calc(100dvh - ${top + 12}px)` }}
+    <div ref={ref} id={id} role="menu" aria-label={entry.label} data-testid={`flyout-${entry.id}`} className="sl-fly sl-fly-bridge fixed z-[60] flex flex-col"
+      style={{ left, top: y, width: two ? 500 : 260, maxWidth: `calc(100vw - ${left + 8}px)`, maxHeight: 'calc(100dvh - 16px)' }}
       onMouseEnter={onEnter} onMouseLeave={onLeave}>
-      <div className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{title}</div>
-      <div className={wide ? 'sm:columns-2 sm:gap-2' : ''}>
-        {items.map((it) => (
-          <Link key={it.label} href={itemHref(it)} role="menuitem" onClick={onNavigate} className="sl-fly-item" data-testid={`flyout-link-${id}-${it.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>
-            <span className="sl-fly-tile">{icon}</span>
-            <span className="min-w-0">
-              <span className="sl-fly-label block text-[12.5px] font-semibold leading-tight">{it.label}</span>
-              <span className="block text-[11px] leading-tight text-[hsl(var(--text-secondary))]">{it.desc}</span>
-            </span>
-          </Link>
+      <div className="flex items-center gap-2 px-3 pb-1.5 pt-2.5 text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+        <span className="text-[hsl(var(--brand))]">{entry.icon}</span>{entry.label}
+      </div>
+      <div className={`scroll-thin min-h-0 overflow-y-auto px-1.5 pb-1.5 ${two ? 'grid grid-cols-2 gap-x-1' : ''}`}>
+        {cols.map((c, i) => (
+          <div key={i} className="min-w-0" data-testid={`flyout-col-${entry.id}-${i + 1}`}>
+            <NavItemList items={c} variant="fly" onNavigate={onNavigate} activeHref={loc} />
+          </div>
         ))}
       </div>
     </div>

@@ -4,7 +4,7 @@ import { Bell, LogOut, Menu, Search } from 'lucide-react';
 import { logout, useStore, errorMessage } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminPath } from '@/lib/admin-entry';
-import { CATALOG, itemHref } from './nav-catalog';
+import { titleForLocation } from './nav-catalog';
 import { ThemeToggle } from './ThemeToggle';
 import { EmptyState } from './EmptyState';
 import { InstallOption } from './PwaInstall';
@@ -21,15 +21,7 @@ export function MobileHeader({ owner, onOpenMenu, onOpenSearch, menuOpen, menuBt
   const { toast } = useToast();
   const bell = usePopover();
   const acct = usePopover();
-  const title = useMemo(() => {
-    if (loc === '/' || loc === '/dashboard') return 'Dashboard';
-    for (const category of CATALOG) {
-      const page = category.items.find(item => itemHref(item) === loc);
-      if (page) return page.label;
-      if (category.href === loc) return category.label;
-    }
-    return '';
-  }, [loc]);
+  const title = useMemo(() => titleForLocation(loc), [loc]);
   const role = st.session.role === 'admin' ? 'Administrator' : 'Owner';
   const signOut = async () => {
     try { await logout(); nav(st.session.role === 'admin' ? adminPath : '/login'); }

@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Bell, Check, ChevronDown, LogOut, Menu, Search, Server } from 'lucide-react';
 import { logout, useStore, errorMessage } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminPath } from '@/lib/admin-entry';
-import { CATALOG, itemHref } from './nav-catalog';
+import { SEARCH_INDEX } from './nav-catalog';
 import { ThemeToggle } from './ThemeToggle';
 import { EmptyState } from './EmptyState';
 import { ServerClock } from './ServerClock';
@@ -16,17 +16,13 @@ const initialsOf = (n: string) => n.split(/\s+/).filter(Boolean).map((w) => w[0]
 export function SearchPalette({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState('');
   const [idx, setIdx] = useState(0);
+  const selected = useRef<HTMLButtonElement>(null);
+  useEffect(() => { selected.current?.scrollIntoView({ block: 'nearest' }); }, [idx, q]);
   const [, nav] = useLocation();
-  const all = useMemo(() => {
-    const seen = new Set<string>();
-    const out: { label: string; group: string; href: string }[] = [];
-    CATALOG.forEach((c) => {
-      if (!seen.has(c.href)) { seen.add(c.href); out.push({ label: c.label, group: 'Menu', href: c.href }); }
-      c.items.forEach((it) => { const h = itemHref(it); if (!seen.has(h)) { seen.add(h); out.push({ label: it.label, group: c.label, href: h }); } });
-    });
-    return out;
-  }, []);
-  const res = all.filter((r) => `${r.label} ${r.group}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 30);
+  const res = useMemo(() => {
+    const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return SEARCH_INDEX.filter((r) => { const hay = `${r.label} ${r.context}`.toLowerCase(); return terms.every((w) => hay.includes(w)); });
+  }, [q]);
   const go = (href: string) => { onClose(); nav(href); };
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/40 p-4 pt-[12vh]" onMouseDown={onClose}>
@@ -46,10 +42,10 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
         <ul className="scroll-thin max-h-[50dvh] overflow-y-auto p-1.5">
           {res.length === 0 && <li className="px-3 py-6 text-center text-[12.5px] text-[hsl(var(--text-secondary))]">No page matches "{q}".</li>}
           {res.map((r, k) => (
-            <li key={r.href + r.label}>
-              <button type="button" onMouseEnter={() => setIdx(k)} onClick={() => go(r.href)} data-testid={`search-result-${k}`}
-                className={`flex min-h-11 w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-[12.5px] lg:min-h-0 ${k === idx ? 'bg-[hsl(var(--hover))] text-[hsl(var(--brand))]' : ''}`}>
-                <span className="font-medium">{r.label}</span><span className="text-[11px] text-[hsl(var(--text-secondary))]">{r.group}</span>
+            <li key={r.id}>
+              <button ref={k === idx ? selected : undefined} type="button" onMouseEnter={() => setIdx(k)} onClick={() => go(r.href)} data-testid={`search-result-${r.id.replace('.', '--')}`}
+                className={`flex min-h-11 w-full flex-col items-start justify-between gap-1 rounded-md px-2.5 py-2 text-left text-[12.5px] sm:flex-row sm:items-center lg:min-h-0 ${k === idx ? 'bg-[hsl(var(--hover))] text-[hsl(var(--brand))]' : ''}`}>
+                <span className="min-w-0 font-medium">{r.label}</span><span className="max-w-full text-left text-[11px] text-[hsl(var(--text-secondary))] sm:ml-3 sm:max-w-[50%] sm:text-right">{r.context}</span>
               </button>
             </li>
           ))}
