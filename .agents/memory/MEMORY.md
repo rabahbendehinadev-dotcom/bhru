@@ -3,3 +3,6 @@
 - [Docker sandbox verification](docker-sandbox-verification.md) — Builds and initial processes can work while exec-based health checks fail due to sandbox restrictions.
 - [Subscriber visual standard](subscriber-visual-standard.md) — Final light-first reference supersedes dark-only requests; future subscriber pages share both themes, without affecting Platform Admin.
 - [Frontend cascade](frontend-cascade.md) — Declare Tailwind layer order before component-imported styles; otherwise responsive visibility or component padding can silently break.
+- [Subscriber PWA safety](subscriber-pwa-safety.md) — Offline is a neutral connection notice, not cached account access; installation stays user-initiated and platform-aware.
+- [Viewport gutters](responsive-viewport-gutters.md) — Check overlay edges against layout width; 100vw can include scrollbar gutters and hide negative-left overflow.
+- [PWA offline testing](pwa-offline-testing.md) — CDP offline flags can leave worker fetch online; verify the real failure path before changing fallback logic.

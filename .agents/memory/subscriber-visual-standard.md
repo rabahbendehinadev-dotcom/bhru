@@ -13,4 +13,4 @@ The subscriber home Dashboard stays simple: a twelve-month orders chart and IMEI
 
 **Why:** The user explicitly rejected restoring the old many-card/table dashboard and deferred business-module implementation until after reviewing the UI foundation.
 
-**How to apply:** Use compact top-level sidebar navigation and reusable overlay flyouts rather than permanently expanding every subpage. Work in Preview and wait for review before pushing, deploying or building deferred business modules.
+**How to apply:** Keep compact top-level navigation and hover flyouts on desktop. On mobile, use a tap-driven drawer that starts with categories, never an automatically opened Dashboard submenu; include Back/Close and dismiss after navigation. Mobile/PWA refinements must preserve the established desktop design. Work in Preview and wait for review before pushing, deploying or building deferred business modules.

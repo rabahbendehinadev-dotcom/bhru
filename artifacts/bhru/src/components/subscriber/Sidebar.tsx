@@ -17,6 +17,7 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile, onOpenSearch }: 
   const cancel = () => window.clearTimeout(timer.current);
   const scheduleClose = () => { cancel(); timer.current = window.setTimeout(() => setOpen(null), 180); };
   const show = (label: string, el: HTMLElement) => {
+    if (!window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches) return;
     cancel();
     const r = el.getBoundingClientRect();
     setLeft(asideRef.current?.getBoundingClientRect().right ?? r.right);
@@ -40,9 +41,8 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile, onOpenSearch }: 
 
   return (
     <>
-      {mobileOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onCloseMobile} />}
       <aside ref={asideRef} data-testid="subscriber-sidebar" data-flyout-zone
-        className={`sl-aside fixed inset-y-0 z-50 flex flex-col transition-[left] duration-200 lg:sticky lg:top-0 lg:z-30 lg:h-[100dvh] lg:shrink-0 lg:self-start ${mobileOpen ? 'left-0' : '-left-[260px] lg:left-0'} ${collapsed ? 'w-[232px] lg:w-[64px]' : 'w-[232px]'}`}>
+        className={`sl-aside hidden flex-col lg:flex lg:sticky lg:top-0 lg:z-30 lg:h-[100dvh] lg:shrink-0 lg:self-start ${collapsed ? 'w-[232px] lg:w-[64px]' : 'w-[232px]'}`}>
         <div className="flex h-14 items-center justify-between px-3.5">
           <Wordmark compact={collapsed} />
           <button className="sl-icon-btn lg:hidden" onClick={onCloseMobile} aria-label="Close menu"><X size={15} /></button>
@@ -61,12 +61,7 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile, onOpenSearch }: 
                 <Link href={c.href} data-testid={`nav-${slug}`} data-active={isActive(c)} data-open={on} title={collapsed ? c.label : undefined}
                   aria-haspopup="menu" aria-expanded={on} aria-controls={on ? `fly-${slug}` : undefined} className="sl-nav"
                   onFocus={(e) => show(c.label, e.currentTarget.parentElement as HTMLElement)}
-                   onClick={(e) => {
-                     if (window.matchMedia('(max-width: 1023px)').matches) {
-                       e.preventDefault();
-                       show(c.label, e.currentTarget.parentElement as HTMLElement);
-                     } else onCloseMobile();
-                   }}>
+                   onClick={onCloseMobile}>
                   {c.icon}
                   <span className={collapsed ? 'lg:hidden' : ''}>{c.label}</span>
                   <ChevronRight size={13} className={`sl-chev ${collapsed ? 'lg:hidden' : ''}`} />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2, ChevronDown, FileText, Monitor, Server, Smartphone, Info } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { SubscriberShell } from '@/components/bhru/shells';
@@ -20,7 +20,15 @@ const CARDS = [
   { title: 'REMOTE ORDER', token: '--c-remote', icon: Monitor, id: 'remote' },
 ] as const;
 
+function usePhone() {
+  const q = '(max-width: 639px)';
+  const [m, setM] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => { const l = window.matchMedia(q); const f = () => setM(l.matches); l.addEventListener('change', f); return () => l.removeEventListener('change', f); }, []);
+  return m;
+}
+
 function Dash() {
+  const phone = usePhone();
   const [months, setMonths] = useState<number>(12);
   const { data, label } = useMemo(() => {
     const now = new Date();
@@ -53,9 +61,9 @@ function Dash() {
             {SERIES.map((s) => <li key={s.key} className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full" style={{ background: `hsl(var(${s.token}))` }} />{s.label}</li>)}
           </ul>
         </div>
-        <div className="sl-chart mt-3 h-[300px] sm:h-[340px]" data-testid="chart-orders">
+        <div className="sl-chart mt-3 h-[230px] sm:h-[340px]" data-testid="chart-orders">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ left: -12, right: 12, top: 8 }}>
+            <AreaChart data={data} margin={phone ? { left: -22, right: 8, top: 8 } : { left: -12, right: 12, top: 8 }}>
               <defs>
                 {SERIES.map((s) => (
                   <linearGradient key={s.key} id={`g-${s.key}`} x1="0" y1="0" x2="0" y2="1">
@@ -65,12 +73,12 @@ function Dash() {
                 ))}
               </defs>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={18} />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={phone ? 28 : 18} tickFormatter={phone ? (v: string) => v.split(' ')[0] : undefined} tick={phone ? { fontSize: 10 } : undefined} />
               <YAxis tickLine={false} axisLine={false} allowDecimals={false} domain={[0, 4]} ticks={[0, 1, 2, 3, 4]} />
               <Tooltip contentStyle={{ background: 'hsl(var(--surface))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--text-primary))' }} />
               {SERIES.map((s) => (
                 <Area key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={`hsl(var(${s.token}))`} fill={`url(#g-${s.key})`} strokeWidth={2}
-                  dot={{ r: 3, strokeWidth: 0, fill: `hsl(var(${s.token}))` }} isAnimationActive={false} />
+                  dot={phone ? false : { r: 3, strokeWidth: 0, fill: `hsl(var(${s.token}))` }} isAnimationActive={false} />
               ))}
             </AreaChart>
           </ResponsiveContainer>

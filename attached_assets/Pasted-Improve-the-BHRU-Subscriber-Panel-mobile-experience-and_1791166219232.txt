@@ -1,0 +1,256 @@
+Improve the BHRU Subscriber Panel mobile experience and turn the subscriber frontend into a professional installable PWA.
+
+IMPORTANT:
+- Work in Replit Preview only.
+- DO NOT git push.
+- DO NOT deploy.
+- DO NOT modify Platform Admin.
+- DO NOT modify authentication.
+- DO NOT modify database, migrations, subscriptions or licences.
+- Preserve the current desktop design.
+- Focus on subscriber frontend/mobile/PWA only.
+
+==================================================
+1. MOBILE-FIRST RESPONSIVE EXPERIENCE
+==================================================
+
+The current mobile sidebar/flyout is too large and feels like a desktop interface squeezed onto a phone.
+
+Redesign the subscriber interface specifically for:
+- iPhone Safari
+- iPhone installed PWA
+- Android Chrome
+- Android installed PWA
+
+Target widths:
+320px, 360px, 375px, 390px, 412px, 430px.
+
+Desktop layout must remain unchanged.
+
+On mobile:
+- Use the full available viewport correctly.
+- Respect iPhone safe areas / Dynamic Island / home indicator.
+- No horizontal scrolling.
+- No content overflowing outside the viewport.
+- Minimum comfortable touch targets.
+- Compact typography and spacing.
+- Smooth opening/closing animations.
+- Professional app-like navigation.
+
+Use:
+env(safe-area-inset-top)
+env(safe-area-inset-bottom)
+env(safe-area-inset-left)
+env(safe-area-inset-right)
+
+==================================================
+2. MOBILE NAVIGATION
+==================================================
+
+Do NOT reproduce the desktop hover behavior on touch devices.
+
+Desktop:
+- Keep the existing hover flyout menus.
+
+Mobile:
+- Hamburger opens a clean navigation drawer.
+- Drawer should not automatically display the Dashboard submenu.
+- Show the main navigation categories first.
+- Tapping a category that contains children should open/expand its submenu.
+- Provide an obvious Back/Close behavior.
+- Close drawer after navigating to a page.
+- Tapping outside closes the drawer.
+
+Do not show a huge Dashboard flyout immediately like the current mobile screenshot.
+
+The mobile navigation should feel like a real SaaS mobile application.
+
+==================================================
+3. MOBILE HEADER
+==================================================
+
+Create a compact mobile header.
+
+Show:
+- BHRU logo
+- current page title when appropriate
+- notifications
+- user/avatar menu
+- hamburger/menu button
+
+Remove unnecessary desktop controls from the mobile header.
+
+Do not squeeze the desktop search/server/time controls into the phone layout.
+
+==================================================
+4. MOBILE DASHBOARD
+==================================================
+
+Optimize the dashboard specifically for phones.
+
+Chart:
+- responsive
+- readable labels
+- never overflow screen
+
+IMEI ORDER
+SERVER ORDER
+REMOTE ORDER
+
+cards should stack cleanly on mobile.
+
+Prefer:
+1 column on narrow phones
+and optionally 2 columns where enough width exists.
+
+Cards should be compact and app-like.
+
+==================================================
+5. LIGHT / DARK MODE
+==================================================
+
+Keep:
+- Light Mode = default
+- Dark Mode = optional
+
+Theme toggle must work on mobile.
+
+Remember the selected theme locally.
+
+Also set the PWA/browser theme color appropriately so the installed app looks polished.
+
+==================================================
+6. INSTALLABLE BHRU PWA
+==================================================
+
+Turn the subscriber frontend into a proper Progressive Web App.
+
+Add:
+- Web App Manifest
+- service worker
+- appropriate caching strategy for static frontend assets
+- standalone display mode
+- BHRU application name
+- short name: BHRU
+- BHRU app icons
+- theme/background colors
+- Apple mobile web app metadata
+- proper viewport metadata
+
+Installed app must launch in standalone/app mode instead of looking like a normal browser tab.
+
+Do NOT cache authenticated API responses or sensitive user/account data in the service worker.
+
+==================================================
+7. ANDROID INSTALL EXPERIENCE
+==================================================
+
+Detect supported Android/browser installation capability correctly.
+
+When the browser exposes the PWA installation prompt:
+show a professional non-intrusive:
+
+"Install BHRU"
+
+option inside the subscriber interface.
+
+Do NOT repeatedly annoy the user with a popup.
+
+After installation, do not continue showing the install prompt unnecessarily.
+
+==================================================
+8. IPHONE / IOS INSTALL EXPERIENCE
+==================================================
+
+Do not attempt to use the Android beforeinstallprompt flow on iOS.
+
+For iPhone/iOS:
+
+If BHRU is opened in Safari and is not installed:
+provide a small professional "Install BHRU" option.
+
+When tapped, show clear instructions:
+
+1. Tap the Share button in Safari
+2. Choose "Add to Home Screen"
+3. Confirm "Add"
+
+Make this instruction visual and easy to understand.
+
+If the app is already running in standalone PWA mode:
+do not show the installation instructions.
+
+If opened inside an unsupported in-app browser, provide a useful instruction to open BHRU in Safari.
+
+==================================================
+9. INSTALLED APP EXPERIENCE
+==================================================
+
+When launched from the Home Screen:
+
+- no unnecessary browser-specific installation UI
+- proper safe-area handling
+- responsive app shell
+- preserve authenticated session behavior
+- theme preference remains available
+- navigation feels like a standalone application
+
+Do not implement fake device detection based only on screen width.
+
+Use capability/platform detection only where needed for installation UX.
+
+==================================================
+10. DO NOT BREAK EXISTING SYSTEM
+==================================================
+
+Absolutely preserve:
+- subscriber authentication
+- existing subscriber account
+- current API integration
+- session handling
+- Platform Admin private entry
+- Platform Admin authentication
+- database
+- licences/subscriptions
+- current desktop subscriber interface
+
+Do not touch:
+PLATFORM_ADMIN_PATH
+or the private Platform Admin routing.
+
+==================================================
+11. TEST BEFORE FINISHING
+==================================================
+
+Test in Preview at least:
+
+- 320px mobile
+- 375px iPhone-sized viewport
+- 390px iPhone-sized viewport
+- 430px large iPhone-sized viewport
+- Android-sized viewport
+- desktop 1366px+
+- Light Mode
+- Dark Mode
+
+Verify:
+- no horizontal overflow
+- sidebar/drawer works
+- submenus work by tap
+- dashboard cards fit
+- chart fits
+- login fits
+- installed-PWA shell is configured
+- admin route remains unchanged
+
+At the end tell me:
+1. files changed
+2. PWA files added
+3. mobile navigation behavior implemented
+4. iOS installation behavior
+5. Android installation behavior
+6. responsive sizes tested
+7. confirmation that Platform Admin/auth/database were untouched
+
+DO NOT PUSH TO GITHUB.
+I will push manually after I approve the Preview.

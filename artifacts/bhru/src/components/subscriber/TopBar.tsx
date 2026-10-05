@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Bell, Check, ChevronDown, LogOut, Menu, Search, Server } from 'lucide-react';
 import { logout, useStore, errorMessage } from '@/lib/store';
@@ -8,21 +8,10 @@ import { CATALOG, itemHref } from './nav-catalog';
 import { ThemeToggle } from './ThemeToggle';
 import { EmptyState } from './EmptyState';
 import { ServerClock } from './ServerClock';
+import { InstallOption } from './PwaInstall';
+import { usePopover } from './popover';
 
 const initialsOf = (n: string) => n.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-
-function usePopover() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const d = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    window.addEventListener('pointerdown', d); window.addEventListener('keydown', k);
-    return () => { window.removeEventListener('pointerdown', d); window.removeEventListener('keydown', k); };
-  }, [open]);
-  return { open, setOpen, ref };
-}
 
 export function SearchPalette({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState('');
@@ -45,7 +34,7 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
         <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] px-3">
           <Search size={15} className="text-[hsl(var(--text-secondary))]" />
           <input autoFocus value={q} data-testid="input-nav-search" onChange={(e) => { setQ(e.target.value); setIdx(0); }} placeholder="Jump to a page..." aria-label="Search navigation"
-            className="h-11 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[hsl(var(--text-secondary))]"
+            className="h-11 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-[hsl(var(--text-secondary))] lg:text-[13px]"
             onKeyDown={(e) => {
               if (e.key === 'Escape') onClose();
               else if (e.key === 'ArrowDown') { e.preventDefault(); setIdx((i) => Math.min(i + 1, res.length - 1)); }
@@ -59,7 +48,7 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
           {res.map((r, k) => (
             <li key={r.href + r.label}>
               <button type="button" onMouseEnter={() => setIdx(k)} onClick={() => go(r.href)} data-testid={`search-result-${k}`}
-                className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-[12.5px] ${k === idx ? 'bg-[hsl(var(--hover))] text-[hsl(var(--brand))]' : ''}`}>
+                className={`flex min-h-11 w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-[12.5px] lg:min-h-0 ${k === idx ? 'bg-[hsl(var(--hover))] text-[hsl(var(--brand))]' : ''}`}>
                 <span className="font-medium">{r.label}</span><span className="text-[11px] text-[hsl(var(--text-secondary))]">{r.group}</span>
               </button>
             </li>
@@ -78,7 +67,7 @@ export function TopBar({ business, owner, onToggleSidebar, onOpenSearch }: { bus
   const srv = usePopover();
   const bell = usePopover();
   return (
-    <header className="sl-topbar sticky top-0 z-20 flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4">
+    <header className="sl-topbar sticky top-0 z-20 hidden h-14 lg:flex items-center gap-2 px-3 sm:gap-3 sm:px-4">
       <button className="sl-icon-btn" onClick={onToggleSidebar} aria-label="Toggle sidebar" data-testid="button-menu"><Menu size={16} /></button>
 
       <div className="relative" ref={srv.ref}>
@@ -92,6 +81,7 @@ export function TopBar({ business, owner, onToggleSidebar, onOpenSearch }: { bus
           <div className="sl-pop absolute left-0 top-10 z-50 w-[260px] p-2">
             <div className="flex items-center gap-2 rounded-md bg-[hsl(var(--hover))] px-2.5 py-2 text-[12.5px]"><Check size={14} className="text-[hsl(var(--brand))]" /><span className="truncate font-semibold">{business}</span><span className="ml-auto text-[10.5px] text-[hsl(var(--text-secondary))]">Current</span></div>
             <p className="px-1 pb-1 pt-2 text-[11px] leading-snug text-[hsl(var(--text-secondary))]">This account manages a single server. Switching between servers will appear here once more than one is linked.</p>
+            <InstallOption />
           </div>
         )}
       </div>
