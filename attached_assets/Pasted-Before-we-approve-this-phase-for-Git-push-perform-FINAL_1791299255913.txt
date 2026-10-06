@@ -1,0 +1,77 @@
+Before we approve this phase for Git push, perform FINAL VERIFICATION ONLY.
+
+Do NOT change architecture.
+Do NOT add features.
+Do NOT implement last-write-wins conflict protection.
+Do NOT modify domains, DNS, SSL or multi-server architecture.
+Do NOT push or deploy.
+
+1. REGISTRATION ATOMICITY
+
+Confirm with an actual development test that creation of:
+
+subscriber
+account_user
+subscription
+subscriber_general_settings
+
+occurs inside the same registration transaction.
+
+Force/simulate a failure during subscriber_general_settings creation and verify that the entire registration transaction rolls back.
+
+After the forced failure there must be NO orphan:
+- subscriber
+- account_user
+- subscription
+- general settings record
+
+Report the result.
+
+2. PLATFORM ADMIN SMOKE TEST
+
+Because the previous report says the Platform Admin private UI was not browser-retested, perform a simple browser smoke test of the existing private Platform Admin.
+
+Verify only:
+- private admin route opens
+- admin login still works
+- subscriber list loads
+- opening an existing subscriber still works
+- no obvious runtime/frontend error was introduced
+
+Do not modify Platform Admin.
+
+3. GENERAL SETTINGS FINAL SMOKE TEST
+
+Using a normal subscriber session:
+
+- open General Settings
+- change at least one text field
+- change at least one toggle
+- change one monetary field
+- Save Changes
+- refresh
+- confirm values persist
+
+Then confirm another subscriber still has independent values.
+
+4. TEST DATA
+
+Do not leave unnecessary new verification data active.
+
+If temporary verification accounts/records were created specifically for these tests, clean them up safely where appropriate.
+
+Do not delete legitimate development subscriber data.
+
+5. REPORT ONLY
+
+Return:
+- registration rollback test result
+- Platform Admin smoke-test result
+- General Settings persistence result
+- cross-subscriber isolation result
+- whether any code had to be changed to fix a discovered issue
+
+If everything passes, stop.
+
+DO NOT PUSH.
+DO NOT DEPLOY.

@@ -9,3 +9,4 @@
 - [Browser input testing](browser-input-testing.md) — Desktop viewport width does not guarantee hover support in the remote test browser.
 - [Subscriber workspace state](subscriber-workspace-state.md) — Preserve opened page state and shell; workspace state is session-scoped, not a browser draft cache.
 - [Subscriber Settings staging](subscriber-settings-staging.md) — Subscriber-owned persistence is approved; internal 11-entry nav stays distinct; domains and multiple servers remain deferred.
+- [Temporary test module resolution](temporary-test-module-resolution.md) — Pino transport lookup is caller-relative; scratch bundles can fail while the app remains healthy.
