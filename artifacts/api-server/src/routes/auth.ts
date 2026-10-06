@@ -24,7 +24,9 @@ router.post("/auth/register", async (req, res) => {
   const passwordHash = await hashPassword(input.password);
   const subscriberId = randomUUID(), userId = randomUUID();
   const cookie = await transaction(async client => {
-    await client.query("INSERT INTO subscribers(id,business) VALUES($1,$2)", [subscriberId, input.business.trim()]);
+    await client.query("SELECT public.bhru_create_subscriber($1,$2,$3)", [
+      subscriberId, input.business.trim(), adminPath.slice(1),
+    ]);
     await client.query(`INSERT INTO account_users(id,subscriber_id,full_name,username,email,phone,country,password_hash)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, [userId, subscriberId, input.owner.trim(), input.username.toLowerCase(),
       input.email.trim().toLowerCase(), input.phone.trim(), input.country.trim(), passwordHash]);

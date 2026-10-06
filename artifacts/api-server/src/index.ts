@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
+import { adminPath } from "./lib/admin-entry";
 
 const rawPort = process.env["PORT"] || "3000";
 
@@ -18,6 +19,10 @@ if (!Number.isInteger(port) || port <= 0 || port > 65535) {
 
 try {
   await pool.query("SELECT name FROM schema_migrations LIMIT 1");
+  const collision = await pool.query(
+    "SELECT 1 FROM subscribers WHERE public_slug=lower($1) LIMIT 1", [adminPath.slice(1)],
+  );
+  if (collision.rowCount) throw new Error("Private entry conflicts with an assigned public slug.");
 } catch {
   logger.error("Database is unavailable or migrations have not been applied. Run db:migrate before starting.");
   await pool.end();

@@ -21,6 +21,13 @@ try {
     }
     await client.query("BEGIN");
     try {
+      if (file === "004_subscriber_public_slugs.sql") {
+        const segment = process.env.PLATFORM_ADMIN_PATH;
+        if (!segment || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,95}$/.test(segment)) {
+          throw new Error("PLATFORM_ADMIN_PATH is required for private-entry slug reservation.");
+        }
+        await client.query("SELECT set_config('bhru.private_admin_segment', $1, true)", [segment]);
+      }
       await client.query(sql);
       await client.query("INSERT INTO schema_migrations(name,checksum) VALUES($1,$2)", [file, checksum]);
       await client.query("COMMIT");
