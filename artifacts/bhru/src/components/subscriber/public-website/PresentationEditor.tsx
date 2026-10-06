@@ -4,6 +4,7 @@ import type { PublicAnnouncement, PublicBanner, PublicPartnerLogo, PublicPresent
 import { SettingsRow, SettingToggle } from '@/components/subscriber/general-settings/settings-ui';
 import { MAX_BANNERS, MAX_BARS, MAX_HTML, MAX_LOGOS, usePublicWebsite } from '@/hooks/use-public-website';
 import { TickerControls, TickerColours, defaultStrip, defaultTicker } from './TickerControls';
+import { PartnerImageControls } from './PartnerImageControls';
 
 type W = ReturnType<typeof usePublicWebsite>;
 const err = (m?: string) => m ? <p className="gs-err" role="alert">{m}</p> : null;
@@ -27,12 +28,12 @@ function Thumb({ url, alt }: { url?: string; alt: string }) {
     {url ? <img src={url} alt={alt} className="max-h-full max-w-full object-contain" /> : <span className="gs-help px-1 text-center">No preview</span>}</div>;
 }
 
-function FilePick({ w, label, onId, icon, usage = 'logo' }: { w: W; label: string; onId: (id: string) => void; icon?: 'add' | 'replace'; usage?: 'logo' | 'banner' }) {
+function FilePick({ w, label, onId, icon, usage = 'logo', className = '', touchFriendly = false, disabled = false }: { w: W; label: string; onId: (id: string) => void; icon?: 'add' | 'replace'; usage?: 'logo' | 'banner'; className?: string; touchFriendly?: boolean; disabled?: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   return <>
     <input ref={ref} type="file" accept="image/png,image/jpeg" className="sr-only" aria-label={`${label} file`}
       onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (!f) return; const id = await w.uploadItem(f, usage); if (id) onId(id); }} />
-    <button type="button" className="btn btn-sm" disabled={w.itemUploading || w.saving} onClick={() => ref.current?.click()} data-testid={`button-${label.toLowerCase().replace(/\W+/g, '-')}`}>
+    <button type="button" className={`btn btn-sm ${className}`} style={touchFriendly ? { height: 44, minHeight: 44 } : undefined} disabled={disabled || w.itemUploading || w.saving} onClick={() => ref.current?.click()} data-testid={`button-${label.toLowerCase().replace(/\W+/g, '-')}`}>
       {icon === 'replace' ? <Upload size={13} /> : <ImagePlus size={13} />}{w.itemUploading ? 'Uploading…' : label}</button>
   </>;
 }
@@ -91,26 +92,34 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
         <div className="space-y-5">
           {w.itemError && <p className="gs-err" role="alert" data-testid="text-item-error">{w.itemError}</p>}
           {err(E.limits)}
-          <div className="space-y-2" data-testid="group-logos">
+          <div className="min-w-0 space-y-3" data-testid="group-logos">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div><h3 className="text-[13px] font-semibold">1. Partner / Image Strip</h3><p className="gs-help">Show uploaded partner or tool images. {p.logos.length}/{MAX_LOGOS} used.</p></div>
-              <div className="flex items-center gap-2"><SettingToggle id="sw-logo-strip" label="Logo strip" checked={p.logo_strip_enabled} onChange={(v) => set({ logo_strip_enabled: v })} />
-                {p.logos.length < MAX_LOGOS && <FilePick w={w} label="Add Image" onId={(id) => { const l: PublicPartnerLogo = { id: crypto.randomUUID(), asset_id: id, label: '', destination: '', new_tab: true, enabled: true }; w.presEdit(v => ({ ...v, logos: [...v.logos, l] })); setEditing(l.id); }} />}</div>
+              <SettingToggle id="sw-logo-strip" label="Logo strip" checked={p.logo_strip_enabled} onChange={(v) => set({ logo_strip_enabled: v })} />
+            </div>
+            <div className="min-w-0">
+              <FilePick w={w} label="Upload Image / Add Image" className="btn-brand w-full sm:w-auto" touchFriendly disabled={p.logos.length >= MAX_LOGOS}
+                onId={(id) => { const l: PublicPartnerLogo = { id: crypto.randomUUID(), asset_id: id, label: '', destination: '', new_tab: true, enabled: true }; w.presEdit(v => ({ ...v, logos: [...v.logos, l] })); setEditing(l.id); }} />
+              <p className="gs-help">{p.logos.length >= MAX_LOGOS ? 'Image limit reached. Replace or delete an image to add another.' : 'Upload a PNG or JPEG directly here. No Custom HTML needed.'}</p>
             </div>
             <TickerControls id="image-strip" image settings={strip} onChange={value => set({ logo_strip_settings: value })} />
             {p.logos.length === 0 ? <Empty text="No logos added yet." hint="Upload a PNG or JPEG to start your partner strip." /> :
               p.logos.map((l, i) => (
-                <div key={l.id} className="space-y-2 rounded-md border border-[hsl(var(--border))] p-2.5" data-testid={`card-logo-${i}`}>
-                  <div className="flex flex-wrap items-center gap-3"><Thumb url={url(l.asset_id)} alt={l.label || 'Logo'} />
-                    <div className="min-w-0 flex-1 space-y-1.5"><p className="truncate text-[13px] font-medium">{l.label || `Logo ${i + 1}`}</p>
-                      <Actions name={`logo-${i}`} i={i} n={p.logos.length} enabled={l.enabled} editing={editing === l.id} onEdit={() => toggleEdit(l.id)}
-                        onToggle={(v) => set({ logos: patch(p.logos, l.id, { enabled: v }) })} onMove={(d) => set({ logos: swap(p.logos, i, d) })}
-                        onDelete={() => { set({ logos: p.logos.filter(x => x.id !== l.id) }); after(); }} /></div></div>
-                  {editing === l.id && <div className="grid gap-2 sm:grid-cols-2">
+                <div key={l.id} className="min-w-0 space-y-3 rounded-md border border-[hsl(var(--border))] p-2.5" data-testid={`card-logo-${i}`}>
+                  <div className="flex min-w-0 items-center gap-3"><Thumb url={url(l.asset_id)} alt={l.label || `Partner image ${i + 1}`} />
+                    <div className="min-w-0 flex-1"><p className="truncate text-[13px] font-medium">{l.label || `Image ${i + 1}`}</p>
+                      <p className="gs-help">{l.enabled ? 'Enabled' : 'Disabled'}</p></div></div>
+                  <PartnerImageControls index={i} count={p.logos.length} enabled={l.enabled} editing={editing === l.id} onEdit={() => toggleEdit(l.id)}
+                    replace={<FilePick w={w} label="Replace" icon="replace" className="w-full" touchFriendly onId={(id) => {
+                      w.presEdit(v => ({ ...v, logos: patch(v.logos, l.id, { asset_id: id }) })); after();
+                    }} />}
+                    onToggle={() => set({ logos: patch(p.logos, l.id, { enabled: !l.enabled }) })} onMove={(d) => set({ logos: swap(p.logos, i, d) })}
+                    onDelete={() => { set({ logos: p.logos.filter(x => x.id !== l.id) }); after(); }} />
+                  {err(E[`${l.id}.image`])}
+                  {editing === l.id && <div className="grid min-w-0 gap-2 sm:grid-cols-2">
                     <Field label="Label (optional)" error={E[`${l.id}.label`]}><input className="input" value={l.label} onChange={(e) => set({ logos: patch(p.logos, l.id, { label: e.target.value }) })} data-testid={`input-logo-label-${i}`} /></Field>
                     <Field label="Link (optional)" error={E[`${l.id}.destination`]}><input className="input" value={l.destination} placeholder="https://… or /page" onChange={(e) => set({ logos: patch(p.logos, l.id, { destination: e.target.value }) })} data-testid={`input-logo-link-${i}`} /></Field>
                     <Check id={`check-logo-newtab-${i}`} label="Open link in a new tab" checked={l.new_tab} onChange={(v) => set({ logos: patch(p.logos, l.id, { new_tab: v }) })} />
-                    <div><FilePick w={w} label="Replace image" icon="replace" onId={(id) => { set({ logos: patch(p.logos, l.id, { asset_id: id }) }); after(); }} />{err(E[`${l.id}.image`])}</div>
                   </div>}
                 </div>))}
           </div>

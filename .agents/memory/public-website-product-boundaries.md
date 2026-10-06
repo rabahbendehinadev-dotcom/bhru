@@ -51,8 +51,8 @@ Future authorized CMS features are conditional extensions, not permission to red
 
 **How to apply:** Keep new HTML, scoped styles and trusted behavior conditional on configured content. Extend accessibility for new regions without rewriting the frozen menu or default styles.
 
-Common subscribers must not need Advanced HTML to configure Top Area image strips or announcement tickers. Use uploaded images, messages and simple built-in display controls; Advanced HTML stays optional, collapsed and sanitized.
+Common subscribers must not need Advanced HTML to configure Top Area image strips or announcement tickers. Use uploaded images, messages and simple built-in display controls; Advanced HTML stays optional, collapsed and sanitized. Image upload and basic image controls must be directly visible inside Partner / Image Strip on desktop and mobile, never hidden behind another section or Edit.
 
-**Why:** The user explicitly wants to remove the need to imitate old DHRU "Other HTML Code" / marquee snippets.
+**Why:** The user explicitly wants to remove the need to imitate old DHRU "Other HTML Code" / marquee snippets and requires obvious upload, replacement and image management for customers.
 
 **How to apply:** Build common Top Area features as native CMS controls. Do not ask subscribers for CSS, JavaScript or HTML, use deprecated marquee, or weaken sanitization to support routine ticker content.
