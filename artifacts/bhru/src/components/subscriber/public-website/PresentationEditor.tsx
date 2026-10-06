@@ -154,10 +154,24 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
 
       <CollapsibleCard id="hero-banner" title="Hero / Banner" description="Choose a classic hero or a banner slider.">
         <div className="space-y-3">
-          {classic && <div data-testid="group-classic-hero"><h3 className="text-[13px] font-semibold">Classic hero content</h3>{classic}</div>}
-          <div role="radiogroup" aria-label="Hero mode" className="flex gap-2">
-            {(['classic', 'banner'] as const).map(m => <button key={m} type="button" role="radio" aria-checked={p.hero_mode === m} className={`btn btn-sm ${p.hero_mode === m ? 'btn-brand' : ''}`} onClick={() => set({ hero_mode: m })} data-testid={`button-hero-mode-${m}`}>{m === 'classic' ? 'Classic Hero' : 'Banner'}</button>)}
+          <div role="radiogroup" aria-label="Hero display mode" className="grid gap-3 sm:grid-cols-2">
+            {(['classic', 'banner'] as const).map(m => (
+              <label key={m} className="cursor-pointer">
+                <input type="radio" name="hero-display-mode" value={m} checked={p.hero_mode === m}
+                  onChange={() => set({ hero_mode: m })} className="peer sr-only" data-testid={`button-hero-mode-${m}`} />
+                <div className={`flex min-h-[76px] items-center justify-between gap-3 rounded-lg border-2 p-3 text-left peer-focus-visible:ring-2 peer-focus-visible:ring-[hsl(var(--ring))] peer-focus-visible:ring-offset-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-60 ${p.hero_mode === m ? 'border-[hsl(var(--brand))] bg-[hsl(var(--brand)/.08)]' : 'border-[hsl(var(--border))] hover:border-[hsl(var(--brand)/.5)]'}`}>
+                  <span>
+                    <span className="block text-[13px] font-semibold">{m === 'classic' ? 'Classic Hero' : 'Banner Slider'}</span>
+                    <span className="gs-help block">{m === 'classic' ? 'Text + image' : 'Full-width banners'}</span>
+                  </span>
+                  <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${p.hero_mode === m ? 'border-[hsl(var(--brand))]' : 'border-[hsl(var(--border))]'}`}>
+                    {p.hero_mode === m && <span className="h-2 w-2 rounded-full bg-[hsl(var(--brand))]" />}
+                  </span>
+                </div>
+              </label>
+            ))}
           </div>
+          {p.hero_mode === 'classic' && classic && <div data-testid="group-classic-hero"><h3 className="text-[13px] font-semibold">Classic hero content</h3>{classic}</div>}
           {p.hero_mode === 'banner' && <>
             {enabledBanners === 0 && <p className="gs-help" role="status" style={{ color: 'hsl(var(--danger))' }} data-testid="text-banner-warning">No banner is enabled, so your website will show the Classic Hero instead.</p>}
             {enabledBanners === 1 && <p className="gs-help">One enabled banner is shown as a static image.</p>}
