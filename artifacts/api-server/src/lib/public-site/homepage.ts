@@ -16,7 +16,7 @@ export function renderPublicHome(model: PublicSiteModel): string {
   // Self-contained public monogram: no browser fallback request to app favicon
   // routes, and no private/session-backed asset bootstrap.
   const letter = escapeHTML(Array.from(model.siteName.trim())[0]?.toUpperCase() || 'W');
-  const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="${safePublicColor(model.theme.ink, '#17251e')}"/><text x="32" y="45" text-anchor="middle" font-family="sans-serif" font-size="40" font-weight="700" fill="${safePublicColor(model.theme.accent, '#bbf451')}">${letter}</text></svg>`;
+  const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="${safePublicColor(model.theme.ink, '#152238')}"/><text x="32" y="45" text-anchor="middle" font-family="sans-serif" font-size="40" font-weight="700" fill="${safePublicColor(model.theme.accent, '#2563eb')}">${letter}</text></svg>`;
   const favicon = escapeHTML(`data:image/svg+xml,${encodeURIComponent(icon)}`);
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">

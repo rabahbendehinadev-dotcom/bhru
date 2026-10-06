@@ -84,3 +84,45 @@ mtime_ms = 1791306891829
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/ed7582bc-4c33-48dd-91d0-bcc2ed05a429/35b9eea7-b245-4acb-8029-bfcd8cf38e09"
 storage_version_token = "1791307758185702"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "YJLlCvp7hq32WkMXajrOk"
+uri = "file://screenshots/public-template-v2-desktop.jpg"
+type = "image"
+title = "Public template V2 — desktop"
+description = "Full shared GSM/service homepage with model-driven branding, neutral device banner fallback and optional sections hidden when empty."
+logical_id = "24970ef5-5fe5-4b1c-ab09-f9871cf831b6"
+content_hash = "sha256:98f500c95226ce2791f0f3d796f18147236e00c7c0b5c0177885ea5d32af8621"
+size = 151762
+mtime_ms = 1791310091444
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/24970ef5-5fe5-4b1c-ab09-f9871cf831b6/f1f8f502-e84c-4511-bfe1-3c2b4c560235"
+storage_version_token = "1791310280155658"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "iCpSuipXfo444ovYCIGCh"
+uri = "file://screenshots/public-template-v2-iphone.jpg"
+type = "image"
+title = "Public template V2 — iPhone"
+description = "390px mobile layout with readable typography, proportional banner and touch-friendly buttons."
+logical_id = "dd7dfda4-1b10-427b-be3e-05ff1050e0b8"
+content_hash = "sha256:ff5edb8bb973a1bec26e964e86d26f82939ab61b7ca801d8cd2ddc750604ff57"
+size = 36432
+mtime_ms = 1791309888564
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/dd7dfda4-1b10-427b-be3e-05ff1050e0b8/1f51028e-edde-48fd-9f13-15b26082fa97"
+storage_version_token = "1791310280726410"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "vLJxbB_N5INARb6jEEltG"
+uri = "file://screenshots/public-template-v2-mobile-menu.jpg"
+type = "image"
+title = "Public template V2 — open mobile menu"
+description = "Actual native open-menu state with full-width navigation and distinct Login action."
+logical_id = "2692270c-2bb2-44a6-8b53-41ecc7d72e7c"
+content_hash = "sha256:110876a68cecef444f1b271fe712dcdb7f9adf88830630b824cc1acfbc37b84a"
+size = 23182
+mtime_ms = 1791309889964
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/2692270c-2bb2-44a6-8b53-41ecc7d72e7c/5126353b-c4a7-436c-9ffc-36697f3ac31e"
+storage_version_token = "1791310281255174"
+content_type = "image/jpeg"

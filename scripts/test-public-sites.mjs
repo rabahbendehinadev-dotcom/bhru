@@ -32,7 +32,9 @@ try {
       assert.equal(page.response.headers.get('set-cookie'), null);
       assert(page.html.includes(site.company) && page.html.includes(site.business));
       assert(page.html.includes('data-public-template="bhru-v1"'));
-      assert(page.html.includes('No statistics published yet') && page.html.includes('Coming soon'));
+      assert(page.html.includes('Coming soon'));
+      assert(!page.html.includes('No statistics published yet') && !page.html.includes('No feedback published yet'));
+      assert(!page.html.includes('id="statistics"'), 'Empty optional statistics must not render');
       assert(!/<form\b/i.test(page.html));
       for (const target of ['home', 'services', 'about', 'contact', 'customer-access']) {
         assert(page.html.includes(`id="${target}"`));
@@ -45,7 +47,7 @@ try {
         assert(!page.html.includes(privateField), 'Private data must not occur in public HTML');
       }
     }
-    pass('ACTIVE/TRIAL share the public template, own names, honest defaults, live section links; no panel scripts/private metadata');
+    pass('ACTIVE/TRIAL share the public template, own names, honest service placeholders, optional empty sections hidden; no panel scripts/private metadata');
     for (const site of fixtures.sites.slice(2)) {
       const page = await document(`/${site.slug}`);
       assert.equal(page.status, 404);

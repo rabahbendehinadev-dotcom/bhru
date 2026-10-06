@@ -7,6 +7,10 @@ export interface PublicService {
   icon: 'device' | 'server' | 'support';
   state: 'placeholder' | 'published';
   href: string | null;
+  image?: string | null;
+  category?: string;
+  statusLabel?: string;
+  ctaLabel?: string;
 }
 export interface PublicSiteModel extends PublicSiteNames {
   siteName: string;
@@ -28,10 +32,16 @@ export interface PublicSiteModel extends PublicSiteNames {
     statistics: { value: string; label: string; note: string }[];
     ctaTitle: string;
     ctaDescription: string;
+    cta?: PublicLink;
     customerAccessTitle: string;
     customerAccessDescription: string;
   };
-  footer: { description: string; links: PublicLink[]; copyrightYear: number };
+  footer: {
+    description: string; links: PublicLink[]; copyrightYear: number;
+    serviceLinks?: PublicLink[];
+    contact?: { label: string; value: string; href?: string }[];
+    socialLinks?: PublicLink[];
+  };
 }
 
 /** Generic, truthful defaults; no subscriber-specific demo catalogue or metrics. */
@@ -44,39 +54,31 @@ export function normalizePublicSite(identity: PublicSiteNames): PublicSiteModel 
   return {
     businessName: identity.businessName, companyName: identity.companyName,
     siteName, logo: null, heroImage: null,
-    heroTitle: 'Your next service starts here.',
-    heroDescription: `Welcome to ${siteName}. Explore this website for service information as it becomes available.`,
-    primaryCTA: { label: 'Explore services', href: '#services' },
-    secondaryCTA: { label: 'Discover more', href: '#about' },
-    theme: { accent: '#bbf451', ink: '#17251e', background: '#f7f9f6' },
+    heroTitle: 'Your next phone service starts here.',
+    heroDescription: `Welcome to ${siteName}. Explore our service catalogue and find the information you need for your device.`,
+    primaryCTA: { label: 'Explore Services', href: '#services' },
+    secondaryCTA: { label: 'Learn More', href: '#about' },
+    theme: { accent: '#2563eb', ink: '#152238', background: '#f7f9fc' },
     navigation,
     services: [
-      { title: 'Service information', description: 'Published service descriptions will appear here.', icon: 'device', state: 'placeholder', href: null },
-      { title: 'Availability & details', description: 'Availability, requirements and service details are not published yet.', icon: 'server', state: 'placeholder', href: null },
-      { title: 'Getting started', description: 'Ordering guidance will appear when customer services are connected.', icon: 'support', state: 'placeholder', href: null },
+      { title: 'Service catalogue', description: 'Service listings will appear here when available.', icon: 'device', state: 'placeholder', href: null },
+      { title: 'Service details', description: 'Explore requirements and availability when services are listed.', icon: 'server', state: 'placeholder', href: null },
+      { title: 'Customer services', description: 'Discover the next steps for your device when available.', icon: 'support', state: 'placeholder', href: null },
     ],
     sections: {
-      servicesTitle: 'Find your next service.',
-      servicesDescription: 'This space is ready for the service catalogue. Listings have not been published yet.',
-      whyTitle: 'A clearer way to explore.',
-      whyDescription: 'One place for service information, requirements and the next steps.',
-      reasons: [
-        { title: 'Details in one place', description: 'Service descriptions and requirements will be presented together when published.' },
-        { title: 'Know what comes next', description: 'Clear guidance will help you understand the next steps before getting started.' },
-        { title: 'Easy to explore', description: 'Browse this website comfortably from your phone, tablet or desktop.' },
-      ],
-      statistics: [
-        { value: '—', label: 'Published services', note: 'Catalogue coming soon' },
-        { value: '—', label: 'Service statistics', note: 'No statistics published yet' },
-        { value: '—', label: 'Customer feedback', note: 'No feedback published yet' },
-      ],
-      ctaTitle: 'Discover what comes next.',
-      ctaDescription: 'Explore the service area. Contact information and customer access will appear here when published.',
-      customerAccessTitle: 'Customer access is coming soon.',
-      customerAccessDescription: 'Customer login is not connected yet. This public website is separate from the business owner’s Subscriber Panel.',
+      servicesTitle: 'Explore our services.',
+      servicesDescription: 'Find service information, availability and next steps in one place.',
+      whyTitle: 'Why choose us',
+      whyDescription: '',
+      reasons: [],
+      statistics: [],
+      ctaTitle: 'Find the right service for your device.',
+      ctaDescription: 'Start with the service catalogue and explore your options.',
+      customerAccessTitle: 'Customer access coming soon',
+      customerAccessDescription: 'Customer login is not available yet. Please check back soon.',
     },
     footer: {
-      description: `The public website of ${identity.businessName || siteName}.`,
+      description: `Service information from ${identity.businessName || siteName}.`,
       links: [...navigation.filter(link => link.href !== '#home'), { label: 'Customer access', href: '#customer-access' }],
       copyrightYear: new Date().getUTCFullYear(),
     },

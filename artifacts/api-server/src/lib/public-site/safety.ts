@@ -19,3 +19,17 @@ export function safePublicImage(image: string | null): string | null {
 export function safePublicColor(color: string, fallback: string): string {
   return /^#[0-9a-f]{6}$/i.exec(color)?.[0] === color ? color : fallback;
 }
+
+/** Presentation links: local anchors, https (no credentials), mailto/tel. Never JS/data/protocol-relative/owner paths. */
+export function safePublicLink(href: string | undefined | null, fallback = '#home'): string {
+  if (!href) return fallback;
+  if (/^#[a-z][a-z0-9-]*$/.test(href)) return href;
+  if (/^mailto:[^\s<>"'?#]+@[^\s<>"'?#]+$/i.test(href)) return href;
+  if (/^tel:\+?[0-9()\-. ]{3,30}$/i.test(href)) return href;
+  try {
+    if (!/^https:\/\//i.test(href)) return fallback;
+    const u = new URL(href);
+    return u.protocol === 'https:' && !u.username && !u.password ? u.href : fallback;
+  } catch { return fallback; }
+}
+export const isExternalLink = (href: string) => /^https:/i.test(href);

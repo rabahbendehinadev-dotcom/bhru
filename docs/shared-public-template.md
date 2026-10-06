@@ -60,7 +60,7 @@ while preserving the generic Phase 2 error documents.
 
 Only existing permitted identity fields currently come from storage. Other fields
 use generic defaults. Service cards are clearly labelled Coming soon; statistics
-are dashes with explicitly unpublished notes. There are no fabricated prices,
+and benefits are omitted when no real content is configured. There are no fabricated prices,
 turnaround times, reviews, counts, partners or provider-specific service claims.
 Images default to null; the illustration is generic, not subscriber business data.
 
@@ -71,8 +71,9 @@ must be defined alongside any future upload/publishing feature.
 ## Navigation and security
 
 The homepage is still `/{slug}`. Current navigation/CTAs are functional local
-section anchors. The public Login button navigates to a truthful customer-access
-notice; it does not open the owner's `/login` page or pretend customer auth exists.
+section anchors. The public Login button reveals a dismissible, target-only
+customer-access notice; it is hidden on ordinary page loads and does not open
+the owner's `/login` page or pretend customer auth exists.
 
 The mobile menu uses native details/summary, with no browser JavaScript. While
 open, its header stops sticking so an anchor jump scrolls the menu away rather
@@ -126,3 +127,21 @@ Transient owner sign-in/loading and chart-sizing warnings were observed on the
 unchanged panel but did not block the public-site review.
 
 No push or deployment. Visual approval is required before CMS implementation.
+
+## Visual revision
+
+The user approved the architecture/isolation but requested a more professional
+GSM/IMEI service-business presentation. The shared renderers now provide a
+neutral studio-like device fallback, model-driven branding, responsive service
+cards, conditional benefits/statistics, an on-demand customer-access notice and
+a footer that omits absent contact/social/service columns.
+
+Presentation-only optional model fields support service images, category/status,
+card CTA labels, a separate bottom CTA and actual public footer links/contact.
+The data loader, resolver, eligibility, authentication and database remain unchanged.
+
+The revised 11-group regression suite and workspace/API type checks passed.
+Development fixtures were cleaned and original data fingerprints matched.
+Rendered layouts were reviewed at 375/390/430px plus desktop, including the real
+native open-menu state and customer-access target state. No UI scripts were added.
+Screenshots for approval: `screenshots/public-template-v2-*`.
