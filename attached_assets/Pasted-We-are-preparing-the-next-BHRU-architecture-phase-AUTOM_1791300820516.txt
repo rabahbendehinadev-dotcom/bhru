@@ -1,0 +1,452 @@
+We are preparing the next BHRU architecture phase:
+
+AUTOMATIC PUBLIC WEBSITE URL
+https://bhru.net/{subscriber-slug}
+
+IMPORTANT:
+THIS TASK IS READ-ONLY ARCHITECTURE ANALYSIS.
+
+DO NOT modify code.
+DO NOT create migrations.
+DO NOT modify the database.
+DO NOT add slug yet.
+DO NOT create the public website/index yet.
+DO NOT implement custom domains.
+DO NOT modify registration.
+DO NOT modify authentication.
+DO NOT modify Platform Admin.
+DO NOT push.
+DO NOT deploy.
+
+==================================================
+CONTEXT / APPROVED PRODUCT MODEL
+==================================================
+
+Current approved model:
+
+1 Subscriber
+=
+1 Unlock Business / Server
+=
+1 Public Website
+=
+1 Subscription
+
+The existing business ownership boundary remains:
+
+subscribers.id
+
+We are NOT introducing tenant_id/server_id/workspace_id.
+
+Later every subscriber will have:
+
+Default public URL:
+https://bhru.net/{slug}
+
+Example:
+
+Business / Server Name:
+Unlock Fast
+
+Automatically generated slug:
+unlockfast
+
+Default public website:
+https://bhru.net/unlockfast
+
+Later the same subscriber may connect:
+
+https://unlockfast.com
+
+Both URLs will eventually resolve to the SAME subscriber website and SAME business data.
+
+Custom domains are NOT part of this task.
+
+The public website template is also NOT being built yet.
+
+==================================================
+1. AUDIT CURRENT ROOT ROUTING
+==================================================
+
+Inspect the current frontend AND backend routing.
+
+List every important existing root-level path and route family.
+
+Especially inspect:
+
+/
+/login
+/register
+/api/*
+private Platform Admin path
+subscriber panel routes
+workspace/module routes
+static asset paths
+health endpoints
+callback/webhook paths if any
+404/fallback handling
+
+Also inspect any dynamic root route that already exists.
+
+Report which routes could conflict with:
+
+/{slug}
+
+Do not change anything.
+
+==================================================
+2. FRONTEND ROUTER
+==================================================
+
+Inspect the actual frontend routing implementation.
+
+Report:
+
+- router/library being used
+- where routes are declared
+- route precedence/order behavior
+- how unknown routes are currently handled
+- whether direct browser refresh works through server fallback
+- whether adding /:slug could accidentally capture application routes
+- whether nested subscriber-panel routes are isolated from public routes
+
+Recommend the safest routing position for /:slug.
+
+Do NOT implement it.
+
+==================================================
+3. BACKEND / SERVER ROUTING
+==================================================
+
+Inspect the server responsible for serving BHRU.
+
+Explain:
+
+- how frontend fallback currently works
+- how /api is protected from frontend route fallback
+- how static assets are served
+- whether /{slug} requires server changes
+- whether Dokploy/Traefik needs any change for bhru.net/{slug}
+
+Remember:
+
+This phase is PATH-based:
+bhru.net/unlockfast
+
+NOT:
+unlockfast.bhru.net
+
+Therefore do not propose wildcard subdomains.
+
+==================================================
+4. RESERVED SLUGS
+==================================================
+
+Based on the ACTUAL existing BHRU routes, produce a proposed reserved-slug list.
+
+Include anything that must never be assignable to a subscriber because it would collide with BHRU itself.
+
+Examples may include:
+
+login
+register
+api
+admin
+settings
+assets
+health
+
+But do not blindly use this example list.
+
+Inspect the real application and return the correct list based on current routes plus clearly necessary infrastructure names.
+
+Also consider case-insensitive collisions.
+
+Do NOT store the list yet.
+
+==================================================
+5. SLUG STORAGE
+==================================================
+
+Inspect the current subscribers schema.
+
+Recommend the safest additive storage location for the public slug.
+
+We expect it will probably belong to subscribers.id/business identity, but verify against the current architecture.
+
+Report:
+
+- recommended table
+- recommended column
+- data type
+- UNIQUE requirement
+- NOT NULL or nullable during migration
+- case-sensitivity strategy
+- index requirement
+
+Do NOT create the column or migration.
+
+==================================================
+6. SLUG GENERATION
+==================================================
+
+Current registration contains:
+
+Business / server name
+
+Study how we can automatically derive the slug from this field.
+
+Examples:
+
+Unlock Fast
+→ unlockfast
+
+GAB Server
+→ gabserver
+
+My Unlock 24
+→ myunlock24
+
+The user should NOT have to manually choose a slug during registration.
+
+Analyze handling for:
+
+- uppercase/lowercase
+- spaces
+- hyphens
+- punctuation
+- accented Latin characters
+- Arabic/non-Latin business names
+- empty result after normalization
+- excessively long names
+- reserved names
+
+Do not implement yet.
+
+==================================================
+7. DUPLICATE BUSINESS NAMES / SLUGS
+==================================================
+
+The public slug must be unique.
+
+Analyze a concurrency-safe strategy.
+
+Desired behavior conceptually:
+
+First:
+Unlock Fast
+→ /unlockfast
+
+Second conflicting registration:
+Unlock Fast
+→ /unlockfast-2
+
+Third:
+→ /unlockfast-3
+
+But verify the safest database-backed implementation.
+
+The database UNIQUE constraint must remain the final authority.
+
+Specifically analyze simultaneous registrations trying to obtain the same slug.
+
+Do NOT rely only on:
+"SELECT first, then INSERT"
+
+if that creates a race condition.
+
+Do not implement yet.
+
+==================================================
+8. SLUG IMMUTABILITY
+==================================================
+
+Our current intended product rule is:
+
+The slug is generated automatically when the subscriber is created.
+
+Changing:
+
+subscribers.business
+
+later must NOT automatically change the public slug.
+
+Reason:
+existing customer links must not break.
+
+Review whether this rule fits the current architecture.
+
+Also report whether we should allow manual slug changes at all.
+
+Do not implement any editing UI.
+
+==================================================
+9. EXISTING SUBSCRIBERS
+==================================================
+
+There are already Development subscribers.
+
+Analyze how an eventual migration should safely assign unique slugs to existing subscribers using their current:
+
+subscribers.business
+
+Do not run the migration.
+
+Explain how collisions and unusable names would be handled.
+
+==================================================
+10. PUBLIC TENANT RESOLUTION
+==================================================
+
+We are NOT building the website template yet.
+
+Analyze the cleanest future request flow for:
+
+GET https://bhru.net/unlockfast
+
+Expected concept:
+
+request path
+    ↓
+slug = unlockfast
+    ↓
+lookup subscriber by slug
+    ↓
+subscriber found and eligible
+    ↓
+load public website for that subscriber
+
+For now, the future page may initially be only a minimal placeholder.
+
+Analyze where this resolution should happen and how it should avoid exposing private subscriber data.
+
+Do NOT implement it.
+
+==================================================
+11. SUBSCRIPTION / LICENCE STATUS
+==================================================
+
+Analyze what should happen to the public website when the subscriber is:
+
+PENDING
+TRIAL
+ACTIVE
+SUSPENDED
+EXPIRED
+REVOKED
+
+Do NOT change current licence behavior.
+
+Report the safest recommended behavior for each state.
+
+We will approve the product behavior separately before implementation.
+
+==================================================
+12. SECURITY
+==================================================
+
+Identify risks including:
+
+- route takeover
+- reserved route collisions
+- slug enumeration
+- cross-subscriber data leakage
+- exposing private /api/state data publicly
+- registration race conditions
+- Unicode normalization problems
+- path traversal / encoded slash issues
+- case collisions
+- unsafe redirects
+- cache mixing between subscribers
+
+Do not implement fixes yet.
+
+==================================================
+13. CUSTOM DOMAIN COMPATIBILITY
+==================================================
+
+Without implementing domains, confirm that the proposed slug architecture can later support:
+
+bhru.net/unlockfast
+AND
+unlockfast.com
+
+resolving to the SAME subscribers.id.
+
+The future custom domain must be an additional hostname mapping.
+
+It must NOT create:
+- another subscriber
+- another website copy
+- another business database
+- duplicated CMS content
+
+Do NOT implement custom domains.
+
+==================================================
+14. PUBLIC WEBSITE / CMS FUTURE COMPATIBILITY
+==================================================
+
+Important future requirement:
+
+BHRU will have ONE shared public website template.
+
+We will NOT create a separate source-code copy per subscriber.
+
+Each subscriber will later customize the shared template through their panel/CMS, including things such as:
+
+- Logo
+- Index Banner
+- Page Content
+- Services
+- Testimonials
+- Gallery
+- Blog
+- Contact information
+- Appearance
+
+Do NOT build any of this now.
+
+Only confirm that the proposed slug resolution architecture supports:
+
+slug/hostname
+→ subscribers.id
+→ subscriber-specific CMS/content
+→ shared BHRU public template
+
+==================================================
+15. FINAL REPORT
+==================================================
+
+Return a concise report with:
+
+A. Existing route map
+B. Potential /{slug} collisions
+C. Recommended reserved slug strategy
+D. Recommended slug storage
+E. Recommended normalization algorithm
+F. Duplicate/concurrency strategy
+G. Existing-subscriber migration strategy
+H. Slug immutability recommendation
+I. Public subscriber resolution flow
+J. Subscription-status behavior recommendation
+K. Security risks
+L. Custom-domain compatibility
+M. Shared-template/CMS compatibility
+N. Safest implementation plan
+
+CRITICAL:
+
+DO NOT IMPLEMENT ANYTHING.
+
+I want to review the architecture report before authorizing:
+- migration
+- registration changes
+- routing changes
+- public website resolution
+
+READ ONLY.
+NO CODE CHANGES.
+NO DATABASE CHANGES.
+NO PUSH.
+NO DEPLOY.

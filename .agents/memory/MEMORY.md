@@ -10,3 +10,4 @@
 - [Subscriber workspace state](subscriber-workspace-state.md) — Preserve opened page state and shell; workspace state is session-scoped, not a browser draft cache.
 - [Subscriber Settings staging](subscriber-settings-staging.md) — Subscriber-owned persistence is approved; internal 11-entry nav stays distinct; domains and multiple servers remain deferred.
 - [Temporary test module resolution](temporary-test-module-resolution.md) — Pino transport lookup is caller-relative; scratch bundles can fail while the app remains healthy.
+- [Public website product boundaries](public-website-product-boundaries.md) — Path-based automatic URLs, stable slugs, one shared template; future custom hostnames map to the same business.
