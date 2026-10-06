@@ -5,6 +5,7 @@ import { Btn } from '@/components/bhru/ui';
 import { resolveSlug } from '@/components/subscriber/nav-catalog';
 import { OnlineStaffList, useOnlineStaff } from '@/components/subscriber/OnlineStaff';
 import { EmptyState } from '@/components/subscriber/EmptyState';
+import GeneralSettingsPage from '@/pages/general-settings';
 
 function Crumbs({ items }: { items: string[] }) {
   return (
@@ -32,6 +33,10 @@ export default function Module() {
       </div>
     </>
   );
+
+  if (r.entry.id === 'settings' && r.child?.label === 'General Settings') {
+    return <><Crumbs items={r.crumbs} /><GeneralSettingsPage /></>;
+  }
 
   const isStaff = r.entry.id === 'online-staff' && !r.child;
   return (
