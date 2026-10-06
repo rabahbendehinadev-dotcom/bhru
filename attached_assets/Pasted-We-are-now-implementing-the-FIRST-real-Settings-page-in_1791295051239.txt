@@ -1,0 +1,338 @@
+We are now implementing the FIRST real Settings page in the BHRU Subscriber Panel:
+
+Settings → General Settings
+
+I provided DHRU Fusion reference screenshots.
+
+IMPORTANT:
+Use those screenshots as the STRUCTURAL reference for this page.
+
+We are NOT implementing the settings backend yet.
+For this step, build the complete General Settings UI only.
+
+Do NOT:
+- modify Platform Admin
+- modify authentication
+- modify subscription/licence logic
+- modify database architecture
+- modify the existing sidebar structure
+- modify the workspace tabs architecture
+- implement custom domains
+- implement tenant provisioning
+- invent new settings
+- remove settings because they look old
+- push or deploy
+
+Work in Replit Preview only.
+
+==================================================
+1. SETTINGS INTERNAL NAVIGATION
+==================================================
+
+When Settings → General Settings is opened, the workspace must contain a secondary Settings navigation like the DHRU reference.
+
+Use this exact order:
+
+General Settings
+Registration / Profile
+Shopping Cart
+Localizations
+Tax
+Invoice
+Contact Us
+Orders
+Fraud protection
+Appearance
+Other
+
+General Settings must be selected/active.
+
+The other Settings pages do NOT need to be implemented in this task.
+
+They are navigation entries that we will build one by one later.
+
+Do not create fake settings content for them.
+
+==================================================
+2. GENERAL SETTINGS PAGE
+==================================================
+
+Build the General Settings page with the following sections and exact field structure.
+
+--------------------------------------------------
+SECTION: Site Information
+--------------------------------------------------
+
+Company Name
+- text input
+- helper text:
+  "Your Company Name as you want it to appear throughout the system"
+
+Site Name
+- text input
+
+Logo Link
+- text input
+- button: "Add From Gallery"
+- helper text:
+  "Enter your logo URL to display in email messages or leave blank for none"
+
+Favicon Icon
+- text input
+- button: "Add From Gallery"
+- helper text:
+  "64 Kb PNG image recommended"
+
+For now, Add From Gallery only needs its UI.
+Do not invent a complete gallery/media backend.
+
+--------------------------------------------------
+SECTION: Site Links
+--------------------------------------------------
+
+Site Link
+- URL/text input
+- helper text based on the DHRU reference
+
+Site SSL Link
+- URL/text input
+- helper text based on the DHRU reference
+
+Do NOT implement our future BHRU tenant URL/custom-domain architecture yet.
+We will handle that separately after the page structure is complete.
+
+--------------------------------------------------
+SECTION: SEO Settings
+--------------------------------------------------
+
+SEO Friendly url
+- Enable / Disable control
+
+Page Title Format
+- input/select matching the reference behavior visually
+
+Site Description
+- textarea
+- helper text:
+  "Header META tag description"
+
+Site Keywords
+- textarea
+
+--------------------------------------------------
+SECTION: Site Settings
+--------------------------------------------------
+
+Create Enable / Disable controls for ALL of these settings in this exact order:
+
+Faster Browsing
+Recharge Voucher
+Testimonial
+Blog
+Knowledge Base
+Support Ticket
+Show Service Price
+Show Service Icon
+Affiliate System
+Gift Certificate
+Gift Certificate Tax
+Withdrawal Request
+EU Cookie Law
+E-mail History Save
+User can Manage Credit Card Detail
+Mobile App
+Display Track Order
+Display Downloads
+
+For Show Service Icon, reserve helper text area like the reference:
+"Reseller Price Page icon"
+
+IMPORTANT:
+Do not remove any of these settings.
+Do not rename them.
+Do not create functionality behind them yet.
+
+==================================================
+3. SITE PAGE REDIRECT
+==================================================
+
+Create section:
+
+Site Page Redirect
+
+Fields:
+
+Index Redirect
+- text input
+- helper:
+  "Main index page redirect to eg. main.php"
+
+Logout Redirect
+- text input
+- helper:
+  "Redirection after logout eg. main.php"
+
+No redirect logic yet.
+
+==================================================
+4. FUND SETTINGS
+==================================================
+
+Create section:
+
+Fund Settings
+
+Add Fund
+- Enable / Disable
+- helper:
+  "Adding of funds by clients from the client area"
+
+Tax for add fund
+- Enable / Disable
+- helper:
+  "Enable tax for Add Fund"
+
+Minimum Add Fund
+- numeric input
+- helper:
+  "Enter the minimum amount a client can add in a single transaction"
+
+Also visually support the DHRU note:
+"Set Minimum Fund Limit Payment Gateway wise"
+
+Maximum Add Fund
+- numeric input
+- helper:
+  "Enter the maximum amount a client can add in a single transaction"
+
+Also visually support:
+"Set Maximum Fund Limit Payment Gateway wise"
+
+Maximum Balance
+- numeric input
+- helper:
+  "Enter the maximum balance that a client can add in credit"
+
+==================================================
+5. SAVE ACTION
+==================================================
+
+At the bottom provide:
+
+Save Changes
+
+For this UI phase, do NOT pretend that settings are permanently saved to the production backend.
+
+The button may operate as a frontend interaction/validation only.
+
+Do not show fake success messages claiming database persistence.
+
+==================================================
+6. DESIGN
+==================================================
+
+Do NOT copy the old DHRU visual design.
+
+Use the existing modern BHRU design system.
+
+I want the same INFORMATION ARCHITECTURE as DHRU, but modernized.
+
+Use:
+- clean section cards/panels
+- clear section headings
+- professional spacing
+- aligned labels and controls
+- modern inputs
+- modern Enable/Disable switches
+- BHRU typography
+- BHRU orange accent where appropriate
+- current BHRU Light Mode
+- full Dark Mode compatibility
+
+Avoid making every individual setting a huge card.
+
+This is a professional administration/settings screen and must remain compact enough for many settings.
+
+==================================================
+7. RESPONSIVE DESIGN
+==================================================
+
+Desktop:
+- settings secondary navigation visible clearly
+- main settings content uses available workspace width
+- labels and controls aligned cleanly
+
+Tablet:
+- adapt without horizontal page overflow
+
+Mobile/iPhone/Android:
+- do NOT keep a narrow permanent secondary sidebar that destroys the content width
+- transform the Settings navigation into an appropriate mobile control/drawer/dropdown
+- inputs use full available width
+- buttons remain touch friendly
+- textareas resize correctly
+- no horizontal overflow
+
+Keep it compatible with the future BHRU PWA.
+
+==================================================
+8. WORKSPACE TAB INTEGRATION
+==================================================
+
+General Settings must open inside the existing BHRU workspace/tab system.
+
+Example tab:
+
+General Settings ×
+
+Do NOT create a second independent application shell.
+
+The existing:
+- BHRU main sidebar
+- header
+- workspace tabs
+- theme
+- user session
+
+must remain mounted.
+
+==================================================
+9. CODE STRUCTURE
+==================================================
+
+Do not put the entire page into one giant component.
+
+Create reusable UI components where appropriate, for example:
+
+- SettingsSection
+- SettingsRow
+- SettingToggle
+- SettingInput
+- SettingTextarea
+- SettingsNavigation
+
+Keep the settings definition clean enough that the remaining Settings pages can reuse the same architecture later.
+
+But do NOT over-engineer or build their business logic now.
+
+==================================================
+10. FINAL CHECK
+==================================================
+
+Before finishing, compare the page against the DHRU screenshots and confirm that General Settings contains:
+
+Site Information
+Site Links
+SEO Settings
+Site Settings
+Site Page Redirect
+Fund Settings
+
+and that no visible field/toggle from the supplied General Settings reference was accidentally omitted.
+
+Do not work on Registration / Profile yet.
+
+Do not push.
+Do not deploy.
+
+Stop after General Settings is visually complete in Replit Preview and let me review it.
