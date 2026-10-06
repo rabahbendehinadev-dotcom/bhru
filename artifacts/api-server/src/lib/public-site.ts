@@ -1,7 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 import { pool, type PoolClient } from "@workspace/db";
 import { adminPath } from "./admin-entry";
-import { publicSiteHTML, type PublicSiteNames } from "./public-site-html";
+import { publicSiteHTML } from "./public-site-html";
+import type { PublicSiteModel } from "./public-site/model";
+import { loadSubscriberPublicSiteData } from "./public-site/data";
 
 const APPLICATION_ROOTS = new Set([
   'login', 'register', 'dashboard', 'settings', 'm', 'api', 'admin',
@@ -26,7 +28,7 @@ export function classifyPublicPath(path: unknown): Classification {
 type DocumentResult =
   | { kind: 'application'; status: 204 }
   | { kind: 'missing'; status: 404 }
-  | { kind: 'site'; status: 200; site: PublicSiteNames }
+  | { kind: 'site'; status: 200; site: PublicSiteModel }
   | { kind: 'unavailable'; status: 503; errorCode: string };
 
 export async function resolvePublicDocument(
@@ -36,10 +38,11 @@ export async function resolvePublicDocument(
   if (classification.kind === 'application') return { kind: 'application', status: 204 };
   if (classification.kind === 'invalid') return { kind: 'missing', status: 404 };
   try {
-    // Deliberately select no IDs, account/contact fields, licence keys or status.
+    // The resolved ID is internal ownership context only; never public markup.
+    // Select no account/contact fields, licence keys or private status.
     // Eligibility matches the existing panel predicate; plan.enabled is not an
     // access condition for an already-issued licence.
-    const result = await database.query(`SELECT s.business AS "businessName",
+    const result = await database.query(`SELECT s.id AS "subscriberId", s.business AS "businessName",
       coalesce(nullif(btrim(g.company_name),''),s.business) AS "companyName"
       FROM subscribers s JOIN subscriptions l ON l.subscriber_id=s.id
       LEFT JOIN subscriber_general_settings g ON g.subscriber_id=s.id
@@ -52,7 +55,9 @@ export async function resolvePublicDocument(
     if (typeof row.businessName !== 'string' || typeof row.companyName !== 'string') {
       throw new Error('Invalid public names');
     }
-    return { kind: 'site', status: 200, site: { businessName: row.businessName, companyName: row.companyName } };
+    return { kind: 'site', status: 200, site: loadSubscriberPublicSiteData({
+      subscriberId: row.subscriberId, businessName: row.businessName, companyName: row.companyName,
+    }) };
   } catch (error) {
     const code = error && typeof error === 'object' ? (error as { code?: unknown }).code : undefined;
     return { kind: 'unavailable', status: 503, errorCode: typeof code === 'string' ? code : 'INTERNAL' };
@@ -63,7 +68,8 @@ export function writePublicDocument(req: Request, res: Response, result: Documen
   res.setHeader('Cache-Control', 'no-store');
   if (result.kind === 'application') { res.status(204).end(); return; }
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'");
+  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'" +
+    (result.kind === 'site' ? "; img-src 'self' https: data:" : ''));
   if (result.kind === 'unavailable') {
     req.log.error({ code: result.errorCode }, 'Public site unavailable');
     res.setHeader('Retry-After', '60');

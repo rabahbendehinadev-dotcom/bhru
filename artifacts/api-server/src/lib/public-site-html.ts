@@ -1,19 +1,16 @@
-// This document is deliberately independent of the panel bundle, session store,
-// SubscriberShell and administrator UI. Only explicitly public names enter it.
-export interface PublicSiteNames {
-  businessName: string;
-  companyName: string;
-}
+import { renderPublicHome } from './public-site/homepage';
+import type { PublicSiteModel } from './public-site/model';
+export type { PublicSiteNames } from './public-site/model';
 const escape = (value: string) => value.replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[character]!));
 
-export function publicSiteHTML(site?: PublicSiteNames, unavailable = false): string {
-  const title = site ? `${site.companyName} — Public website`
-    : unavailable ? 'Website temporarily unavailable' : 'Website unavailable';
-  const heading = site?.companyName || title;
-  const description = site ? `Public website for ${site.businessName}.`
-    : unavailable ? 'Please try again later.' : 'This website is not available.';
+export function publicSiteHTML(site?: PublicSiteModel, unavailable = false): string {
+  if (site) return renderPublicHome(site);
+  // Preserve Phase 2 generic failure documents, independent of the template.
+  const title = unavailable ? 'Website temporarily unavailable' : 'Website unavailable';
+  const heading = title;
+  const description = unavailable ? 'Please try again later.' : 'This website is not available.';
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -34,11 +31,11 @@ p{font-size:16px;line-height:1.75;color:#637083;margin:0;overflow-wrap:anywhere}
 </style></head><body><div class="page">
 <header><span class="brand">BHRU</span><span class="separator" aria-hidden="true"></span><span>Public website</span></header>
 <main><section class="card" aria-labelledby="site-name">
-<div class="label"><span class="dot" aria-hidden="true"></span>${site ? 'Subscriber public website' : 'Public website'}</div>
+<div class="label"><span class="dot" aria-hidden="true"></span>Public website</div>
 <h1 id="site-name">${escape(heading)}</h1>
 <p>${escape(description)}</p>
-${site && site.companyName !== site.businessName ? `<p class="business">Business: ${escape(site.businessName)}</p>` : ''}
-${site ? '<p class="notice">This website is being prepared. More content will be available here later.</p>' : ''}
+
+
 </section></main><footer>Powered by BHRU</footer>
 </div></body></html>`;
 }

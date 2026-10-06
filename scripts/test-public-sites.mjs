@@ -31,13 +31,21 @@ try {
       assert.equal(page.response.headers.get('cache-control'), 'no-store');
       assert.equal(page.response.headers.get('set-cookie'), null);
       assert(page.html.includes(site.company) && page.html.includes(site.business));
-      assert(page.html.includes('Subscriber public website'));
+      assert(page.html.includes('data-public-template="bhru-v1"'));
+      assert(page.html.includes('No statistics published yet') && page.html.includes('Coming soon'));
+      assert(!/<form\b/i.test(page.html));
+      for (const target of ['home', 'services', 'about', 'contact', 'customer-access']) {
+        assert(page.html.includes(`id="${target}"`));
+      }
+      for (const [, href] of page.html.matchAll(/<a\b[^>]*\bhref="([^"]+)"/g)) {
+        assert(href.startsWith('#'), 'Homepage default links must stay within the public document');
+      }
       assert(!/<script\b/i.test(page.html) && !page.html.includes('/api/state'));
       for (const privateField of [...fixtures.sites.flatMap(row => [row.id, row.owner, row.email, row.licence]), 'PRIVATE_PHONE', fixtures.planId, fixtures.adminPath]) {
         assert(!page.html.includes(privateField), 'Private data must not occur in public HTML');
       }
     }
-    pass('ACTIVE/TRIAL public pages: only public names, no cookies/panel scripts/private metadata');
+    pass('ACTIVE/TRIAL share the public template, own names, honest defaults, live section links; no panel scripts/private metadata');
     for (const site of fixtures.sites.slice(2)) {
       const page = await document(`/${site.slug}`);
       assert.equal(page.status, 404);
@@ -66,7 +74,7 @@ try {
       '/manifest.webmanifest', '/sw.js', '/robots.txt', '/brand/bhru-icon.png', '/pwa/offline.html']) {
       const page = await document(path);
       assert.equal(page.status, 200);
-      assert(!page.html.includes('Subscriber public website'));
+      assert(!page.html.includes('data-public-template="bhru-v1"'));
     }
     assert.equal((await api({}, '/healthz')).status, 200);
     assert.equal((await api({}, '/unknown-public-site-endpoint')).status, 404);
@@ -103,12 +111,24 @@ try {
     let module;
     try {
       await build({
-        stdin: { contents: 'export * from "./src/lib/public-site"; export {pool as testPool} from "@workspace/db"; export {publicSitePreview} from "../bhru/public-site-preview";',
+        stdin: { contents: 'export * from "./src/lib/public-site"; export * from "./src/lib/public-site/model"; export * from "./src/lib/public-site/data"; export * from "./src/lib/public-site/safety"; export {pool as testPool} from "@workspace/db"; export {publicSitePreview} from "../bhru/public-site-preview";',
           resolveDir: new URL('../artifacts/api-server/', import.meta.url).pathname, loader: 'ts' },
         outfile: file.pathname, platform: 'node', bundle: true, format: 'esm', logLevel: 'silent',
         banner: { js: 'import {createRequire} from "node:module"; const require=createRequire(import.meta.url);' },
       });
       module = await import(pathToFileURL(file.pathname).href);
+      const modelA = module.loadSubscriberPublicSiteData({ subscriberId: a.id, businessName: a.business,
+        companyName: a.company, email: 'PRIVATE_MODEL_EMAIL', licenceKey: 'PRIVATE_MODEL_LICENCE' });
+      const modelB = module.loadSubscriberPublicSiteData({ subscriberId: b.id, businessName: b.business, companyName: b.company });
+      assert.equal(modelA.siteName, a.company); assert.equal(modelB.siteName, b.company);
+      assert(!JSON.stringify(modelA).includes(a.id) && !JSON.stringify(modelA).includes('PRIVATE_MODEL'));
+      assert.notEqual(modelA.services, modelB.services);
+      assert.equal(module.publicPagePath(a.slug), `/${a.slug}`);
+      assert.equal(module.publicPagePath(a.slug, 'services'), `/${a.slug}/services`);
+      assert.equal(module.safePublicHref('javascript:alert(1)'), '#home');
+      assert.equal(module.safePublicImage('javascript:alert(1)'), null);
+      assert.equal(module.safePublicColor('red;}</style><script>', '#17251e'), '#17251e');
+      pass('Normalized model drops internal IDs/extra private properties, stays per-tenant and sanitizes future content fields');
       const capture = () => ({
         headers: {}, setHeader(key, value) { this.headers[key] = value; },
         status(value) { this.statusCode = value; return this; },

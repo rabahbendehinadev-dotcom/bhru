@@ -24,7 +24,7 @@ paths:
         - { name: path, in: query, required: true, schema: { type: string, maxLength: 2048 } }
       responses:
         "200":
-          description: Minimal eligible subscriber public site shell
+          description: Shared eligible subscriber public homepage; names and safe generic rendering defaults
           content:
             text/html:
               schema: { type: string }

@@ -56,3 +56,31 @@ mtime_ms = 1791304727682
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/1cfb6c68-db23-44bd-b709-e91b79464ce7/39539db9-3ec3-4103-a68e-74abef55a486"
 storage_version_token = "1791305265386755"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "lgYGPKlyHhEGpdy4J0New"
+uri = "file://screenshots/phase-3-public-home-desktop.jpg"
+type = "image"
+title = "Phase 3 — shared public homepage, desktop"
+description = "Full-page shared template using an existing eligible Development subscriber, with honest unpublished service/statistics defaults."
+logical_id = "24fae5da-770c-4c61-ac6e-4cf6221092a5"
+content_hash = "sha256:b8078a855e4f1a6168202b5e0fe98a808600fc4e675d4ecae39d3c8a50d27d82"
+size = 236415
+mtime_ms = 1791306889945
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/24fae5da-770c-4c61-ac6e-4cf6221092a5/6ba93c87-f3c3-49a4-9cc5-b36f26633d81"
+storage_version_token = "1791307757466545"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "5gMUpBiEkN1L4ryfm35gE"
+uri = "file://screenshots/phase-3-public-home-iphone.jpg"
+type = "image"
+title = "Phase 3 — shared public homepage, iPhone layout"
+description = "390×844 responsive homepage with native public navigation and no Subscriber Panel bootstrap."
+logical_id = "ed7582bc-4c33-48dd-91d0-bcc2ed05a429"
+content_hash = "sha256:ce2e9891933ee04aaf080d8fb23a7e909714e240aadcd5708d7a2973bfb56182"
+size = 32889
+mtime_ms = 1791306891829
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/ed7582bc-4c33-48dd-91d0-bcc2ed05a429/35b9eea7-b245-4acb-8029-bfcd8cf38e09"
+storage_version_token = "1791307758185702"
+content_type = "image/jpeg"

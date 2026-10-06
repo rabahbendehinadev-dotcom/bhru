@@ -1,0 +1,248 @@
+Proceed with Phase 3 only: BHRU Shared Public Website Template.
+
+Phase 2 public slug resolution has been verified and must remain intact.
+
+IMPORTANT:
+Do not push.
+Do not deploy.
+Development Preview only.
+
+Do NOT modify:
+- Phase 1 public_slug allocation or immutability
+- public slug resolver behavior
+- licence/subscription eligibility rules
+- Platform Admin authentication/private route
+- Subscriber Panel design/navigation
+- authentication/session ownership
+- custom-domain routing
+
+==================================================
+GOAL
+==================================================
+
+Replace the current eligible public-site placeholder with the first real BHRU shared public website template.
+
+Example:
+
+bhru.net/unlockfast
+bhru.net/gabserver
+
+Both URLs must use the SAME shared public-site application/template.
+
+Do NOT create separate frontend code for each subscriber.
+
+The resolved subscriber.id must determine which subscriber's public website data is rendered.
+
+Architecture:
+
+public slug
+→ resolve subscriber
+→ verify existing public eligibility
+→ load subscriber-scoped public website data
+→ render shared BHRU public template
+
+==================================================
+PHASE 3 SCOPE
+==================================================
+
+For this phase, build the reusable public website UI architecture.
+
+Create a professional responsive public homepage containing:
+
+1. Public Header
+   - subscriber/company logo area
+   - navigation
+   - Login button
+   - mobile menu
+
+2. Hero / Banner
+   - company/site name
+   - headline
+   - description
+   - primary CTA
+   - secondary CTA
+   - optional banner/image area
+
+3. Services section
+   - reusable service cards
+   - responsive grid
+
+4. Why Choose Us section
+
+5. Statistics / trust section
+
+6. CTA section
+
+7. Public Footer
+   - company/site name
+   - navigation
+   - copyright
+   - public links area
+
+==================================================
+IMPORTANT DATA RULE
+==================================================
+
+Do not hardcode subscriber-specific content into the shared template.
+
+The template must receive a normalized public-site model.
+
+Prepare the architecture so later CMS data can provide values such as:
+
+- siteName
+- logo
+- heroTitle
+- heroDescription
+- heroImage
+- primaryCTA
+- secondaryCTA
+- colors/theme
+- navigation
+- services
+- sections
+- footer
+
+For fields that do not exist in the database yet, use safe generic defaults in the rendering layer.
+
+Do NOT invent subscriber business data.
+
+Keep the data contract separated from the visual components so Phase 4 can connect the Subscriber CMS without rebuilding the public template.
+
+==================================================
+TENANT ISOLATION
+==================================================
+
+This is critical.
+
+Every public-site data load must remain scoped to the subscriber resolved from the public slug.
+
+Never allow:
+
+bhru.net/subscriber-a
+
+to load public content belonging to subscriber-b.
+
+Do not derive ownership from browser session.
+
+Public website ownership comes only from the server-side resolved subscriber.
+
+==================================================
+PUBLIC WEBSITE VS SUBSCRIBER PANEL
+==================================================
+
+The public website must remain independent from SubscriberShell.
+
+Do not load:
+- subscriber dashboard
+- workspace tabs
+- panel sidebar
+- /api/state
+- private subscriber metadata
+
+Visiting the public website while logged into another subscriber account must not change the current session.
+
+==================================================
+DESIGN
+==================================================
+
+Create a modern professional website suitable for an unlock/server services business.
+
+It should feel like a commercial website, NOT an admin dashboard.
+
+Use the existing BHRU design quality as inspiration but keep the public website visually independent.
+
+Requirements:
+
+- modern desktop layout
+- excellent iPhone layout
+- excellent Android layout
+- responsive tablet layout
+- no horizontal overflow
+- touch-friendly navigation
+- clean typography
+- professional spacing
+- modern cards
+- strong hero section
+- Light Mode first
+
+Do not copy the old DHRU public website visually.
+
+==================================================
+ROUTING
+==================================================
+
+Keep the current Phase 2 public URL behavior.
+
+For now the homepage remains:
+
+/{slug}
+
+Prepare the frontend architecture for future public pages such as:
+
+/{slug}/services
+/{slug}/about
+/{slug}/contact
+
+But do not implement a large CMS/router system yet.
+
+Do not interfere with existing BHRU application routes.
+
+==================================================
+CUSTOM DOMAINS
+==================================================
+
+Do NOT implement custom domains in this phase.
+
+The future architecture must allow:
+
+bhru.net/unlockfast
+and
+unlockfast.com
+
+to resolve to the same subscriber.id and use the same public-site template/data.
+
+But no hostname verification, DNS, SSL or domain routing work now.
+
+==================================================
+CMS
+==================================================
+
+Do NOT build the full CMS editor yet.
+
+Only prepare the public template/data contract so the Subscriber CMS can control it in the next phase.
+
+Do not create unnecessary database tables just to fill the template with demo content.
+
+==================================================
+TESTING
+==================================================
+
+Verify:
+
+1. Two different eligible subscriber slugs render through the same shared template.
+2. Each shows only its own allowed public identity.
+3. Unknown/ineligible subscribers retain Phase 2 behavior.
+4. Logged-in Subscriber A can visit Subscriber B public site without session mutation.
+5. Existing /login, /register, /dashboard, /m/*, API, static, PWA and private-admin routes still work.
+6. Direct refresh works.
+7. Desktop/mobile layouts have no horizontal overflow.
+8. HTML escaping/public-field leakage protections remain intact.
+
+==================================================
+STOP CONDITION
+==================================================
+
+Do not push.
+Do not deploy.
+
+Show me the completed public website in Replit Preview.
+
+Give me:
+- files changed
+- public-site component structure
+- public data model used
+- routing behavior
+- tenant-isolation verification
+- screenshots/Preview result
+
+Then STOP and wait for my visual approval before CMS implementation.

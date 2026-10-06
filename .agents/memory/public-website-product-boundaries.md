@@ -7,7 +7,7 @@ The intended default public website URL is `https://bhru.net/{subscriber-slug}`,
 
 **Why:** The user specified automatic URLs without a registration slug picker and stated that existing customer links must not break.
 
-**How to apply:** Preserve this URL and lifetime model in future work. Phase 1 is approved. Phase 2 authorizes anonymous URL resolution and a minimal isolated shell using only business/company names; CMS, customer features and custom domains remain separately authorized.
+**How to apply:** Preserve this URL and lifetime model in future work. Phase 1 is approved; Phase 2 resolution must stay intact. Phase 3 authorizes a shared public template only; CMS requires visual approval first, and customer features/custom domains remain deferred.
 
 Keep one versioned normalization policy for registration and migration/backfill; never silently renormalize already-assigned URLs.
 
@@ -31,4 +31,10 @@ BHRU will have one shared public website template. Subscribers will later custom
 
 **Why:** The user explicitly ruled out separate source-code copies per subscriber.
 
-**How to apply:** Resolve slug/hostname to the owning subscriber and then scoped public CMS content for the shared template. Only the minimal public shell is authorized in Phase 2; full template/CMS and custom domains remain future work.
+**How to apply:** Resolve slug/hostname to the owning subscriber and then scoped public CMS content for the shared template. Phase 3 prepares the template/public contract; do not begin CMS implementation before visual approval.
+
+When public CMS fields do not exist yet, use clearly generic rendering defaults rather than invented subscriber-specific services, prices, statistics, testimonials or business claims.
+
+**Why:** The user explicitly prohibits demo business data and unnecessary database tables to fill the public template.
+
+**How to apply:** Keep defaults visibly unpublished where appropriate. Customer Login remains an honest not-connected notice until customer authentication is separately authorized; it must not use the owner's panel login.
