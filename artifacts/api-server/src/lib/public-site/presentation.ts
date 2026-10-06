@@ -121,13 +121,14 @@ export async function savePresentation(id:string,values:PublicPresentationValues
 }
 export async function attachPresentation(model:PublicSiteModel,id:string,client:Database=pool,raw?:PublicPresentationValues,preview=false) {
   const values=raw ?? (await readPresentation(id,client)).values;
-  const images=await ownedImages(id,emptyWebsiteValues(),client,presentationAssetIds(values));
+  const sizes=new Map<string,{width:number;height:number}>();
+  const images=await ownedImages(id,emptyWebsiteValues(),client,presentationAssetIds(values),sizes);
   const url=preview?previewImageUrl:publicImageUrl;
   model.presentation={
-    logos:values.logo_strip_enabled?values.logos.filter(i=>i.enabled).map(i=>({src:url(i.asset_id,images.get(i.asset_id)!),label:i.label,href:i.destination,newTab:i.new_tab})):[],
+    logos:values.logo_strip_enabled?values.logos.filter(i=>i.enabled).map(i=>({src:url(i.asset_id,images.get(i.asset_id)!),label:i.label,href:i.destination,newTab:i.new_tab,...sizes.get(i.asset_id)})):[],
     announcements:values.announcements_enabled?values.announcements.filter(i=>i.enabled).map(i=>({text:i.text,href:i.destination,background:i.background_color,color:i.text_color,movement:i.movement,direction:i.direction,speed:i.speed})):[],
     customHTML:values.custom_html_enabled?sanitizedTopHTML(values.custom_html):'',
-    heroMode:values.hero_mode,banners:values.banners.filter(i=>i.enabled).map(i=>({src:url(i.asset_id,images.get(i.asset_id)!),alt:i.alt_text,href:i.destination})),
+    heroMode:values.hero_mode,banners:values.banners.filter(i=>i.enabled).map(i=>({src:url(i.asset_id,images.get(i.asset_id)!),alt:i.alt_text,href:i.destination,...sizes.get(i.asset_id)})),
     autoplay:values.slider_autoplay,interval:values.slider_interval,
   };
   return model;

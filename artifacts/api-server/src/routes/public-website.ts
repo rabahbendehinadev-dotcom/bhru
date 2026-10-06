@@ -124,7 +124,7 @@ router.post('/cms/public-website/assets', async (req,res,next) => {
 }, raw({ type: () => true, limit: MAX_IMAGE_BYTES }), async (req,res) => {
   const user = current(req);
   if (!Buffer.isBuffer(req.body)) throw new HttpError(400,'Send a PNG or JPEG image.');
-  const image = normalizeImage(req.body,(req.get('content-type') || '').split(';')[0]!.toLowerCase());
+  const image = normalizeImage(req.body,(req.get('content-type') || '').split(';')[0]!.toLowerCase(),req.get('X-BHRU-Image-Usage')==='banner');
   const id = randomUUID(), key = `${id}.${image.extension}`;
   try {
     await transaction(async client => {
@@ -161,6 +161,7 @@ router.delete('/cms/public-website/assets/:assetId', async(req,res) => {
 /** Public files are served before session middleware, with no visitor context. */
 export const publicMediaRouter = Router();
 publicMediaRouter.get('/api/public/media/:key',async(req,res) => {
+  res.setHeader('Cache-Control','no-store');
   const key=req.params.key;
   if (typeof key!=='string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.(png|jpg)$/.test(key)) { res.status(404).end(); return; }
   const id=key.slice(0,36);
@@ -170,12 +171,19 @@ publicMediaRouter.get('/api/public/media/:key',async(req,res) => {
     FROM public_site_assets a WHERE a.id=$1 AND a.storage_key=$2`,[id,key])).rows[0];
   if (!asset || (!asset.published && !validPreviewToken(id,req.query.preview))) { res.status(404).end(); return; }
   try {
-    const bytes=await readImage(asset.storage_key);
-    res.setHeader('Cache-Control','no-store');
     res.setHeader('Content-Security-Policy',"default-src 'none'");
     res.setHeader('Cross-Origin-Resource-Policy','cross-origin');
+    // Store immutable public bytes, but validate visibility on every reuse.
+    // Freshness without validation would bypass later licence/reference changes.
+    if (asset.published && req.query.preview===undefined) {
+      res.setHeader('Cache-Control','private, max-age=31536000, no-cache');
+      res.setHeader('ETag',`"bhru-${asset.storage_key}"`);
+      if (req.fresh) { res.status(304).end(); return; }
+    }
+    const bytes=await readImage(asset.storage_key);
     res.type(asset.content_type).send(bytes);
   } catch (error) {
+    res.setHeader('Cache-Control','no-store');
     if ((error as {code?:string}).code==='ENOENT') { res.status(404).end(); return; }
     throw error;
   }

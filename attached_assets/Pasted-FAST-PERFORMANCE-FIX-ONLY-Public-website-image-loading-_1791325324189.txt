@@ -1,0 +1,79 @@
+FAST PERFORMANCE FIX ONLY — Public website image loading.
+
+Problem:
+On the BHRU public website, uploaded banner/images visibly load in pieces/slowly when the page is opened.
+The banner slider can render before its image is fully ready, producing a poor experience.
+
+This image-loading problem has appeared in several Replit-built projects, so inspect the actual image delivery path instead of only masking it with CSS.
+
+GOAL:
+Public banners/logos should appear smoothly and quickly without visible broken/partial loading or layout jumps.
+
+DO ONLY THIS:
+
+1. Inspect how uploaded public images are currently:
+- stored
+- served by the Node production server
+- referenced in public HTML
+- loaded by the banner slider
+
+2. Check the response headers used for public media.
+Add appropriate long-lived browser caching for immutable uploaded asset URLs where safe.
+Do not cache mutable API/HTML responses incorrectly.
+
+3. Banner optimization:
+- Do not start/show a banner slide before its image is ready.
+- Preload the FIRST active banner because it is above the fold.
+- Give the first visible banner high loading priority where appropriate.
+- Preload the NEXT banner in the background.
+- Do NOT eagerly download every banner at page startup.
+- Slider autoplay should start only after the first visible banner is ready.
+
+4. Prevent visual cutting/jumping:
+- reserve the banner's layout space before image completion
+- preserve aspect ratio
+- no stretching
+- no cumulative layout shift
+- show a clean lightweight placeholder/background until the image is decoded
+- transition to the image smoothly after loading
+
+5. Inspect uploaded file sizes.
+If CMS currently stores huge original PNG/JPEG files without optimization, implement a SAFE server-side optimization pipeline for NEW banner uploads:
+- preserve good visual quality
+- resize excessively large banners to a sensible maximum width
+- optimize/compress them
+- prefer WebP for generated optimized banner assets if supported cleanly by the current stack
+- never upscale smaller images
+- keep tenant isolation and existing persistent BHRU_MEDIA_DIR storage
+- do not introduce an external CDN/storage service
+
+Do not destructively rewrite existing files unless necessary.
+Existing uploaded images must continue working.
+
+6. Logo images should also use sensible browser caching and dimensions, but do not preload every logo.
+
+7. Preserve:
+- CMS Phase 1/2 behavior
+- banner manager
+- tenant isolation
+- persistent media volume
+- public_slug routes
+- frozen V2 design
+- database schema unless absolutely required
+
+FAST MODE:
+Do NOT run full regression tests.
+Do NOT run E2E/browser suites.
+Do NOT test unrelated features.
+Do NOT deploy or push.
+
+Only perform the minimum compile/type validation.
+
+STOP and give me a SHORT report:
+- root cause found
+- files changed
+- media cache headers before/after
+- whether image optimization was added
+- maximum generated banner dimensions/format/quality if applicable
+- how first/next banner loading now works
+- where I should manually test it

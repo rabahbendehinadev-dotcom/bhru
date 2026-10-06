@@ -49,12 +49,13 @@ export async function websiteNames(id: string, client: Pick<PoolClient,'query'> 
   if (!result.rows[0]) throw new HttpError(404, 'Subscriber not found.');
   return result.rows[0] as PublicSiteNames & { public_slug: string };
 }
-export async function ownedImages(id: string, values: PublicWebsiteValues, client: Pick<PoolClient,'query'> = pool, additional: string[] = []) {
+export async function ownedImages(id: string, values: PublicWebsiteValues, client: Pick<PoolClient,'query'> = pool, additional: string[] = [], sizes?: Map<string,{width:number;height:number}>) {
   const ids = [...new Set([values.logo_asset_id, values.hero_asset_id,...additional].filter(Boolean))];
   const rows = ids.length ? (await client.query(
-    'SELECT id,storage_key FROM public_site_assets WHERE subscriber_id=$1 AND id=ANY($2::uuid[]) FOR KEY SHARE', [id,ids],
+    'SELECT id,storage_key,width,height FROM public_site_assets WHERE subscriber_id=$1 AND id=ANY($2::uuid[]) FOR KEY SHARE', [id,ids],
   )).rows : [];
   if (rows.length !== ids.length) throw new HttpError(400, 'Select an existing image uploaded to your own website.');
+  rows.forEach(row=>sizes?.set(row.id,{width:row.width,height:row.height}));
   return new Map(rows.map(row => [row.id as string, row.storage_key as string]));
 }
 export function configuredPublicModel(names: PublicSiteNames, values: PublicWebsiteValues, images: Map<string,string>, preview = false): PublicSiteModel {

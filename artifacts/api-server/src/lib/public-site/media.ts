@@ -33,7 +33,7 @@ const assetPath = (key: string) => {
   return join(directory, key);
 };
 
-export function normalizeImage(bytes: Buffer, contentType: string) {
+export function normalizeImage(bytes: Buffer, contentType: string, banner = false) {
   if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) throw new HttpError(413, 'Images must be no larger than 5 MB.');
   if (activeDecodes >= 2) throw new HttpError(429, 'Image processing is busy. Please try again.');
   activeDecodes++;
@@ -53,9 +53,6 @@ export function normalizeImage(bytes: Buffer, contentType: string) {
       if (!bytes.subarray(-8).equals(Buffer.from([73,69,78,68,174,66,96,130]))) throw new Error('Unexpected PNG trailing content');
       const decoded = PNG.sync.read(bytes, { checkCRC: true });
       data = decoded.data;
-      const normalized = new PNG({ width, height });
-      normalized.data = data;
-      output = PNG.sync.write(normalized);
       extension = 'png';
     } else if (contentType === 'image/jpeg' && bytes[0] === 255 && bytes[1] === 216 &&
         bytes[bytes.length-2] === 255 && bytes[bytes.length-1] === 217) {
@@ -63,15 +60,48 @@ export function normalizeImage(bytes: Buffer, contentType: string) {
       const decoded = jpeg.decode(bytes, { useTArray: true, maxResolutionInMP: 8, maxMemoryUsageInMB: 128 });
       width = decoded.width; height = decoded.height;
       dimensions(width, height);
-      output = jpeg.encode(decoded, 85).data;
+      data = Buffer.from(decoded.data);
       extension = 'jpg';
     } else throw new Error('Unsupported image');
+    if (banner) {
+      const resized = resizeBanner(data!, width, height);
+      data = resized.data; width = resized.width; height = resized.height;
+      // Preserve transparency; opaque photographic banners get bounded JPEGs.
+      let transparent = false;
+      for (let i=3;i<data.length;i+=4) if (data[i]!==255) { transparent=true; break; }
+      extension = transparent ? 'png' : 'jpg';
+    }
+    if (extension === 'png') {
+      const normalized = new PNG({ width, height });
+      normalized.data = data!;
+      output = PNG.sync.write(normalized, { deflateLevel: 9 });
+    } else output = jpeg.encode({ width, height, data: data! }, 85).data;
     if (output.length > 8 * 1024 * 1024) throw new Error('Decoded image is too large');
     return { bytes: output, width, height, extension, contentType: extension === 'png' ? 'image/png' : 'image/jpeg' };
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError(400, 'Upload a valid PNG or JPEG image, up to 4096px per side and 8 megapixels. SVG, animated and executable files are not accepted.');
   } finally { activeDecodes--; }
+}
+/** Bounded bilinear resampling using existing codecs: no native/runtime changes. */
+function resizeBanner(data: Buffer, width: number, height: number) {
+  const scale = Math.min(1, 1920 / width, 1080 / height);
+  if (scale === 1) return { data, width, height };
+  const w = Math.max(1, Math.round(width*scale)), h = Math.max(1, Math.round(height*scale));
+  const out = Buffer.alloc(w*h*4);
+  for (let y=0;y<h;y++) {
+    const sy=Math.max(0,Math.min(height-1,(y+.5)*height/h-.5)), y0=Math.floor(sy), y1=Math.min(height-1,y0+1), fy=sy-y0;
+    for (let x=0;x<w;x++) {
+      const sx=Math.max(0,Math.min(width-1,(x+.5)*width/w-.5)), x0=Math.floor(sx), x1=Math.min(width-1,x0+1), fx=sx-x0;
+      const a=(y0*width+x0)*4,b=(y0*width+x1)*4,c=(y1*width+x0)*4,d=(y1*width+x1)*4;
+      const wa=(1-fx)*(1-fy),wb=fx*(1-fy),wc=(1-fx)*fy,wd=fx*fy;
+      const offset=(y*w+x)*4;
+      const alpha=wa*data[a+3]!+wb*data[b+3]!+wc*data[c+3]!+wd*data[d+3]!;
+      out[offset+3]=Math.round(alpha);
+      for(let channel=0;channel<3;channel++) out[offset+channel]=alpha ? Math.round((wa*data[a+channel]!*data[a+3]!+wb*data[b+channel]!*data[b+3]!+wc*data[c+channel]!*data[c+3]!+wd*data[d+channel]!*data[d+3]!)/alpha) : 0;
+    }
+  }
+  return { data:out, width:w, height:h };
 }
 function dimensions(width: number, height: number) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width<1 || height<1 || width>4096 || height>4096 || width*height>8_000_000) throw new Error('Image dimensions');

@@ -73,7 +73,30 @@ automatic seeds, database resets, or production environment changes here.
   do not share them; no account data or permanent public access is granted.
 - Anonymous unsigned image URLs work only while a saved config references the
   image and its owner meets the existing public-site eligibility rules.
-  Media does not read or modify visitor sessions. Responses are not cached.
+  Media does not read or modify visitor sessions. Signed drafts/errors remain
+  `Cache-Control: no-store`. Published immutable URLs use
+  `private, max-age=31536000, no-cache` and a stable ETag. Every reuse validates
+  publication/licence first; authorized unchanged responses return 304 without
+  reading/transferring the file again. `no-cache` means revalidate, not discard:
+  browser bytes are retained, but shared caches and stale eligibility bypasses
+  are not allowed. HTML and mutable API response policies are unchanged.
+
+### New banner image optimization
+
+CMS Add/Replace Banner sends `X-BHRU-Image-Usage: banner` to the existing upload
+endpoint. After the same real-decoding/security validation, new banner images
+are resized proportionally within **1920×1080**, never upscaled, and metadata
+records the generated dimensions. Opaque output is JPEG quality **85**;
+transparency retains lossless PNG with compression level **9**.
+Existing codecs are reused. WebP would require schema/runtime compatibility
+changes and is not introduced. Logos/Classic uploads retain their existing
+normalization. No existing asset is rewritten; replacing generates a new UUID.
+
+The public banner frame reserves the first image's aspect ratio for all slides
+and uses `contain` rather than cropping/stretching. Only the first active image
+gets a head preload/high priority; remaining URLs are deferred until needed.
+The slider decodes before revealing, starts autoplay only after readiness,
+and loads just the next slide in the background.
 - Replacing/removing a saved image updates configuration first, then cleans
   the old unreferenced file. Reset/removing unsaved uploads uses the owner-only
   unused-image endpoint; deleting an image still referenced by saved config

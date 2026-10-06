@@ -236,7 +236,7 @@ export function usePublicWebsite() {
     pDraftRef.current = next; setPDraft(next); setPreview(p => p.html ? { ...p, stale: true } : p); setPresErrors({}); setNotice(null);
   };
   // Upload an item image; resolves to the new asset id (staged, unreferenced until the caller adds it) or null.
-  const uploadItem = async (file: File): Promise<string | null> => {
+  const uploadItem = async (file: File, usage: 'logo' | 'banner' = 'logo'): Promise<string | null> => {
     if (!ready || busy.current.saving || anyBusy()) return null;
     if (file.type !== 'image/png' && file.type !== 'image/jpeg') { setItemError('Only PNG or JPEG images are accepted.'); return null; }
     if (file.size > MAX_BYTES) { setItemError('The image is larger than 5 MB.'); return null; }
@@ -245,7 +245,7 @@ export function usePublicWebsite() {
     const version = generation.current;
     itemBusy.current = true; setItemUploading(true);
     try {
-      const r = await uploadPublicWebsiteAsset(file, _requestOptions({ headers: { 'Content-Type': file.type } }));
+      const r = await uploadPublicWebsiteAsset(file, _requestOptions({ headers: { 'Content-Type': file.type, 'X-BHRU-Image-Usage': usage } }));
       if (version !== generation.current) { void deleteUnusedPublicWebsiteAsset(r.id, _requestOptions()).catch(() => undefined); return null; }
       uploaded.current.add(r.id);
       setAssetUrls(p => ({ ...p, [r.id]: r.url }));

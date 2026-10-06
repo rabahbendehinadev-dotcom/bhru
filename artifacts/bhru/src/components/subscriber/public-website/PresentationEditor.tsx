@@ -26,11 +26,11 @@ function Thumb({ url, alt }: { url?: string; alt: string }) {
     {url ? <img src={url} alt={alt} className="max-h-full max-w-full object-contain" /> : <span className="gs-help px-1 text-center">No preview</span>}</div>;
 }
 
-function FilePick({ w, label, onId, icon }: { w: W; label: string; onId: (id: string) => void; icon?: 'add' | 'replace' }) {
+function FilePick({ w, label, onId, icon, usage = 'logo' }: { w: W; label: string; onId: (id: string) => void; icon?: 'add' | 'replace'; usage?: 'logo' | 'banner' }) {
   const ref = useRef<HTMLInputElement>(null);
   return <>
     <input ref={ref} type="file" accept="image/png,image/jpeg" className="sr-only" aria-label={`${label} file`}
-      onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (!f) return; const id = await w.uploadItem(f); if (id) onId(id); }} />
+      onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (!f) return; const id = await w.uploadItem(f, usage); if (id) onId(id); }} />
     <button type="button" className="btn btn-sm" disabled={w.itemUploading || w.saving} onClick={() => ref.current?.click()} data-testid={`button-${label.toLowerCase().replace(/\W+/g, '-')}`}>
       {icon === 'replace' ? <Upload size={13} /> : <ImagePlus size={13} />}{w.itemUploading ? 'Uploading…' : label}</button>
   </>;
@@ -183,7 +183,7 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
                   {[3, 5, 7, 10].map(s => <option key={s} value={s}>{s} seconds</option>)}</select></label>
             </div>
             <div className="flex items-center justify-between"><p className="gs-help">{p.banners.length}/{MAX_BANNERS} banners.</p>
-              {p.banners.length < MAX_BANNERS && <FilePick w={w} label="Add banner" onId={(id) => { const b: PublicBanner = { id: crypto.randomUUID(), asset_id: id, alt_text: '', destination: '', enabled: true }; w.presEdit(v => ({ ...v, banners: [...v.banners, b] })); setEditing(b.id); }} />}</div>
+              {p.banners.length < MAX_BANNERS && <FilePick w={w} label="Add banner" usage="banner" onId={(id) => { const b: PublicBanner = { id: crypto.randomUUID(), asset_id: id, alt_text: '', destination: '', enabled: true }; w.presEdit(v => ({ ...v, banners: [...v.banners, b] })); setEditing(b.id); }} />}</div>
             {p.banners.length === 0 ? <Empty text="No banners added yet." hint="Upload a wide PNG or JPEG image." /> :
               p.banners.map((b, i) => (
                 <div key={b.id} className="space-y-2 rounded-md border border-[hsl(var(--border))] p-2.5" data-testid={`card-banner-${i}`}>
@@ -195,7 +195,7 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
                   {editing === b.id && <div className="grid gap-2 sm:grid-cols-2">
                     <Field label="Description for accessibility" error={E[`${b.id}.alt_text`]}><input className="input" value={b.alt_text} onChange={(e) => set({ banners: patch(p.banners, b.id, { alt_text: e.target.value }) })} data-testid={`input-banner-alt-${i}`} /></Field>
                     <Field label="Link (optional)" error={E[`${b.id}.destination`]}><input className="input" value={b.destination} placeholder="https://… or /page" onChange={(e) => set({ banners: patch(p.banners, b.id, { destination: e.target.value }) })} data-testid={`input-banner-link-${i}`} /></Field>
-                    <div><FilePick w={w} label="Replace image" icon="replace" onId={(id) => { set({ banners: patch(p.banners, b.id, { asset_id: id }) }); after(); }} />{err(E[`${b.id}.image`])}</div>
+                    <div><FilePick w={w} label="Replace image" icon="replace" usage="banner" onId={(id) => { set({ banners: patch(p.banners, b.id, { asset_id: id }) }); after(); }} />{err(E[`${b.id}.image`])}</div>
                   </div>}
                 </div>))}
           </>}

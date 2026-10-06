@@ -9,7 +9,7 @@ import { renderStatistics } from './components/statistics';
 import { renderCta } from './components/cta';
 import { renderFooter } from './components/footer';
 import { PUBLIC_MENU_SCRIPT } from './mobile-menu';
-import { renderTopArea, renderBanner, renderPresentationStyles, renderBannerScript } from './presentation-render';
+import { renderTopArea, renderBanner, renderPresentationStyles, renderBannerScript, renderBannerPreload } from './presentation-render';
 
 export function renderPublicHome(model: PublicSiteModel): string {
   const title = `${model.siteName} — Public website`;
@@ -23,7 +23,7 @@ export function renderPublicHome(model: PublicSiteModel): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="icon" type="image/svg+xml" href="${favicon}">
+<link rel="icon" type="image/svg+xml" href="${favicon}">${renderBannerPreload(model)}
 <title>${t}</title>
 <meta name="description" content="${d}">
 <meta name="robots" content="noindex,nofollow">

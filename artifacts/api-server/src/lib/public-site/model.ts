@@ -14,11 +14,11 @@ export interface PublicService {
 }
 export interface PublicSiteModel extends PublicSiteNames {
   presentation?: {
-    logos: {src:string;label:string;href:string;newTab:boolean}[];
+    logos: {src:string;label:string;href:string;newTab:boolean;width?:number;height?:number}[];
     announcements: {text:string;href:string;background:string;color:string;movement:'static'|'scrolling';direction:'left'|'right';speed:'slow'|'normal'|'fast'}[];
     customHTML:string;
     heroMode:'classic'|'banner';
-    banners: {src:string;alt:string;href:string}[];
+    banners: {src:string;alt:string;href:string;width?:number;height?:number}[];
     autoplay:boolean;interval:number;
   };
   siteName: string;
