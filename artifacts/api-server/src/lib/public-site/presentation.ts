@@ -63,7 +63,15 @@ export const emptyPresentation = (): PublicPresentationValues => ({
   hero_mode:'classic',slider_autoplay:true,slider_interval:5,logos:[],announcements:[],banners:[],
 });
 export function validatePresentation(raw: unknown,host?:string): PublicPresentationValues {
-  const values=presentationSchema.parse(raw);
+  // Ignore obsolete shared settings before validation as well: they must not
+  // block loading, previewing or saving otherwise valid individual rows.
+  let input=raw;
+  if(raw && typeof raw==='object' && !Array.isArray(raw)) {
+    const copy={...raw} as Record<string,unknown>;
+    delete copy.announcement_ticker_settings;
+    input=copy;
+  }
+  const values=presentationSchema.parse(input);
   const seen=new Set<string>();
   for(const group of [values.logos,values.announcements,values.banners]) for(const item of group) {
     item.id=item.id.toLowerCase();
@@ -136,7 +144,6 @@ export async function attachPresentation(model:PublicSiteModel,id:string,client:
   const url=preview?previewImageUrl:publicImageUrl;
   model.presentation={
     logoSettings:values.logo_strip_settings,
-    tickerSettings:values.announcement_ticker_settings,
     logos:values.logo_strip_enabled?values.logos.filter(i=>i.enabled).map(i=>({src:url(i.asset_id,images.get(i.asset_id)!),label:i.label,href:i.destination,newTab:i.new_tab,...sizes.get(i.asset_id)})):[],
     announcements:values.announcements_enabled?values.announcements.filter(i=>i.enabled).map(i=>({text:i.text,icon:i.icon_text || '',href:i.destination,background:i.background_color,color:i.text_color,movement:i.movement,direction:i.direction,speed:i.speed})):[],
     customHTML:values.custom_html_enabled?sanitizedTopHTML(values.custom_html):'',

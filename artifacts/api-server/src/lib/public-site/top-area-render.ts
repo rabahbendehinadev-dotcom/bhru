@@ -50,6 +50,7 @@ export const TOP_AREA_STYLES=`
 .p2-logo-label{display:block;flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:14px;color:#152238}
 .p2-announcement{width:100%;min-width:0;max-width:100%;overflow:hidden;font-size:14px;font-weight:600;line-height:1.5}
 .p2-announcement a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.p2-announcement .p2-message,.p2-announcement .p2-message bdi{color:inherit}
 .p2-announcement .p2-loop{padding-bottom:0}
 .p2-announcement>div:not([data-ticker]) .p2-ticker-track{width:100%}
 .p2-announcement>div:not([data-ticker]) .p2-message-group{flex-wrap:wrap;justify-content:center;width:100%;box-sizing:border-box}

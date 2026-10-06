@@ -3,7 +3,8 @@ import { ChevronDown, ChevronUp, ImagePlus, Pencil, Plus, Trash2, Upload } from 
 import type { PublicAnnouncement, PublicBanner, PublicPartnerLogo, PublicPresentationValues } from '@workspace/api-client-react';
 import { SettingsRow, SettingToggle } from '@/components/subscriber/general-settings/settings-ui';
 import { MAX_BANNERS, MAX_BARS, MAX_HTML, MAX_LOGOS, usePublicWebsite } from '@/hooks/use-public-website';
-import { TickerControls, TickerColours, defaultStrip, defaultTicker } from './TickerControls';
+import { TickerControls, defaultStrip } from './TickerControls';
+import { AnnouncementRowFields } from './AnnouncementRowFields';
 import { PartnerImageControls } from './PartnerImageControls';
 
 type W = ReturnType<typeof usePublicWebsite>;
@@ -126,13 +127,12 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
             </div>
             <button type="button" className="btn btn-brand w-full sm:w-auto" style={{ height: 44, minHeight: 44 }} disabled={p.announcements.length >= MAX_BARS}
               data-testid="button-add-announcement" onClick={() => {
-                const a: PublicAnnouncement = { id: crypto.randomUUID(), enabled: true, text: '', icon_text: '', destination: '', background_color: defaultTicker.background_color, text_color: defaultTicker.text_color, movement: 'scrolling', direction: 'left', speed: 'normal' };
+                const a: PublicAnnouncement = { id: crypto.randomUUID(), enabled: true, text: '', icon_text: '', destination: '', background_color: '#152238', text_color: '#FFFFFF', movement: 'scrolling', direction: 'left', speed: 'normal' };
                 w.presEdit(v => ({ ...v, announcements: [...v.announcements, a] })); setEditing(a.id);
               }}><Plus size={16} />Add Message</button>
             {p.announcements.length >= MAX_BARS && <p className="gs-help">Message limit reached. Edit or delete an existing announcement.</p>}
             {p.announcements.length === 0 ? <Empty text="No messages yet." hint="Add a message for offers, notices or opening hours." /> :
               p.announcements.map((a, i) => {
-                const settings = { ...defaultTicker, display: 'moving' as const, speed: a.speed, direction: a.direction, pause_on_hover: false, background_color: a.background_color, text_color: a.text_color };
                 return (
                 <div key={a.id} className="min-w-0 space-y-3 rounded-md border border-[hsl(var(--border))] p-3" data-testid={`card-announcement-${i}`}>
                   <h4 className="text-[13px] font-semibold">Ticker Row {i + 1}</h4>
@@ -140,16 +140,8 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
                       <Actions name={`announcement-${i}`} i={i} n={p.announcements.length} enabled={a.enabled} editing={editing === a.id} onEdit={() => toggleEdit(a.id)}
                         onToggle={(v) => set({ announcements: patch(p.announcements, a.id, { enabled: v }) })} onMove={(d) => set({ announcements: swap(p.announcements, i, d) })}
                         onDelete={() => set({ announcements: p.announcements.filter(x => x.id !== a.id) })} />
-                  {editing === a.id && <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                    <div className="sm:col-span-2"><Field label="Message text (emoji allowed)" error={E[`${a.id}.text`]}><textarea className="input" dir="auto" rows={2} value={a.text} onChange={(e) => set({ announcements: patch(p.announcements, a.id, { text: e.target.value }) })} data-testid={`input-bar-text-${i}`} /></Field><p className="gs-help">{a.text.length}/500</p></div>
-                    <div className="sm:col-span-2"><TickerControls id={`announcement-${a.id}`} settings={settings} showPauseOnHover={false} continuous
-                      onChange={value => set({ announcements: patch(p.announcements, a.id, { movement: value.display === 'moving' ? 'scrolling' : 'static', speed: value.speed, direction: value.direction }) })} /></div>
-                    <div className="sm:col-span-2"><TickerColours settings={settings} errors={E} errorPrefix={a.id} showSeparator={false}
-                      onChange={value => set({ announcements: patch(p.announcements, a.id, { background_color: value.background_color, text_color: value.text_color }) })} /></div>
-                    <Field label="Link (optional)" error={E[`${a.id}.destination`]}><input className="input" value={a.destination} placeholder="https://… or /page" onChange={(e) => set({ announcements: patch(p.announcements, a.id, { destination: e.target.value }) })} data-testid={`input-bar-link-${i}`} /></Field>
-                    <Field label="Emoji / icon (optional)" error={E[`${a.id}.icon_text`]}><input className="input" dir="auto" value={a.icon_text ?? ''} maxLength={32} placeholder="🔥"
-                      onChange={e => set({ announcements: patch(p.announcements, a.id, { icon_text: e.target.value }) })} data-testid={`input-message-icon-${i}`} /></Field>
-                  </div>}
+                  {editing === a.id && <AnnouncementRowFields row={a} index={i} errors={E}
+                    onChange={value => w.presEdit(v => ({ ...v, announcements: patch(v.announcements, a.id, value) }))} />}
                 </div>);})}
           </div>
 

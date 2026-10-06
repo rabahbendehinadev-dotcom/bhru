@@ -57,11 +57,6 @@ export function validatePresentation(p: PublicPresentationValues): Record<string
     if (!HEX.test(a.text_color)) e[`${a.id}.text_color`] = 'Use a 6-digit HEX colour.';
     link(`${a.id}.destination`, a.destination);
   });
-  if (p.announcement_ticker_settings) {
-    const t = p.announcement_ticker_settings;
-    for (const key of ['background_color', 'text_color'] as const) if (!HEX.test(t[key])) e[`ticker.${key}`] = 'Use a 6-digit HEX colour.';
-    if (t.separator.length > 16 || /[\u0000-\u001f\u007f]/.test(t.separator)) e['ticker.separator'] = 'Use up to 16 printable characters.';
-  }
   p.banners.forEach(b => { if (!b.asset_id) e[`${b.id}.image`] = 'Image required.'; if (b.alt_text.length > 180) e[`${b.id}.alt_text`] = 'Use at most 180 characters.'; link(`${b.id}.destination`, b.destination); });
   if (p.custom_html.length > MAX_HTML) e.custom_html = `Use at most ${MAX_HTML} characters.`;
   if (p.logos.length > MAX_LOGOS || p.announcements.length > MAX_BARS || p.banners.length > MAX_BANNERS) e.limits = 'An item limit was exceeded.';

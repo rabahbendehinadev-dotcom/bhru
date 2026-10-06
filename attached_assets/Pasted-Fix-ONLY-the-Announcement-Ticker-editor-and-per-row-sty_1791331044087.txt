@@ -1,0 +1,170 @@
+Fix ONLY the Announcement Ticker editor and per-row styling.
+
+The previous change is still not correct.
+
+CURRENT PROBLEM:
+The CMS still shows shared/global:
+- Background colour
+- Text colour
+- Separator
+
+above the list of messages.
+
+On the public website, the announcement rows are still using the same visual styling.
+
+THIS IS NOT WHAT I WANT.
+
+I want EVERY Ticker Row to be completely independent.
+
+==================================================
+1. REMOVE SHARED COLOUR SETTINGS
+==================================================
+
+For Announcement Ticker, remove the global/shared:
+
+- Background colour
+- Text colour
+- Separator character / emoji
+
+These must NOT control all ticker rows.
+
+The only global setting that may remain is:
+- Enable/Disable the entire Announcement Ticker section
+
+Do not use a shared colour to override individual rows.
+
+==================================================
+2. EACH TICKER ROW MUST HAVE ITS OWN EDIT SETTINGS
+==================================================
+
+When I click "Edit" on Ticker Row 1, open/show the settings for THAT ROW ONLY.
+
+Inside each Ticker Row editor provide:
+
+- Text
+- Link (optional)
+- Emoji / icon text (optional)
+
+STYLE:
+- Background colour picker
+- Background HEX input
+- Text colour picker
+- Text HEX input
+
+MOVEMENT:
+- Speed: Slow / Normal / Fast
+- Direction: Left / Right
+
+CONTROLS:
+- Enable / Disable
+- Move Up
+- Move Down
+- Delete
+
+IMPORTANT:
+Text colour MUST be editable per row.
+
+Example:
+
+Ticker Row 1:
+Text: SERVICES | UNLOCK | iPhone...
+Background: #E60046
+Text: #FFFFFF
+Direction: Left
+Speed: Normal
+
+Ticker Row 2:
+Text: 🔥 خدمات الآيفون بأرخص الأسعار
+Background: #FFC400
+Text: #111111
+Direction: Right
+Speed: Fast
+
+Ticker Row 3:
+Text: Contact us for the best prices
+Background: #00AFC1
+Text: #FFFFFF
+Direction: Left
+Speed: Slow
+
+Changing Row 2 must NEVER change Row 1 or Row 3.
+
+==================================================
+3. PUBLIC WEBSITE
+==================================================
+
+Render each enabled row as its own full-width horizontal ticker:
+
+[ ROW 1 - its own background + text colour ]
+[ ROW 2 - its own background + text colour ]
+[ ROW 3 - its own background + text colour ]
+
+They must be visually separated rows, not multiple messages sharing one style.
+
+Each row continuously scrolls.
+
+- seamless infinite movement
+- no empty gap
+- no pause on hover
+- no Pause button
+- each row uses its own direction
+- each row uses its own speed
+- responsive on mobile
+- no horizontal page overflow
+
+==================================================
+4. LIVE PREVIEW
+==================================================
+
+This is important:
+
+When I edit:
+- Background colour
+- Text colour
+- Speed
+- Direction
+- Text
+
+the CMS Live Preview must update immediately BEFORE Save.
+
+After Save + reload, every row must preserve its own settings.
+
+==================================================
+5. EXISTING DATA
+==================================================
+
+Do NOT destroy existing announcements.
+
+If the backend already has per-row fields for:
+background colour,
+text colour,
+speed,
+direction,
+
+use those existing fields.
+
+Do NOT add a migration unless the existing database structure truly cannot store these settings.
+
+Remove any legacy compatibility logic that copies global colours/settings into all rows.
+
+==================================================
+DO NOT CHANGE
+==================================================
+
+Do not modify:
+- Partner / Image Strip
+- Hero / Banner
+- Header/navigation
+- Public slug
+- Authentication
+- Licence system
+- Media storage
+- Other CMS sections
+
+Do not run browser/E2E/full regression tests.
+Only run minimal type/build validation.
+
+Do NOT push.
+Do NOT deploy.
+
+Stop when this specific fix is finished and report what was changed.
