@@ -1,0 +1,47 @@
+-- Additive, subscriber-owned site configuration. No identity/domain changes.
+CREATE TABLE subscriber_general_settings (
+  id uuid PRIMARY KEY,
+  subscriber_id uuid NOT NULL UNIQUE REFERENCES subscribers(id),
+  company_name text NOT NULL DEFAULT '',
+  site_name text NOT NULL DEFAULT '',
+  logo_url text NOT NULL DEFAULT '',
+  favicon_url text NOT NULL DEFAULT '',
+  site_link text NOT NULL DEFAULT '',
+  site_ssl_link text NOT NULL DEFAULT '',
+  seo_friendly_url boolean NOT NULL DEFAULT false,
+  page_title_format text NOT NULL DEFAULT '' CHECK (page_title_format IN ('', 'Default')),
+  site_description text NOT NULL DEFAULT '',
+  site_keywords text NOT NULL DEFAULT '',
+  faster_browsing boolean NOT NULL DEFAULT false,
+  recharge_voucher boolean NOT NULL DEFAULT false,
+  testimonial boolean NOT NULL DEFAULT false,
+  blog boolean NOT NULL DEFAULT false,
+  knowledge_base boolean NOT NULL DEFAULT false,
+  support_ticket boolean NOT NULL DEFAULT false,
+  show_service_price boolean NOT NULL DEFAULT false,
+  show_service_icon boolean NOT NULL DEFAULT false,
+  affiliate_system boolean NOT NULL DEFAULT false,
+  gift_certificate boolean NOT NULL DEFAULT false,
+  gift_certificate_tax boolean NOT NULL DEFAULT false,
+  withdrawal_request boolean NOT NULL DEFAULT false,
+  eu_cookie_law boolean NOT NULL DEFAULT false,
+  email_history_save boolean NOT NULL DEFAULT false,
+  user_manage_credit_card boolean NOT NULL DEFAULT false,
+  mobile_app boolean NOT NULL DEFAULT false,
+  display_track_order boolean NOT NULL DEFAULT false,
+  display_downloads boolean NOT NULL DEFAULT false,
+  index_redirect text NOT NULL DEFAULT '',
+  logout_redirect text NOT NULL DEFAULT '',
+  add_fund_enabled boolean NOT NULL DEFAULT false,
+  add_fund_tax_enabled boolean NOT NULL DEFAULT false,
+  minimum_add_fund numeric(18,2) CHECK (minimum_add_fund IS NULL OR minimum_add_fund >= 0),
+  maximum_add_fund numeric(18,2) CHECK (maximum_add_fund IS NULL OR maximum_add_fund >= 0),
+  maximum_balance numeric(18,2) CHECK (maximum_balance IS NULL OR maximum_balance >= 0),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (minimum_add_fund IS NULL OR maximum_add_fund IS NULL OR minimum_add_fund <= maximum_add_fund)
+);
+
+-- Initialise existing subscribers without copying names or domain metadata.
+INSERT INTO subscriber_general_settings(id, subscriber_id)
+SELECT gen_random_uuid(), id FROM subscribers;

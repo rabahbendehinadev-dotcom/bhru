@@ -8,4 +8,4 @@
 - [PWA offline testing](pwa-offline-testing.md) — CDP offline flags can leave worker fetch online; verify the real failure path before changing fallback logic.
 - [Browser input testing](browser-input-testing.md) — Desktop viewport width does not guarantee hover support in the remote test browser.
 - [Subscriber workspace state](subscriber-workspace-state.md) — Preserve opened page state and shell; workspace state is session-scoped, not a browser draft cache.
-- [Subscriber Settings staging](subscriber-settings-staging.md) — Keep the 11-entry internal Settings nav distinct from the main flyout; General Settings is frontend-only until later phases.
+- [Subscriber Settings staging](subscriber-settings-staging.md) — Subscriber-owned persistence is approved; internal 11-entry nav stays distinct; domains and multiple servers remain deferred.

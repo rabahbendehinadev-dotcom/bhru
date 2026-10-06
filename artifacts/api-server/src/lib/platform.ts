@@ -26,8 +26,8 @@ export function serializeSubscriber(row: Record<string, any>) {
   }
   return { ...row, allowed: !!row.allowed, accessReason: row.allowed ? "" : reasons[row.status] || "Your licence is awaiting activation." };
 }
-export async function getSubscriber(id: string) {
-  const result = await pool.query(subscriberSelect + " WHERE s.id=$1", [id]);
+export async function getSubscriber(id: string, client: Pick<PoolClient, "query"> = pool) {
+  const result = await client.query(subscriberSelect + " WHERE s.id=$1", [id]);
   return result.rows[0] ? serializeSubscriber(result.rows[0]) : undefined;
 }
 export async function platformState(user: AuthUser) {

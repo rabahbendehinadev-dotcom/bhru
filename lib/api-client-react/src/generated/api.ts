@@ -24,6 +24,8 @@ import type {
   AdminCredentialsInput,
   AuthEntry,
   CredentialsInput,
+  GeneralSettings,
+  GeneralSettingsInput,
   HealthStatus,
   PanelAccess,
   PlanInput,
@@ -61,6 +63,171 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetCurrentGeneralSettingsUrl = () => {
+
+
+
+
+  return `/api/settings/general`
+}
+
+/**
+ * @summary Read the eligible authenticated subscriber's General Settings
+ */
+export const getCurrentGeneralSettings = async ( options?: Parameters<typeof customFetch>[1]): Promise<GeneralSettings> => {
+
+  return customFetch<GeneralSettings>(getGetCurrentGeneralSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentGeneralSettingsQueryKey = () => {
+    return [
+    `/api/settings/general`
+    ] as const;
+    }
+
+
+export const getGetCurrentGeneralSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentGeneralSettings>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentGeneralSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentGeneralSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentGeneralSettings>>> = ({ signal }) => getCurrentGeneralSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentGeneralSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentGeneralSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentGeneralSettings>>>
+export type GetCurrentGeneralSettingsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read the eligible authenticated subscriber's General Settings
+ */
+
+export function useGetCurrentGeneralSettings<TData = Awaited<ReturnType<typeof getCurrentGeneralSettings>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentGeneralSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentGeneralSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateCurrentGeneralSettingsUrl = () => {
+
+
+
+
+  return `/api/settings/general`
+}
+
+/**
+ * @summary Replace the eligible authenticated subscriber's General Settings
+ */
+export const updateCurrentGeneralSettings = async (generalSettingsInput: GeneralSettingsInput, options?: Parameters<typeof customFetch>[1]): Promise<GeneralSettings> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<GeneralSettings>(getUpdateCurrentGeneralSettingsUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(generalSettingsInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateCurrentGeneralSettingsMutationKey = () => ['updateCurrentGeneralSettings'] as const;
+
+export const getUpdateCurrentGeneralSettingsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentGeneralSettings>>, TError,UpdateCurrentGeneralSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCurrentGeneralSettings>>, TError,UpdateCurrentGeneralSettingsMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCurrentGeneralSettingsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCurrentGeneralSettings>>, UpdateCurrentGeneralSettingsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCurrentGeneralSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCurrentGeneralSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateCurrentGeneralSettings>>>
+    export type UpdateCurrentGeneralSettingsMutationBody = BodyType<GeneralSettingsInput>
+    export type UpdateCurrentGeneralSettingsMutationError = ErrorType<void>
+    export type UpdateCurrentGeneralSettingsMutationVariables = {data: BodyType<GeneralSettingsInput>}
+
+    /**
+ * @summary Replace the eligible authenticated subscriber's General Settings
+ */
+export const useUpdateCurrentGeneralSettings = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentGeneralSettings>>, TError,UpdateCurrentGeneralSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCurrentGeneralSettings>>,
+        TError,
+        UpdateCurrentGeneralSettingsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCurrentGeneralSettingsMutationOptions(options));
+    }
 
 export const getResolveAuthEntryUrl = (params: ResolveAuthEntryParams,) => {
   const normalizedParams = new URLSearchParams();

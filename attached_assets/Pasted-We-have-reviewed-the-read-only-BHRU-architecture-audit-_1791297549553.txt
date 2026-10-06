@@ -1,0 +1,412 @@
+We have reviewed the read-only BHRU architecture audit and approved the next step.
+
+We are now implementing persistence for:
+
+Settings → General Settings
+
+IMPORTANT:
+This task is ONLY about persisting General Settings safely for the current subscriber/business.
+
+Do NOT implement custom domains yet.
+Do NOT implement DNS.
+Do NOT implement SSL provisioning.
+Do NOT implement tenant slugs yet.
+Do NOT implement multiple servers.
+Do NOT modify Platform Admin architecture.
+Do NOT modify authentication architecture.
+Do NOT change the existing subscriber ownership model.
+Do NOT push or deploy.
+
+==================================================
+APPROVED OWNERSHIP MODEL
+==================================================
+
+The current BHRU architecture uses:
+
+subscribers.id
+
+as the business/server/tenant boundary.
+
+For the current architecture:
+
+1 Subscriber
+=
+1 Business / Unlock Server
+=
+1 Website
+=
+1 Subscription
+
+Therefore General Settings MUST belong to:
+
+subscriber_id → subscribers.id
+
+Do NOT attach business/site settings to account_users.id.
+
+Do NOT create:
+- tenant_id
+- server_id
+- workspace_id
+- organization_id
+
+The existing subscriber_id is the approved ownership boundary.
+
+==================================================
+IMPORTANT SECURITY RULE
+==================================================
+
+Never trust a subscriber_id supplied by the frontend for normal subscriber settings access.
+
+For subscriber API requests:
+
+authenticated session
+        ↓
+account_users.subscriber_id
+        ↓
+authorized General Settings
+
+The backend must derive the subscriber identity from the authenticated session.
+
+A subscriber must never be able to change a request parameter and read/write another subscriber's settings.
+
+==================================================
+DATABASE DESIGN
+==================================================
+
+Create an ADDITIVE persistence design for General Settings.
+
+Do not add dozens of General Settings columns directly to the subscribers table.
+
+Keep subscribers as the core business/subscriber identity.
+
+Create a dedicated General Settings storage model/table linked to:
+
+subscriber_id → subscribers.id
+
+There must be exactly one General Settings record per subscriber.
+
+Use:
+- UUID primary key consistent with the existing project conventions
+- subscriber_id FK
+- UNIQUE subscriber_id
+- created_at
+- updated_at
+
+Use the existing SQL migration system because the architecture audit confirmed that SQL migrations are the source of truth.
+
+Do NOT use schema push.
+Do NOT generate the database from the empty Drizzle schema.
+
+==================================================
+FIELD CONTRACT
+==================================================
+
+Persist the current General Settings fields.
+
+SITE INFORMATION
+
+company_name
+site_name
+logo_url
+favicon_url
+
+Important:
+
+subscribers.business remains the BHRU subscriber/business identity.
+
+company_name and site_name are website/site presentation settings.
+
+Changing company_name or site_name must NOT silently rename subscribers.business.
+
+==================================================
+SITE LINKS
+==================================================
+
+The current UI contains:
+
+Site Link
+Site SSL Link
+
+Do NOT build domain routing from these fields.
+
+For this phase they may remain persisted configuration values for compatibility with the current General Settings UI, but:
+
+- they must NOT provision domains
+- they must NOT change routing
+- they must NOT configure SSL
+- they must NOT modify subscribers.domain
+
+We will redesign/integrate website URLs and custom domains in a separate approved phase.
+
+==================================================
+SEO SETTINGS
+==================================================
+
+Persist:
+
+seo_friendly_url
+page_title_format
+site_description
+site_keywords
+
+Use appropriate data types.
+
+==================================================
+SITE SETTINGS
+==================================================
+
+Persist every current toggle independently:
+
+faster_browsing
+recharge_voucher
+testimonial
+blog
+knowledge_base
+support_ticket
+show_service_price
+show_service_icon
+affiliate_system
+gift_certificate
+gift_certificate_tax
+withdrawal_request
+eu_cookie_law
+email_history_save
+user_manage_credit_card
+mobile_app
+display_track_order
+display_downloads
+
+Use boolean values.
+
+Do not implement the actual business functionality behind these switches yet.
+
+Example:
+
+Enabling Blog only saves the setting.
+
+It does NOT require implementing the Blog module in this task.
+
+==================================================
+SITE PAGE REDIRECT
+==================================================
+
+Persist:
+
+index_redirect
+logout_redirect
+
+Do not implement redirect behavior yet.
+
+==================================================
+FUND SETTINGS
+==================================================
+
+Persist:
+
+add_fund_enabled
+add_fund_tax_enabled
+minimum_add_fund
+maximum_add_fund
+maximum_balance
+
+Use an appropriate exact numeric/decimal type for monetary values.
+
+Do NOT use floating point for money.
+
+Do not implement payment processing in this task.
+
+==================================================
+DEFAULTS
+==================================================
+
+Define safe defaults matching the current UI behavior.
+
+Do not populate fake business data.
+
+Where appropriate, existing subscriber metadata may be used only as an initial display/default value, but do not silently duplicate or overwrite subscriber identity.
+
+Document the defaults you choose.
+
+==================================================
+API
+==================================================
+
+Create authenticated subscriber endpoints for:
+
+GET current subscriber General Settings
+
+and
+
+UPDATE current subscriber General Settings
+
+Do NOT design the normal subscriber API as:
+
+/settings/:subscriberId
+
+where the browser chooses which subscriber it wants.
+
+The backend must resolve the current subscriber from the authenticated session.
+
+==================================================
+AUTHORIZATION
+==================================================
+
+Reuse the existing authentication and subscriber authorization mechanisms.
+
+Do not create a second authentication system.
+
+Respect existing panel/subscription/licence eligibility checks.
+
+Unauthorized or ineligible access must be rejected server-side.
+
+==================================================
+VALIDATION
+==================================================
+
+Add server-side validation.
+
+At minimum validate:
+
+- string lengths
+- URLs where appropriate
+- numeric fund limits
+- booleans
+- nullable/empty fields
+
+Reject malformed values.
+
+Do not rely only on React validation.
+
+Do not allow arbitrary unexpected properties to be persisted.
+
+==================================================
+GENERAL SETTINGS UI
+==================================================
+
+Connect the EXISTING General Settings UI to the new API.
+
+Do not redesign the page.
+
+On page load:
+- load the current subscriber's settings
+
+While loading:
+- show an appropriate non-disruptive loading state
+
+Save Changes:
+- validate
+- send the update
+- only show success after the backend confirms persistence
+
+Remove the current frontend-only "Not saved" behavior once real persistence is working.
+
+Handle backend errors clearly without destroying the user's form state.
+
+==================================================
+STATE / WORKSPACE TABS
+==================================================
+
+Do not break the existing workspace-tab system.
+
+Switching tabs should continue to preserve the draft where practical.
+
+After a successful save, reopening/reloading General Settings must load the persisted values.
+
+==================================================
+CROSS-SUBSCRIBER ISOLATION TESTS
+==================================================
+
+This is CRITICAL.
+
+Create tests proving isolation.
+
+Use at least two separate test subscribers:
+
+Subscriber A
+Subscriber B
+
+Verify:
+
+A can read A settings.
+B can read B settings.
+
+A cannot read B settings.
+A cannot update B settings.
+
+B cannot read A settings.
+B cannot update A settings.
+
+Attempt manipulated IDs/requests where relevant.
+
+The protection must exist on the SERVER, not only because the frontend hides another subscriber ID.
+
+==================================================
+DO NOT TOUCH DOMAIN SYSTEM
+==================================================
+
+The architecture audit found subscribers.domain already exists.
+
+Do NOT repurpose, migrate, remove or update it in this task.
+
+Do NOT add:
+- slug
+- DNS verification
+- domain verification
+- hostname middleware
+- SSL status
+- certificate provisioning
+
+That will be a separate architecture phase after General Settings persistence is verified.
+
+==================================================
+MIGRATION SAFETY
+==================================================
+
+The migration must be additive.
+
+Do not:
+- drop existing tables
+- rename existing identity columns
+- rewrite subscriber IDs
+- modify account ownership
+- modify subscriptions
+- modify licences
+- modify existing production data
+
+Before applying the migration, inspect the existing migration conventions and follow them exactly.
+
+Development environment only.
+
+==================================================
+FINAL VERIFICATION
+==================================================
+
+Before finishing verify:
+
+1. Subscriber A saves General Settings.
+2. Refresh the browser.
+3. A's settings remain.
+4. Subscriber B has independent settings.
+5. Changing B does not change A.
+6. Unauthorized cross-subscriber access is rejected.
+7. Existing login still works.
+8. Platform Admin still works.
+9. Workspace tabs still work.
+10. Existing subscriber dashboard still works.
+11. No domain/DNS/SSL functionality was introduced.
+
+Then report:
+
+- migration created
+- table/model created
+- API endpoints created
+- authorization method used
+- validation method used
+- isolation tests performed
+- files changed
+- any architecture concern discovered
+
+Do NOT push.
+Do NOT deploy.
+
+Stop after Development/Preview verification and wait for my approval.

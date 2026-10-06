@@ -11,6 +11,35 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /settings/general:
+    get:
+      operationId: getCurrentGeneralSettings
+      summary: Read the eligible authenticated subscriber's General Settings
+      responses:
+        "200":
+          description: Persisted configuration; identity comes from the session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeneralSettings" }
+        "401": { description: Authentication required }
+        "403": { description: Subscriber account and eligible licence required }
+    put:
+      operationId: updateCurrentGeneralSettings
+      summary: Replace the eligible authenticated subscriber's General Settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GeneralSettingsInput" }
+      responses:
+        "200":
+          description: Confirmed persisted configuration
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeneralSettings" }
+        "400": { description: Invalid fields or unexpected properties }
+        "401": { description: Authentication required }
+        "403": { description: Subscriber account and eligible licence required }
   /auth/entry:
     get:
       operationId: resolveAuthEntry
@@ -187,6 +216,59 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    GeneralSettings:
+      type: object
+      required: [id, subscriber_id, values, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        subscriber_id: { type: string, format: uuid, readOnly: true }
+        values: { $ref: "#/components/schemas/GeneralSettingsInput" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    GeneralSettingsInput:
+      type: object
+      additionalProperties: false
+      required: [company_name, site_name, logo_url, favicon_url, site_link, site_ssl_link, seo_friendly_url, page_title_format, site_description, site_keywords, faster_browsing, recharge_voucher, testimonial, blog, knowledge_base, support_ticket, show_service_price, show_service_icon, affiliate_system, gift_certificate, gift_certificate_tax, withdrawal_request, eu_cookie_law, email_history_save, user_manage_credit_card, mobile_app, display_track_order, display_downloads, index_redirect, logout_redirect, add_fund_enabled, add_fund_tax_enabled, minimum_add_fund, maximum_add_fund, maximum_balance]
+      properties:
+        company_name: { type: string, maxLength: 200 }
+        site_name: { type: string, maxLength: 200 }
+        logo_url: { type: string, maxLength: 2048, description: Empty or an absolute HTTP/HTTPS image URL }
+        favicon_url: { type: string, maxLength: 2048, description: Empty or an absolute HTTP/HTTPS image URL }
+        site_link: { type: string, maxLength: 2048, description: Compatibility value only; no routing or provisioning }
+        site_ssl_link: { type: string, maxLength: 2048, description: Empty or HTTPS compatibility value; no SSL provisioning }
+        seo_friendly_url: { type: boolean }
+        page_title_format: { type: string, enum: ["", Default] }
+        site_description: { type: string, maxLength: 4000 }
+        site_keywords: { type: string, maxLength: 2000 }
+        faster_browsing: { type: boolean }
+        recharge_voucher: { type: boolean }
+        testimonial: { type: boolean }
+        blog: { type: boolean }
+        knowledge_base: { type: boolean }
+        support_ticket: { type: boolean }
+        show_service_price: { type: boolean }
+        show_service_icon: { type: boolean }
+        affiliate_system: { type: boolean }
+        gift_certificate: { type: boolean }
+        gift_certificate_tax: { type: boolean }
+        withdrawal_request: { type: boolean }
+        eu_cookie_law: { type: boolean }
+        email_history_save: { type: boolean }
+        user_manage_credit_card: { type: boolean }
+        mobile_app: { type: boolean }
+        display_track_order: { type: boolean }
+        display_downloads: { type: boolean }
+        index_redirect: { type: string, maxLength: 2048 }
+        logout_redirect: { type: string, maxLength: 2048 }
+        add_fund_enabled: { type: boolean }
+        add_fund_tax_enabled: { type: boolean }
+        minimum_add_fund: { $ref: "#/components/schemas/SettingsMoney" }
+        maximum_add_fund: { $ref: "#/components/schemas/SettingsMoney" }
+        maximum_balance: { $ref: "#/components/schemas/SettingsMoney" }
+    SettingsMoney:
+      type: ["string", "null"]
+      pattern: '^(0|[1-9][0-9]{0,15})(\.[0-9]{1,2})?$'
+      description: Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.
     AuthEntry:
       type: object
       required: [adminPath, isAdminEntry]

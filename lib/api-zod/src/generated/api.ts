@@ -8,6 +8,215 @@
 import * as zod from 'zod';
 
 
+/**
+ * @summary Read the eligible authenticated subscriber's General Settings
+ */
+export const getCurrentGeneralSettingsResponseValuesCompanyNameMax = 200;
+
+export const getCurrentGeneralSettingsResponseValuesSiteNameMax = 200;
+
+export const getCurrentGeneralSettingsResponseValuesLogoUrlMax = 2048;
+
+export const getCurrentGeneralSettingsResponseValuesFaviconUrlMax = 2048;
+
+export const getCurrentGeneralSettingsResponseValuesSiteLinkMax = 2048;
+
+export const getCurrentGeneralSettingsResponseValuesSiteSslLinkMax = 2048;
+
+export const getCurrentGeneralSettingsResponseValuesSiteDescriptionMax = 4000;
+
+export const getCurrentGeneralSettingsResponseValuesSiteKeywordsMax = 2000;
+
+export const getCurrentGeneralSettingsResponseValuesIndexRedirectMax = 2048;
+
+export const getCurrentGeneralSettingsResponseValuesLogoutRedirectMax = 2048;
+
+export const getCurrentGeneralSettingsResponseValuesMinimumAddFundRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+export const getCurrentGeneralSettingsResponseValuesMaximumAddFundRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+export const getCurrentGeneralSettingsResponseValuesMaximumBalanceRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+
+
+export const GetCurrentGeneralSettingsResponse = zod.object({
+  "id": zod.string().uuid(),
+  "subscriber_id": zod.string().uuid(),
+  "values": zod.object({
+  "company_name": zod.string().max(getCurrentGeneralSettingsResponseValuesCompanyNameMax),
+  "site_name": zod.string().max(getCurrentGeneralSettingsResponseValuesSiteNameMax),
+  "logo_url": zod.string().max(getCurrentGeneralSettingsResponseValuesLogoUrlMax).describe('Empty or an absolute HTTP/HTTPS image URL'),
+  "favicon_url": zod.string().max(getCurrentGeneralSettingsResponseValuesFaviconUrlMax).describe('Empty or an absolute HTTP/HTTPS image URL'),
+  "site_link": zod.string().max(getCurrentGeneralSettingsResponseValuesSiteLinkMax).describe('Compatibility value only; no routing or provisioning'),
+  "site_ssl_link": zod.string().max(getCurrentGeneralSettingsResponseValuesSiteSslLinkMax).describe('Empty or HTTPS compatibility value; no SSL provisioning'),
+  "seo_friendly_url": zod.boolean(),
+  "page_title_format": zod.enum(['', 'Default']),
+  "site_description": zod.string().max(getCurrentGeneralSettingsResponseValuesSiteDescriptionMax),
+  "site_keywords": zod.string().max(getCurrentGeneralSettingsResponseValuesSiteKeywordsMax),
+  "faster_browsing": zod.boolean(),
+  "recharge_voucher": zod.boolean(),
+  "testimonial": zod.boolean(),
+  "blog": zod.boolean(),
+  "knowledge_base": zod.boolean(),
+  "support_ticket": zod.boolean(),
+  "show_service_price": zod.boolean(),
+  "show_service_icon": zod.boolean(),
+  "affiliate_system": zod.boolean(),
+  "gift_certificate": zod.boolean(),
+  "gift_certificate_tax": zod.boolean(),
+  "withdrawal_request": zod.boolean(),
+  "eu_cookie_law": zod.boolean(),
+  "email_history_save": zod.boolean(),
+  "user_manage_credit_card": zod.boolean(),
+  "mobile_app": zod.boolean(),
+  "display_track_order": zod.boolean(),
+  "display_downloads": zod.boolean(),
+  "index_redirect": zod.string().max(getCurrentGeneralSettingsResponseValuesIndexRedirectMax),
+  "logout_redirect": zod.string().max(getCurrentGeneralSettingsResponseValuesLogoutRedirectMax),
+  "add_fund_enabled": zod.boolean(),
+  "add_fund_tax_enabled": zod.boolean(),
+  "minimum_add_fund": zod.string().regex(getCurrentGeneralSettingsResponseValuesMinimumAddFundRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.'),
+  "maximum_add_fund": zod.string().regex(getCurrentGeneralSettingsResponseValuesMaximumAddFundRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.'),
+  "maximum_balance": zod.string().regex(getCurrentGeneralSettingsResponseValuesMaximumBalanceRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.')
+}),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Replace the eligible authenticated subscriber's General Settings
+ */
+export const updateCurrentGeneralSettingsBodyCompanyNameMax = 200;
+
+export const updateCurrentGeneralSettingsBodySiteNameMax = 200;
+
+export const updateCurrentGeneralSettingsBodyLogoUrlMax = 2048;
+
+export const updateCurrentGeneralSettingsBodyFaviconUrlMax = 2048;
+
+export const updateCurrentGeneralSettingsBodySiteLinkMax = 2048;
+
+export const updateCurrentGeneralSettingsBodySiteSslLinkMax = 2048;
+
+export const updateCurrentGeneralSettingsBodySiteDescriptionMax = 4000;
+
+export const updateCurrentGeneralSettingsBodySiteKeywordsMax = 2000;
+
+export const updateCurrentGeneralSettingsBodyIndexRedirectMax = 2048;
+
+export const updateCurrentGeneralSettingsBodyLogoutRedirectMax = 2048;
+
+export const updateCurrentGeneralSettingsBodyMinimumAddFundRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+export const updateCurrentGeneralSettingsBodyMaximumAddFundRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+export const updateCurrentGeneralSettingsBodyMaximumBalanceRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+
+
+export const UpdateCurrentGeneralSettingsBody = zod.object({
+  "company_name": zod.string().max(updateCurrentGeneralSettingsBodyCompanyNameMax),
+  "site_name": zod.string().max(updateCurrentGeneralSettingsBodySiteNameMax),
+  "logo_url": zod.string().max(updateCurrentGeneralSettingsBodyLogoUrlMax).describe('Empty or an absolute HTTP/HTTPS image URL'),
+  "favicon_url": zod.string().max(updateCurrentGeneralSettingsBodyFaviconUrlMax).describe('Empty or an absolute HTTP/HTTPS image URL'),
+  "site_link": zod.string().max(updateCurrentGeneralSettingsBodySiteLinkMax).describe('Compatibility value only; no routing or provisioning'),
+  "site_ssl_link": zod.string().max(updateCurrentGeneralSettingsBodySiteSslLinkMax).describe('Empty or HTTPS compatibility value; no SSL provisioning'),
+  "seo_friendly_url": zod.boolean(),
+  "page_title_format": zod.enum(['', 'Default']),
+  "site_description": zod.string().max(updateCurrentGeneralSettingsBodySiteDescriptionMax),
+  "site_keywords": zod.string().max(updateCurrentGeneralSettingsBodySiteKeywordsMax),
+  "faster_browsing": zod.boolean(),
+  "recharge_voucher": zod.boolean(),
+  "testimonial": zod.boolean(),
+  "blog": zod.boolean(),
+  "knowledge_base": zod.boolean(),
+  "support_ticket": zod.boolean(),
+  "show_service_price": zod.boolean(),
+  "show_service_icon": zod.boolean(),
+  "affiliate_system": zod.boolean(),
+  "gift_certificate": zod.boolean(),
+  "gift_certificate_tax": zod.boolean(),
+  "withdrawal_request": zod.boolean(),
+  "eu_cookie_law": zod.boolean(),
+  "email_history_save": zod.boolean(),
+  "user_manage_credit_card": zod.boolean(),
+  "mobile_app": zod.boolean(),
+  "display_track_order": zod.boolean(),
+  "display_downloads": zod.boolean(),
+  "index_redirect": zod.string().max(updateCurrentGeneralSettingsBodyIndexRedirectMax),
+  "logout_redirect": zod.string().max(updateCurrentGeneralSettingsBodyLogoutRedirectMax),
+  "add_fund_enabled": zod.boolean(),
+  "add_fund_tax_enabled": zod.boolean(),
+  "minimum_add_fund": zod.string().regex(updateCurrentGeneralSettingsBodyMinimumAddFundRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.'),
+  "maximum_add_fund": zod.string().regex(updateCurrentGeneralSettingsBodyMaximumAddFundRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.'),
+  "maximum_balance": zod.string().regex(updateCurrentGeneralSettingsBodyMaximumBalanceRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.')
+})
+
+export const updateCurrentGeneralSettingsResponseValuesCompanyNameMax = 200;
+
+export const updateCurrentGeneralSettingsResponseValuesSiteNameMax = 200;
+
+export const updateCurrentGeneralSettingsResponseValuesLogoUrlMax = 2048;
+
+export const updateCurrentGeneralSettingsResponseValuesFaviconUrlMax = 2048;
+
+export const updateCurrentGeneralSettingsResponseValuesSiteLinkMax = 2048;
+
+export const updateCurrentGeneralSettingsResponseValuesSiteSslLinkMax = 2048;
+
+export const updateCurrentGeneralSettingsResponseValuesSiteDescriptionMax = 4000;
+
+export const updateCurrentGeneralSettingsResponseValuesSiteKeywordsMax = 2000;
+
+export const updateCurrentGeneralSettingsResponseValuesIndexRedirectMax = 2048;
+
+export const updateCurrentGeneralSettingsResponseValuesLogoutRedirectMax = 2048;
+
+export const updateCurrentGeneralSettingsResponseValuesMinimumAddFundRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+export const updateCurrentGeneralSettingsResponseValuesMaximumAddFundRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+export const updateCurrentGeneralSettingsResponseValuesMaximumBalanceRegExp = new RegExp('^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$');
+
+
+export const UpdateCurrentGeneralSettingsResponse = zod.object({
+  "id": zod.string().uuid(),
+  "subscriber_id": zod.string().uuid(),
+  "values": zod.object({
+  "company_name": zod.string().max(updateCurrentGeneralSettingsResponseValuesCompanyNameMax),
+  "site_name": zod.string().max(updateCurrentGeneralSettingsResponseValuesSiteNameMax),
+  "logo_url": zod.string().max(updateCurrentGeneralSettingsResponseValuesLogoUrlMax).describe('Empty or an absolute HTTP/HTTPS image URL'),
+  "favicon_url": zod.string().max(updateCurrentGeneralSettingsResponseValuesFaviconUrlMax).describe('Empty or an absolute HTTP/HTTPS image URL'),
+  "site_link": zod.string().max(updateCurrentGeneralSettingsResponseValuesSiteLinkMax).describe('Compatibility value only; no routing or provisioning'),
+  "site_ssl_link": zod.string().max(updateCurrentGeneralSettingsResponseValuesSiteSslLinkMax).describe('Empty or HTTPS compatibility value; no SSL provisioning'),
+  "seo_friendly_url": zod.boolean(),
+  "page_title_format": zod.enum(['', 'Default']),
+  "site_description": zod.string().max(updateCurrentGeneralSettingsResponseValuesSiteDescriptionMax),
+  "site_keywords": zod.string().max(updateCurrentGeneralSettingsResponseValuesSiteKeywordsMax),
+  "faster_browsing": zod.boolean(),
+  "recharge_voucher": zod.boolean(),
+  "testimonial": zod.boolean(),
+  "blog": zod.boolean(),
+  "knowledge_base": zod.boolean(),
+  "support_ticket": zod.boolean(),
+  "show_service_price": zod.boolean(),
+  "show_service_icon": zod.boolean(),
+  "affiliate_system": zod.boolean(),
+  "gift_certificate": zod.boolean(),
+  "gift_certificate_tax": zod.boolean(),
+  "withdrawal_request": zod.boolean(),
+  "eu_cookie_law": zod.boolean(),
+  "email_history_save": zod.boolean(),
+  "user_manage_credit_card": zod.boolean(),
+  "mobile_app": zod.boolean(),
+  "display_track_order": zod.boolean(),
+  "display_downloads": zod.boolean(),
+  "index_redirect": zod.string().max(updateCurrentGeneralSettingsResponseValuesIndexRedirectMax),
+  "logout_redirect": zod.string().max(updateCurrentGeneralSettingsResponseValuesLogoutRedirectMax),
+  "add_fund_enabled": zod.boolean(),
+  "add_fund_tax_enabled": zod.boolean(),
+  "minimum_add_fund": zod.string().regex(updateCurrentGeneralSettingsResponseValuesMinimumAddFundRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.'),
+  "maximum_add_fund": zod.string().regex(updateCurrentGeneralSettingsResponseValuesMaximumAddFundRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.'),
+  "maximum_balance": zod.string().regex(updateCurrentGeneralSettingsResponseValuesMaximumBalanceRegExp).nullable().describe('Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.')
+}),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
 export const resolveAuthEntryQueryPathMax = 512;
 
 

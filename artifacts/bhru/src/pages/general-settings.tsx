@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Save, ImagePlus, X } from 'lucide-react';
+import { useGeneralSettings } from '@/hooks/use-general-settings';
 import { SettingsSection, SettingsRow, SettingInput, SettingTextarea, SettingToggle, SettingSelect, SettingsNavigation, type SettingsNavItem } from '@/components/subscriber/general-settings/settings-ui';
 
 const NAV: SettingsNavItem[] = [
@@ -15,34 +16,9 @@ const SITE_TOGGLES: { id: string; label: string; help?: string }[] = [
   ['display-track-order', 'Display Track Order'], ['display-downloads', 'Display Downloads'],
 ].map(([id, label, help]) => ({ id, label, help }));
 
-type Errors = Record<string, string>;
-
 export default function GeneralSettingsPage() {
-  const [t, setT] = useState<Record<string, string>>({});
-  const [on, setOn] = useState<Record<string, boolean>>({});
-  const [errors, setErrors] = useState<Errors>({});
-  const [notice, setNotice] = useState<{ kind: 'error' | 'info'; text: string } | null>(null);
+  const { v, set, tog, errors, notice, loading, saving, ready, dirty, canRetry, save, reload } = useGeneralSettings();
   const [gallery, setGallery] = useState<string | null>(null);
-
-  const v = (k: string) => t[k] ?? '';
-  const set = (k: string) => (val: string) => setT((p) => ({ ...p, [k]: val }));
-  const tog = (k: string) => ({ checked: !!on[k], onChange: (c: boolean) => setOn((p) => ({ ...p, [k]: c })) });
-
-  const save = () => {
-    const e: Errors = {};
-    ['site-link', 'site-ssl-link'].forEach((k) => { if (v(k).trim() && !/^https?:\/\/\S+$/i.test(v(k).trim())) e[k] = 'Enter a full URL starting with http:// or https://'; });
-    if (v('site-ssl-link').trim() && !/^https:\/\//i.test(v('site-ssl-link').trim()) && !e['site-ssl-link']) e['site-ssl-link'] = 'A secure link must start with https://';
-    const nums = ['min-add-fund', 'max-add-fund', 'max-balance'];
-    nums.forEach((k) => {
-      const value = v(k).trim();
-      if (value && (!/^\d+(?:\.\d+)?$/.test(value) || !Number.isFinite(Number(value)))) e[k] = 'Enter a non-negative number';
-    });
-    if (!e['min-add-fund'] && !e['max-add-fund'] && v('min-add-fund') && v('max-add-fund') && Number(v('min-add-fund')) > Number(v('max-add-fund'))) e['max-add-fund'] = 'Maximum must not be lower than the minimum';
-    setErrors(e);
-    setNotice(Object.keys(e).length
-      ? { kind: 'error', text: `Not saved. Fix ${Object.keys(e).length} field${Object.keys(e).length > 1 ? 's' : ''} marked below.` }
-      : { kind: 'info', text: 'Not saved. Values are valid, but saving settings is not connected yet. Changes stay on this screen only while this tab is open.' });
-  };
 
   const gal = (id: string) => <button type="button" className="btn" onClick={() => setGallery(id)} data-testid={`button-gallery-${id}`}><ImagePlus size={14} />Add From Gallery</button>;
 
@@ -50,6 +26,11 @@ export default function GeneralSettingsPage() {
     <div className="gs-root" data-testid="page-general-settings">
       <SettingsNavigation items={NAV} activeId="general-settings" />
       <div className="space-y-3 min-w-0">
+        <div className="gs-help" role="status" aria-live="polite" data-testid="text-load-status">
+          {loading ? 'Loading your saved General Settings…' : !ready ? notice?.text : ''}
+          {!loading && !ready && canRetry && <button type="button" className="btn btn-sm ml-2" onClick={() => void reload()} data-testid="button-retry-settings">Retry</button>}
+        </div>
+        <fieldset disabled={loading || saving || !ready} className="min-w-0 space-y-3 border-0 m-0 p-0" aria-busy={loading || saving}>
         <SettingsSection id="site-information" title="Site Information">
           <SettingsRow id="company-name" label="Company Name" help="Your Company Name as you want it to appear throughout the system"><SettingInput id="company-name" value={v('company-name')} onChange={set('company-name')} /></SettingsRow>
           <SettingsRow id="site-name" label="Site Name"><SettingInput id="site-name" value={v('site-name')} onChange={set('site-name')} /></SettingsRow>
@@ -89,12 +70,13 @@ export default function GeneralSettingsPage() {
         </SettingsSection>
 
         <div className="gs-savebar">
-          <button type="button" className="btn btn-brand" onClick={save} data-testid="button-save-changes"><Save size={14} />Save Changes</button>
+          <button type="button" className="btn btn-brand" onClick={() => void save()} data-testid="button-save-changes"><Save size={14} />{saving ? 'Saving…' : 'Save Changes'}</button>
           <p className="gs-notice" role="status" aria-live="polite" data-testid="text-save-notice"
             style={{ color: notice?.kind === 'error' ? 'hsl(var(--danger))' : 'hsl(var(--muted-foreground))' }}>
-            {notice ? notice.text : 'Nothing saved. Settings on this page are not stored yet.'}
+            {saving ? 'Saving your General Settings…' : loading ? 'Loading saved settings…' : notice?.text ?? (dirty ? 'You have unsaved changes.' : 'No unsaved changes.')}
           </p>
         </div>
+        </fieldset>
       </div>
 
       {gallery && (

@@ -4,10 +4,10 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const require = createRequire(new URL('../package.json', import.meta.url));
-const { buildSync } = createRequire(require.resolve('vite'))('esbuild');
+const { build } = createRequire(require.resolve('vite'))('esbuild');
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
-const result = buildSync({
+const result = await build({
   entryPoints: [fileURLToPath(new URL('../src/pages/general-settings.tsx', import.meta.url))],
   bundle: true,
   write: false,
@@ -16,6 +16,22 @@ const result = buildSync({
   jsx: 'automatic',
   loader: { '.css': 'empty' },
   external: ['react', 'react/jsx-runtime', 'lucide-react'],
+  // This test measures markup, not authentication or the network. Integration
+  // and browser tests exercise the real persistence hook separately.
+  plugins: [{
+    name: 'settings-layout-only',
+    setup(builder) {
+      builder.onResolve({ filter: /hooks\/use-general-settings$/ }, () => ({ path: 'settings-hook', namespace: 'layout-test' }));
+      builder.onLoad({ filter: /.*/, namespace: 'layout-test' }, () => ({
+        contents: `export const useGeneralSettings = () => ({
+          v: () => '', set: () => () => {}, tog: () => ({checked:false,onChange:()=>{}}),
+          errors:{}, notice:null, loading:false, saving:false, ready:true, dirty:false,
+          canRetry:true, save:async()=>{}, reload:async()=>{}
+        });`,
+        loader: 'js',
+      }));
+    },
+  }],
 });
 const mod = { exports: {} };
 vm.runInNewContext(result.outputFiles[0].text, { module: mod, exports: mod.exports, require, console });
@@ -63,6 +79,6 @@ for (const text of [
   'Enter the minimum amount a client can add in a single transaction',
   'Enter the maximum amount a client can add in a single transaction',
   'Enter the maximum balance that a client can add in credit',
-  'Nothing saved. Settings on this page are not stored yet.',
+  'No unsaved changes.',
 ]) assert.ok(markup.includes(text), `Missing reference helper or save disclosure: ${text}`);
-console.log('PASS: General Settings reference sections, 11 navigation labels, 18 site toggles, 3 numeric inputs, field labels, helpers and honest Save status.');
+console.log('PASS: General Settings retains reference sections, 11 navigation labels, 18 site toggles, 3 numeric inputs, labels and helpers after persistence integration.');

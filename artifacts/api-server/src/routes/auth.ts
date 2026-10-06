@@ -29,6 +29,7 @@ router.post("/auth/register", async (req, res) => {
       VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, [userId, subscriberId, input.owner.trim(), input.username.toLowerCase(),
       input.email.trim().toLowerCase(), input.phone.trim(), input.country.trim(), passwordHash]);
     await client.query("INSERT INTO subscriptions(id,subscriber_id) VALUES($1,$2)", [randomUUID(), subscriberId]);
+    await client.query("INSERT INTO subscriber_general_settings(id,subscriber_id) VALUES($1,$2)", [randomUUID(), subscriberId]);
     await audit(client, userId, "Subscriber registered", "subscriber", subscriberId, input.business.trim());
     return createSession(client, { id: userId, subscriber_id: subscriberId, full_name: input.owner.trim(), admin: false }, req.sessionHash);
   });

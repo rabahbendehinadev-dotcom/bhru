@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import {
   getPlatformState, resolveAuthEntry, registerAccount, loginAccount, loginAdministrator, logoutAccount, manageSubscription,
   editSubscriber, createPlan as createPlanRequest, editPlan, getSubscriberPanel,
+  getCurrentGeneralSettings, updateCurrentGeneralSettings, type GeneralSettingsInput,
   type PlatformState, type Subscriber, type Plan, type SessionState, type LogEntry,
   type AccountInput, type PlanInput, type SubscriberUpdate, type SubscriptionAction,
 } from '@workspace/api-client-react';
@@ -70,6 +71,8 @@ export const accessCheck = (sub: Subscriber | undefined) => ({
   allowed: !!sub?.allowed, status: sub?.status ?? null, reason: sub?.accessReason || 'Account not found.',
 });
 export const verifyPanelAccess = (id: string) => getSubscriberPanel(id, options());
+export const loadGeneralSettings = (signal?: AbortSignal) => getCurrentGeneralSettings({ ...options(), signal });
+export const persistGeneralSettings = (values: GeneralSettingsInput) => updateCurrentGeneralSettings(values, options());
 const p2 = (n: number) => String(n).padStart(2, '0');
 export const fmtDate = (v: string | null) => { if (!v) return '-'; const d = new Date(v); return `${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()}`; };
 export const fmtTime = (v: string | null) => { if (!v) return ''; const d = new Date(v); return `${p2(d.getHours())}:${p2(d.getMinutes())}`; };

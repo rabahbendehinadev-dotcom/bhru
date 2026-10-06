@@ -5,6 +5,89 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export type GeneralSettingsInputPageTitleFormat = typeof GeneralSettingsInputPageTitleFormat[keyof typeof GeneralSettingsInputPageTitleFormat];
+
+
+export const GeneralSettingsInputPageTitleFormat = {
+  '': '',
+  Default: 'Default',
+} as const;
+
+/**
+ * Null for unset, otherwise a nonnegative exact decimal string, at most 16 integer and 2 fractional digits; JSON floating-point numbers are rejected.
+ * @nullable
+ * @pattern ^(0|[1-9][0-9]{0,15})(\.[0-9]{1,2})?$
+ */
+export type SettingsMoney = string | null;
+
+export interface GeneralSettingsInput {
+  /** @maxLength 200 */
+  company_name: string;
+  /** @maxLength 200 */
+  site_name: string;
+  /**
+     * Empty or an absolute HTTP/HTTPS image URL
+     * @maxLength 2048
+     */
+  logo_url: string;
+  /**
+     * Empty or an absolute HTTP/HTTPS image URL
+     * @maxLength 2048
+     */
+  favicon_url: string;
+  /**
+     * Compatibility value only; no routing or provisioning
+     * @maxLength 2048
+     */
+  site_link: string;
+  /**
+     * Empty or HTTPS compatibility value; no SSL provisioning
+     * @maxLength 2048
+     */
+  site_ssl_link: string;
+  seo_friendly_url: boolean;
+  page_title_format: GeneralSettingsInputPageTitleFormat;
+  /** @maxLength 4000 */
+  site_description: string;
+  /** @maxLength 2000 */
+  site_keywords: string;
+  faster_browsing: boolean;
+  recharge_voucher: boolean;
+  testimonial: boolean;
+  blog: boolean;
+  knowledge_base: boolean;
+  support_ticket: boolean;
+  show_service_price: boolean;
+  show_service_icon: boolean;
+  affiliate_system: boolean;
+  gift_certificate: boolean;
+  gift_certificate_tax: boolean;
+  withdrawal_request: boolean;
+  eu_cookie_law: boolean;
+  email_history_save: boolean;
+  user_manage_credit_card: boolean;
+  mobile_app: boolean;
+  display_track_order: boolean;
+  display_downloads: boolean;
+  /** @maxLength 2048 */
+  index_redirect: string;
+  /** @maxLength 2048 */
+  logout_redirect: string;
+  add_fund_enabled: boolean;
+  add_fund_tax_enabled: boolean;
+  minimum_add_fund: SettingsMoney | null;
+  maximum_add_fund: SettingsMoney | null;
+  maximum_balance: SettingsMoney | null;
+}
+
+export interface GeneralSettings {
+  id: string;
+  readonly subscriber_id: string;
+  values: GeneralSettingsInput;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuthEntry {
   /** @nullable */
   adminPath: string | null;
