@@ -1,0 +1,91 @@
+Improve ONLY the Announcement Ticker structure in Top Area.
+
+The current implementation is wrong for my intended design:
+multiple messages are being rendered inside the same announcement background/style.
+
+I want EACH announcement message to be a completely independent horizontal ticker row.
+
+Example:
+
+Ticker Row 1
+[ 🔥 First announcement continuously scrolling ]
+- Background colour: configurable for Row 1
+- Text colour: configurable for Row 1
+- Speed: configurable for Row 1
+- Direction: configurable for Row 1
+
+Ticker Row 2
+[ SERVICES | Box & Dongle | Credits | UNLOCK | iPhone... ]
+- Background colour: configurable for Row 2
+- Text colour: configurable for Row 2
+- Speed: configurable for Row 2
+- Direction: configurable for Row 2
+
+Ticker Row 3
+[ Another independent announcement... ]
+- Its own background/text/speed/direction settings.
+
+IMPORTANT:
+Do NOT combine multiple messages inside one ticker row.
+
+CMS behavior:
+When the subscriber clicks "Add Message", create an independent announcement row/card.
+
+Inside EACH message card provide:
+- Message text
+- Optional emoji/icon
+- Optional link
+- Background colour picker + HEX input
+- Text colour picker + HEX input
+- Speed: Slow / Normal / Fast
+- Direction: Left / Right
+- Enable / Disable
+- Reorder Up / Down
+- Delete
+
+Each row must store and use its OWN settings.
+
+Public website:
+- Render enabled rows vertically, one below another.
+- Each row is full width.
+- Each row scrolls continuously and seamlessly.
+- No empty gap during looping.
+- Never pause on mouse hover.
+- No visible "Pause" button.
+- Compact professional height around 32–36px desktop.
+- Responsive on mobile.
+- No horizontal page overflow.
+- The text should be vertically centered.
+- Different rows may have completely different background and text colours.
+
+Example visual structure:
+
+┌──────────────────────────────────────────────────────────┐
+│ 🔥 Announcement 1 → continuously moving                 │  RED
+├──────────────────────────────────────────────────────────┤
+│ SERVICES | UNLOCK | iPhone | Samsung → continuously     │  BLUE
+├──────────────────────────────────────────────────────────┤
+│ 🚀 Announcement 3 → continuously moving                 │  ORANGE
+└──────────────────────────────────────────────────────────┘
+
+The CMS Live Preview must immediately show the individual colours/settings of every row before Save.
+
+Existing saved announcement data must remain compatible. Migrate existing messages safely to per-row presentation settings if necessary.
+
+Do NOT modify:
+- Partner / Image Strip
+- Header/navigation
+- Hero/Banner
+- public slug
+- authentication
+- licence system
+- media storage
+- other CMS sections.
+
+If a small additive database migration is required for per-message styling, create the next migration without modifying previous migrations.
+
+Do not run browser/E2E/full regression tests.
+Only run minimal type/build validation.
+Do not push.
+Do not deploy.
+Stop after implementation and report exactly what changed.

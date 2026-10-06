@@ -78,20 +78,11 @@ export function validatePresentation(raw: unknown,host?:string): PublicPresentat
   }
   if(values.announcements.some(item=>!item.text)) throw new HttpError(400,'Announcement text is required.');
   values.logo_strip_settings ??= emptyPresentation().logo_strip_settings!;
-  // Legacy shared settings defined the visible appearance of every message.
-  // Materialize that appearance into the existing per-message fields on read,
-  // without mutating the database. The next explicit save stores independent
-  // bars and clears the nullable legacy setting so later edits are not remapped.
-  const legacy=values.announcement_ticker_settings;
-  if(legacy) {
-    if(/[\u0000-\u001f\u007f]/.test(legacy.separator)) throw new HttpError(400,'Use a printable ticker separator.');
-    for(const item of values.announcements) {
-      item.background_color=legacy.background_color;item.text_color=legacy.text_color;
-      item.movement=legacy.display==='moving'?'scrolling':'static';
-      item.speed=legacy.speed;item.direction=legacy.direction;
-    }
-    delete values.announcement_ticker_settings;
-  }
+  // Each saved announcement already owns its styling and motion fields.
+  // Accept legacy shared settings for compatibility, but never let them
+  // overwrite individual rows on load, preview or save. Only an explicit
+  // save clears the obsolete nullable shared setting in the database.
+  delete values.announcement_ticker_settings;
   for(const item of values.announcements) item.icon_text ??= '';
   values.custom_html=sanitizedTopHTML(values.custom_html,host);
   if(values.custom_html.length>4096) throw new HttpError(400,'Sanitized HTML is too long.');

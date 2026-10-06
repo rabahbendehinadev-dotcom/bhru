@@ -135,7 +135,7 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
                 const settings = { ...defaultTicker, display: 'moving' as const, speed: a.speed, direction: a.direction, pause_on_hover: false, background_color: a.background_color, text_color: a.text_color };
                 return (
                 <div key={a.id} className="min-w-0 space-y-3 rounded-md border border-[hsl(var(--border))] p-3" data-testid={`card-announcement-${i}`}>
-                  <h4 className="text-[13px] font-semibold">Announcement {i + 1}</h4>
+                  <h4 className="text-[13px] font-semibold">Ticker Row {i + 1}</h4>
                   <p dir="auto" className="truncate rounded-md px-3 py-2 text-center text-[13px] font-semibold" style={{ background: a.background_color, color: a.text_color }}>{a.icon_text} {a.text || 'No text yet'}</p>
                       <Actions name={`announcement-${i}`} i={i} n={p.announcements.length} enabled={a.enabled} editing={editing === a.id} onEdit={() => toggleEdit(a.id)}
                         onToggle={(v) => set({ announcements: patch(p.announcements, a.id, { enabled: v }) })} onMove={(d) => set({ announcements: swap(p.announcements, i, d) })}
@@ -147,6 +147,8 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
                     <div className="sm:col-span-2"><TickerColours settings={settings} errors={E} errorPrefix={a.id} showSeparator={false}
                       onChange={value => set({ announcements: patch(p.announcements, a.id, { background_color: value.background_color, text_color: value.text_color }) })} /></div>
                     <Field label="Link (optional)" error={E[`${a.id}.destination`]}><input className="input" value={a.destination} placeholder="https://… or /page" onChange={(e) => set({ announcements: patch(p.announcements, a.id, { destination: e.target.value }) })} data-testid={`input-bar-link-${i}`} /></Field>
+                    <Field label="Emoji / icon (optional)" error={E[`${a.id}.icon_text`]}><input className="input" dir="auto" value={a.icon_text ?? ''} maxLength={32} placeholder="🔥"
+                      onChange={e => set({ announcements: patch(p.announcements, a.id, { icon_text: e.target.value }) })} data-testid={`input-message-icon-${i}`} /></Field>
                   </div>}
                 </div>);})}
           </div>

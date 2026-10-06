@@ -67,4 +67,4 @@ Each enabled announcement must render as its own compact, full-width, continuous
 
 **Why:** The user requires visually independent announcement bars with Arabic/RTL and English/LTR support, and clarified that every enabled bar must continuously move, even when hovering.
 
-**How to apply:** Keep per-announcement editing simple and preserve existing messages when mapping legacy shared appearance settings. Render legacy Static announcements as moving without a database rewrite. Do not combine separately configured announcements into a shared sequence.
+**How to apply:** Keep per-announcement editing simple and preserve each row's own saved colours, speed, direction, icon and link. Legacy shared settings must never overwrite per-row values during load, preview or save. Render legacy Static announcements as moving without a database rewrite. Do not combine separately configured announcements into a shared sequence.
