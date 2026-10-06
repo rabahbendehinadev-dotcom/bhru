@@ -27,6 +27,13 @@ a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-of
 .menu[open] .burger{background:transparent}.menu[open] .burger:before{top:0;transform:rotate(45deg)}.menu[open] .burger:after{top:0;transform:rotate(-45deg)}
 .menu-panel{position:absolute;left:0;right:0;top:100%;width:100%;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 20px 20px;box-shadow:0 24px 40px color-mix(in srgb,var(--ink) 14%,transparent)}
 .menu-panel nav{display:grid;gap:2px}.menu-panel nav a:not(.btn){padding:14px 12px;border-radius:10px;font-weight:600;min-height:50px;border-bottom:1px solid var(--line)}.menu-panel nav a:not(.btn):hover{background:var(--line)}.menu-panel .btn{margin-top:14px;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.mobile-menu-backdrop[hidden]{display:none}
+@media(max-width:959px){html.public-menu-open{overflow:hidden;overscroll-behavior:none}
+.site-header:has(.menu[open]){position:sticky}
+html.public-menu-open .site-header:has(.menu[open]){position:fixed;top:0;left:0;right:0}
+html.public-menu-open body:before{content:"";display:block;height:72px}
+.mobile-menu-backdrop:not([hidden]){position:fixed;inset:0;z-index:19;border:0;padding:0;background:color-mix(in srgb,var(--ink) 60%,transparent);backdrop-filter:blur(16px);touch-action:none;cursor:pointer}
+.menu[open] .menu-panel{max-height:calc(100dvh - 72px);overflow-y:auto;overscroll-behavior:contain}}
 .hero{padding:40px 0 56px;background:radial-gradient(800px 380px at 90% 0,color-mix(in srgb,var(--accent) 16%,transparent),transparent 70%)}
 .hero-grid{display:grid;gap:36px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;max-width:100%;font-weight:700;font-size:13px;letter-spacing:.04em;background:var(--card);border:1px solid var(--line);color:var(--ink);padding:6px 14px;border-radius:999px;box-shadow:var(--sh)}.dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent)}
 h1{font-size:clamp(32px,8.4vw,60px);line-height:1.06;letter-spacing:-.035em;margin:20px 0 16px}.lead{font-size:clamp(17px,2.4vw,19px);color:var(--muted);max-width:56ch}

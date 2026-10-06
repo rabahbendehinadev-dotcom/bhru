@@ -8,6 +8,7 @@ import { renderWhy } from './components/why';
 import { renderStatistics } from './components/statistics';
 import { renderCta } from './components/cta';
 import { renderFooter } from './components/footer';
+import { PUBLIC_MENU_SCRIPT } from './mobile-menu';
 
 export function renderPublicHome(model: PublicSiteModel): string {
   const title = `${model.siteName} — Public website`;
@@ -28,7 +29,9 @@ export function renderPublicHome(model: PublicSiteModel): string {
 <meta property="og:type" content="website"><meta property="og:title" content="${t}"><meta property="og:description" content="${d}"><meta property="og:site_name" content="${escapeHTML(model.siteName)}">
 <style>${renderStyles(model)}</style></head><body data-public-template="bhru-v1">
 ${renderHeader(model)}
+<button class="mobile-menu-backdrop" type="button" aria-label="Close mobile menu" tabindex="-1" hidden></button>
 <main>${renderHero(model)}${renderServices(model)}${renderWhy(model)}${renderStatistics(model)}${renderCta(model)}</main>
 ${renderFooter(model)}
+<script>${PUBLIC_MENU_SCRIPT}</script>
 </body></html>`;
 }

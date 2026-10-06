@@ -126,3 +126,17 @@ mtime_ms = 1791309889964
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/2692270c-2bb2-44a6-8b53-41ecc7d72e7c/5126353b-c4a7-436c-9ffc-36697f3ac31e"
 storage_version_token = "1791310281255174"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "SGw2mnek2ON1C8ApyAzQi"
+uri = "file://screenshots/public-template-v2-frozen-mobile-menu.jpg"
+type = "image"
+title = "Public Template V2 — frozen mobile navigation"
+description = "Final 390px iPhone-width open menu with a dimmed, blurred backdrop, blocked background controls and accessible focus containment."
+logical_id = "b36c5ee8-a198-468a-b7a9-e30802754283"
+content_hash = "sha256:910cfaf0ba3bc1efa7ce6210d92d9dd45b039c4a7fd2ff6fa545dd85f05b2b58"
+size = 19254
+mtime_ms = 1791311582887
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/b36c5ee8-a198-468a-b7a9-e30802754283/2bdf99f2-0426-4181-a2fa-1660b09e863f"
+storage_version_token = "1791311619595536"
+content_type = "image/jpeg"

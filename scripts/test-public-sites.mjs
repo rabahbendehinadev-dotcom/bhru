@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { readFile, unlink } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -42,7 +43,15 @@ try {
       for (const [, href] of page.html.matchAll(/<a\b[^>]*\bhref="([^"]+)"/g)) {
         assert(href.startsWith('#'), 'Homepage default links must stay within the public document');
       }
-      assert(!/<script\b/i.test(page.html) && !page.html.includes('/api/state'));
+      const menuSource = await readFile(new URL('../artifacts/api-server/src/lib/public-site/mobile-menu.ts', import.meta.url), 'utf8');
+      const expectedMenuScript = menuSource.match(/String\.raw`([\s\S]*?)`;/)[1];
+      const scripts = [...page.html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+      assert.equal(scripts.length, 1, 'Only the fixed menu interaction script is allowed');
+      assert.equal(scripts[0][1], expectedMenuScript);
+      assert.equal((page.html.match(/<script\b/gi) || []).length, 1);
+      const scriptPolicy = page.response.headers.get('content-security-policy').match(/script-src ([^;]+)/)[1];
+      assert.equal(scriptPolicy, `'sha256-${createHash('sha256').update(expectedMenuScript).digest('base64')}'`);
+      assert(!page.html.includes('/api/state'));
       for (const privateField of [...fixtures.sites.flatMap(row => [row.id, row.owner, row.email, row.licence]), 'PRIVATE_PHONE', fixtures.planId, fixtures.adminPath]) {
         assert(!page.html.includes(privateField), 'Private data must not occur in public HTML');
       }

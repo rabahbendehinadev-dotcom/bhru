@@ -15,7 +15,7 @@ export function renderHeader(m: PublicSiteModel): string {
 ${renderLogo(m)}
 <nav class="nav-desktop" aria-label="Primary">${links}</nav>
 <a class="login" href="#customer-access">Login</a>
-<details class="menu"><summary aria-label="Menu"><span class="burger" aria-hidden="true"></span></summary>
+<details class="menu"><summary aria-label="Open mobile menu" aria-controls="mobile-navigation"><span class="burger" aria-hidden="true"></span></summary>
 <div class="menu-panel" id="mobile-navigation"><nav aria-label="Mobile">${links}<a class="btn btn-solid" href="#customer-access">Login</a></nav></div></details>
 </div></header>`;
 }

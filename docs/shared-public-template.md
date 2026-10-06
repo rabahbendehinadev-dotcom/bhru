@@ -143,5 +143,28 @@ The data loader, resolver, eligibility, authentication and database remain uncha
 The revised 11-group regression suite and workspace/API type checks passed.
 Development fixtures were cleaned and original data fingerprints matched.
 Rendered layouts were reviewed at 375/390/430px plus desktop, including the real
-native open-menu state and customer-access target state. No UI scripts were added.
+native open-menu state and customer-access target state. That visual revision
+initially added no UI scripts.
+
+## Public Template V2 — frozen
+
+V2 is visually approved. The final authorized change is mobile navigation only:
+a dimmed/blurred backdrop, inert background controls, fixed-body scroll lock,
+backdrop/X/link/Escape dismissal, trapped menu focus and preserved scroll position.
+Desktop design, PublicSiteModel, resolver, ownership, eligibility and auth are unchanged.
+
+The template now includes exactly one static menu-only browser handler.
+Successful public documents permit only its exact SHA-256 script hash; other
+scripts, external scripts, eval, forms and script-initiated network connections remain blocked.
+It does not call APIs, access storage or read subscriber/session state.
+This supersedes earlier zero-script statements, not the isolation boundaries.
+
+All 11 regression groups and workspace type checks passed. Browser checks
+covered 375/390/430px, dismissal/navigation/focus, background blocking and desktop
+resize cleanup. Opening from scrollY 650 and dismissing restored exactly 650 at
+all three widths. Native touch gestures were unavailable in the test browser;
+the fixed-body lock and non-passive touch-move guard are implemented.
+Development fixtures were removed and original data fingerprints matched.
+
+No further redesign, CMS, custom domains, push or deployment is authorized.
 Screenshots for approval: `screenshots/public-template-v2-*`.
