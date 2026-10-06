@@ -4,7 +4,8 @@ assert(process.env.NODE_ENV!=='production','Development fixture cleanup only');
 const fixtures=await load();
 try {
   const ids=fixtures.sites.map(site=>site.id);
-  await pool.query('DELETE FROM subscriber_public_sites WHERE subscriber_id=ANY($1::uuid[])',[ids]);
+  for(const table of ['public_site_partner_logos','public_site_announcements','public_site_banners','public_site_presentation','subscriber_public_sites'])
+    await pool.query(`DELETE FROM ${table} WHERE subscriber_id=ANY($1::uuid[])`,[ids]);
   for(const site of fixtures.sites) {
     const rows=(await pool.query('SELECT id FROM public_site_assets WHERE subscriber_id=$1',[site.id])).rows;
     if (!rows.length) continue;

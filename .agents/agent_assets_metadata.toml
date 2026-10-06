@@ -168,3 +168,31 @@ mtime_ms = 1791315496109
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/548e8f0e-4fad-44a6-bf7b-35a293babb3d/cea04033-9c4c-40f2-ba0c-e2f983d3143c"
 storage_version_token = "1791315989931085"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "bCuOs-zUAemXjdh9hmcJh"
+uri = "file://BHRU_CMS_PHASE2_REPORT.md"
+type = "text"
+title = "BHRU CMS Phase 2 — complete implementation and test report"
+description = "All 12 requested sections, migration 006, schema/API changes, security, 57 regression groups, Preview access and later production prerequisites."
+logical_id = "e98485c9-55f3-4186-86f3-d50f063be328"
+content_hash = "sha256:7fcdbaa823813b627e22e4fbcac8d33cb173f127dc2f0706bccf633c1aab9ae4"
+size = 13738
+mtime_ms = 1791323437787
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/e98485c9-55f3-4186-86f3-d50f063be328/429eecf1-55ab-400b-8464-12415be61e3a"
+storage_version_token = "1791323852742589"
+content_type = "text/markdown"
+
+[[outputs]]
+id = "fIoms5nbtDRDCw4nyMmri"
+uri = "file://screenshots/bhru-cms-phase2-public-iphone.jpg"
+type = "image"
+title = "CMS Phase 2 — iPhone-sized public preview"
+description = "390px shared public renderer with isolated QA logo, announcements, sanitized HTML and banner slider. Test fixtures were removed after verification."
+logical_id = "0843c8f1-0b3d-4173-b2f8-5ad49dd46414"
+content_hash = "sha256:284bd41ee2806ed088a0b3cfe437886976080d49d9418f9055217a9262664113"
+size = 34315
+mtime_ms = 1791322527508
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/0843c8f1-0b3d-4173-b2f8-5ad49dd46414/e53c65c2-288e-4b8d-bf68-6dc8c73f01e5"
+storage_version_token = "1791323853500061"
+content_type = "image/jpeg"

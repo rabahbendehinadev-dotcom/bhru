@@ -1,0 +1,454 @@
+We are continuing the existing BHRU SaaS project.
+
+IMPORTANT:
+This is CMS Phase 2 only.
+Do NOT redesign or replace the approved/frozen Public Template V2.
+Do NOT modify the independent Platform Admin routes/login.
+Do NOT break existing subscriber authentication, public_slug routing, CMS Phase 1, public media storage, or tenant isolation.
+Do NOT deploy or push anything.
+Work only in Development/Preview and report all changes/tests when finished.
+
+==================================================
+GOAL
+==================================================
+
+Build a polished and very easy-to-use "CMS Phase 2 – Top Area & Banner Manager" for each subscriber's public website.
+
+The subscriber must NOT need HTML/CSS knowledge for normal configuration.
+
+The UI should feel simple, organized, visual, and smooth.
+
+Existing CMS page:
+CMS / Blog → Public Website
+
+Keep all existing Phase 1 settings.
+
+Add two new well-organized sections:
+
+1. Top Area
+2. Hero / Banner
+
+All settings must be tenant-owned using the authenticated subscriber ID.
+
+The same subscriber-specific configuration must drive:
+- CMS Live Preview
+- Public route /:public_slug
+
+Never create separate template copies per subscriber.
+
+==================================================
+A. CMS PAGE ORGANIZATION / UX
+==================================================
+
+Improve the Public Website editor organization without changing the global BHRU shell.
+
+Use clean collapsible cards/sections in this order:
+
+1. General / Branding
+2. Top Area
+3. Hero / Banner
+4. Existing remaining public-site settings
+
+The page must remain easy to understand for non-technical users.
+
+Each section should have:
+- clear title
+- short description
+- clean spacing
+- obvious controls
+- immediate Live Preview updates where practical
+
+Do not overload the screen.
+
+For repeatable items such as banners/logos:
+- use visual cards
+- thumbnail preview
+- drag/reorder if safely practical, otherwise simple Move Up / Move Down controls
+- Enable/Disable
+- Edit
+- Delete with confirmation
+
+Show useful empty states such as:
+"No banners added yet."
+
+==================================================
+B. TOP AREA
+==================================================
+
+Create a "Top Area" manager for the area ABOVE the normal website header.
+
+The subscriber can independently enable/disable its components.
+
+-------------------------
+1. Logo / Partner Strip
+-------------------------
+
+Allow subscriber to add multiple small images/logos.
+
+Each item:
+- image upload using the existing secure public media storage adapter
+- optional label
+- optional destination URL
+- open link in new tab toggle
+- enabled/disabled
+- sort order
+
+Display them horizontally above the website header.
+
+Desktop:
+- clean horizontal strip
+- if there are many items, allow smooth horizontal overflow/automatic continuous scrolling without breaking layout
+
+Mobile:
+- horizontally scrollable or smoothly auto-scrolling
+- must not create page horizontal overflow
+
+Images should preserve aspect ratio and use consistent visual height.
+
+Do not hardcode any brand logos.
+
+-------------------------
+2. Announcement Bars
+-------------------------
+
+Allow multiple announcement bars, not just one.
+
+Each announcement item:
+- enabled/disabled
+- text
+- optional emoji as part of text
+- optional link
+- background colour
+- text colour
+- movement mode:
+  * Static
+  * Scrolling
+- scrolling direction:
+  * Left
+  * Right
+- speed:
+  * Slow
+  * Normal
+  * Fast
+- sort order
+
+The subscriber should be able to add, edit, remove and reorder bars.
+
+The result should support layouts similar in concept to DHRU sites:
+one or more full-width announcement/marquee strips above the main header.
+
+IMPORTANT:
+Do NOT use deprecated <marquee>.
+Implement accessible CSS/React animation.
+
+Pause scrolling animation on hover where appropriate.
+Respect prefers-reduced-motion.
+
+Content must remain readable on mobile.
+
+-------------------------
+3. Advanced Custom HTML
+-------------------------
+
+Add an OPTIONAL collapsed "Advanced" area.
+
+Label clearly:
+"Custom HTML (Advanced)"
+
+This is NOT the primary way to configure the Top Area.
+
+Security is mandatory.
+
+Do NOT allow arbitrary JavaScript execution.
+Do NOT allow:
+- <script>
+- inline event handlers such as onclick/onerror
+- javascript: URLs
+- unsafe iframes
+- dangerous executable content
+
+Use a proven sanitization strategy appropriate to the current stack.
+
+If safely implementing sanitized HTML is not appropriate with the existing architecture, do not fake it:
+leave this feature disabled and explain why in the final report.
+
+Tenant A's HTML must never appear on Tenant B.
+
+==================================================
+C. HERO / BANNER MODE
+==================================================
+
+The existing Classic Hero must remain available and must remain the default for existing subscribers.
+
+Add a simple selector:
+
+Hero display:
+[ Classic Hero ] [ Banner Slider ]
+
+Do NOT delete the existing Hero fields.
+
+-------------------------
+Classic Hero
+-------------------------
+
+When Classic Hero is selected:
+render exactly the existing approved V2 Hero behavior.
+
+Do not redesign it.
+
+-------------------------
+Banner Slider
+-------------------------
+
+When Banner Slider is selected, replace ONLY the public Hero area with a full-width banner/slider.
+
+The normal website header remains.
+
+Subscriber can add multiple banners.
+
+Each banner:
+- image
+- optional internal/external destination URL
+- optional accessible alt text
+- enabled/disabled
+- sort order
+
+Use the existing secure media storage adapter for images.
+
+CMS controls:
+- Add Banner
+- Replace Image
+- Edit
+- Delete
+- Enable/Disable
+- reorder
+
+Show image thumbnail cards.
+
+==================================================
+D. BANNER DISPLAY
+==================================================
+
+The banner must feel like a professional DHRU-style server homepage banner while staying consistent with BHRU V2.
+
+Desktop:
+- wide/full-content-width presentation
+- no unnecessary card surrounding the banner
+- preserve image quality
+- responsive
+- no stretching/distortion
+
+Mobile:
+- responsive
+- no horizontal overflow
+- maintain sensible aspect ratio
+- do not crop important content aggressively
+
+If only ONE enabled banner exists:
+- show it as a static banner
+- no unnecessary arrows/dots/autoplay
+
+If TWO OR MORE enabled banners exist:
+- enable slider
+- automatic rotation
+- previous/next controls
+- pagination dots
+- touch/swipe support on mobile if practical
+- pause on hover
+- accessible controls
+
+Add simple slider settings:
+- Autoplay ON/OFF
+- Interval:
+  * 3 seconds
+  * 5 seconds
+  * 7 seconds
+  * 10 seconds
+
+Default:
+Autoplay ON
+Interval 5 seconds
+
+Do not build an overly complicated animation editor.
+
+==================================================
+E. LIVE PREVIEW
+==================================================
+
+The existing CMS Live Preview is important.
+
+Extend it so the subscriber can preview:
+- partner/logo strip
+- announcement bars
+- Classic Hero
+- Banner Slider
+- colours
+- ordering
+
+Desktop/Mobile preview toggle must continue working.
+
+Preview must use the SAME shared public rendering components/model as the real public website wherever possible.
+
+Do not create a fake second implementation just for preview.
+
+==================================================
+F. DATA MODEL
+==================================================
+
+Design this as an additive migration after the existing migrations.
+
+Current production already has:
+001
+002
+003
+004_subscriber_public_slugs.sql
+005_subscriber_public_website.sql
+
+Create the next migration as 006.
+
+Do not modify old migration files.
+
+Use tenant-owned records with subscriber_id and proper foreign keys.
+
+Choose a clean normalized model appropriate for:
+- top-area logo items
+- announcement bars
+- banner items
+- display/settings configuration
+
+All queries and mutations MUST derive subscriber ownership from the authenticated session.
+
+Never trust subscriber_id supplied by the browser.
+
+Public reads must resolve:
+public_slug → subscriber → that subscriber's public configuration/items.
+
+Add appropriate indexes and constraints.
+
+Deleting a subscriber-owned image record must follow the existing safe media ownership/storage rules.
+
+==================================================
+G. MEDIA / STORAGE
+==================================================
+
+Reuse the CMS Phase 1 media infrastructure.
+
+Production storage is already designed around:
+BHRU_MEDIA_DIR=/var/lib/bhru/public-media
+
+Do NOT introduce a second upload/storage system.
+
+Validate uploads using the existing secure rules.
+
+No path traversal.
+No cross-tenant asset access.
+No arbitrary filesystem paths from clients.
+
+Banner and logo files must survive application redeploys using the existing persistent media design.
+
+==================================================
+H. SECURITY / TENANT ISOLATION
+==================================================
+
+This is mandatory.
+
+Test at minimum:
+
+Subscriber A:
+- cannot read B's Top Area configuration through private CMS APIs
+- cannot edit B's announcement bars
+- cannot edit/delete/reorder B's logos
+- cannot edit/delete/reorder B's banners
+- cannot access B's protected media management endpoints
+
+Public visitor:
+- can view the intended public assets/configuration for the requested public_slug
+- receives no private subscriber/account data
+
+Signed-in Subscriber A visiting Subscriber B's public URL:
+- must see B's PUBLIC website content
+- A's authenticated session must remain A
+- no cross-tenant mutation/read leak
+
+==================================================
+I. BACKWARD COMPATIBILITY
+==================================================
+
+Existing subscribers with no Phase 2 configuration must continue seeing the exact current Public Template V2.
+
+Specifically:
+- no top strips by default
+- Classic Hero remains default
+- existing Phase 1 hero/settings continue working
+- no blank/broken public page after migration
+
+Do not alter public_slug values.
+
+Do not alter the independent Platform Admin path.
+
+==================================================
+J. TESTS
+==================================================
+
+Add regression tests for:
+
+1. Existing V2 public website unchanged with no Phase 2 config
+2. Classic Hero remains default
+3. Banner mode with one banner
+4. Banner mode with multiple banners
+5. disabled banners not rendered
+6. banner ordering
+7. announcement ordering
+8. announcement enable/disable
+9. logo strip ordering
+10. tenant isolation
+11. public_slug resolution
+12. image ownership/security
+13. sanitized custom HTML if implemented
+14. mobile-safe rendering assumptions
+15. CMS load/save/reload persistence
+
+Also run all existing public-site/CMS tests.
+
+==================================================
+K. IMPORTANT IMPLEMENTATION RULES
+==================================================
+
+Do not deploy.
+Do not push.
+Do not modify production.
+Do not run destructive migrations.
+
+Do not rebuild the whole public website.
+
+Do not replace the frozen V2 template.
+
+Do not duplicate the public renderer.
+
+Do not use hardcoded Unlock Gab/GAB content for the new features.
+
+Keep the implementation generic for every BHRU subscriber.
+
+Keep the CMS UI simple enough that a normal shop/server owner can configure the homepage without technical knowledge.
+
+==================================================
+FINAL REPORT
+==================================================
+
+When finished, STOP and give me a report containing:
+
+1. Files changed
+2. Migration 006 details
+3. New database tables/columns
+4. New API endpoints
+5. CMS UI changes
+6. Public rendering changes
+7. Media/storage changes
+8. Security/sanitization approach
+9. Tenant-isolation tests
+10. Regression test results
+11. Exact Development/Preview URLs or navigation steps to test it
+12. Any production migration/storage action that will be required later
+
+Do NOT push or deploy.
+Wait for my approval.

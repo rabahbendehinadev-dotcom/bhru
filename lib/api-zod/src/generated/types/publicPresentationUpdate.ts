@@ -6,13 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PublicPresentationValues } from './publicPresentationValues';
-import type { PublicWebsiteValues } from './publicWebsiteValues';
 
-export interface PublicWebsiteUpdate {
-  values: PublicWebsiteValues;
+export interface PublicPresentationUpdate {
+  values: PublicPresentationValues;
   /** @minimum 0 */
   revision: number;
-  presentation?: PublicPresentationValues;
-  /** @minimum 0 */
-  presentation_revision?: number;
 }

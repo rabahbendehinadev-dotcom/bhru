@@ -13,6 +13,14 @@ export interface PublicService {
   ctaLabel?: string;
 }
 export interface PublicSiteModel extends PublicSiteNames {
+  presentation?: {
+    logos: {src:string;label:string;href:string;newTab:boolean}[];
+    announcements: {text:string;href:string;background:string;color:string;movement:'static'|'scrolling';direction:'left'|'right';speed:'slow'|'normal'|'fast'}[];
+    customHTML:string;
+    heroMode:'classic'|'banner';
+    banners: {src:string;alt:string;href:string}[];
+    autoplay:boolean;interval:number;
+  };
   siteName: string;
   logo: string | null;
   heroTitle: string;

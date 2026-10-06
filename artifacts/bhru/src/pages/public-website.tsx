@@ -1,7 +1,8 @@
 import { ExternalLink, RotateCcw, Save } from 'lucide-react';
 import { usePublicWebsite } from '@/hooks/use-public-website';
-import { SettingsSection, SettingsRow, SettingInput, SettingTextarea } from '@/components/subscriber/general-settings/settings-ui';
+import { SettingsRow, SettingInput, SettingTextarea } from '@/components/subscriber/general-settings/settings-ui';
 import { ImageField } from '@/components/subscriber/public-website/ImageField';
+import { PresentationEditor, CollapsibleCard } from '@/components/subscriber/public-website/PresentationEditor';
 import { PublicWebsitePreview } from '@/components/subscriber/public-website/PublicWebsitePreview';
 
 export default function PublicWebsitePage() {
@@ -25,7 +26,7 @@ export default function PublicWebsitePage() {
       </div>
       <div className="grid gap-4 min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <fieldset disabled={locked} aria-busy={w.loading || w.saving} className="min-w-0 space-y-3 border-0 m-0 p-0">
-          <SettingsSection id="branding" title="General / Branding">
+          <CollapsibleCard id="branding" title="General / Branding" description="Your name, logo, colour and public address." defaultOpen>
             {text('display_name', 'display-name', 'Display name')}
             <SettingsRow id="logo" label="Logo">
               <ImageField kind="logo" label="Logo" url={w.urls.logo} hasAsset={!!draft?.logo_asset_id} uploading={w.uploading.logo} disabled={locked}
@@ -48,9 +49,9 @@ export default function PublicWebsitePage() {
                 {openUrl && <a href={openUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm" data-testid="link-open-website"><ExternalLink size={13} />Open Website</a>}
               </div>
             </SettingsRow>
-          </SettingsSection>
+          </CollapsibleCard>
 
-          <SettingsSection id="hero" title="Hero">
+          <PresentationEditor w={w} classic={<>
             {text('hero_badge', 'hero-badge', 'Hero badge')}
             {text('hero_title', 'hero-title', 'Hero title')}
             <SettingsRow id="hero-description" label="Hero description" error={errors.hero_description}
@@ -65,7 +66,7 @@ export default function PublicWebsitePage() {
             {text('primary_cta_destination', 'primary-cta-destination', 'Primary button destination', 'Use #section, https://, mailto: or tel:.')}
             {text('secondary_cta_label', 'secondary-cta-label', 'Secondary button label')}
             {text('secondary_cta_destination', 'secondary-cta-destination', 'Secondary button destination', 'Use #section, https://, mailto: or tel:.')}
-          </SettingsSection>
+          </>} />
 
           <div className="gs-savebar">
             <button type="button" className="btn btn-brand" disabled={!w.dirty || w.anyUploading} onClick={() => void w.save()} data-testid="button-save-public-website"><Save size={14} />{w.saving ? 'Saving…' : 'Save Changes'}</button>

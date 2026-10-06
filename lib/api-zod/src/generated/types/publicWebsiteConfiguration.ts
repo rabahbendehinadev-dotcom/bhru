@@ -5,10 +5,12 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicPresentationConfiguration } from './publicPresentationConfiguration';
 import type { PublicWebsiteValues } from './publicWebsiteValues';
 
 export interface PublicWebsiteConfiguration {
   values: PublicWebsiteValues;
+  presentation?: PublicPresentationConfiguration;
   defaults: PublicWebsiteValues;
   /** @minimum 0 */
   revision: number;

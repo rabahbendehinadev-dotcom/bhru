@@ -45,6 +45,30 @@ export const getCurrentPublicWebsiteResponseValuesSecondaryCtaLabelMax = 60;
 
 export const getCurrentPublicWebsiteResponseValuesSecondaryCtaDestinationMax = 512;
 
+export const getCurrentPublicWebsiteResponsePresentationValuesCustomHtmlMax = 4096;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesLogosItemLabelMax = 120;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesLogosItemDestinationMax = 512;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesLogosMax = 6;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextMax = 500;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemDestinationMax = 512;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemBackgroundColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsMax = 8;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesBannersItemAltTextMax = 180;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesBannersItemDestinationMax = 512;
+
+export const getCurrentPublicWebsiteResponsePresentationValuesBannersMax = 8;
+
+export const getCurrentPublicWebsiteResponsePresentationRevisionMin = 0;
+
 export const getCurrentPublicWebsiteResponseDefaultsDisplayNameMax = 120;
 
 export const getCurrentPublicWebsiteResponseDefaultsBusinessDescriptionMax = 500;
@@ -83,6 +107,45 @@ export const GetCurrentPublicWebsiteResponse = zod.object({
   "secondary_cta_label": zod.string().max(getCurrentPublicWebsiteResponseValuesSecondaryCtaLabelMax),
   "secondary_cta_destination": zod.string().max(getCurrentPublicWebsiteResponseValuesSecondaryCtaDestinationMax)
 }),
+  "presentation": zod.object({
+  "values": zod.object({
+  "logo_strip_enabled": zod.boolean(),
+  "announcements_enabled": zod.boolean(),
+  "custom_html_enabled": zod.boolean(),
+  "custom_html": zod.string().max(getCurrentPublicWebsiteResponsePresentationValuesCustomHtmlMax),
+  "hero_mode": zod.enum(['classic', 'banner']),
+  "slider_autoplay": zod.boolean(),
+  "slider_interval": zod.union([zod.literal(3),zod.literal(5),zod.literal(7),zod.literal(10)]),
+  "logos": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "label": zod.string().max(getCurrentPublicWebsiteResponsePresentationValuesLogosItemLabelMax),
+  "destination": zod.string().max(getCurrentPublicWebsiteResponsePresentationValuesLogosItemDestinationMax),
+  "new_tab": zod.boolean(),
+  "enabled": zod.boolean()
+})).max(getCurrentPublicWebsiteResponsePresentationValuesLogosMax),
+  "announcements": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "text": zod.string().min(1).max(getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextMax),
+  "destination": zod.string().max(getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemDestinationMax),
+  "background_color": zod.string().regex(getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemBackgroundColorRegExp),
+  "text_color": zod.string().regex(getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextColorRegExp),
+  "movement": zod.enum(['static', 'scrolling']),
+  "direction": zod.enum(['left', 'right']),
+  "speed": zod.enum(['slow', 'normal', 'fast'])
+})).max(getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsMax),
+  "banners": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "alt_text": zod.string().max(getCurrentPublicWebsiteResponsePresentationValuesBannersItemAltTextMax),
+  "destination": zod.string().max(getCurrentPublicWebsiteResponsePresentationValuesBannersItemDestinationMax),
+  "enabled": zod.boolean()
+})).max(getCurrentPublicWebsiteResponsePresentationValuesBannersMax)
+}),
+  "revision": zod.number().int().min(getCurrentPublicWebsiteResponsePresentationRevisionMin),
+  "asset_urls": zod.record(zod.string(), zod.string())
+}).optional(),
   "defaults": zod.object({
   "display_name": zod.string().max(getCurrentPublicWebsiteResponseDefaultsDisplayNameMax),
   "business_description": zod.string().max(getCurrentPublicWebsiteResponseDefaultsBusinessDescriptionMax),
@@ -127,6 +190,30 @@ export const updateCurrentPublicWebsiteBodyValuesSecondaryCtaDestinationMax = 51
 
 export const updateCurrentPublicWebsiteBodyRevisionMin = 0;
 
+export const updateCurrentPublicWebsiteBodyPresentationCustomHtmlMax = 4096;
+
+export const updateCurrentPublicWebsiteBodyPresentationLogosItemLabelMax = 120;
+
+export const updateCurrentPublicWebsiteBodyPresentationLogosItemDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteBodyPresentationLogosMax = 6;
+
+export const updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextMax = 500;
+
+export const updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemBackgroundColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicWebsiteBodyPresentationAnnouncementsMax = 8;
+
+export const updateCurrentPublicWebsiteBodyPresentationBannersItemAltTextMax = 180;
+
+export const updateCurrentPublicWebsiteBodyPresentationBannersItemDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteBodyPresentationBannersMax = 8;
+
+export const updateCurrentPublicWebsiteBodyPresentationRevisionMin = 0;
+
 
 
 export const UpdateCurrentPublicWebsiteBody = zod.object({
@@ -144,7 +231,43 @@ export const UpdateCurrentPublicWebsiteBody = zod.object({
   "secondary_cta_label": zod.string().max(updateCurrentPublicWebsiteBodyValuesSecondaryCtaLabelMax),
   "secondary_cta_destination": zod.string().max(updateCurrentPublicWebsiteBodyValuesSecondaryCtaDestinationMax)
 }),
-  "revision": zod.number().int().min(updateCurrentPublicWebsiteBodyRevisionMin)
+  "revision": zod.number().int().min(updateCurrentPublicWebsiteBodyRevisionMin),
+  "presentation": zod.object({
+  "logo_strip_enabled": zod.boolean(),
+  "announcements_enabled": zod.boolean(),
+  "custom_html_enabled": zod.boolean(),
+  "custom_html": zod.string().max(updateCurrentPublicWebsiteBodyPresentationCustomHtmlMax),
+  "hero_mode": zod.enum(['classic', 'banner']),
+  "slider_autoplay": zod.boolean(),
+  "slider_interval": zod.union([zod.literal(3),zod.literal(5),zod.literal(7),zod.literal(10)]),
+  "logos": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "label": zod.string().max(updateCurrentPublicWebsiteBodyPresentationLogosItemLabelMax),
+  "destination": zod.string().max(updateCurrentPublicWebsiteBodyPresentationLogosItemDestinationMax),
+  "new_tab": zod.boolean(),
+  "enabled": zod.boolean()
+})).max(updateCurrentPublicWebsiteBodyPresentationLogosMax),
+  "announcements": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "text": zod.string().min(1).max(updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextMax),
+  "destination": zod.string().max(updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemDestinationMax),
+  "background_color": zod.string().regex(updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemBackgroundColorRegExp),
+  "text_color": zod.string().regex(updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextColorRegExp),
+  "movement": zod.enum(['static', 'scrolling']),
+  "direction": zod.enum(['left', 'right']),
+  "speed": zod.enum(['slow', 'normal', 'fast'])
+})).max(updateCurrentPublicWebsiteBodyPresentationAnnouncementsMax),
+  "banners": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "alt_text": zod.string().max(updateCurrentPublicWebsiteBodyPresentationBannersItemAltTextMax),
+  "destination": zod.string().max(updateCurrentPublicWebsiteBodyPresentationBannersItemDestinationMax),
+  "enabled": zod.boolean()
+})).max(updateCurrentPublicWebsiteBodyPresentationBannersMax)
+}).optional(),
+  "presentation_revision": zod.number().int().min(updateCurrentPublicWebsiteBodyPresentationRevisionMin).optional()
 })
 
 export const updateCurrentPublicWebsiteResponseValuesDisplayNameMax = 120;
@@ -165,6 +288,30 @@ export const updateCurrentPublicWebsiteResponseValuesPrimaryCtaDestinationMax = 
 export const updateCurrentPublicWebsiteResponseValuesSecondaryCtaLabelMax = 60;
 
 export const updateCurrentPublicWebsiteResponseValuesSecondaryCtaDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesCustomHtmlMax = 4096;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesLogosItemLabelMax = 120;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesLogosItemDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesLogosMax = 6;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextMax = 500;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemBackgroundColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsMax = 8;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesBannersItemAltTextMax = 180;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesBannersItemDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteResponsePresentationValuesBannersMax = 8;
+
+export const updateCurrentPublicWebsiteResponsePresentationRevisionMin = 0;
 
 export const updateCurrentPublicWebsiteResponseDefaultsDisplayNameMax = 120;
 
@@ -204,6 +351,45 @@ export const UpdateCurrentPublicWebsiteResponse = zod.object({
   "secondary_cta_label": zod.string().max(updateCurrentPublicWebsiteResponseValuesSecondaryCtaLabelMax),
   "secondary_cta_destination": zod.string().max(updateCurrentPublicWebsiteResponseValuesSecondaryCtaDestinationMax)
 }),
+  "presentation": zod.object({
+  "values": zod.object({
+  "logo_strip_enabled": zod.boolean(),
+  "announcements_enabled": zod.boolean(),
+  "custom_html_enabled": zod.boolean(),
+  "custom_html": zod.string().max(updateCurrentPublicWebsiteResponsePresentationValuesCustomHtmlMax),
+  "hero_mode": zod.enum(['classic', 'banner']),
+  "slider_autoplay": zod.boolean(),
+  "slider_interval": zod.union([zod.literal(3),zod.literal(5),zod.literal(7),zod.literal(10)]),
+  "logos": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "label": zod.string().max(updateCurrentPublicWebsiteResponsePresentationValuesLogosItemLabelMax),
+  "destination": zod.string().max(updateCurrentPublicWebsiteResponsePresentationValuesLogosItemDestinationMax),
+  "new_tab": zod.boolean(),
+  "enabled": zod.boolean()
+})).max(updateCurrentPublicWebsiteResponsePresentationValuesLogosMax),
+  "announcements": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "text": zod.string().min(1).max(updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextMax),
+  "destination": zod.string().max(updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemDestinationMax),
+  "background_color": zod.string().regex(updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemBackgroundColorRegExp),
+  "text_color": zod.string().regex(updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextColorRegExp),
+  "movement": zod.enum(['static', 'scrolling']),
+  "direction": zod.enum(['left', 'right']),
+  "speed": zod.enum(['slow', 'normal', 'fast'])
+})).max(updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsMax),
+  "banners": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "alt_text": zod.string().max(updateCurrentPublicWebsiteResponsePresentationValuesBannersItemAltTextMax),
+  "destination": zod.string().max(updateCurrentPublicWebsiteResponsePresentationValuesBannersItemDestinationMax),
+  "enabled": zod.boolean()
+})).max(updateCurrentPublicWebsiteResponsePresentationValuesBannersMax)
+}),
+  "revision": zod.number().int().min(updateCurrentPublicWebsiteResponsePresentationRevisionMin),
+  "asset_urls": zod.record(zod.string(), zod.string())
+}).optional(),
   "defaults": zod.object({
   "display_name": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsDisplayNameMax),
   "business_description": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsBusinessDescriptionMax),
@@ -246,6 +432,28 @@ export const previewCurrentPublicWebsiteBodyValuesSecondaryCtaLabelMax = 60;
 
 export const previewCurrentPublicWebsiteBodyValuesSecondaryCtaDestinationMax = 512;
 
+export const previewCurrentPublicWebsiteBodyPresentationCustomHtmlMax = 4096;
+
+export const previewCurrentPublicWebsiteBodyPresentationLogosItemLabelMax = 120;
+
+export const previewCurrentPublicWebsiteBodyPresentationLogosItemDestinationMax = 512;
+
+export const previewCurrentPublicWebsiteBodyPresentationLogosMax = 6;
+
+export const previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextMax = 500;
+
+export const previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemDestinationMax = 512;
+
+export const previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemBackgroundColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const previewCurrentPublicWebsiteBodyPresentationAnnouncementsMax = 8;
+
+export const previewCurrentPublicWebsiteBodyPresentationBannersItemAltTextMax = 180;
+
+export const previewCurrentPublicWebsiteBodyPresentationBannersItemDestinationMax = 512;
+
+export const previewCurrentPublicWebsiteBodyPresentationBannersMax = 8;
+
 
 
 export const PreviewCurrentPublicWebsiteBody = zod.object({
@@ -262,13 +470,248 @@ export const PreviewCurrentPublicWebsiteBody = zod.object({
   "primary_cta_destination": zod.string().max(previewCurrentPublicWebsiteBodyValuesPrimaryCtaDestinationMax),
   "secondary_cta_label": zod.string().max(previewCurrentPublicWebsiteBodyValuesSecondaryCtaLabelMax),
   "secondary_cta_destination": zod.string().max(previewCurrentPublicWebsiteBodyValuesSecondaryCtaDestinationMax)
-})
+}),
+  "presentation": zod.object({
+  "logo_strip_enabled": zod.boolean(),
+  "announcements_enabled": zod.boolean(),
+  "custom_html_enabled": zod.boolean(),
+  "custom_html": zod.string().max(previewCurrentPublicWebsiteBodyPresentationCustomHtmlMax),
+  "hero_mode": zod.enum(['classic', 'banner']),
+  "slider_autoplay": zod.boolean(),
+  "slider_interval": zod.union([zod.literal(3),zod.literal(5),zod.literal(7),zod.literal(10)]),
+  "logos": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "label": zod.string().max(previewCurrentPublicWebsiteBodyPresentationLogosItemLabelMax),
+  "destination": zod.string().max(previewCurrentPublicWebsiteBodyPresentationLogosItemDestinationMax),
+  "new_tab": zod.boolean(),
+  "enabled": zod.boolean()
+})).max(previewCurrentPublicWebsiteBodyPresentationLogosMax),
+  "announcements": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "text": zod.string().min(1).max(previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextMax),
+  "destination": zod.string().max(previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemDestinationMax),
+  "background_color": zod.string().regex(previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemBackgroundColorRegExp),
+  "text_color": zod.string().regex(previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextColorRegExp),
+  "movement": zod.enum(['static', 'scrolling']),
+  "direction": zod.enum(['left', 'right']),
+  "speed": zod.enum(['slow', 'normal', 'fast'])
+})).max(previewCurrentPublicWebsiteBodyPresentationAnnouncementsMax),
+  "banners": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "alt_text": zod.string().max(previewCurrentPublicWebsiteBodyPresentationBannersItemAltTextMax),
+  "destination": zod.string().max(previewCurrentPublicWebsiteBodyPresentationBannersItemDestinationMax),
+  "enabled": zod.boolean()
+})).max(previewCurrentPublicWebsiteBodyPresentationBannersMax)
+}).optional()
 })
 
 export const PreviewCurrentPublicWebsiteResponse = zod.object({
   "html": zod.string(),
   "logo_url": zod.string().nullable(),
-  "hero_image_url": zod.string().nullable()
+  "hero_image_url": zod.string().nullable(),
+  "asset_urls": zod.record(zod.string(), zod.string()).optional()
+})
+
+
+export const getCurrentPublicPresentationResponseValuesCustomHtmlMax = 4096;
+
+export const getCurrentPublicPresentationResponseValuesLogosItemLabelMax = 120;
+
+export const getCurrentPublicPresentationResponseValuesLogosItemDestinationMax = 512;
+
+export const getCurrentPublicPresentationResponseValuesLogosMax = 6;
+
+export const getCurrentPublicPresentationResponseValuesAnnouncementsItemTextMax = 500;
+
+export const getCurrentPublicPresentationResponseValuesAnnouncementsItemDestinationMax = 512;
+
+export const getCurrentPublicPresentationResponseValuesAnnouncementsItemBackgroundColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const getCurrentPublicPresentationResponseValuesAnnouncementsItemTextColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const getCurrentPublicPresentationResponseValuesAnnouncementsMax = 8;
+
+export const getCurrentPublicPresentationResponseValuesBannersItemAltTextMax = 180;
+
+export const getCurrentPublicPresentationResponseValuesBannersItemDestinationMax = 512;
+
+export const getCurrentPublicPresentationResponseValuesBannersMax = 8;
+
+export const getCurrentPublicPresentationResponseRevisionMin = 0;
+
+
+
+export const GetCurrentPublicPresentationResponse = zod.object({
+  "values": zod.object({
+  "logo_strip_enabled": zod.boolean(),
+  "announcements_enabled": zod.boolean(),
+  "custom_html_enabled": zod.boolean(),
+  "custom_html": zod.string().max(getCurrentPublicPresentationResponseValuesCustomHtmlMax),
+  "hero_mode": zod.enum(['classic', 'banner']),
+  "slider_autoplay": zod.boolean(),
+  "slider_interval": zod.union([zod.literal(3),zod.literal(5),zod.literal(7),zod.literal(10)]),
+  "logos": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "label": zod.string().max(getCurrentPublicPresentationResponseValuesLogosItemLabelMax),
+  "destination": zod.string().max(getCurrentPublicPresentationResponseValuesLogosItemDestinationMax),
+  "new_tab": zod.boolean(),
+  "enabled": zod.boolean()
+})).max(getCurrentPublicPresentationResponseValuesLogosMax),
+  "announcements": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "text": zod.string().min(1).max(getCurrentPublicPresentationResponseValuesAnnouncementsItemTextMax),
+  "destination": zod.string().max(getCurrentPublicPresentationResponseValuesAnnouncementsItemDestinationMax),
+  "background_color": zod.string().regex(getCurrentPublicPresentationResponseValuesAnnouncementsItemBackgroundColorRegExp),
+  "text_color": zod.string().regex(getCurrentPublicPresentationResponseValuesAnnouncementsItemTextColorRegExp),
+  "movement": zod.enum(['static', 'scrolling']),
+  "direction": zod.enum(['left', 'right']),
+  "speed": zod.enum(['slow', 'normal', 'fast'])
+})).max(getCurrentPublicPresentationResponseValuesAnnouncementsMax),
+  "banners": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "alt_text": zod.string().max(getCurrentPublicPresentationResponseValuesBannersItemAltTextMax),
+  "destination": zod.string().max(getCurrentPublicPresentationResponseValuesBannersItemDestinationMax),
+  "enabled": zod.boolean()
+})).max(getCurrentPublicPresentationResponseValuesBannersMax)
+}),
+  "revision": zod.number().int().min(getCurrentPublicPresentationResponseRevisionMin),
+  "asset_urls": zod.record(zod.string(), zod.string())
+})
+
+
+export const updateCurrentPublicPresentationBodyValuesCustomHtmlMax = 4096;
+
+export const updateCurrentPublicPresentationBodyValuesLogosItemLabelMax = 120;
+
+export const updateCurrentPublicPresentationBodyValuesLogosItemDestinationMax = 512;
+
+export const updateCurrentPublicPresentationBodyValuesLogosMax = 6;
+
+export const updateCurrentPublicPresentationBodyValuesAnnouncementsItemTextMax = 500;
+
+export const updateCurrentPublicPresentationBodyValuesAnnouncementsItemDestinationMax = 512;
+
+export const updateCurrentPublicPresentationBodyValuesAnnouncementsItemBackgroundColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicPresentationBodyValuesAnnouncementsItemTextColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicPresentationBodyValuesAnnouncementsMax = 8;
+
+export const updateCurrentPublicPresentationBodyValuesBannersItemAltTextMax = 180;
+
+export const updateCurrentPublicPresentationBodyValuesBannersItemDestinationMax = 512;
+
+export const updateCurrentPublicPresentationBodyValuesBannersMax = 8;
+
+export const updateCurrentPublicPresentationBodyRevisionMin = 0;
+
+
+
+export const UpdateCurrentPublicPresentationBody = zod.object({
+  "values": zod.object({
+  "logo_strip_enabled": zod.boolean(),
+  "announcements_enabled": zod.boolean(),
+  "custom_html_enabled": zod.boolean(),
+  "custom_html": zod.string().max(updateCurrentPublicPresentationBodyValuesCustomHtmlMax),
+  "hero_mode": zod.enum(['classic', 'banner']),
+  "slider_autoplay": zod.boolean(),
+  "slider_interval": zod.union([zod.literal(3),zod.literal(5),zod.literal(7),zod.literal(10)]),
+  "logos": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "label": zod.string().max(updateCurrentPublicPresentationBodyValuesLogosItemLabelMax),
+  "destination": zod.string().max(updateCurrentPublicPresentationBodyValuesLogosItemDestinationMax),
+  "new_tab": zod.boolean(),
+  "enabled": zod.boolean()
+})).max(updateCurrentPublicPresentationBodyValuesLogosMax),
+  "announcements": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "text": zod.string().min(1).max(updateCurrentPublicPresentationBodyValuesAnnouncementsItemTextMax),
+  "destination": zod.string().max(updateCurrentPublicPresentationBodyValuesAnnouncementsItemDestinationMax),
+  "background_color": zod.string().regex(updateCurrentPublicPresentationBodyValuesAnnouncementsItemBackgroundColorRegExp),
+  "text_color": zod.string().regex(updateCurrentPublicPresentationBodyValuesAnnouncementsItemTextColorRegExp),
+  "movement": zod.enum(['static', 'scrolling']),
+  "direction": zod.enum(['left', 'right']),
+  "speed": zod.enum(['slow', 'normal', 'fast'])
+})).max(updateCurrentPublicPresentationBodyValuesAnnouncementsMax),
+  "banners": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "alt_text": zod.string().max(updateCurrentPublicPresentationBodyValuesBannersItemAltTextMax),
+  "destination": zod.string().max(updateCurrentPublicPresentationBodyValuesBannersItemDestinationMax),
+  "enabled": zod.boolean()
+})).max(updateCurrentPublicPresentationBodyValuesBannersMax)
+}),
+  "revision": zod.number().int().min(updateCurrentPublicPresentationBodyRevisionMin)
+})
+
+export const updateCurrentPublicPresentationResponseValuesCustomHtmlMax = 4096;
+
+export const updateCurrentPublicPresentationResponseValuesLogosItemLabelMax = 120;
+
+export const updateCurrentPublicPresentationResponseValuesLogosItemDestinationMax = 512;
+
+export const updateCurrentPublicPresentationResponseValuesLogosMax = 6;
+
+export const updateCurrentPublicPresentationResponseValuesAnnouncementsItemTextMax = 500;
+
+export const updateCurrentPublicPresentationResponseValuesAnnouncementsItemDestinationMax = 512;
+
+export const updateCurrentPublicPresentationResponseValuesAnnouncementsItemBackgroundColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicPresentationResponseValuesAnnouncementsItemTextColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicPresentationResponseValuesAnnouncementsMax = 8;
+
+export const updateCurrentPublicPresentationResponseValuesBannersItemAltTextMax = 180;
+
+export const updateCurrentPublicPresentationResponseValuesBannersItemDestinationMax = 512;
+
+export const updateCurrentPublicPresentationResponseValuesBannersMax = 8;
+
+export const updateCurrentPublicPresentationResponseRevisionMin = 0;
+
+
+
+export const UpdateCurrentPublicPresentationResponse = zod.object({
+  "values": zod.object({
+  "logo_strip_enabled": zod.boolean(),
+  "announcements_enabled": zod.boolean(),
+  "custom_html_enabled": zod.boolean(),
+  "custom_html": zod.string().max(updateCurrentPublicPresentationResponseValuesCustomHtmlMax),
+  "hero_mode": zod.enum(['classic', 'banner']),
+  "slider_autoplay": zod.boolean(),
+  "slider_interval": zod.union([zod.literal(3),zod.literal(5),zod.literal(7),zod.literal(10)]),
+  "logos": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "label": zod.string().max(updateCurrentPublicPresentationResponseValuesLogosItemLabelMax),
+  "destination": zod.string().max(updateCurrentPublicPresentationResponseValuesLogosItemDestinationMax),
+  "new_tab": zod.boolean(),
+  "enabled": zod.boolean()
+})).max(updateCurrentPublicPresentationResponseValuesLogosMax),
+  "announcements": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "text": zod.string().min(1).max(updateCurrentPublicPresentationResponseValuesAnnouncementsItemTextMax),
+  "destination": zod.string().max(updateCurrentPublicPresentationResponseValuesAnnouncementsItemDestinationMax),
+  "background_color": zod.string().regex(updateCurrentPublicPresentationResponseValuesAnnouncementsItemBackgroundColorRegExp),
+  "text_color": zod.string().regex(updateCurrentPublicPresentationResponseValuesAnnouncementsItemTextColorRegExp),
+  "movement": zod.enum(['static', 'scrolling']),
+  "direction": zod.enum(['left', 'right']),
+  "speed": zod.enum(['slow', 'normal', 'fast'])
+})).max(updateCurrentPublicPresentationResponseValuesAnnouncementsMax),
+  "banners": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "asset_id": zod.string().uuid(),
+  "alt_text": zod.string().max(updateCurrentPublicPresentationResponseValuesBannersItemAltTextMax),
+  "destination": zod.string().max(updateCurrentPublicPresentationResponseValuesBannersItemDestinationMax),
+  "enabled": zod.boolean()
+})).max(updateCurrentPublicPresentationResponseValuesBannersMax)
+}),
+  "revision": zod.number().int().min(updateCurrentPublicPresentationResponseRevisionMin),
+  "asset_urls": zod.record(zod.string(), zod.string())
 })
 
 

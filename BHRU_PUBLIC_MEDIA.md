@@ -78,7 +78,8 @@ automatic seeds, database resets, or production environment changes here.
   the old unreferenced file. Reset/removing unsaved uploads uses the owner-only
   unused-image endpoint; deleting an image still referenced by saved config
   is blocked. Shared logo/hero references are not removed prematurely.
-- Limits are 16 retained image records / 32 MiB per subscriber and 20 uploads
+- CMS Phase 2 has at most 16 configured slots; two bounded staging slots permit
+  replacement before Save. Limits are 18 retained image records / 48 MiB per subscriber and 20 uploads
   per 15-minute window, independent of subscriptions or licence behavior.
 - A process crash between file write and database commit can leave an
   unreferenced file. A deletion failure can leave a DB-unreferenced file.

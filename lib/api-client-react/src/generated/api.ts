@@ -32,6 +32,8 @@ import type {
   PlanInput,
   PlatformState,
   PreviewCurrentPublicWebsite200,
+  PublicPresentationConfiguration,
+  PublicPresentationUpdate,
   PublicWebsiteConfiguration,
   PublicWebsitePreviewInput,
   PublicWebsiteUpdate,
@@ -391,6 +393,159 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getPreviewCurrentPublicWebsiteMutationOptions(options));
+    }
+
+export const getGetCurrentPublicPresentationUrl = () => {
+
+
+
+
+  return `/api/cms/public-website/presentation`
+}
+
+export const getCurrentPublicPresentation = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicPresentationConfiguration> => {
+
+  return customFetch<PublicPresentationConfiguration>(getGetCurrentPublicPresentationUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentPublicPresentationQueryKey = () => {
+    return [
+    `/api/cms/public-website/presentation`
+    ] as const;
+    }
+
+
+export const getGetCurrentPublicPresentationQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentPublicPresentation>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentPublicPresentation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentPublicPresentationQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentPublicPresentation>>> = ({ signal }) => getCurrentPublicPresentation({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentPublicPresentation>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentPublicPresentationQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentPublicPresentation>>>
+export type GetCurrentPublicPresentationQueryError = ErrorType<unknown>
+
+
+
+export function useGetCurrentPublicPresentation<TData = Awaited<ReturnType<typeof getCurrentPublicPresentation>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentPublicPresentation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentPublicPresentationQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateCurrentPublicPresentationUrl = () => {
+
+
+
+
+  return `/api/cms/public-website/presentation`
+}
+
+export const updateCurrentPublicPresentation = async (publicPresentationUpdate: PublicPresentationUpdate, options?: Parameters<typeof customFetch>[1]): Promise<PublicPresentationConfiguration> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PublicPresentationConfiguration>(getUpdateCurrentPublicPresentationUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(publicPresentationUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateCurrentPublicPresentationMutationKey = () => ['updateCurrentPublicPresentation'] as const;
+
+export const getUpdateCurrentPublicPresentationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentPublicPresentation>>, TError,UpdateCurrentPublicPresentationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCurrentPublicPresentation>>, TError,UpdateCurrentPublicPresentationMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCurrentPublicPresentationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCurrentPublicPresentation>>, UpdateCurrentPublicPresentationMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCurrentPublicPresentation(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCurrentPublicPresentationMutationResult = NonNullable<Awaited<ReturnType<typeof updateCurrentPublicPresentation>>>
+    export type UpdateCurrentPublicPresentationMutationBody = BodyType<PublicPresentationUpdate>
+    export type UpdateCurrentPublicPresentationMutationError = ErrorType<void>
+    export type UpdateCurrentPublicPresentationMutationVariables = {data: BodyType<PublicPresentationUpdate>}
+
+    export const useUpdateCurrentPublicPresentation = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentPublicPresentation>>, TError,UpdateCurrentPublicPresentationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCurrentPublicPresentation>>,
+        TError,
+        UpdateCurrentPublicPresentationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCurrentPublicPresentationMutationOptions(options));
     }
 
 export const getUploadPublicWebsiteAssetUrl = () => {

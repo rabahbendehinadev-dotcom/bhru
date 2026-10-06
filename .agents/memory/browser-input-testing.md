@@ -14,3 +14,9 @@ For sticky-control scroll-preservation tests, measure the viewport at pointerdow
 **Why:** Menu restoration checks reported a jump from a pre-test scroll position, but the locator had already moved the viewport before the actual pointer event; coordinate activation verified the intended baseline.
 
 **How to apply:** Separate automation-induced scrolling from application scrolling before changing code. Check pre-activation position, locked background offset and post-dismissal position independently.
+
+For carousel checks, inspect the visible slide, not the first image remaining in the DOM. Bring the public tab to the foreground and verify visibility, reduced-motion, hover and focus state before expecting timed rotation.
+
+**Why:** An apparent autoplay failure was disproved by checking the active slide and scheduling conditions; hidden slides remain in the DOM, and background/hover/focus pauses are intentional accessibility behavior.
+
+**How to apply:** Establish a deterministic active slide, move pointer/focus outside the carousel, use normal motion in a foreground tab, and compare the visible slide, current dot and status after the configured interval.

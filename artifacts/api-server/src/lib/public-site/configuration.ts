@@ -49,8 +49,8 @@ export async function websiteNames(id: string, client: Pick<PoolClient,'query'> 
   if (!result.rows[0]) throw new HttpError(404, 'Subscriber not found.');
   return result.rows[0] as PublicSiteNames & { public_slug: string };
 }
-export async function ownedImages(id: string, values: PublicWebsiteValues, client: Pick<PoolClient,'query'> = pool) {
-  const ids = [...new Set([values.logo_asset_id, values.hero_asset_id].filter(Boolean))];
+export async function ownedImages(id: string, values: PublicWebsiteValues, client: Pick<PoolClient,'query'> = pool, additional: string[] = []) {
+  const ids = [...new Set([values.logo_asset_id, values.hero_asset_id,...additional].filter(Boolean))];
   const rows = ids.length ? (await client.query(
     'SELECT id,storage_key FROM public_site_assets WHERE subscriber_id=$1 AND id=ANY($2::uuid[]) FOR KEY SHARE', [id,ids],
   )).rows : [];

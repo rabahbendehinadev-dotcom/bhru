@@ -85,6 +85,33 @@ paths:
                   html: { type: string }
                   logo_url: { type: [string, "null"] }
                   hero_image_url: { type: [string, "null"] }
+                  asset_urls:
+                    type: object
+                    additionalProperties: { type: string }
+  /cms/public-website/presentation:
+    get:
+      operationId: getCurrentPublicPresentation
+      responses:
+        "200":
+          description: Authenticated subscriber Top Area and Banner configuration
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicPresentationConfiguration" }
+    put:
+      operationId: updateCurrentPublicPresentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PublicPresentationUpdate" }
+      responses:
+        "200":
+          description: Confirmed saved Top Area and Banner configuration
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicPresentationConfiguration" }
+        "400": { description: Invalid input or image ownership }
+        "409": { description: Revision conflict }
   /cms/public-website/assets:
     post:
       operationId: uploadPublicWebsiteAsset
@@ -329,12 +356,90 @@ components:
       properties:
         values: { $ref: "#/components/schemas/PublicWebsiteValues" }
         revision: { type: integer, minimum: 0 }
+        presentation: { $ref: "#/components/schemas/PublicPresentationValues" }
+        presentation_revision: { type: integer, minimum: 0 }
     PublicWebsitePreviewInput:
       type: object
       additionalProperties: false
       required: [values]
       properties:
         values: { $ref: "#/components/schemas/PublicWebsiteValues" }
+        presentation: { $ref: "#/components/schemas/PublicPresentationValues" }
+    PublicPresentationUpdate:
+      type: object
+      additionalProperties: false
+      required: [values, revision]
+      properties:
+        values: { $ref: "#/components/schemas/PublicPresentationValues" }
+        revision: { type: integer, minimum: 0 }
+    PublicPresentationConfiguration:
+      type: object
+      required: [values, revision, asset_urls]
+      properties:
+        values: { $ref: "#/components/schemas/PublicPresentationValues" }
+        revision: { type: integer, minimum: 0 }
+        asset_urls:
+          type: object
+          additionalProperties: { type: string }
+    PublicPresentationValues:
+      type: object
+      additionalProperties: false
+      required: [logo_strip_enabled, announcements_enabled, custom_html_enabled, custom_html, hero_mode, slider_autoplay, slider_interval, logos, announcements, banners]
+      properties:
+        logo_strip_enabled: { type: boolean }
+        announcements_enabled: { type: boolean }
+        custom_html_enabled: { type: boolean }
+        custom_html: { type: string, maxLength: 4096 }
+        hero_mode: { type: string, enum: [classic, banner] }
+        slider_autoplay: { type: boolean }
+        slider_interval: { type: integer, enum: [3, 5, 7, 10] }
+        logos:
+          type: array
+          maxItems: 6
+          items: { $ref: "#/components/schemas/PublicPartnerLogo" }
+        announcements:
+          type: array
+          maxItems: 8
+          items: { $ref: "#/components/schemas/PublicAnnouncement" }
+        banners:
+          type: array
+          maxItems: 8
+          items: { $ref: "#/components/schemas/PublicBanner" }
+    PublicPartnerLogo:
+      type: object
+      additionalProperties: false
+      required: [id, asset_id, label, destination, new_tab, enabled]
+      properties:
+        id: { type: string, format: uuid }
+        asset_id: { type: string, format: uuid }
+        label: { type: string, maxLength: 120 }
+        destination: { type: string, maxLength: 512 }
+        new_tab: { type: boolean }
+        enabled: { type: boolean }
+    PublicAnnouncement:
+      type: object
+      additionalProperties: false
+      required: [id, enabled, text, destination, background_color, text_color, movement, direction, speed]
+      properties:
+        id: { type: string, format: uuid }
+        enabled: { type: boolean }
+        text: { type: string, minLength: 1, maxLength: 500 }
+        destination: { type: string, maxLength: 512 }
+        background_color: { type: string, pattern: "^#[0-9a-fA-F]{6}$" }
+        text_color: { type: string, pattern: "^#[0-9a-fA-F]{6}$" }
+        movement: { type: string, enum: [static, scrolling] }
+        direction: { type: string, enum: [left, right] }
+        speed: { type: string, enum: [slow, normal, fast] }
+    PublicBanner:
+      type: object
+      additionalProperties: false
+      required: [id, asset_id, alt_text, destination, enabled]
+      properties:
+        id: { type: string, format: uuid }
+        asset_id: { type: string, format: uuid }
+        alt_text: { type: string, maxLength: 180 }
+        destination: { type: string, maxLength: 512 }
+        enabled: { type: boolean }
     PublicWebsiteValues:
       type: object
       additionalProperties: false
@@ -357,6 +462,7 @@ components:
       required: [values, defaults, revision, public_slug, public_url, preview_url, logo_url, hero_image_url]
       properties:
         values: { $ref: "#/components/schemas/PublicWebsiteValues" }
+        presentation: { $ref: "#/components/schemas/PublicPresentationConfiguration" }
         defaults: { $ref: "#/components/schemas/PublicWebsiteValues" }
         revision: { type: integer, minimum: 0 }
         public_slug: { type: string }

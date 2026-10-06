@@ -21,6 +21,7 @@ if (!Number.isInteger(port) || port <= 0 || port > 65535) {
 try {
   await pool.query("SELECT name FROM schema_migrations LIMIT 1");
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
+  await pool.query("SELECT subscriber_id FROM public_site_presentation LIMIT 0");
   const collision = await pool.query(
     "SELECT 1 FROM subscribers WHERE public_slug=lower($1) LIMIT 1", [adminPath.slice(1)],
   );

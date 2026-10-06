@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { PreviewCurrentPublicWebsite200AssetUrls } from './previewCurrentPublicWebsite200AssetUrls';
 
 export type PreviewCurrentPublicWebsite200 = {
   html: string;
@@ -12,4 +13,5 @@ export type PreviewCurrentPublicWebsite200 = {
   logo_url: string | null;
   /** @nullable */
   hero_image_url: string | null;
+  asset_urls?: PreviewCurrentPublicWebsite200AssetUrls;
 };

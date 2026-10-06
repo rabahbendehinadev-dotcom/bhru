@@ -1,6 +1,7 @@
 import { normalizePublicSite, type PublicSiteModel, type PublicSiteNames } from './model';
 import { pool, type PoolClient } from '@workspace/db';
 import { configuredPublicModel, rowWebsiteValues, ownedImages } from './configuration';
+import { attachPresentation } from './presentation';
 
 /** Internal server context. Never serialize this object into a public response. */
 export interface ResolvedPublicSubscriber extends PublicSiteNames {
@@ -19,7 +20,7 @@ export async function loadSubscriberPublicSiteData(resolved: ResolvedPublicSubsc
     businessName: resolved.businessName, companyName: resolved.companyName,
   };
   const row = (await database.query('SELECT * FROM subscriber_public_sites WHERE subscriber_id=$1', [resolved.subscriberId])).rows[0];
-  if (!row) return normalizePublicSite(names);
+  if (!row) return attachPresentation(normalizePublicSite(names),resolved.subscriberId,database);
   const values = rowWebsiteValues(row);
-  return configuredPublicModel(names, values, await ownedImages(resolved.subscriberId, values, database));
+  return attachPresentation(configuredPublicModel(names, values, await ownedImages(resolved.subscriberId, values, database)),resolved.subscriberId,database);
 }

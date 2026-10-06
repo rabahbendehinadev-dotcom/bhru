@@ -32,18 +32,138 @@ export interface PublicWebsiteValues {
   secondary_cta_destination: string;
 }
 
+export type PublicPresentationValuesHeroMode = typeof PublicPresentationValuesHeroMode[keyof typeof PublicPresentationValuesHeroMode];
+
+
+export const PublicPresentationValuesHeroMode = {
+  classic: 'classic',
+  banner: 'banner',
+} as const;
+
+export type PublicPresentationValuesSliderInterval = typeof PublicPresentationValuesSliderInterval[keyof typeof PublicPresentationValuesSliderInterval];
+
+
+export const PublicPresentationValuesSliderInterval = {
+  NUMBER_3: 3,
+  NUMBER_5: 5,
+  NUMBER_7: 7,
+  NUMBER_10: 10,
+} as const;
+
+export interface PublicPartnerLogo {
+  id: string;
+  asset_id: string;
+  /** @maxLength 120 */
+  label: string;
+  /** @maxLength 512 */
+  destination: string;
+  new_tab: boolean;
+  enabled: boolean;
+}
+
+export type PublicAnnouncementMovement = typeof PublicAnnouncementMovement[keyof typeof PublicAnnouncementMovement];
+
+
+export const PublicAnnouncementMovement = {
+  static: 'static',
+  scrolling: 'scrolling',
+} as const;
+
+export type PublicAnnouncementDirection = typeof PublicAnnouncementDirection[keyof typeof PublicAnnouncementDirection];
+
+
+export const PublicAnnouncementDirection = {
+  left: 'left',
+  right: 'right',
+} as const;
+
+export type PublicAnnouncementSpeed = typeof PublicAnnouncementSpeed[keyof typeof PublicAnnouncementSpeed];
+
+
+export const PublicAnnouncementSpeed = {
+  slow: 'slow',
+  normal: 'normal',
+  fast: 'fast',
+} as const;
+
+export interface PublicAnnouncement {
+  id: string;
+  enabled: boolean;
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  text: string;
+  /** @maxLength 512 */
+  destination: string;
+  /** @pattern ^#[0-9a-fA-F]{6}$ */
+  background_color: string;
+  /** @pattern ^#[0-9a-fA-F]{6}$ */
+  text_color: string;
+  movement: PublicAnnouncementMovement;
+  direction: PublicAnnouncementDirection;
+  speed: PublicAnnouncementSpeed;
+}
+
+export interface PublicBanner {
+  id: string;
+  asset_id: string;
+  /** @maxLength 180 */
+  alt_text: string;
+  /** @maxLength 512 */
+  destination: string;
+  enabled: boolean;
+}
+
+export interface PublicPresentationValues {
+  logo_strip_enabled: boolean;
+  announcements_enabled: boolean;
+  custom_html_enabled: boolean;
+  /** @maxLength 4096 */
+  custom_html: string;
+  hero_mode: PublicPresentationValuesHeroMode;
+  slider_autoplay: boolean;
+  slider_interval: PublicPresentationValuesSliderInterval;
+  /** @maxItems 6 */
+  logos: PublicPartnerLogo[];
+  /** @maxItems 8 */
+  announcements: PublicAnnouncement[];
+  /** @maxItems 8 */
+  banners: PublicBanner[];
+}
+
 export interface PublicWebsiteUpdate {
   values: PublicWebsiteValues;
   /** @minimum 0 */
   revision: number;
+  presentation?: PublicPresentationValues;
+  /** @minimum 0 */
+  presentation_revision?: number;
 }
 
 export interface PublicWebsitePreviewInput {
   values: PublicWebsiteValues;
+  presentation?: PublicPresentationValues;
+}
+
+export interface PublicPresentationUpdate {
+  values: PublicPresentationValues;
+  /** @minimum 0 */
+  revision: number;
+}
+
+export type PublicPresentationConfigurationAssetUrls = {[key: string]: string};
+
+export interface PublicPresentationConfiguration {
+  values: PublicPresentationValues;
+  /** @minimum 0 */
+  revision: number;
+  asset_urls: PublicPresentationConfigurationAssetUrls;
 }
 
 export interface PublicWebsiteConfiguration {
   values: PublicWebsiteValues;
+  presentation?: PublicPresentationConfiguration;
   defaults: PublicWebsiteValues;
   /** @minimum 0 */
   revision: number;
@@ -389,12 +509,15 @@ export type GetPublicSiteDocumentParams = {
 path: string;
 };
 
+export type PreviewCurrentPublicWebsite200AssetUrls = {[key: string]: string};
+
 export type PreviewCurrentPublicWebsite200 = {
   html: string;
   /** @nullable */
   logo_url: string | null;
   /** @nullable */
   hero_image_url: string | null;
+  asset_urls?: PreviewCurrentPublicWebsite200AssetUrls;
 };
 
 export type UploadPublicWebsiteAsset201 = {

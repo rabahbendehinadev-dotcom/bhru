@@ -44,3 +44,9 @@ The user approved Public Template V2 visually and requires it to be FROZEN after
 **Why:** The user explicitly approved V2, restricted the final change to mobile navigation behavior, and prohibited proceeding to CMS, pushing or deploying.
 
 **How to apply:** Do not redesign the frozen template or change desktop without new authorization. Subscriber branding, accent and hero/banner come from the model; do not hardcode BHRU branding or depend on lime green or a generic network illustration as the permanent identity. Visual approval alone does not authorize CMS; wait for a separate request.
+
+Future authorized CMS features are conditional extensions, not permission to redesign frozen V2. Subscribers with no new configuration must receive the same default public HTML and CSP.
+
+**Why:** The user explicitly required exact V2 backward compatibility when approving Top Area and Banner management.
+
+**How to apply:** Keep new HTML, scoped styles and trusted behavior conditional on configured content. Extend accessibility for new regions without rewriting the frozen menu or default styles.

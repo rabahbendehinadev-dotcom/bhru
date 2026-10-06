@@ -4,7 +4,7 @@ import { adminPath } from "./admin-entry";
 import { publicSiteHTML } from "./public-site-html";
 import type { PublicSiteModel } from "./public-site/model";
 import { loadSubscriberPublicSiteData } from "./public-site/data";
-import { PUBLIC_MENU_SCRIPT_HASH } from "./public-site/mobile-menu";
+import { publicScriptSources } from "./public-site/presentation-render";
 
 const APPLICATION_ROOTS = new Set([
   'login', 'register', 'dashboard', 'settings', 'm', 'api', 'admin',
@@ -70,7 +70,7 @@ export function writePublicDocument(req: Request, res: Response, result: Documen
   if (result.kind === 'application') { res.status(204).end(); return; }
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'" +
-    (result.kind === 'site' ? "; img-src 'self' https: data:; script-src 'sha256-" + PUBLIC_MENU_SCRIPT_HASH + "'" : ''));
+    (result.kind === 'site' ? "; img-src 'self' https: data:; script-src " + publicScriptSources(result.site) : ''));
   if (result.kind === 'unavailable') {
     req.log.error({ code: result.errorCode }, 'Public site unavailable');
     res.setHeader('Retry-After', '60');
