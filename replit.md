@@ -32,9 +32,9 @@ A PostgreSQL-backed SaaS foundation for unlock server owners, with separate plat
 
 ## Architecture decisions
 
-- SQL migrations are manual, transactional, non-destructive and rerunnable. Never use Drizzle schema push against this schema; those scripts are intentionally disabled.
+- SQL migrations use the existing checksum/advisory-lock/transaction runner and are rerunnable. Docker production startup runs it before the server; local `pnpm start` still requires explicit `pnpm db:migrate`. Never use Drizzle schema push against this schema; those scripts are intentionally disabled.
 - Independent administrator identities in `platform_admin_users`, sessions in `platform_admin_sessions` and domain-separated `bhru_admin_session` cookies; subscribers remain in `account_users`/`sessions` with `bhru_session`. Passwords use scrypt. No admin registration, subscriber status, plan or licence.
-- Docker runs the API and static frontend in one non-root Node process; no automatic startup migrations.
+- Docker runs `node migrate.mjs && exec node index.mjs` as non-root: migrations must succeed before the unified API/static server starts. Migration failure exits the container. Keep the runtime database role authorized for reviewed migrations.
 
 ## Product
 

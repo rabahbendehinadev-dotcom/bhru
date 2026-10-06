@@ -1,0 +1,88 @@
+FAST DEVELOPMENT MODE — deployment fix only.
+
+We need to permanently fix BHRU production deployments.
+
+Current problem:
+When a new release contains a new database migration, Dokploy/Docker Swarm starts the new application container before that migration has been applied.
+
+The application correctly refuses to start and logs:
+"Database is unavailable or migrations have not been applied. Run db:migrate before starting."
+
+This causes every new deployment with a migration to fail until we manually run:
+node migrate.mjs
+
+I want this fixed permanently.
+
+REQUIREMENTS:
+
+1. Inspect the current Dockerfile, package scripts, migrate.mjs and production startup command.
+
+2. Change the production container startup so it runs the existing migration runner BEFORE starting the application.
+
+Conceptually:
+
+node migrate.mjs && start-the-server
+
+Use the project's real existing server start command. Do not invent or replace the application architecture.
+
+3. Keep migrate.mjs as the single migration mechanism.
+Do not create another migration system.
+
+4. Existing migrations already use:
+- schema_migrations
+- checksums
+- advisory locking
+- transactional application
+
+Preserve this behavior.
+
+This must be safe when Docker Swarm temporarily starts/restarts containers:
+already-applied migrations must simply be skipped.
+
+5. CRITICAL:
+If migration fails, application startup MUST stop.
+Never start the server against an incompatible database.
+
+6. Do NOT modify migrations 001–006.
+Do NOT modify application features.
+Do NOT modify CMS.
+Do NOT modify Platform Admin.
+Do NOT modify public routes.
+Do NOT modify persistent media configuration.
+
+7. The solution must work automatically for future:
+007, 008, 009... migrations.
+
+Expected future deployment flow:
+
+new container starts
+→ migration runner acquires DB lock
+→ skips already applied migrations
+→ applies pending migrations
+→ migration succeeds
+→ application starts
+→ health check becomes healthy
+→ Docker Swarm replaces old container
+
+No more manual SSH migration commands for normal deployments.
+
+FAST MODE:
+Do NOT run browser tests.
+Do NOT run E2E tests.
+Do NOT run the full regression suite.
+Do NOT perform unrelated QA.
+
+Only perform the minimum build/type/startup validation necessary for this deployment change.
+
+Do NOT push.
+Do NOT deploy.
+
+When finished, STOP and report:
+- exact files changed
+- old production startup command
+- new production startup command
+- why concurrent Swarm startup is safe
+- what happens if a migration fails
+- whether any Dokploy setting must be changed
+
+Keep the report short.

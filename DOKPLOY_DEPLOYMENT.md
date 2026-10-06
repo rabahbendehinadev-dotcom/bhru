@@ -37,9 +37,33 @@
 
 استخدم TLS وCA موثوقة إذا كانت قاعدة البيانات عبر شبكة غير موثوقة.
 تُقرأ خيارات TLS من رابط PostgreSQL وفق إعداد `pg`؛ لا تعطّل التحقق من الشهادة.
-لا تكشف منفذ PostgreSQL للعامة. نفّذ migrations بمستخدم مخوّل بـDDL؛ يمكن لحساب التشغيل اليومي أن يكون أقل صلاحيات.
+لا تكشف منفذ PostgreSQL للعامة. Docker يشغّل migrations قبل التطبيق باستخدام `DATABASE_URL` نفسها؛ يجب أن يكون مستخدمها مخوّلًا بـDDL المطلوبة للمهاجرات المعتمدة.
 
 ## Build / Migration / Start
+
+### Docker production startup
+
+أمر الصورة الافتراضي:
+
+```sh
+node migrate.mjs && exec node index.mjs
+```
+
+عند كل تشغيل/إعادة تشغيل، ينتظر runner قفل PostgreSQL، يتجاوز الملفات المطبقة
+بعد التحقق من checksums، ويطبق الملفات الجديدة بالترتيب داخل transactions.
+لا يبدأ التطبيق أو health endpoint إلا بعد نجاح runner. عند الفشل تخرج الحاوية
+بخطأ ولا يبدأ السيرفر. `exec` يجعل السيرفر PID 1 لاستقبال إشارات Docker/Swarm.
+يشمل ذلك تلقائيًا ملفات 007 و008 وما بعدها، لأن البناء ينسخ مجلد migrations كاملًا.
+
+اترك Command/Entrypoint override في Dokploy فارغًا لاستخدام أمر الصورة.
+إذا كان هناك override قديم مثل `node index.mjs`، أزله لأنه يتجاوز بوابة migration.
+لا تغيير في Environment أو media mount. فترة health startup أصبحت 120 ثانية؛
+إذا كان Dokploy يفرض healthcheck/rollout timeout مستقلًا، اجعله يسمح بوقت
+المهاجرة وانتظار القفل المتوقع. المهاجرات الطويلة مستقبلًا قد تحتاج مهلة أطول.
+خذ نسخة احتياطية وراجع توافق المهاجرة مع النسخة القديمة التي تستمر أثناء rollout؛
+قفل migrations لا يجعل تغييرات schema الهدامة متوافقة مع التطبيق القديم.
+
+### Local/manual operation
 
 من **جذر المستودع**، بعد `pnpm install --frozen-lockfile`:
 
@@ -57,13 +81,13 @@ pnpm start
 
 ### migrations
 
-- SQL المصدر: `lib/db/src/migrations/001_platform.sql`.
+- SQL المصدر: ملفات `lib/db/src/migrations/` بالترتيب الرقمي.
 - ناتج البناء يحتوي `migrations/` و`migrate.mjs` داخل `artifacts/api-server/dist`.
 - دفتر `schema_migrations` يحفظ اسم الملف وSHA-256. إعادة التشغيل تتجاوز الملف المطبق.
 - advisory lock يمنع تنفيذ migration نفسها بالتوازي.
 - كل ملف يُطبَّق داخل transaction؛ عند الخطأ rollback.
 - لا تغيّر ملفًا مطبقًا؛ أضف ملفًا جديدًا بالرقم التالي. تغير checksum يوقف migration.
-- **لا migration تلقائية أثناء startup، لا seed، لا reset، لا DROP DATABASE، ولا حذف بيانات.**
+- **Docker startup يستخدم runner نفسها تلقائيًا قبل التطبيق؛ لا seed، لا reset، لا DROP DATABASE، ولا تنظيف بيانات تلقائي.**
 - startup يفشل بوضوح إذا قاعدة البيانات غير متاحة أو migrations لم تُطبق.
 
 ## أول Platform Admin
@@ -94,20 +118,10 @@ pnpm admin:promote -- --email your-registered-email@example.com
    وBuild Stage فارغ لاستخدام `runtime`.
 5. اضبط `DATABASE_URL` و`SESSION_SECRET` و`PLATFORM_ADMIN_PATH` في Runtime Environment، لا أثناء البناء.
 6. جهّز PostgreSQL الخارجية وخذ نسخة احتياطية قبل migrations المستقبلية.
-7. نفّذ migration مرة صراحةً **قبل تشغيل أول نسخة**، باستخدام البيئة نفسها:
-
-```bash
-docker build -t bhru:latest .
-
-# ملف محلي خارج Git يحمل Runtime Environment؛ لا تطبع محتواه.
-docker run --rm --env-file /secure/path/bhru-runtime.env \
-  bhru:latest node migrate.mjs
-```
-
-هذه حاوية مؤقتة لتنفيذ الأمر فقط، وليست خدمة أو infrastructure إضافية.
-إذا تم بناء الصورة عبر Dokploy، استخدم صورتها الفعلية مع Environment نفسها،
-أو نفّذ الأمر `node migrate.mjs` من terminal مخوّلة قبل بدء الخدمة.
-لا تحتاج startup command إضافية؛ أمر الصورة هو `node index.mjs`.
+7. لا تحتاج أمر SSH migration لكل release؛ أمر الصورة يشغّل runner قبل السيرفر.
+   تأكد أن Dokploy لا يتجاوز CMD وأن `DATABASE_URL` تستهدف القاعدة الحالية المقصودة.
+   migrations اليدوية تبقى متاحة للصيانة المقصودة باستخدام `node migrate.mjs`،
+   لكنها ليست شرطًا إضافيًا للنشر المعتاد.
 
 للترقية اليدوية في صورة التشغيل:
 
@@ -139,7 +153,7 @@ docker run --rm --env-file /secure/path/bhru-runtime.env \
 ## Health / التشغيل / البيانات
 
 - `/healthz`: HTTP 200 مع `{"status":"ok"}` عند نجاح اتصال PostgreSQL.
-- Docker HEALTHCHECK كل 30 ثانية، timeout خمس ثوان، start period عشر ثوان، ثلاث محاولات.
+- Docker HEALTHCHECK كل 30 ثانية، timeout خمس ثوان، start period 120 ثانية، ثلاث محاولات.
 - readiness يفشل عند تعذر PostgreSQL؛ راجع Environment والشبكة والمهاجرات عند 502.
 - restart لا يعيد seed ولا يحذف حسابًا أو خطة أو جلسة.
 - `ACTIVE` / `TRIAL` مع خطة ومفتاح وexpiry مستقبلية يسمحان بالـPanel.
