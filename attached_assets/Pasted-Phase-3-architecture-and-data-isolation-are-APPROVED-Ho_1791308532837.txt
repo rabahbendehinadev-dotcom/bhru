@@ -1,0 +1,288 @@
+Phase 3 architecture and data isolation are APPROVED.
+
+However, I do NOT approve the current visual design as the final BHRU shared public template.
+
+IMPORTANT:
+Do not change the working public-site architecture.
+Do not change slug resolution.
+Do not change subscriber isolation.
+Do not change licence/subscription eligibility.
+Do not change authentication.
+Do not change Platform Admin.
+Do not add CMS yet.
+Do not add custom domains.
+Do not push or deploy.
+
+This task is VISUAL DESIGN ONLY.
+
+==================================================
+BHRU PUBLIC TEMPLATE V2
+==================================================
+
+Redesign the existing shared public homepage so it looks like a premium professional GSM / IMEI / phone unlocking service website rather than a generic startup landing page.
+
+Keep the existing PublicSiteModel architecture so the content can later come from subscriber CMS/settings.
+
+The design must remain generic enough that every BHRU subscriber can use the same template with their own:
+- logo
+- company name
+- primary/accent color
+- hero title
+- hero description
+- banner/image
+- services
+- navigation
+- contact information
+
+Do not hardcode BHRU branding into subscriber public websites.
+
+==================================================
+HEADER
+==================================================
+
+Create a more premium header.
+
+Desktop:
+Logo + business name on the left.
+
+Navigation on the right:
+Home
+Services
+About
+Contact
+Login
+
+Keep Login visually distinct.
+
+The header should feel appropriate for a professional unlocking/server business.
+
+Mobile:
+Logo + shortened business name when necessary.
+Professional hamburger button.
+Clean full-width mobile navigation panel.
+
+==================================================
+HERO
+==================================================
+
+The hero must immediately communicate the subscriber's business.
+
+Use a strong layout:
+
+Small business/service badge
+
+Large headline
+
+Short description
+
+Primary CTA:
+Explore Services
+
+Secondary CTA:
+Learn More / Contact Us
+
+Then a strong configurable hero/banner visual.
+
+Do not use the current generic network illustration as the permanent visual identity.
+
+The hero image must come from the model/configuration so later the subscriber can upload their own banner through CMS.
+
+If no image exists, provide an elegant neutral fallback.
+
+==================================================
+SERVICES
+==================================================
+
+Make Services a major visual section.
+
+Use professional service cards suitable for future examples such as:
+
+IMEI Services
+Server Services
+Remote Services
+File Services
+
+These are layout examples only.
+Do NOT create fake subscriber services or prices.
+
+Until real services exist, keep honest placeholder states.
+
+Cards should support later:
+- icon/image
+- service title
+- short description
+- CTA
+- optional category/status
+
+Desktop:
+3 or 4 cards per row depending on available width.
+
+Mobile:
+1 card per row.
+
+==================================================
+REMOVE TEST-LIKE PRESENTATION
+==================================================
+
+The current homepage visually exposes too much implementation/testing language.
+
+Do not make the final public template look unfinished because data is not connected yet.
+
+Avoid prominently presenting blocks such as:
+
+"Service statistics — No statistics published yet"
+"Customer feedback — No feedback published yet"
+
+If there is no real content for an optional section, the section should simply not render.
+
+Never invent data to fill it.
+
+The public website should remain polished even when the subscriber has configured only basic information.
+
+==================================================
+WHY CHOOSE US / INFORMATION
+==================================================
+
+Keep this as an optional reusable section.
+
+Improve its visual hierarchy.
+
+It should support subscriber-configured benefits/features later.
+
+If no benefits are configured, hide the section instead of inventing claims.
+
+==================================================
+CTA
+==================================================
+
+Keep a strong CTA section near the bottom.
+
+It should later support:
+- custom title
+- description
+- CTA label
+- CTA destination
+
+Do not show internal architecture/testing language.
+
+==================================================
+CUSTOMER LOGIN
+==================================================
+
+Keep the current safe behavior:
+DO NOT connect it to Subscriber Panel owner login.
+
+But visually integrate customer access professionally.
+
+Until customer authentication exists, clicking Login can continue showing the honest "Customer access coming soon" notice.
+
+Do not display that technical notice permanently as a large homepage section.
+
+==================================================
+FOOTER
+==================================================
+
+Create a more professional footer supporting:
+
+Logo/business name
+short description
+navigation
+services links
+contact information
+social links
+copyright
+
+Only render data that actually exists.
+
+Never fabricate phone numbers, addresses, social accounts or services.
+
+==================================================
+VISUAL DIRECTION
+==================================================
+
+Use a modern premium SaaS/service aesthetic appropriate for:
+
+GSM services
+IMEI services
+Unlock servers
+Phone technicians
+Digital service businesses
+
+Cleaner and stronger than the current version.
+
+Avoid making the entire identity dependent on the current lime green.
+
+The accent color must come from the PublicSiteModel/theme so every subscriber can eventually have their own brand color.
+
+Use:
+- strong typography
+- generous but controlled spacing
+- subtle borders/shadows
+- premium cards
+- excellent contrast
+- polished hover states
+- professional icon treatment
+
+Do not make it excessively futuristic or gaming-style.
+
+==================================================
+MOBILE / IPHONE
+==================================================
+
+Mobile quality is extremely important.
+
+Test approximately:
+375px
+390px
+430px
+
+Hero title must not overflow.
+
+Buttons should be touch-friendly.
+
+No horizontal scrolling.
+
+Images must remain proportional.
+
+Cards must stack naturally.
+
+Header and hamburger menu must be polished.
+
+Footer must remain readable.
+
+==================================================
+IMPORTANT ARCHITECTURAL RULE
+==================================================
+
+This is still ONE shared template.
+
+Do not create separate HTML/templates for each subscriber.
+
+The future architecture remains:
+
+public slug
+→ resolved subscriber
+→ subscriber-scoped public data
+→ PublicSiteModel
+→ shared BHRU public template
+
+Later CMS will only change the model/content/theme, not create copies of the website.
+
+==================================================
+STOP CONDITION
+==================================================
+
+Do not proceed to CMS.
+
+Do not push.
+Do not deploy.
+
+Show me:
+
+1. Desktop screenshot
+2. iPhone screenshot
+3. Open mobile menu screenshot
+
+and give me a short list of the visual files changed.
+
+Wait for my approval.

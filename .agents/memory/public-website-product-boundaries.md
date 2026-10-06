@@ -37,4 +37,10 @@ When public CMS fields do not exist yet, use clearly generic rendering defaults 
 
 **Why:** The user explicitly prohibits demo business data and unnecessary database tables to fill the public template.
 
-**How to apply:** Keep defaults visibly unpublished where appropriate. Customer Login remains an honest not-connected notice until customer authentication is separately authorized; it must not use the owner's panel login.
+**How to apply:** Keep service placeholders honest, but hide optional statistics, feedback and benefits when no real content exists. Customer Login remains an honest coming-soon notice shown on demand, not a permanent large homepage section; it must not use the owner's panel login.
+
+The user approved the public architecture and data isolation, but not the initial visual design. The shared website should look like a premium professional GSM/IMEI/phone-unlocking service website, not a generic startup landing page.
+
+**Why:** The user explicitly separated architecture approval from visual approval and requires approval before CMS work.
+
+**How to apply:** Preserve the ownership/model/resolver boundaries while revising visuals. Subscriber branding, accent and hero/banner come from the model; do not hardcode BHRU branding or depend on lime green or a generic network illustration as the permanent identity.
