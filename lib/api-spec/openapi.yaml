@@ -388,6 +388,8 @@ components:
       properties:
         logo_strip_enabled: { type: boolean }
         announcements_enabled: { type: boolean }
+        logo_strip_settings: { $ref: "#/components/schemas/PublicStripSettings" }
+        announcement_ticker_settings: { $ref: "#/components/schemas/PublicTickerSettings" }
         custom_html_enabled: { type: boolean }
         custom_html: { type: string, maxLength: 4096 }
         hero_mode: { type: string, enum: [classic, banner] }
@@ -405,6 +407,27 @@ components:
           type: array
           maxItems: 8
           items: { $ref: "#/components/schemas/PublicBanner" }
+    PublicStripSettings:
+      type: object
+      additionalProperties: false
+      required: [display, speed, direction, pause_on_hover]
+      properties:
+        display: { type: string, enum: [static, moving] }
+        speed: { type: string, enum: [slow, normal, fast] }
+        direction: { type: string, enum: [left, right] }
+        pause_on_hover: { type: boolean }
+    PublicTickerSettings:
+      type: object
+      additionalProperties: false
+      required: [display, speed, direction, pause_on_hover, background_color, text_color, separator]
+      properties:
+        display: { type: string, enum: [static, moving] }
+        speed: { type: string, enum: [slow, normal, fast] }
+        direction: { type: string, enum: [left, right] }
+        pause_on_hover: { type: boolean }
+        background_color: { type: string, pattern: "^#[0-9a-fA-F]{6}$" }
+        text_color: { type: string, pattern: "^#[0-9a-fA-F]{6}$" }
+        separator: { type: string, maxLength: 16 }
     PublicPartnerLogo:
       type: object
       additionalProperties: false
@@ -424,6 +447,7 @@ components:
         id: { type: string, format: uuid }
         enabled: { type: boolean }
         text: { type: string, minLength: 1, maxLength: 500 }
+        icon_text: { type: string, maxLength: 32 }
         destination: { type: string, maxLength: 512 }
         background_color: { type: string, pattern: "^#[0-9a-fA-F]{6}$" }
         text_color: { type: string, pattern: "^#[0-9a-fA-F]{6}$" }

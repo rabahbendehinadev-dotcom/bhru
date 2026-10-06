@@ -50,3 +50,9 @@ Future authorized CMS features are conditional extensions, not permission to red
 **Why:** The user explicitly required exact V2 backward compatibility when approving Top Area and Banner management.
 
 **How to apply:** Keep new HTML, scoped styles and trusted behavior conditional on configured content. Extend accessibility for new regions without rewriting the frozen menu or default styles.
+
+Common subscribers must not need Advanced HTML to configure Top Area image strips or announcement tickers. Use uploaded images, messages and simple built-in display controls; Advanced HTML stays optional, collapsed and sanitized.
+
+**Why:** The user explicitly wants to remove the need to imitate old DHRU "Other HTML Code" / marquee snippets.
+
+**How to apply:** Build common Top Area features as native CMS controls. Do not ask subscribers for CSS, JavaScript or HTML, use deprecated marquee, or weaken sanitization to support routine ticker content.

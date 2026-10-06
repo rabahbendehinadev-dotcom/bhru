@@ -1,3 +1,4 @@
+import type { PublicStripSettings, PublicTickerSettings } from '@workspace/api-zod';
 /** Public rendering contract. No account IDs, sessions or licence fields. */
 export interface PublicSiteNames { businessName: string; companyName: string }
 export interface PublicLink { label: string; href: string }
@@ -14,8 +15,10 @@ export interface PublicService {
 }
 export interface PublicSiteModel extends PublicSiteNames {
   presentation?: {
+    logoSettings?: PublicStripSettings;
+    tickerSettings?: PublicTickerSettings;
     logos: {src:string;label:string;href:string;newTab:boolean;width?:number;height?:number}[];
-    announcements: {text:string;href:string;background:string;color:string;movement:'static'|'scrolling';direction:'left'|'right';speed:'slow'|'normal'|'fast'}[];
+    announcements: {text:string;icon?:string;href:string;background:string;color:string;movement:'static'|'scrolling';direction:'left'|'right';speed:'slow'|'normal'|'fast'}[];
     customHTML:string;
     heroMode:'classic'|'banner';
     banners: {src:string;alt:string;href:string;width?:number;height?:number}[];

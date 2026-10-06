@@ -10,10 +10,14 @@ import type { PublicBanner } from './publicBanner';
 import type { PublicPartnerLogo } from './publicPartnerLogo';
 import type { PublicPresentationValuesHeroMode } from './publicPresentationValuesHeroMode';
 import type { PublicPresentationValuesSliderInterval } from './publicPresentationValuesSliderInterval';
+import type { PublicStripSettings } from './publicStripSettings';
+import type { PublicTickerSettings } from './publicTickerSettings';
 
 export interface PublicPresentationValues {
   logo_strip_enabled: boolean;
   announcements_enabled: boolean;
+  logo_strip_settings?: PublicStripSettings;
+  announcement_ticker_settings?: PublicTickerSettings;
   custom_html_enabled: boolean;
   /** @maxLength 4096 */
   custom_html: string;

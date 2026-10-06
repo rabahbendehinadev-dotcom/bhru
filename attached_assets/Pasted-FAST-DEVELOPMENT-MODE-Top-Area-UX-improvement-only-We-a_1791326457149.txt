@@ -1,0 +1,180 @@
+FAST DEVELOPMENT MODE — Top Area UX improvement only.
+
+We already have CMS / Blog → Public Website → Top Area with:
+- Logo / Partner strip
+- Announcement bars
+- Advanced custom HTML
+
+I want to make this much easier for subscribers and remove the need to imitate old DHRU "Other HTML Code" / <marquee> snippets.
+
+REFERENCE UX:
+The desired public result is a modern continuous horizontal strip like the reference screenshots:
+- a row of uploaded partner/tool images moving continuously horizontally
+- a separate announcement ticker with text/items moving continuously
+- smooth infinite movement
+- responsive desktop/mobile
+- no subscriber-written HTML required
+
+IMPORTANT:
+This is NOT a redesign of the whole public site.
+Improve ONLY Top Area.
+
+1. PARTNER / IMAGE TICKER
+
+Upgrade the existing Logo / Partner strip.
+
+Subscriber can:
+- Enable/disable it
+- Add images using existing public-media upload/storage
+- Edit each item
+- Delete
+- Reorder
+- Enable/disable individual items
+
+For each image item allow:
+- Image
+- Optional label
+- Optional destination URL
+
+Add simple display settings:
+Display style:
+[ Static Row ] [ Moving Strip ]
+
+When Moving Strip is selected:
+- Speed: Slow / Normal / Fast
+- Direction: Left / Right
+- Pause on hover: On/Off
+
+Do NOT ask subscriber for CSS, JavaScript or HTML.
+
+Public rendering:
+- continuous seamless infinite horizontal movement
+- no visible jump when loop restarts
+- images preserve aspect ratio
+- consistent cards/spacing
+- clicking an image opens its configured URL when present
+- lazy-load non-critical images
+- no horizontal page overflow
+- pause animation when appropriate for accessibility/reduced-motion
+- mobile responsive
+
+Do not use deprecated <marquee>.
+Implement with modern CSS/JS using the existing architecture.
+
+2. ANNOUNCEMENT TICKER
+
+Upgrade the existing Announcement bars so a subscriber can create a moving announcement strip like:
+
+🔥 New services available
+⭐ All servers are stable
+⚡ Auto delivery
+💎 Best prices
+
+Subscriber should only write the messages.
+
+Allow multiple announcement items.
+
+For each item:
+- Text
+- Optional emoji/icon text
+- Optional link
+- Enable/disable
+
+Display settings:
+[ Static ] [ Moving Ticker ]
+
+Ticker options:
+- Speed: Slow / Normal / Fast
+- Direction: Left / Right
+- Background colour
+- Text colour
+- Separator character/emoji
+- Pause on hover
+
+Render enabled messages as one seamless continuous ticker.
+
+Example visual concept:
+
+⭐ Message 1    •    ⭐ Message 2    •    ⭐ Message 3    •    ⭐ Message 1 ...
+
+Do not require duplicate messages from the subscriber.
+The renderer may duplicate the sequence internally only to produce a seamless loop.
+
+3. CMS UX
+
+Keep Top Area simple and ordered:
+
+Top Area
+
+1. Partner / Image Strip
+   Enable
+   Display: Static | Moving
+   [+ Add Image]
+   image cards/items
+   simple movement settings
+
+2. Announcement Ticker
+   Enable
+   Display: Static | Moving
+   [+ Add Message]
+   message items
+   simple movement/colour settings
+
+3. Advanced Custom HTML
+   collapsed by default
+   clearly marked "Advanced"
+   preserve existing sanitization/security
+
+The common subscriber should never need Advanced HTML.
+
+4. LIVE PREVIEW
+
+All changes must update the existing Desktop/Mobile Live Preview before Save.
+
+Static/Moving mode, speed, direction, colours and enabled items should be visible in preview.
+
+5. PERFORMANCE
+
+Do not make the ticker depend on huge JavaScript libraries.
+Use lightweight existing architecture.
+
+Image strip must work with the public-media caching/loading improvements already implemented.
+
+Avoid downloading unnecessary duplicate image files; visual duplication for the infinite loop should reuse the same asset URLs.
+
+6. COMPATIBILITY
+
+Preserve existing saved Phase 2 data.
+Do not delete existing logos or announcement bars.
+
+If existing records need mapping, preserve them automatically.
+
+Do not touch:
+- Hero/Banner
+- banner slider
+- public slug
+- authentication
+- Platform Admin
+- licences
+- media persistent volume
+- unrelated CMS sections
+
+If a small additive migration is genuinely required for these display settings, create the next migration only.
+Never modify migrations 001–006.
+
+FAST MODE:
+Do NOT run browser/E2E tests.
+Do NOT run the full regression suite.
+Do NOT perform unrelated QA.
+
+Only run minimum type/build validation.
+
+Do NOT push.
+Do NOT deploy.
+
+STOP when implementation is complete and give me a short report:
+- what changed
+- whether a migration was added
+- where Image Strip settings are
+- where Announcement Ticker settings are
+- where I should manually test

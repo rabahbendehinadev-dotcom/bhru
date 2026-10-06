@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, ImagePlus, Pencil, Plus, Trash2, Upload } from 
 import type { PublicAnnouncement, PublicBanner, PublicPartnerLogo, PublicPresentationValues } from '@workspace/api-client-react';
 import { SettingsRow, SettingToggle } from '@/components/subscriber/general-settings/settings-ui';
 import { MAX_BANNERS, MAX_BARS, MAX_HTML, MAX_LOGOS, usePublicWebsite } from '@/hooks/use-public-website';
+import { TickerControls, TickerColours, defaultStrip, defaultTicker } from './TickerControls';
 
 type W = ReturnType<typeof usePublicWebsite>;
 const err = (m?: string) => m ? <p className="gs-err" role="alert">{m}</p> : null;
@@ -71,6 +72,12 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
   const [editing, setEditing] = useState<string | null>(null);
   if (!p) return null;
   const E = w.presErrors;
+  const strip = p.logo_strip_settings ?? defaultStrip;
+  const first = p.announcements.find(a => a.enabled) ?? p.announcements[0];
+  const ticker = p.announcement_ticker_settings ?? (first ? { ...defaultTicker,
+    display: first.movement === 'scrolling' ? 'moving' as const : 'static' as const,
+    speed: first.speed, direction: first.direction, background_color: first.background_color, text_color: first.text_color,
+  } : defaultTicker);
   const set = (patch: Partial<PublicPresentationValues>) => w.presEdit(v => ({ ...v, ...patch }));
   const url = (id: string) => w.assetUrls[id];
   const toggleEdit = (id: string) => setEditing(e => e === id ? null : id);
@@ -80,16 +87,17 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
 
   return (
     <>
-      <CollapsibleCard id="top-area" title="Top Area" description="Logos and announcement bars shown above your website header." defaultOpen>
+      <CollapsibleCard id="top-area" title="Top Area" description="Partner images and announcements above your header. No HTML needed." defaultOpen>
         <div className="space-y-5">
           {w.itemError && <p className="gs-err" role="alert" data-testid="text-item-error">{w.itemError}</p>}
           {err(E.limits)}
           <div className="space-y-2" data-testid="group-logos">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div><h3 className="text-[13px] font-semibold">Logo / Partner strip</h3><p className="gs-help">Small logos shown in a row. {p.logos.length}/{MAX_LOGOS} used.</p></div>
+              <div><h3 className="text-[13px] font-semibold">1. Partner / Image Strip</h3><p className="gs-help">Show uploaded partner or tool images. {p.logos.length}/{MAX_LOGOS} used.</p></div>
               <div className="flex items-center gap-2"><SettingToggle id="sw-logo-strip" label="Logo strip" checked={p.logo_strip_enabled} onChange={(v) => set({ logo_strip_enabled: v })} />
-                {p.logos.length < MAX_LOGOS && <FilePick w={w} label="Add logo" onId={(id) => { const l: PublicPartnerLogo = { id: crypto.randomUUID(), asset_id: id, label: '', destination: '', new_tab: true, enabled: true }; w.presEdit(v => ({ ...v, logos: [...v.logos, l] })); setEditing(l.id); }} />}</div>
+                {p.logos.length < MAX_LOGOS && <FilePick w={w} label="Add Image" onId={(id) => { const l: PublicPartnerLogo = { id: crypto.randomUUID(), asset_id: id, label: '', destination: '', new_tab: true, enabled: true }; w.presEdit(v => ({ ...v, logos: [...v.logos, l] })); setEditing(l.id); }} />}</div>
             </div>
+            <TickerControls id="image-strip" image settings={strip} onChange={value => set({ logo_strip_settings: value })} />
             {p.logos.length === 0 ? <Empty text="No logos added yet." hint="Upload a PNG or JPEG to start your partner strip." /> :
               p.logos.map((l, i) => (
                 <div key={l.id} className="space-y-2 rounded-md border border-[hsl(var(--border))] p-2.5" data-testid={`card-logo-${i}`}>
@@ -109,38 +117,34 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
 
           <div className="space-y-2" data-testid="group-announcements">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div><h3 className="text-[13px] font-semibold">Announcement bars</h3><p className="gs-help">Full-width strips above the header. {p.announcements.length}/{MAX_BARS} used.</p></div>
+              <div><h3 className="text-[13px] font-semibold">2. Announcement Ticker</h3><p className="gs-help">Write messages; we handle the strip and movement. {p.announcements.length}/{MAX_BARS} used.</p></div>
               <div className="flex items-center gap-2"><SettingToggle id="sw-announcements" label="Announcements" checked={p.announcements_enabled} onChange={(v) => set({ announcements_enabled: v })} />
                 {p.announcements.length < MAX_BARS && <button type="button" className="btn btn-sm" data-testid="button-add-announcement" onClick={() => {
-                  const a: PublicAnnouncement = { id: crypto.randomUUID(), enabled: true, text: '', destination: '', background_color: '#1A7F64', text_color: '#FFFFFF', movement: 'static', direction: 'left', speed: 'normal' };
-                  w.presEdit(v => ({ ...v, announcements: [...v.announcements, a] })); setEditing(a.id); }}><Plus size={13} />Add bar</button>}</div>
+                  const a: PublicAnnouncement = { id: crypto.randomUUID(), enabled: true, text: '', icon_text: '', destination: '', background_color: ticker.background_color, text_color: ticker.text_color, movement: 'static', direction: 'left', speed: 'normal' };
+                  w.presEdit(v => ({ ...v, announcements: [...v.announcements, a] })); setEditing(a.id); }}><Plus size={13} />Add Message</button>}</div>
             </div>
-            {p.announcements.length === 0 ? <Empty text="No announcement bars yet." hint="Add a bar for offers, notices or opening hours." /> :
+            <TickerControls id="announcement-ticker" settings={ticker} onChange={value => set({ announcement_ticker_settings: { ...ticker, ...value } })} />
+            <TickerColours settings={ticker} onChange={value => set({ announcement_ticker_settings: value })} errors={E} />
+            {p.announcements.length === 0 ? <Empty text="No messages yet." hint="Add a message for offers, notices or opening hours." /> :
               p.announcements.map((a, i) => (
                 <div key={a.id} className="space-y-2 rounded-md border border-[hsl(var(--border))] p-2.5" data-testid={`card-announcement-${i}`}>
                   <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md px-1 text-center text-[10px]" style={{ background: a.background_color, color: a.text_color }}>{a.text || 'Empty'}</div>
-                    <div className="min-w-0 flex-1 space-y-1.5"><p className="truncate text-[13px] font-medium">{a.text || `Bar ${i + 1} (no text yet)`}</p>
+                     <div className="flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md px-1 text-center text-[10px]" style={{ background: ticker.background_color, color: ticker.text_color }}>{a.icon_text} {a.text || 'Empty'}</div>
+                     <div className="min-w-0 flex-1 space-y-1.5"><p className="truncate text-[13px] font-medium">{a.icon_text} {a.text || `Message ${i + 1} (no text yet)`}</p>
                       <Actions name={`announcement-${i}`} i={i} n={p.announcements.length} enabled={a.enabled} editing={editing === a.id} onEdit={() => toggleEdit(a.id)}
                         onToggle={(v) => set({ announcements: patch(p.announcements, a.id, { enabled: v }) })} onMove={(d) => set({ announcements: swap(p.announcements, i, d) })}
                         onDelete={() => set({ announcements: p.announcements.filter(x => x.id !== a.id) })} /></div></div>
                   {editing === a.id && <div className="grid gap-2 sm:grid-cols-2">
                     <div className="sm:col-span-2"><Field label="Text (emoji allowed)" error={E[`${a.id}.text`]}><textarea className="input" rows={2} value={a.text} onChange={(e) => set({ announcements: patch(p.announcements, a.id, { text: e.target.value }) })} data-testid={`input-bar-text-${i}`} /></Field><p className="gs-help">{a.text.length}/500</p></div>
                     <Field label="Link (optional)" error={E[`${a.id}.destination`]}><input className="input" value={a.destination} placeholder="https://… or /page" onChange={(e) => set({ announcements: patch(p.announcements, a.id, { destination: e.target.value }) })} data-testid={`input-bar-link-${i}`} /></Field>
-                    <Field label="Movement"><select className="input" value={a.movement} onChange={(e) => set({ announcements: patch(p.announcements, a.id, { movement: e.target.value as PublicAnnouncement['movement'] }) })} data-testid={`select-bar-movement-${i}`}><option value="static">Static</option><option value="scrolling">Scrolling</option></select></Field>
-                    {a.movement === 'scrolling' && <>
-                      <Field label="Direction"><select className="input" value={a.direction} onChange={(e) => set({ announcements: patch(p.announcements, a.id, { direction: e.target.value as PublicAnnouncement['direction'] }) })}><option value="left">Left</option><option value="right">Right</option></select></Field>
-                      <Field label="Speed"><select className="input" value={a.speed} onChange={(e) => set({ announcements: patch(p.announcements, a.id, { speed: e.target.value as PublicAnnouncement['speed'] }) })}><option value="slow">Slow</option><option value="normal">Normal</option><option value="fast">Fast</option></select></Field></>}
-                    {(['background_color', 'text_color'] as const).map(k => (
-                      <Field key={k} label={k === 'background_color' ? 'Background colour' : 'Text colour'} error={E[`${a.id}.${k}`]}>
-                        <div className="flex items-center gap-2"><input type="color" aria-label={k} value={/^#[0-9a-fA-F]{6}$/.test(a[k]) ? a[k] : '#000000'} onChange={(e) => set({ announcements: patch(p.announcements, a.id, { [k]: e.target.value.toUpperCase() }) })} className="h-9 w-12 cursor-pointer rounded border border-[hsl(var(--border))] bg-transparent p-0.5" />
-                          <input className="input" value={a[k]} onChange={(e) => set({ announcements: patch(p.announcements, a.id, { [k]: e.target.value }) })} /></div></Field>))}
+                     <Field label="Emoji / icon text (optional)" error={E[`${a.id}.icon_text`]}><input className="input" value={a.icon_text ?? ''} maxLength={32}
+                       placeholder="⭐" onChange={e => set({ announcements: patch(p.announcements, a.id, { icon_text: e.target.value }) })} data-testid={`input-message-icon-${i}`} /></Field>
                   </div>}
                 </div>))}
           </div>
 
           <details className="rounded-md border border-[hsl(var(--border))] p-2.5" data-testid="details-advanced-html">
-            <summary className="cursor-pointer text-[13px] font-semibold">Advanced: custom HTML (optional)</summary>
+             <summary className="cursor-pointer text-[13px] font-semibold">3. Advanced Custom HTML (optional)</summary>
             <div className="mt-2 space-y-2">
               <p className="gs-help">Most people can skip this. Only simple paragraphs, headings, bold/italic, lists and links are kept. Styles, images, forms, frames and scripts are removed for safety.</p>
               <div className="flex items-center gap-2"><SettingToggle id="sw-custom-html" label="Custom HTML" checked={p.custom_html_enabled} onChange={(v) => set({ custom_html_enabled: v })} /></div>

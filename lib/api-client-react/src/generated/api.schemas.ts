@@ -32,6 +32,76 @@ export interface PublicWebsiteValues {
   secondary_cta_destination: string;
 }
 
+export type PublicStripSettingsDisplay = typeof PublicStripSettingsDisplay[keyof typeof PublicStripSettingsDisplay];
+
+
+export const PublicStripSettingsDisplay = {
+  static: 'static',
+  moving: 'moving',
+} as const;
+
+export type PublicStripSettingsSpeed = typeof PublicStripSettingsSpeed[keyof typeof PublicStripSettingsSpeed];
+
+
+export const PublicStripSettingsSpeed = {
+  slow: 'slow',
+  normal: 'normal',
+  fast: 'fast',
+} as const;
+
+export type PublicStripSettingsDirection = typeof PublicStripSettingsDirection[keyof typeof PublicStripSettingsDirection];
+
+
+export const PublicStripSettingsDirection = {
+  left: 'left',
+  right: 'right',
+} as const;
+
+export interface PublicStripSettings {
+  display: PublicStripSettingsDisplay;
+  speed: PublicStripSettingsSpeed;
+  direction: PublicStripSettingsDirection;
+  pause_on_hover: boolean;
+}
+
+export type PublicTickerSettingsDisplay = typeof PublicTickerSettingsDisplay[keyof typeof PublicTickerSettingsDisplay];
+
+
+export const PublicTickerSettingsDisplay = {
+  static: 'static',
+  moving: 'moving',
+} as const;
+
+export type PublicTickerSettingsSpeed = typeof PublicTickerSettingsSpeed[keyof typeof PublicTickerSettingsSpeed];
+
+
+export const PublicTickerSettingsSpeed = {
+  slow: 'slow',
+  normal: 'normal',
+  fast: 'fast',
+} as const;
+
+export type PublicTickerSettingsDirection = typeof PublicTickerSettingsDirection[keyof typeof PublicTickerSettingsDirection];
+
+
+export const PublicTickerSettingsDirection = {
+  left: 'left',
+  right: 'right',
+} as const;
+
+export interface PublicTickerSettings {
+  display: PublicTickerSettingsDisplay;
+  speed: PublicTickerSettingsSpeed;
+  direction: PublicTickerSettingsDirection;
+  pause_on_hover: boolean;
+  /** @pattern ^#[0-9a-fA-F]{6}$ */
+  background_color: string;
+  /** @pattern ^#[0-9a-fA-F]{6}$ */
+  text_color: string;
+  /** @maxLength 16 */
+  separator: string;
+}
+
 export type PublicPresentationValuesHeroMode = typeof PublicPresentationValuesHeroMode[keyof typeof PublicPresentationValuesHeroMode];
 
 
@@ -94,6 +164,8 @@ export interface PublicAnnouncement {
      * @maxLength 500
      */
   text: string;
+  /** @maxLength 32 */
+  icon_text?: string;
   /** @maxLength 512 */
   destination: string;
   /** @pattern ^#[0-9a-fA-F]{6}$ */
@@ -118,6 +190,8 @@ export interface PublicBanner {
 export interface PublicPresentationValues {
   logo_strip_enabled: boolean;
   announcements_enabled: boolean;
+  logo_strip_settings?: PublicStripSettings;
+  announcement_ticker_settings?: PublicTickerSettings;
   custom_html_enabled: boolean;
   /** @maxLength 4096 */
   custom_html: string;

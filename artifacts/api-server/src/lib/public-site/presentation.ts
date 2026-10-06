@@ -10,15 +10,17 @@ import type { PublicSiteModel } from './model';
 
 const generated = UpdateCurrentPublicPresentationBody.shape.values;
 export const presentationSchema = generated.extend({
+  logo_strip_settings: generated.shape.logo_strip_settings.unwrap().strict().optional(),
+  announcement_ticker_settings: generated.shape.announcement_ticker_settings.unwrap().strict().optional(),
   logos: generated.shape.logos.element.strict().array().max(6),
   announcements: generated.shape.announcements.element.strict().array().max(8),
   banners: generated.shape.banners.element.strict().array().max(8),
 }).strict();
 type Database = Pick<PoolClient,'query'>;
-const settingsFields = ['logo_strip_enabled','announcements_enabled','custom_html_enabled','custom_html','hero_mode','slider_autoplay','slider_interval'] as const;
+const settingsFields = ['logo_strip_enabled','announcements_enabled','logo_strip_settings','announcement_ticker_settings','custom_html_enabled','custom_html','hero_mode','slider_autoplay','slider_interval'] as const;
 const itemTables = [
   ['logos','public_site_partner_logos',['asset_id','label','destination','new_tab','enabled']],
-  ['announcements','public_site_announcements',['enabled','text','destination','background_color','text_color','movement','direction','speed']],
+  ['announcements','public_site_announcements',['enabled','text','icon_text','destination','background_color','text_color','movement','direction','speed']],
   ['banners','public_site_banners',['asset_id','alt_text','destination','enabled']],
 ] as const;
 const reserved = new Set(['login','register','dashboard','settings','m','api','admin','assets','brand','pwa','healthz','src','node_modules',adminPath.slice(1).toLowerCase()]);
@@ -57,6 +59,8 @@ export function sanitizedTopHTML(html: string, host?: string): string {
 }
 export const emptyPresentation = (): PublicPresentationValues => ({
   logo_strip_enabled:false,announcements_enabled:false,custom_html_enabled:false,custom_html:'',
+  logo_strip_settings:{display:'static',speed:'normal',direction:'left',pause_on_hover:true},
+  announcement_ticker_settings:{display:'static',speed:'normal',direction:'left',pause_on_hover:true,background_color:'#152238',text_color:'#FFFFFF',separator:'•'},
   hero_mode:'classic',slider_autoplay:true,slider_interval:5,logos:[],announcements:[],banners:[],
 });
 export function validatePresentation(raw: unknown,host?:string): PublicPresentationValues {
@@ -74,6 +78,13 @@ export function validatePresentation(raw: unknown,host?:string): PublicPresentat
     item.destination=presentationLink(item.destination,host);
   }
   if(values.announcements.some(item=>!item.text)) throw new HttpError(400,'Announcement text is required.');
+  const first=values.announcements.find(item=>item.enabled) ?? values.announcements[0];
+  values.logo_strip_settings ??= emptyPresentation().logo_strip_settings!;
+  values.announcement_ticker_settings ??= first
+    ? {display:first.movement==='scrolling'?'moving':'static',speed:first.speed,direction:first.direction,pause_on_hover:true,background_color:first.background_color,text_color:first.text_color,separator:'•'}
+    : emptyPresentation().announcement_ticker_settings!;
+  if(/[\u0000-\u001f\u007f]/.test(values.announcement_ticker_settings.separator)) throw new HttpError(400,'Use a printable ticker separator.');
+  for(const item of values.announcements) item.icon_text ??= '';
   values.custom_html=sanitizedTopHTML(values.custom_html,host);
   if(values.custom_html.length>4096) throw new HttpError(400,'Sanitized HTML is too long.');
   return values;
@@ -82,7 +93,7 @@ export const presentationAssetIds=(values:PublicPresentationValues)=>[...new Set
 export async function readPresentation(id:string,client:Database=pool) {
   const row=(await client.query('SELECT * FROM public_site_presentation WHERE subscriber_id=$1',[id])).rows[0];
   if(!row) return {values:emptyPresentation(),revision:0};
-  const raw:Record<string,unknown>=Object.fromEntries(settingsFields.map(key=>[key,row[key]]));
+  const raw:Record<string,unknown>=Object.fromEntries(settingsFields.map(key=>[key,row[key] ?? undefined]));
   for(const [key,table,columns] of itemTables) {
     raw[key]=(await client.query(`SELECT id,${columns.join(',')} FROM ${table} WHERE subscriber_id=$1 ORDER BY sort_order`,[id])).rows;
   }
@@ -125,8 +136,10 @@ export async function attachPresentation(model:PublicSiteModel,id:string,client:
   const images=await ownedImages(id,emptyWebsiteValues(),client,presentationAssetIds(values),sizes);
   const url=preview?previewImageUrl:publicImageUrl;
   model.presentation={
+    logoSettings:values.logo_strip_settings,
+    tickerSettings:values.announcement_ticker_settings,
     logos:values.logo_strip_enabled?values.logos.filter(i=>i.enabled).map(i=>({src:url(i.asset_id,images.get(i.asset_id)!),label:i.label,href:i.destination,newTab:i.new_tab,...sizes.get(i.asset_id)})):[],
-    announcements:values.announcements_enabled?values.announcements.filter(i=>i.enabled).map(i=>({text:i.text,href:i.destination,background:i.background_color,color:i.text_color,movement:i.movement,direction:i.direction,speed:i.speed})):[],
+    announcements:values.announcements_enabled?values.announcements.filter(i=>i.enabled).map(i=>({text:i.text,icon:i.icon_text || '',href:i.destination,background:i.background_color,color:i.text_color,movement:i.movement,direction:i.direction,speed:i.speed})):[],
     customHTML:values.custom_html_enabled?sanitizedTopHTML(values.custom_html):'',
     heroMode:values.hero_mode,banners:values.banners.filter(i=>i.enabled).map(i=>({src:url(i.asset_id,images.get(i.asset_id)!),alt:i.alt_text,href:i.destination,...sizes.get(i.asset_id)})),
     autoplay:values.slider_autoplay,interval:values.slider_interval,

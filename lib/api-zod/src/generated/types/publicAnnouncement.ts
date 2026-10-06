@@ -17,6 +17,8 @@ export interface PublicAnnouncement {
      * @maxLength 500
      */
   text: string;
+  /** @maxLength 32 */
+  icon_text?: string;
   /** @maxLength 512 */
   destination: string;
   /** @pattern ^#[0-9a-fA-F]{6}$ */
