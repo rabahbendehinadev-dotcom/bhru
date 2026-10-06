@@ -1,0 +1,407 @@
+We are now starting:
+
+BHRU — CMS Phase 1
+Subscriber Public Website → Branding & Hero Management
+
+IMPORTANT CONTEXT:
+
+The shared Public Template V2 is now APPROVED and FROZEN.
+
+Do NOT redesign the public template.
+Do NOT rebuild the public-site architecture.
+Do NOT change public slug resolution.
+Do NOT change authentication.
+Do NOT change subscription/licence eligibility.
+Do NOT modify Platform Admin.
+Do NOT implement custom domains.
+Do NOT implement Blog yet.
+Do NOT implement Services management yet.
+Do NOT push or deploy.
+
+Work in Replit Development/Preview only.
+
+==================================================
+GOAL
+==================================================
+
+Allow each authenticated BHRU Subscriber to manage the basic branding
+and Hero section of THEIR OWN public website.
+
+Example:
+
+Subscriber public URL:
+bhru.net/unlockfast
+
+The subscriber edits settings from their Subscriber Panel.
+
+After saving, the public website at:
+
+/unlockfast
+
+must render the saved subscriber-specific configuration through the
+existing frozen shared Public Template V2.
+
+There must still be ONE shared public template.
+
+Do NOT create separate website files/templates for subscribers.
+
+Architecture must remain:
+
+authenticated subscriber
+→ subscriber-scoped CMS data
+→ PublicSiteModel
+→ shared Public Template V2
+→ /{public_slug}
+
+==================================================
+SUBSCRIBER PANEL LOCATION
+==================================================
+
+Use the existing Subscriber Panel navigation architecture.
+
+Under:
+
+CMS / Blog
+
+add/open a page:
+
+Public Website
+
+Do NOT reorganize the existing sidebar.
+
+It must work with the existing BHRU workspace-tab system.
+
+Opening "Public Website" should create/activate its workspace tab like
+the other Subscriber Panel pages.
+
+==================================================
+CMS PHASE 1 PAGE
+==================================================
+
+Create a professional settings page.
+
+For this phase ONLY implement:
+
+1. GENERAL / BRANDING
+2. HERO
+
+Do not add the remaining CMS modules yet.
+
+==================================================
+SECTION 1 — GENERAL / BRANDING
+==================================================
+
+Fields:
+
+Website / Display Name
+
+Logo
+- image upload
+- preview current logo
+- replace logo
+- remove logo
+
+Primary Brand Color
+- color picker
+- valid manual HEX input
+
+Optional short business description
+
+Do NOT allow editing public_slug here.
+
+Display the public website URL as READ ONLY:
+
+https://bhru.net/{public_slug}
+
+Provide an "Open Website" action that opens the public site safely in
+a new tab.
+
+The slug must remain immutable.
+
+==================================================
+SECTION 2 — HERO
+==================================================
+
+Fields:
+
+Hero Badge / Eyebrow
+
+Hero Title
+
+Hero Description
+
+Hero Image / Banner
+- upload
+- preview
+- replace
+- remove
+
+Primary CTA Label
+Primary CTA Destination
+
+Secondary CTA Label
+Secondary CTA Destination
+
+All fields must belong only to the authenticated subscriber.
+
+==================================================
+LIVE PREVIEW
+==================================================
+
+Add a Live Preview area to the Public Website settings page.
+
+The preview should use the SAME visual components/rules as the frozen
+Public Template V2 as much as practical.
+
+Do NOT create a second independently styled template.
+
+Changes in the form should update the preview before saving.
+
+Desktop:
+Use a professional preview panel.
+
+Provide preview modes:
+
+Desktop
+Mobile
+
+The preview must never affect another subscriber.
+
+==================================================
+SAVE BEHAVIOR
+==================================================
+
+Provide clear actions:
+
+Save Changes
+Reset Unsaved Changes
+
+Save must:
+
+- validate input
+- save only the authenticated subscriber's public-site configuration
+- return a clear success state
+- update the public website
+- NOT modify public_slug
+- NOT modify business ownership
+- NOT modify subscription/licence state
+
+If saving fails:
+show a clear error
+and do not pretend the changes were saved.
+
+Protect against double submission.
+
+==================================================
+DATA MODEL
+==================================================
+
+First inspect the current schema and existing PublicSiteModel.
+
+Choose a clean subscriber-scoped persistence model for public-site
+configuration.
+
+Do not overload unrelated subscriber/account columns just to avoid a
+proper model.
+
+The persistence must support future CMS phases without requiring a
+redesign.
+
+Future phases will eventually need:
+
+services
+benefits/about
+navigation
+contact
+footer
+social links
+possibly blog/content
+
+But DO NOT implement those features now.
+
+Design storage so they can be added cleanly later.
+
+Every CMS configuration must be tied to the server-resolved
+subscriber ID.
+
+Never trust a subscriber ID supplied by the browser.
+
+==================================================
+IMAGE STORAGE
+==================================================
+
+Implement logo and Hero image storage in a way suitable for the
+existing BHRU architecture and future Dokploy deployment.
+
+IMPORTANT:
+
+Do NOT store uploaded images only in ephemeral container filesystem
+storage.
+
+Do NOT use base64 blobs inside normal JSON/settings fields.
+
+Inspect the current project/deployment architecture and choose a
+persistent-compatible approach.
+
+If the production storage architecture requires a decision that cannot
+safely be made from the current repository, STOP and report the exact
+options/tradeoffs instead of inventing infrastructure.
+
+For Development Preview, do not introduce an architecture that would
+silently lose files after production redeployment.
+
+==================================================
+SECURITY / VALIDATION
+==================================================
+
+CMS APIs must require Subscriber authentication.
+
+The server determines subscriber ownership from the authenticated
+session.
+
+Subscriber A must NEVER be able to read or modify Subscriber B's CMS
+configuration.
+
+Validate text lengths.
+
+Validate HEX color.
+
+For links/CTA destinations use the existing public-link safety rules
+where applicable.
+
+For uploaded images validate at minimum:
+
+- accepted image type
+- file size
+- safe generated filename/key
+- reject executable/unexpected content
+
+Never trust the original uploaded filename as storage authority.
+
+Do not expose internal filesystem paths.
+
+Public responses must continue excluding private subscriber/account
+metadata.
+
+==================================================
+PUBLIC TEMPLATE INTEGRATION
+==================================================
+
+Update the existing public-site data adapter so PublicSiteModel reads
+the saved Phase 1 CMS configuration.
+
+The frozen template itself should not be redesigned.
+
+Behavior:
+
+Configured value
+→ render subscriber value
+
+Optional value absent
+→ use the existing safe template fallback where appropriate
+or omit the optional element according to existing V2 behavior.
+
+Never fabricate business claims.
+
+==================================================
+BACKWARD COMPATIBILITY
+==================================================
+
+Existing subscribers without CMS configuration must continue to have
+a valid public homepage using the existing safe defaults.
+
+Do not break:
+
+/login
+/register
+/dashboard
+/settings
+/m/*
+private Platform Admin route
+/api/*
+assets
+PWA infrastructure
+public slug resolution
+
+==================================================
+TESTING
+==================================================
+
+Create/test at least two separate subscribers:
+
+Subscriber A
+Subscriber B
+
+Verify:
+
+A can edit only A.
+B can edit only B.
+
+A's logo/color/Hero changes appear only on A's public URL.
+
+B remains unchanged.
+
+Visiting B's public website while authenticated as A must still show
+B's PUBLIC configuration without switching A's private Subscriber
+session.
+
+Verify:
+
+- save
+- reload
+- unsaved reset
+- invalid HEX
+- invalid/unsafe CTA
+- image validation
+- replace image
+- remove image
+- public refresh
+- browser Back/Forward
+- Desktop preview
+- Mobile preview
+- workspace tab behavior
+
+Run existing public-site regression tests and type checks.
+
+Do not weaken or remove existing tests to make the new tests pass.
+
+==================================================
+IMPORTANT STOP CONDITION
+==================================================
+
+CMS Phase 1 ONLY.
+
+Do NOT implement:
+
+Services CMS
+About CMS
+Benefits CMS
+Statistics CMS
+Contact CMS
+Footer CMS
+Social links CMS
+Blog
+custom domains
+customer authentication
+
+Do NOT push.
+Do NOT deploy.
+
+When finished, STOP and report:
+
+1. Database/schema changes
+2. New API endpoints
+3. Files changed
+4. Image-storage decision
+5. Subscriber isolation strategy
+6. PublicSiteModel integration
+7. Tests/results
+
+Then provide screenshots of:
+
+- Public Website CMS page
+- Desktop Live Preview
+- Mobile Live Preview
+- resulting public homepage after saved customization
+
+Wait for my approval before CMS Phase 2.
