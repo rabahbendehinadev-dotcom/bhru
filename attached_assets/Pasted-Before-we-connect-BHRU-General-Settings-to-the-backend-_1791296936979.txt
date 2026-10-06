@@ -1,0 +1,218 @@
+Before we connect BHRU General Settings to the backend, I want a READ-ONLY ARCHITECTURE AUDIT.
+
+IMPORTANT:
+DO NOT modify any code.
+DO NOT create or modify database tables.
+DO NOT create migrations.
+DO NOT change environment variables.
+DO NOT change authentication.
+DO NOT change Platform Admin.
+DO NOT change General Settings.
+DO NOT push.
+DO NOT deploy.
+
+This task is analysis only.
+
+I need to understand the CURRENT architecture before we make any backend decision.
+
+==================================================
+1. CURRENT DATABASE
+==================================================
+
+Inspect the current database schema and report:
+
+- all tables related to users/accounts
+- subscribers
+- businesses/tenants
+- servers/workspaces
+- subscriptions
+- licences
+- memberships
+- roles/permissions
+- domains
+- settings
+
+For each relevant table report:
+
+- table name
+- purpose
+- primary key
+- important columns
+- foreign keys
+- relationships with the other relevant tables
+
+Do not expose passwords, secrets, tokens or sensitive values.
+
+==================================================
+2. SUBSCRIBER OWNERSHIP
+==================================================
+
+Explain exactly what currently happens when a new BHRU subscriber registers.
+
+I need to know:
+
+User registration
+        ↓
+What record is created?
+        ↓
+How is the subscriber/business represented?
+        ↓
+Is a server/workspace/tenant created?
+        ↓
+How is ownership stored?
+
+Determine whether the project already has concepts equivalent to:
+
+tenant_id
+business_id
+server_id
+workspace_id
+organization_id
+
+Do NOT recommend creating another identifier before checking what already exists.
+
+==================================================
+3. SERVER SELECTOR
+==================================================
+
+Inspect the existing selector visible in the Subscriber Panel header:
+
+Server → unlock Gab
+
+Explain:
+
+- where its data currently comes from
+- what object/entity "unlock Gab" represents
+- whether it has a database ID
+- how it is linked to the logged-in user
+- whether one user can currently own/access multiple servers
+- whether the architecture already supports multiple servers
+- what happens when the selected server changes
+
+Do not modify the selector.
+
+==================================================
+4. DATA ISOLATION
+==================================================
+
+Explain how subscriber data is currently isolated.
+
+Determine whether BHRU currently uses:
+
+A) one shared database
+B) separate databases per subscriber/server
+C) a hybrid architecture
+D) only placeholder/demo architecture at the moment
+
+If shared tables currently exist, explain how rows are scoped to the correct subscriber/server.
+
+Do NOT change the architecture.
+
+==================================================
+5. GENERAL SETTINGS
+==================================================
+
+Inspect the new:
+
+Settings → General Settings
+
+It is currently UI-only.
+
+Do NOT connect it yet.
+
+Determine what existing entity General Settings SHOULD logically belong to based only on the CURRENT architecture.
+
+Possible examples:
+
+user
+subscriber
+business
+tenant
+server
+workspace
+organization
+
+Do not create a new concept just because one of these names sounds appropriate.
+
+I specifically want to avoid accidentally storing General Settings globally or directly against the wrong user entity.
+
+==================================================
+6. EXISTING SETTINGS INFRASTRUCTURE
+==================================================
+
+Check whether the project already contains:
+
+- settings tables
+- JSON settings columns
+- configuration models
+- server configuration
+- tenant configuration
+- site configuration
+- branding configuration
+
+Report anything reusable.
+
+Do not create anything.
+
+==================================================
+7. DOMAIN / SITE INFRASTRUCTURE
+==================================================
+
+Check whether the project already has any code/schema for:
+
+- public website URLs
+- slugs
+- custom domains
+- hostnames
+- DNS verification
+- SSL
+- domain status
+
+This is inspection ONLY.
+
+Do NOT implement custom domains yet.
+
+==================================================
+8. ARCHITECTURE RISKS
+==================================================
+
+Identify anything that could become dangerous if we simply connect General Settings to the database now.
+
+Especially check for:
+
+- settings becoming global across all subscribers
+- user ID being confused with business/server ownership
+- cross-tenant data leakage
+- duplicate tenant/server concepts
+- multiple-server incompatibility
+- destructive migrations
+- existing schema we might accidentally duplicate
+
+==================================================
+9. FINAL REPORT
+==================================================
+
+Return a concise architecture report with these sections:
+
+A. Current account model
+B. Current subscriber/tenant/server model
+C. Current database relationships
+D. How the Server selector works
+E. Current data-isolation model
+F. Existing settings infrastructure
+G. Existing domain infrastructure
+H. Recommended owner for General Settings based on the CURRENT code
+I. Risks before implementation
+J. Safest next backend step
+
+CRITICAL:
+
+Do not implement your recommendation.
+
+I want the report first so I can review the architecture before authorizing any backend changes.
+
+READ ONLY.
+NO CODE CHANGES.
+NO DATABASE CHANGES.
+NO PUSH.
+NO DEPLOY.
