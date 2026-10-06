@@ -3,11 +3,11 @@ import type { PublicStripSettings, PublicTickerSettings } from '@workspace/api-c
 export const defaultStrip: PublicStripSettings = { display: 'static', speed: 'normal', direction: 'left', pause_on_hover: true };
 export const defaultTicker: PublicTickerSettings = { ...defaultStrip, background_color: '#152238', text_color: '#FFFFFF', separator: '•' };
 
-export function TickerControls({ id, settings, onChange, image = false, showPauseOnHover = true }: {
-  id: string; settings: PublicStripSettings; onChange: (value: PublicStripSettings) => void; image?: boolean; showPauseOnHover?: boolean;
+export function TickerControls({ id, settings, onChange, image = false, showPauseOnHover = true, continuous = false }: {
+  id: string; settings: PublicStripSettings; onChange: (value: PublicStripSettings) => void; image?: boolean; showPauseOnHover?: boolean; continuous?: boolean;
 }) {
   return <div className="space-y-3 rounded-md bg-[hsl(var(--muted)/.35)] p-3">
-    <fieldset className="space-y-2">
+    {continuous ? <p className="gs-help">Continuous scrolling</p> : <fieldset className="space-y-2">
       <legend className="gs-label">Display style</legend>
       <div className="flex flex-wrap gap-2">
         {(['static', 'moving'] as const).map(display => <label key={display} className="cursor-pointer">
@@ -18,8 +18,8 @@ export function TickerControls({ id, settings, onChange, image = false, showPaus
           </span>
         </label>)}
       </div>
-    </fieldset>
-    {settings.display === 'moving' && <div className="flex flex-wrap items-end gap-3">
+    </fieldset>}
+    {(continuous || settings.display === 'moving') && <div className="flex flex-wrap items-end gap-3">
       <label className="block space-y-1"><span className="gs-label">Speed</span>
         <select className="input" value={settings.speed} onChange={e => onChange({ ...settings, speed: e.target.value as PublicStripSettings['speed'] })} data-testid={`select-${id}-speed`}>
           <option value="slow">Slow</option><option value="normal">Normal</option><option value="fast">Fast</option>
@@ -30,7 +30,7 @@ export function TickerControls({ id, settings, onChange, image = false, showPaus
           <option value="left">Left</option><option value="right">Right</option>
         </select>
       </label>
-      {!image && showPauseOnHover && <label className="flex min-h-9 items-center gap-2 text-[13px]"><input type="checkbox" checked={settings.pause_on_hover}
+      {!image && !continuous && showPauseOnHover && <label className="flex min-h-9 items-center gap-2 text-[13px]"><input type="checkbox" checked={settings.pause_on_hover}
         onChange={e => onChange({ ...settings, pause_on_hover: e.target.checked })} data-testid={`check-${id}-pause-hover`} />Pause on hover</label>}
     </div>}
   </div>;

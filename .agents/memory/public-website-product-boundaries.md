@@ -63,8 +63,8 @@ Partner / Image Strip and moving announcement bars must not pause on mouse hover
 
 **How to apply:** Ignore legacy partner hover-pause settings without changing saved data or requiring re-upload. Do not reintroduce this CMS option or public control when refining the carousel.
 
-Each enabled announcement must render as its own compact, full-width bar, stacked below partner images and above the header. Colours, movement, speed and direction belong to each message, not shared global controls. Do not add decorative separator dots at the edges.
+Each enabled announcement must render as its own compact, full-width, continuously scrolling bar, stacked below partner images and above the header. Colours, speed and direction belong to each message, not shared global controls. Do not offer Static mode for announcements or add decorative separator dots at the edges.
 
-**Why:** The user requires visually independent announcement bars with Arabic/RTL and English/LTR support, rather than combining messages into one ticker.
+**Why:** The user requires visually independent announcement bars with Arabic/RTL and English/LTR support, and clarified that every enabled bar must continuously move, even when hovering.
 
-**How to apply:** Keep per-announcement editing simple and preserve existing messages when mapping legacy shared appearance settings. Do not combine separately configured announcements into a shared sequence.
+**How to apply:** Keep per-announcement editing simple and preserve existing messages when mapping legacy shared appearance settings. Render legacy Static announcements as moving without a database rewrite. Do not combine separately configured announcements into a shared sequence.

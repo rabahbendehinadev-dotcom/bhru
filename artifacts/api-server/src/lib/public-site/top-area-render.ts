@@ -21,7 +21,8 @@ export function renderTopArea(model:PublicSiteModel) {
   }).join('');
   const logoSettings=p.logoSettings??{display:'static',speed:'normal',direction:'left',pause_on_hover:true};
   const announcements=p.announcements.map((item,index)=>{
-    const settings={display:item.movement==='scrolling'?'moving' as const:'static' as const,speed:item.speed,direction:item.direction,pause_on_hover:false};
+    // Every enabled announcement is a ticker, including legacy static records.
+    const settings={display:'moving' as const,speed:item.speed,direction:item.direction,pause_on_hover:false};
     const text=link(`<bdi dir="auto">${item.icon?`${e(item.icon)} `:''}${e(item.text)}</bdi>`,item.href);
     return `<section class="p2-announcement" aria-label="Announcement ${index+1}" style="background:${safePublicColor(item.background,'#152238')};color:${safePublicColor(item.color,'#FFFFFF')}"><div${movement(settings)}>
       <div class="p2-ticker-track"><ul class="p2-ticker-group p2-message-group"><li class="p2-message">${text}</li></ul></div></div></section>`;
