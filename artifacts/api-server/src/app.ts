@@ -7,6 +7,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { adminPath, isAdminEntry } from "./lib/admin-entry";
+import { publicSiteNavigation, resolvePublicDocument, writePublicDocument } from "./lib/public-site";
 
 const app: Express = express();
 app.disable("x-powered-by");
@@ -38,6 +39,12 @@ app.use((req, res, next) => {
   if (req.path.startsWith("/api")) res.setHeader("Cache-Control", "no-store");
   next();
 });
+// Public documents deliberately finish before session/account middleware.
+// The 204 response means "existing application namespace", never public data.
+app.get("/api/public/site-document", async (req, res) => {
+  writePublicDocument(req, res, await resolvePublicDocument(req.query.path));
+});
+if (process.env.NODE_ENV === "production") app.use(publicSiteNavigation);
 app.use(express.json({ limit: "32kb" }));
 app.use(cookieParser());
 app.get("/healthz", async (_req, res) => {

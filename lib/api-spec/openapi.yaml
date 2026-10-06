@@ -11,6 +11,34 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /public/site-document:
+    get:
+      operationId: getPublicSiteDocument
+      summary: Resolve an anonymous public URL to an isolated HTML document
+      description: |
+        Uses only public business/company names. Never loads session ownership,
+        account state, licence details or admin metadata. Existing application
+        namespaces return an empty 204 so the development server can continue
+        its existing routing. Malformed, unknown and ineligible sites share 404.
+      parameters:
+        - { name: path, in: query, required: true, schema: { type: string, maxLength: 2048 } }
+      responses:
+        "200":
+          description: Minimal eligible subscriber public site shell
+          content:
+            text/html:
+              schema: { type: string }
+        "204": { description: Existing application or infrastructure namespace; no public document }
+        "404":
+          description: Generic unavailable document; no subscriber or eligibility details
+          content:
+            text/html:
+              schema: { type: string }
+        "503":
+          description: Generic temporary service-unavailable document
+          content:
+            text/html:
+              schema: { type: string }
   /settings/general:
     get:
       operationId: getCurrentGeneralSettings

@@ -331,6 +331,13 @@ export interface HealthStatus {
   status: string;
 }
 
+export type GetPublicSiteDocumentParams = {
+/**
+ * @maxLength 2048
+ */
+path: string;
+};
+
 export type ResolveAuthEntryParams = {
 /**
  * @maxLength 512

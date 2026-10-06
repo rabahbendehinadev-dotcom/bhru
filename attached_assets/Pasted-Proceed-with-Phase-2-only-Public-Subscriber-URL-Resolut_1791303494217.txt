@@ -1,0 +1,88 @@
+Proceed with Phase 2 only: Public Subscriber URL Resolution + Public Site Shell.
+
+Phase 1 is approved. Do not modify the existing public-slug allocation, normalization, backfill or immutability behavior unless a real bug is discovered.
+
+Implement public resolution for:
+
+https://bhru.net/{public_slug}
+
+Required flow:
+
+/{public_slug}
+→ validate the slug
+→ reject reserved/application paths
+→ resolve the subscriber server-side using subscribers.public_slug
+→ verify that the subscriber is eligible to expose a public site
+→ render an isolated BHRU Public Site Shell for that subscriber
+
+For this phase, the Public Site Shell should be intentionally minimal.
+
+Display only safe public information such as:
+
+* business/company name
+* BHRU public-site placeholder/layout
+* a clear indication that this is the subscriber’s public website
+
+Do NOT expose:
+
+* owner/contact/private account data
+* licence details
+* subscription internals
+* /api/state
+* admin metadata
+* internal IDs
+
+Do not implement the full CMS yet.
+Do not implement products, services, orders, customer login or checkout yet.
+Do not implement custom domains yet.
+
+The public website must be completely isolated from SubscriberShell.
+
+Visiting another subscriber’s public URL must never change or inherit tenant ownership from the visitor’s authenticated subscriber session.
+
+Existing routes must retain priority, including /login, /register, /dashboard, /settings, /m/*, /api/*, static/PWA/health routes and the configured private Platform Admin entry.
+
+Unknown or invalid public slugs must return a genuine HTTP 404 where technically applicable, not expose subscriber information and not accidentally fall through as another tenant.
+
+Subscriber states that are not eligible for public access must show a generic unavailable/not-found response without revealing whether the problem is suspension, expiry, licence, billing or another internal reason.
+
+Database/service failures must not be treated as “subscriber not found”; use an appropriate generic server-unavailable response.
+
+Keep the implementation compatible with the future architecture:
+
+bhru.net/gabserver ─┐
+
+gabserver.com ──────┴→ same subscribers.id → same CMS/content
+
+But DO NOT implement custom-domain routing now.
+
+Also review the current root-scoped PWA/service-worker behavior so a failed public-site navigation does not incorrectly display the Subscriber Panel offline page. Make only the minimum change necessary if this conflict actually exists.
+
+Verification must include:
+
+* valid subscriber slug
+* unknown slug
+* reserved route
+* uppercase/malformed slug
+* authenticated subscriber visiting another subscriber’s public URL
+* blocked/ineligible subscriber
+* direct browser refresh on /{public_slug}
+* browser Back/Forward
+* existing Subscriber Panel routes
+* private Platform Admin route
+* API/static/PWA/health routes
+* no leakage of private subscriber/account/licence data
+
+Do not push and do not deploy.
+
+Test everything in Replit Preview and stop with:
+
+1. files changed
+2. routing flow implemented
+3. public response fields
+4. eligibility behavior
+5. HTTP status behavior
+6. regression-test results
+7. screenshots/Preview result for one valid public subscriber URL
+
+Wait for my approval before implementing CMS or Phase 3.

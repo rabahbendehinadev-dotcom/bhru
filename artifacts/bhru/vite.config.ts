@@ -2,6 +2,7 @@ import path from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
+import { publicSitePreview } from './public-site-preview';
 
 export default defineConfig(async ({ command }) => {
 
@@ -33,6 +34,7 @@ const replitDevelopment = command === 'serve' &&
 return {
   base: basePath,
   plugins: [
+    publicSitePreview(),
     react(),
     tailwindcss(),
     ...(replitDevelopment

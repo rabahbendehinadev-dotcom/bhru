@@ -26,6 +26,7 @@ import type {
   CredentialsInput,
   GeneralSettings,
   GeneralSettingsInput,
+  GetPublicSiteDocumentParams,
   HealthStatus,
   PanelAccess,
   PlanInput,
@@ -63,6 +64,94 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetPublicSiteDocumentUrl = (params: GetPublicSiteDocumentParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/public/site-document?${stringifiedParams}` : `/api/public/site-document`
+}
+
+/**
+ * Uses only public business/company names. Never loads session ownership,
+ * account state, licence details or admin metadata. Existing application
+ * namespaces return an empty 204 so the development server can continue
+ * its existing routing. Malformed, unknown and ineligible sites share 404.
+ * @summary Resolve an anonymous public URL to an isolated HTML document
+ */
+export const getPublicSiteDocument = async (params: GetPublicSiteDocumentParams, options?: Parameters<typeof customFetch>[1]): Promise<string | void> => {
+
+  return customFetch<string | void>(getGetPublicSiteDocumentUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicSiteDocumentQueryKey = (params?: GetPublicSiteDocumentParams,) => {
+    return [
+    `/api/public/site-document`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPublicSiteDocumentQueryOptions = <TData = Awaited<ReturnType<typeof getPublicSiteDocument>>, TError = ErrorType<string>>(params: GetPublicSiteDocumentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicSiteDocument>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicSiteDocumentQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicSiteDocument>>> = ({ signal }) => getPublicSiteDocument(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicSiteDocument>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicSiteDocumentQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicSiteDocument>>>
+export type GetPublicSiteDocumentQueryError = ErrorType<string>
+
+
+/**
+ * @summary Resolve an anonymous public URL to an isolated HTML document
+ */
+
+export function useGetPublicSiteDocument<TData = Awaited<ReturnType<typeof getPublicSiteDocument>>, TError = ErrorType<string>>(
+ params: GetPublicSiteDocumentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicSiteDocument>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicSiteDocumentQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetCurrentGeneralSettingsUrl = () => {
 

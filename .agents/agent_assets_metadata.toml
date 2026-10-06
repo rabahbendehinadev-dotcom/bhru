@@ -42,3 +42,17 @@ mtime_ms = 1791159920291
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/0da79457-b31d-485c-b288-5ed26c0e4662/97cb02f0-2f0e-473e-bbf7-51a4f18878a8"
 storage_version_token = "1791160194460906"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "hjLjN9U51ZxDdYGzNRNGH"
+uri = "file://screenshots/phase-2-public-site-desktop.jpg"
+type = "image"
+title = "BHRU Phase 2 — Public Site Preview"
+description = "Existing eligible subscriber public URL in Development Preview, showing only the business name and placeholder shell."
+logical_id = "1cfb6c68-db23-44bd-b709-e91b79464ce7"
+content_hash = "sha256:6df5cfbeaf9375d57b33bc7069ef16af46daed078214e7848febdfdaf07cd05a"
+size = 31945
+mtime_ms = 1791304727682
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/1cfb6c68-db23-44bd-b709-e91b79464ce7/39539db9-3ec3-4103-a68e-74abef55a486"
+storage_version_token = "1791305265386755"
+content_type = "image/jpeg"

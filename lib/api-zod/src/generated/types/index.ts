@@ -14,6 +14,7 @@ export * from './credentialsInput';
 export * from './generalSettings';
 export * from './generalSettingsInput';
 export * from './generalSettingsInputPageTitleFormat';
+export * from './getPublicSiteDocumentParams';
 export * from './healthStatus';
 export * from './logEntry';
 export * from './panelAccess';

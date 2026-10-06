@@ -9,6 +9,24 @@ import * as zod from 'zod';
 
 
 /**
+ * Uses only public business/company names. Never loads session ownership,
+ * account state, licence details or admin metadata. Existing application
+ * namespaces return an empty 204 so the development server can continue
+ * its existing routing. Malformed, unknown and ineligible sites share 404.
+ * @summary Resolve an anonymous public URL to an isolated HTML document
+ */
+export const getPublicSiteDocumentQueryPathMax = 2048;
+
+
+
+export const GetPublicSiteDocumentQueryParams = zod.object({
+  "path": zod.coerce.string().max(getPublicSiteDocumentQueryPathMax)
+})
+
+export const GetPublicSiteDocumentResponse = zod.unknown()
+
+
+/**
  * @summary Read the eligible authenticated subscriber's General Settings
  */
 export const getCurrentGeneralSettingsResponseValuesCompanyNameMax = 200;
