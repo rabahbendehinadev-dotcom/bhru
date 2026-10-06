@@ -56,3 +56,9 @@ Common subscribers must not need Advanced HTML to configure Top Area image strip
 **Why:** The user explicitly wants to remove the need to imitate old DHRU "Other HTML Code" / marquee snippets and requires obvious upload, replacement and image management for customers.
 
 **How to apply:** Build common Top Area features as native CMS controls. Do not ask subscribers for CSS, JavaScript or HTML, use deprecated marquee, or weaken sanitization to support routine ticker content.
+
+Partner / Image Strip movement must not pause on mouse hover or expose a visitor-facing Pause motion button. Keep reduced-motion and keyboard accessibility; this restriction is specific to partner images, not Announcement Ticker.
+
+**Why:** The user explicitly removed these partner-strip behaviors after reviewing the public presentation.
+
+**How to apply:** Ignore legacy partner hover-pause settings without changing saved data or requiring re-upload. Do not reintroduce this CMS option or public control when refining the carousel.

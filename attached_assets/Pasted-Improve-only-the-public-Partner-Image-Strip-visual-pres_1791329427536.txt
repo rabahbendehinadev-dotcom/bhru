@@ -1,0 +1,54 @@
+Improve only the public Partner / Image Strip visual presentation and motion. Do not change its database schema, upload system, ownership, CMS data model, Announcement Ticker, Hero/Banner, authentication, or other public-site sections.
+1. Premium logo cards
+Replace the current plain/basic logo boxes with a professional partner carousel.
+Each partner logo must appear inside a compact premium card:
+- consistent card width and height
+- white/light card background
+- subtle border
+- rounded corners
+- very subtle shadow
+- balanced horizontal/vertical padding
+- logo centered using object-fit: contain
+- never crop or stretch logos
+- consistent visual size even when source images have different dimensions
+Reduce the excessive empty space currently visible inside the cards. The strip should look like a polished SaaS/e-commerce partner carousel.
+2. Continuous seamless movement
+When Moving Strip is enabled, make the movement:
+- continuous
+- smooth
+- infinite
+- seamless
+- constant speed
+- no visible reset/jump
+- no empty gap at the end of the sequence
+Duplicate the rendered sequence internally when required for seamless looping, but do not duplicate stored CMS records.
+3. NEVER pause on mouse hover
+Remove hover-to-pause behavior from the public website.
+Moving the mouse over:
+- a logo
+- a card
+- the strip
+- any part of the Top Area
+must NOT stop or slow the animation.
+Also remove/ignore the CMS Pause on hover option for Partner / Image Strip because we do not want this behavior.
+4. Remove visible Pause Motion control
+Remove the public Pause motion button shown beside/below the strip.
+Do not expose animation controls to normal website visitors.
+Keep appropriate prefers-reduced-motion accessibility behavior internally, but there should be no visible Pause button.
+5. Responsive behavior
+Desktop: polished horizontal partner cards with smooth continuous movement.
+Mobile: smaller proportional cards/logos, same seamless movement, no horizontal page overflow, no cropped cards and no layout jump.
+The strip itself may overflow hidden horizontally, but the document/body must never create horizontal scrolling.
+6. Preserve existing functionality
+Keep:
+- uploaded partner images
+- Enable/Disable
+- Add/Replace/Delete
+- ordering
+- Static Row mode
+- Moving Strip mode
+- speed
+- direction
+- existing persistent media storage
+Existing subscriber configuration and images must continue working without re-upload.
+Make only this Partner / Image Strip refinement. Do minimal type/build validation only. No browser/E2E/full regression tests. No migration unless technically unavoidable. Do not push or deploy. Stop for my manual Preview test.

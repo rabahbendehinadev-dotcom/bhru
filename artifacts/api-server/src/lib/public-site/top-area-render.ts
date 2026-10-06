@@ -32,8 +32,8 @@ export function renderTopArea(model:PublicSiteModel) {
   ).join('');
   const html=sanitizedTopHTML(p.customHTML);
   if(!logos&&!messages&&!html)return '';
-  const strip=logos?`<nav class="p2-partner-strip" aria-label="Partner links"><div${movement(logoSettings)}>
-    <div class="p2-ticker-track"><ul class="p2-ticker-group p2-logo-group">${logos}</ul></div>${pause(logoSettings.display==='moving')}</div></nav>`:'';
+  const strip=logos?`<nav class="p2-partner-strip" aria-label="Partner links"><div${movement({...logoSettings,pause_on_hover:false})}>
+    <div class="p2-ticker-track"><ul class="p2-ticker-group p2-logo-group">${logos}</ul></div></div></nav>`:'';
   const announcements=messages?`<section class="p2-announcement" aria-label="Announcements" style="background:${safePublicColor(ticker.background_color,'#152238')};color:${safePublicColor(ticker.text_color,'#FFFFFF')}"><div${movement(ticker)}>
     <div class="p2-ticker-track"><ul class="p2-ticker-group p2-message-group">${messages}</ul></div>${pause(ticker.display==='moving')}</div></section>`:'';
   return `<div class="p2-top-area">${strip}${announcements}${html?`<div class="p2-custom">${html}</div>`:''}</div>`;
@@ -41,15 +41,18 @@ export function renderTopArea(model:PublicSiteModel) {
 
 export const TOP_AREA_STYLES=`
 .p2-top-area{width:100%;max-width:100%;overflow:hidden}
-.p2-partner-strip{max-width:100%;overflow-x:auto;background:#fff;scrollbar-width:thin}
+.p2-partner-strip{width:100%;min-width:0;max-width:100%;overflow-x:auto;background:#f8fafc;scrollbar-width:thin}
 .p2-ticker-track{display:flex;width:max-content;max-width:none}
 .p2-ticker-group{display:flex;align-items:center;flex:none;width:max-content;list-style:none;margin:0;padding:12px 16px;direction:ltr}
 .p2-logo-group{gap:16px;margin:0 auto}
+.p2-partner-strip .p2-loop{padding-bottom:0}
+.p2-partner-strip .p2-loop .p2-logo-group{margin:0}
 .p2-partner-strip:not(:has([data-ticker])) .p2-ticker-track{min-width:100%}
-.p2-logo-card{display:flex;flex:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:180px;min-height:72px;padding:8px 12px;border:1px solid #e5eaf1;border-radius:8px;box-sizing:border-box;background:#fff}
-.p2-logo-card a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;color:#152238;text-decoration:none}
-.p2-logo-card img{display:block;height:40px;width:auto;max-width:100%;object-fit:contain}
-.p2-logo-label{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#152238}
+.p2-logo-card{display:flex;flex:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:152px;height:84px;padding:8px 12px;border:1px solid #e5eaf1;border-radius:12px;box-sizing:border-box;background:#fff;box-shadow:0 2px 8px rgba(21,34,56,.045)}
+.p2-logo-card a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;min-width:0;color:#152238;text-decoration:none}
+.p2-logo-card img{display:block;flex:none;height:48px;width:100%;max-width:100%;object-fit:contain;object-position:center}
+.p2-logo-card:not(:has(.p2-logo-label)) img{height:56px}
+.p2-logo-label{display:block;flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:14px;color:#152238}
 .p2-announcement{width:100%;max-width:100%;overflow-x:auto;font-size:14px;line-height:1.5}
 .p2-announcement a{color:inherit;text-decoration:underline;text-underline-offset:3px}
 .p2-announcement>div:not([data-ticker]) .p2-ticker-track{width:100%}
@@ -71,6 +74,6 @@ export const TOP_AREA_STYLES=`
 @keyframes p2-loop{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .p2-custom{padding:12px 24px;overflow-wrap:anywhere}.p2-custom>*{max-width:100%}.p2-custom a{color:var(--accent)}
 .p2-top-area a:focus-visible,.p2-ticker-pause:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-@media(max-width:600px){.p2-logo-card{width:140px;min-height:64px;padding:8px}.p2-logo-card img{height:32px}.p2-logo-group{gap:12px;padding:10px 12px}.p2-loop .p2-logo-group{padding-right:12px}.p2-announcement{font-size:13px}.p2-message{gap:16px}.p2-separator{padding-right:16px}}
+@media(max-width:600px){.p2-logo-card{width:128px;height:72px;padding:8px 10px;border-radius:10px}.p2-logo-card img{height:36px}.p2-logo-card:not(:has(.p2-logo-label)) img{height:48px}.p2-logo-group{gap:12px;padding:10px 12px}.p2-loop .p2-logo-group{padding-right:12px}.p2-announcement{font-size:13px}.p2-message{gap:16px}.p2-separator{padding-right:16px}}
 @media(prefers-reduced-motion:reduce){.p2-loop{padding-bottom:0}.p2-loop.p2-ready{overflow-x:auto}.p2-loop.p2-ready .p2-ticker-track{animation:none;transform:none;will-change:auto}.p2-loop [data-ticker-copy],.p2-ticker-pause{display:none}.p2-loop .p2-message{max-width:100%;white-space:normal}.p2-loop:has(.p2-message-group) .p2-ticker-track{width:100%}.p2-loop .p2-message-group{width:100%;box-sizing:border-box;flex-wrap:wrap}}
 `;

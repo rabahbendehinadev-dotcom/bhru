@@ -30,8 +30,8 @@ export function TickerControls({ id, settings, onChange, image = false }: {
           <option value="left">Left</option><option value="right">Right</option>
         </select>
       </label>
-      <label className="flex min-h-9 items-center gap-2 text-[13px]"><input type="checkbox" checked={settings.pause_on_hover}
-        onChange={e => onChange({ ...settings, pause_on_hover: e.target.checked })} data-testid={`check-${id}-pause-hover`} />Pause on hover</label>
+      {!image && <label className="flex min-h-9 items-center gap-2 text-[13px]"><input type="checkbox" checked={settings.pause_on_hover}
+        onChange={e => onChange({ ...settings, pause_on_hover: e.target.checked })} data-testid={`check-${id}-pause-hover`} />Pause on hover</label>}
     </div>}
   </div>;
 }

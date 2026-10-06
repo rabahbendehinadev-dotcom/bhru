@@ -15,6 +15,7 @@ export const TOP_AREA_SCRIPT=`(function(){
   top.querySelectorAll('[data-ticker]').forEach(function(root){
     var track=root.querySelector('.p2-ticker-track'),group=track.querySelector('.p2-ticker-group');
     var originals=Array.from(group.children),button=root.querySelector('[data-ticker-pause]'),queued=false;
+    var partner=Boolean(root.closest('.p2-partner-strip')),lastViewport=0,lastWidth=0;
     function copy(node){
       var clone=node.cloneNode(true);clone.setAttribute('data-ticker-copy','');clone.setAttribute('aria-hidden','true');
       clone.querySelectorAll('a').forEach(function(a){a.tabIndex=-1;});
@@ -22,10 +23,13 @@ export const TOP_AREA_SCRIPT=`(function(){
       return clone;
     }
     function rebuild(){
-      if(root.classList.contains('p2-focus-static')){button.hidden=motion.matches;return;}
+      if(root.classList.contains('p2-focus-static')){if(button)button.hidden=motion.matches;return;}
+      // Partner cards have fixed dimensions. Ignore repeated size/font notices
+      // when the geometry is unchanged, keeping the animation's current phase.
+      if(partner&&!motion.matches&&root.classList.contains('p2-ready')&&lastViewport===root.clientWidth&&lastWidth===group.getBoundingClientRect().width)return;
       root.classList.remove('p2-ready');
       track.querySelectorAll('[data-ticker-copy]').forEach(function(node){node.remove();});
-      if(motion.matches){button.hidden=true;return;}
+      if(motion.matches){if(button)button.hidden=true;return;}
       // Fill short sequences to at least one viewport; two equal halves then
       // translate exactly one sequence width, including its trailing spacing.
       for(var i=0;i<64&&group.getBoundingClientRect().width<root.clientWidth;i++){
@@ -34,10 +38,11 @@ export const TOP_AREA_SCRIPT=`(function(){
       var width=group.getBoundingClientRect().width;if(!width||!root.clientWidth)return;
       track.appendChild(copy(group));
       root.style.setProperty('--p2-duration',String(width/(Number(root.dataset.speed)||45))+'s');
-      root.scrollLeft=0;root.classList.add('p2-ready');button.hidden=false;
+      root.scrollLeft=0;root.classList.add('p2-ready');if(button)button.hidden=false;
+      if(partner){lastViewport=root.clientWidth;lastWidth=width;}
     }
     function refresh(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;rebuild();});}
-    button.addEventListener('click',function(){
+    if(button)button.addEventListener('click',function(){
       var paused=root.classList.toggle('p2-paused');
       button.setAttribute('aria-pressed',String(paused));button.textContent=paused?'Resume motion':'Pause motion';
     });
