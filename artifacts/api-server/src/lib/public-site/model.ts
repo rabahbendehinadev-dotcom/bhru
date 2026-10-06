@@ -16,6 +16,7 @@ export interface PublicSiteModel extends PublicSiteNames {
   siteName: string;
   logo: string | null;
   heroTitle: string;
+  heroBadge?: string;
   heroDescription: string;
   heroImage: string | null;
   primaryCTA: PublicLink;

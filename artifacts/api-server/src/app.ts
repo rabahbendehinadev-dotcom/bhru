@@ -8,6 +8,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { adminPath, isAdminEntry } from "./lib/admin-entry";
 import { publicSiteNavigation, resolvePublicDocument, writePublicDocument } from "./lib/public-site";
+import { publicMediaRouter } from "./routes/public-website";
 
 const app: Express = express();
 app.disable("x-powered-by");
@@ -45,6 +46,7 @@ app.get("/api/public/site-document", async (req, res) => {
   writePublicDocument(req, res, await resolvePublicDocument(req.query.path));
 });
 if (process.env.NODE_ENV === "production") app.use(publicSiteNavigation);
+app.use(publicMediaRouter);
 app.use(express.json({ limit: "32kb" }));
 app.use(cookieParser());
 app.get("/healthz", async (_req, res) => {
@@ -82,7 +84,9 @@ if (process.env.NODE_ENV === "production") {
 app.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (error instanceof HttpError) { res.status(error.status).json({ error: error.message }); return; }
   if (error.name === "ZodError") {
-    const fields = Object.fromEntries(error.issues.map((i: any) => [i.path.join("."), i.message]));
+    const fields = Object.fromEntries(error.issues.map((i: any) => [
+      (req.path.startsWith('/api/cms/public-website') && i.path[0] === 'values' ? i.path.slice(1) : i.path).join("."), i.message,
+    ]));
     res.status(400).json({ error: "Check the entered values.", fields });
     return;
   }

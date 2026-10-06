@@ -1,5 +1,8 @@
 # BHRU — PostgreSQL وDocker/Dokploy
 
+متطلب CMS قبل أي نشر: راجع [BHRU_PUBLIC_MEDIA.md](BHRU_PUBLIC_MEDIA.md)
+لضبط volume دائم، `BHRU_MEDIA_DIR`، الصلاحيات وعلامة التأكيد والنسخ الاحتياطي.
+
 هذه المرحلة نُفذت في **Development فقط**. لا GitHub push، لا نشر VPS، ولا تعديل Production database.
 الدليل يجهّز المسار المستقبلي: GitHub `main` → Dokploy → Docker → VPS → `bhru.net`.
 

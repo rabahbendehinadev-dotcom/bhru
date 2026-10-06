@@ -6,6 +6,7 @@ import { resolveSlug } from '@/components/subscriber/nav-catalog';
 import { OnlineStaffList, useOnlineStaff } from '@/components/subscriber/OnlineStaff';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import GeneralSettingsPage from '@/pages/general-settings';
+import PublicWebsitePage from '@/pages/public-website';
 
 function Crumbs({ items }: { items: string[] }) {
   return (
@@ -36,6 +37,10 @@ export default function Module() {
 
   if (r.entry.id === 'settings' && r.child?.label === 'General Settings') {
     return <><Crumbs items={r.crumbs} /><GeneralSettingsPage /></>;
+  }
+
+  if (r.slug === 'cms-blog-public-website') {
+    return <><Crumbs items={r.crumbs} /><PublicWebsitePage /></>;
   }
 
   const isStaff = r.entry.id === 'online-staff' && !r.child;

@@ -1,4 +1,4 @@
-import { escapeHTML, safePublicHref, safePublicImage } from '../safety';
+import { escapeHTML, safePublicLink, safePublicImage } from '../safety';
 import type { PublicSiteModel } from '../model';
 
 // Neutral studio-like device silhouettes, never a demo product or service claim.
@@ -31,12 +31,12 @@ const art = `<div class="art" role="img" aria-label="Neutral device illustration
 export function renderHero(m: PublicSiteModel): string {
   const img = safePublicImage(m.heroImage);
   const visual = img ? `<img class="hero-img" src="${escapeHTML(img)}" alt="" loading="eager">` : art;
-  const badge = m.businessName && m.businessName !== m.siteName ? m.businessName : m.siteName;
+  const badge = m.heroBadge || (m.businessName && m.businessName !== m.siteName ? m.businessName : m.siteName);
   return `<section id="home" class="hero" aria-labelledby="hero-title"><div class="wrap hero-grid"><div class="hero-copy">
 <p class="eyebrow"><span class="dot"></span>${escapeHTML(badge)}</p>
 <h1 id="hero-title">${escapeHTML(m.heroTitle)}</h1>
 <p class="lead">${escapeHTML(m.heroDescription)}</p>
-<div class="actions"><a class="btn btn-solid" href="${escapeHTML(safePublicHref(m.primaryCTA.href))}">${escapeHTML(m.primaryCTA.label)}</a>
-<a class="btn btn-outline" href="${escapeHTML(safePublicHref(m.secondaryCTA.href))}">${escapeHTML(m.secondaryCTA.label)}</a></div></div>
+<div class="actions"><a class="btn btn-solid" href="${escapeHTML(safePublicLink(m.primaryCTA.href))}">${escapeHTML(m.primaryCTA.label)}</a>
+<a class="btn btn-outline" href="${escapeHTML(safePublicLink(m.secondaryCTA.href))}">${escapeHTML(m.secondaryCTA.label)}</a></div></div>
 <div class="hero-visual">${visual}</div></div></section>`;
 }

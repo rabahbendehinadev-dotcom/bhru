@@ -140,3 +140,31 @@ mtime_ms = 1791311582887
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/b36c5ee8-a198-468a-b7a9-e30802754283/2bdf99f2-0426-4181-a2fa-1660b09e863f"
 storage_version_token = "1791311619595536"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "Y-izl9gseAIL2826fkkGa"
+uri = "file://reports/bhru-cms-phase1-report.html"
+type = "html"
+title = "BHRU CMS Phase 1 — Implementation & Test Report"
+description = "Schema, endpoints, changed files, persistent Dokploy media requirements, subscriber isolation and all verification results. Development only; stopped before Phase 2."
+logical_id = "2a8de5a8-193d-4d84-b6b9-64bb1dfd4d92"
+content_hash = "sha256:559c4f0f81fc2e075d8ffffb74622450564c3f79d45c4b0fb987b6f11f8cf57e"
+size = 10393
+mtime_ms = 1791315946533
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/2a8de5a8-193d-4d84-b6b9-64bb1dfd4d92/263cded1-e555-48a0-9fb1-eaf51112feb1"
+storage_version_token = "1791315989371335"
+content_type = "text/html"
+
+[[outputs]]
+id = "JpqH1wxqmCSBoaUnhp_cf"
+uri = "file://screenshots/bhru-cms-phase1-saved-homepage.jpg"
+type = "image"
+title = "Saved customized public homepage"
+description = "Anonymous public homepage after saving branding, logo, colour and hero on an isolated test subscriber. Verification fixtures were removed after capture."
+logical_id = "548e8f0e-4fad-44a6-bf7b-35a293babb3d"
+content_hash = "sha256:cafce4f8cd89cfad98eb0cc0719cdf622df0d15c9bf551b80629cd77f79ea4fd"
+size = 69112
+mtime_ms = 1791315496109
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/548e8f0e-4fad-44a6-bf7b-35a293babb3d/cea04033-9c4c-40f2-ba0c-e2f983d3143c"
+storage_version_token = "1791315989931085"
+content_type = "image/jpeg"

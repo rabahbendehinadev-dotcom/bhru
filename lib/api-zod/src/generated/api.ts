@@ -26,6 +26,265 @@ export const GetPublicSiteDocumentQueryParams = zod.object({
 export const GetPublicSiteDocumentResponse = zod.unknown()
 
 
+export const getCurrentPublicWebsiteResponseValuesDisplayNameMax = 120;
+
+export const getCurrentPublicWebsiteResponseValuesBusinessDescriptionMax = 500;
+
+export const getCurrentPublicWebsiteResponseValuesPrimaryColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const getCurrentPublicWebsiteResponseValuesHeroBadgeMax = 120;
+
+export const getCurrentPublicWebsiteResponseValuesHeroTitleMax = 180;
+
+export const getCurrentPublicWebsiteResponseValuesHeroDescriptionMax = 1000;
+
+export const getCurrentPublicWebsiteResponseValuesPrimaryCtaLabelMax = 60;
+
+export const getCurrentPublicWebsiteResponseValuesPrimaryCtaDestinationMax = 512;
+
+export const getCurrentPublicWebsiteResponseValuesSecondaryCtaLabelMax = 60;
+
+export const getCurrentPublicWebsiteResponseValuesSecondaryCtaDestinationMax = 512;
+
+export const getCurrentPublicWebsiteResponseDefaultsDisplayNameMax = 120;
+
+export const getCurrentPublicWebsiteResponseDefaultsBusinessDescriptionMax = 500;
+
+export const getCurrentPublicWebsiteResponseDefaultsPrimaryColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const getCurrentPublicWebsiteResponseDefaultsHeroBadgeMax = 120;
+
+export const getCurrentPublicWebsiteResponseDefaultsHeroTitleMax = 180;
+
+export const getCurrentPublicWebsiteResponseDefaultsHeroDescriptionMax = 1000;
+
+export const getCurrentPublicWebsiteResponseDefaultsPrimaryCtaLabelMax = 60;
+
+export const getCurrentPublicWebsiteResponseDefaultsPrimaryCtaDestinationMax = 512;
+
+export const getCurrentPublicWebsiteResponseDefaultsSecondaryCtaLabelMax = 60;
+
+export const getCurrentPublicWebsiteResponseDefaultsSecondaryCtaDestinationMax = 512;
+
+export const getCurrentPublicWebsiteResponseRevisionMin = 0;
+
+
+
+export const GetCurrentPublicWebsiteResponse = zod.object({
+  "values": zod.object({
+  "display_name": zod.string().max(getCurrentPublicWebsiteResponseValuesDisplayNameMax),
+  "business_description": zod.string().max(getCurrentPublicWebsiteResponseValuesBusinessDescriptionMax),
+  "primary_color": zod.string().regex(getCurrentPublicWebsiteResponseValuesPrimaryColorRegExp),
+  "hero_badge": zod.string().max(getCurrentPublicWebsiteResponseValuesHeroBadgeMax),
+  "hero_title": zod.string().max(getCurrentPublicWebsiteResponseValuesHeroTitleMax),
+  "hero_description": zod.string().max(getCurrentPublicWebsiteResponseValuesHeroDescriptionMax),
+  "logo_asset_id": zod.string().uuid().nullable(),
+  "hero_asset_id": zod.string().uuid().nullable(),
+  "primary_cta_label": zod.string().max(getCurrentPublicWebsiteResponseValuesPrimaryCtaLabelMax),
+  "primary_cta_destination": zod.string().max(getCurrentPublicWebsiteResponseValuesPrimaryCtaDestinationMax),
+  "secondary_cta_label": zod.string().max(getCurrentPublicWebsiteResponseValuesSecondaryCtaLabelMax),
+  "secondary_cta_destination": zod.string().max(getCurrentPublicWebsiteResponseValuesSecondaryCtaDestinationMax)
+}),
+  "defaults": zod.object({
+  "display_name": zod.string().max(getCurrentPublicWebsiteResponseDefaultsDisplayNameMax),
+  "business_description": zod.string().max(getCurrentPublicWebsiteResponseDefaultsBusinessDescriptionMax),
+  "primary_color": zod.string().regex(getCurrentPublicWebsiteResponseDefaultsPrimaryColorRegExp),
+  "hero_badge": zod.string().max(getCurrentPublicWebsiteResponseDefaultsHeroBadgeMax),
+  "hero_title": zod.string().max(getCurrentPublicWebsiteResponseDefaultsHeroTitleMax),
+  "hero_description": zod.string().max(getCurrentPublicWebsiteResponseDefaultsHeroDescriptionMax),
+  "logo_asset_id": zod.string().uuid().nullable(),
+  "hero_asset_id": zod.string().uuid().nullable(),
+  "primary_cta_label": zod.string().max(getCurrentPublicWebsiteResponseDefaultsPrimaryCtaLabelMax),
+  "primary_cta_destination": zod.string().max(getCurrentPublicWebsiteResponseDefaultsPrimaryCtaDestinationMax),
+  "secondary_cta_label": zod.string().max(getCurrentPublicWebsiteResponseDefaultsSecondaryCtaLabelMax),
+  "secondary_cta_destination": zod.string().max(getCurrentPublicWebsiteResponseDefaultsSecondaryCtaDestinationMax)
+}),
+  "revision": zod.number().int().min(getCurrentPublicWebsiteResponseRevisionMin),
+  "public_slug": zod.string(),
+  "public_url": zod.string(),
+  "preview_url": zod.string(),
+  "logo_url": zod.string().nullable(),
+  "hero_image_url": zod.string().nullable()
+})
+
+
+export const updateCurrentPublicWebsiteBodyValuesDisplayNameMax = 120;
+
+export const updateCurrentPublicWebsiteBodyValuesBusinessDescriptionMax = 500;
+
+export const updateCurrentPublicWebsiteBodyValuesPrimaryColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicWebsiteBodyValuesHeroBadgeMax = 120;
+
+export const updateCurrentPublicWebsiteBodyValuesHeroTitleMax = 180;
+
+export const updateCurrentPublicWebsiteBodyValuesHeroDescriptionMax = 1000;
+
+export const updateCurrentPublicWebsiteBodyValuesPrimaryCtaLabelMax = 60;
+
+export const updateCurrentPublicWebsiteBodyValuesPrimaryCtaDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteBodyValuesSecondaryCtaLabelMax = 60;
+
+export const updateCurrentPublicWebsiteBodyValuesSecondaryCtaDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteBodyRevisionMin = 0;
+
+
+
+export const UpdateCurrentPublicWebsiteBody = zod.object({
+  "values": zod.object({
+  "display_name": zod.string().max(updateCurrentPublicWebsiteBodyValuesDisplayNameMax),
+  "business_description": zod.string().max(updateCurrentPublicWebsiteBodyValuesBusinessDescriptionMax),
+  "primary_color": zod.string().regex(updateCurrentPublicWebsiteBodyValuesPrimaryColorRegExp),
+  "hero_badge": zod.string().max(updateCurrentPublicWebsiteBodyValuesHeroBadgeMax),
+  "hero_title": zod.string().max(updateCurrentPublicWebsiteBodyValuesHeroTitleMax),
+  "hero_description": zod.string().max(updateCurrentPublicWebsiteBodyValuesHeroDescriptionMax),
+  "logo_asset_id": zod.string().uuid().nullable(),
+  "hero_asset_id": zod.string().uuid().nullable(),
+  "primary_cta_label": zod.string().max(updateCurrentPublicWebsiteBodyValuesPrimaryCtaLabelMax),
+  "primary_cta_destination": zod.string().max(updateCurrentPublicWebsiteBodyValuesPrimaryCtaDestinationMax),
+  "secondary_cta_label": zod.string().max(updateCurrentPublicWebsiteBodyValuesSecondaryCtaLabelMax),
+  "secondary_cta_destination": zod.string().max(updateCurrentPublicWebsiteBodyValuesSecondaryCtaDestinationMax)
+}),
+  "revision": zod.number().int().min(updateCurrentPublicWebsiteBodyRevisionMin)
+})
+
+export const updateCurrentPublicWebsiteResponseValuesDisplayNameMax = 120;
+
+export const updateCurrentPublicWebsiteResponseValuesBusinessDescriptionMax = 500;
+
+export const updateCurrentPublicWebsiteResponseValuesPrimaryColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicWebsiteResponseValuesHeroBadgeMax = 120;
+
+export const updateCurrentPublicWebsiteResponseValuesHeroTitleMax = 180;
+
+export const updateCurrentPublicWebsiteResponseValuesHeroDescriptionMax = 1000;
+
+export const updateCurrentPublicWebsiteResponseValuesPrimaryCtaLabelMax = 60;
+
+export const updateCurrentPublicWebsiteResponseValuesPrimaryCtaDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteResponseValuesSecondaryCtaLabelMax = 60;
+
+export const updateCurrentPublicWebsiteResponseValuesSecondaryCtaDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteResponseDefaultsDisplayNameMax = 120;
+
+export const updateCurrentPublicWebsiteResponseDefaultsBusinessDescriptionMax = 500;
+
+export const updateCurrentPublicWebsiteResponseDefaultsPrimaryColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const updateCurrentPublicWebsiteResponseDefaultsHeroBadgeMax = 120;
+
+export const updateCurrentPublicWebsiteResponseDefaultsHeroTitleMax = 180;
+
+export const updateCurrentPublicWebsiteResponseDefaultsHeroDescriptionMax = 1000;
+
+export const updateCurrentPublicWebsiteResponseDefaultsPrimaryCtaLabelMax = 60;
+
+export const updateCurrentPublicWebsiteResponseDefaultsPrimaryCtaDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteResponseDefaultsSecondaryCtaLabelMax = 60;
+
+export const updateCurrentPublicWebsiteResponseDefaultsSecondaryCtaDestinationMax = 512;
+
+export const updateCurrentPublicWebsiteResponseRevisionMin = 0;
+
+
+
+export const UpdateCurrentPublicWebsiteResponse = zod.object({
+  "values": zod.object({
+  "display_name": zod.string().max(updateCurrentPublicWebsiteResponseValuesDisplayNameMax),
+  "business_description": zod.string().max(updateCurrentPublicWebsiteResponseValuesBusinessDescriptionMax),
+  "primary_color": zod.string().regex(updateCurrentPublicWebsiteResponseValuesPrimaryColorRegExp),
+  "hero_badge": zod.string().max(updateCurrentPublicWebsiteResponseValuesHeroBadgeMax),
+  "hero_title": zod.string().max(updateCurrentPublicWebsiteResponseValuesHeroTitleMax),
+  "hero_description": zod.string().max(updateCurrentPublicWebsiteResponseValuesHeroDescriptionMax),
+  "logo_asset_id": zod.string().uuid().nullable(),
+  "hero_asset_id": zod.string().uuid().nullable(),
+  "primary_cta_label": zod.string().max(updateCurrentPublicWebsiteResponseValuesPrimaryCtaLabelMax),
+  "primary_cta_destination": zod.string().max(updateCurrentPublicWebsiteResponseValuesPrimaryCtaDestinationMax),
+  "secondary_cta_label": zod.string().max(updateCurrentPublicWebsiteResponseValuesSecondaryCtaLabelMax),
+  "secondary_cta_destination": zod.string().max(updateCurrentPublicWebsiteResponseValuesSecondaryCtaDestinationMax)
+}),
+  "defaults": zod.object({
+  "display_name": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsDisplayNameMax),
+  "business_description": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsBusinessDescriptionMax),
+  "primary_color": zod.string().regex(updateCurrentPublicWebsiteResponseDefaultsPrimaryColorRegExp),
+  "hero_badge": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsHeroBadgeMax),
+  "hero_title": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsHeroTitleMax),
+  "hero_description": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsHeroDescriptionMax),
+  "logo_asset_id": zod.string().uuid().nullable(),
+  "hero_asset_id": zod.string().uuid().nullable(),
+  "primary_cta_label": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsPrimaryCtaLabelMax),
+  "primary_cta_destination": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsPrimaryCtaDestinationMax),
+  "secondary_cta_label": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsSecondaryCtaLabelMax),
+  "secondary_cta_destination": zod.string().max(updateCurrentPublicWebsiteResponseDefaultsSecondaryCtaDestinationMax)
+}),
+  "revision": zod.number().int().min(updateCurrentPublicWebsiteResponseRevisionMin),
+  "public_slug": zod.string(),
+  "public_url": zod.string(),
+  "preview_url": zod.string(),
+  "logo_url": zod.string().nullable(),
+  "hero_image_url": zod.string().nullable()
+})
+
+
+export const previewCurrentPublicWebsiteBodyValuesDisplayNameMax = 120;
+
+export const previewCurrentPublicWebsiteBodyValuesBusinessDescriptionMax = 500;
+
+export const previewCurrentPublicWebsiteBodyValuesPrimaryColorRegExp = new RegExp('^#[0-9a-fA-F]{6}$');
+export const previewCurrentPublicWebsiteBodyValuesHeroBadgeMax = 120;
+
+export const previewCurrentPublicWebsiteBodyValuesHeroTitleMax = 180;
+
+export const previewCurrentPublicWebsiteBodyValuesHeroDescriptionMax = 1000;
+
+export const previewCurrentPublicWebsiteBodyValuesPrimaryCtaLabelMax = 60;
+
+export const previewCurrentPublicWebsiteBodyValuesPrimaryCtaDestinationMax = 512;
+
+export const previewCurrentPublicWebsiteBodyValuesSecondaryCtaLabelMax = 60;
+
+export const previewCurrentPublicWebsiteBodyValuesSecondaryCtaDestinationMax = 512;
+
+
+
+export const PreviewCurrentPublicWebsiteBody = zod.object({
+  "values": zod.object({
+  "display_name": zod.string().max(previewCurrentPublicWebsiteBodyValuesDisplayNameMax),
+  "business_description": zod.string().max(previewCurrentPublicWebsiteBodyValuesBusinessDescriptionMax),
+  "primary_color": zod.string().regex(previewCurrentPublicWebsiteBodyValuesPrimaryColorRegExp),
+  "hero_badge": zod.string().max(previewCurrentPublicWebsiteBodyValuesHeroBadgeMax),
+  "hero_title": zod.string().max(previewCurrentPublicWebsiteBodyValuesHeroTitleMax),
+  "hero_description": zod.string().max(previewCurrentPublicWebsiteBodyValuesHeroDescriptionMax),
+  "logo_asset_id": zod.string().uuid().nullable(),
+  "hero_asset_id": zod.string().uuid().nullable(),
+  "primary_cta_label": zod.string().max(previewCurrentPublicWebsiteBodyValuesPrimaryCtaLabelMax),
+  "primary_cta_destination": zod.string().max(previewCurrentPublicWebsiteBodyValuesPrimaryCtaDestinationMax),
+  "secondary_cta_label": zod.string().max(previewCurrentPublicWebsiteBodyValuesSecondaryCtaLabelMax),
+  "secondary_cta_destination": zod.string().max(previewCurrentPublicWebsiteBodyValuesSecondaryCtaDestinationMax)
+})
+})
+
+export const PreviewCurrentPublicWebsiteResponse = zod.object({
+  "html": zod.string(),
+  "logo_url": zod.string().nullable(),
+  "hero_image_url": zod.string().nullable()
+})
+
+
+export const UploadPublicWebsiteAssetResponse = zod.object({
+  "id": zod.string().uuid(),
+  "url": zod.string()
+})
+
+
+export const DeleteUnusedPublicWebsiteAssetParams = zod.object({
+  "assetId": zod.coerce.string().uuid()
+})
+
+export const DeleteUnusedPublicWebsiteAssetResponse = zod.void()
+
+
 /**
  * @summary Read the eligible authenticated subscriber's General Settings
  */

@@ -5,6 +5,57 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface PublicWebsiteValues {
+  /** @maxLength 120 */
+  display_name: string;
+  /** @maxLength 500 */
+  business_description: string;
+  /** @pattern ^#[0-9a-fA-F]{6}$ */
+  primary_color: string;
+  /** @maxLength 120 */
+  hero_badge: string;
+  /** @maxLength 180 */
+  hero_title: string;
+  /** @maxLength 1000 */
+  hero_description: string;
+  /** @nullable */
+  logo_asset_id: string | null;
+  /** @nullable */
+  hero_asset_id: string | null;
+  /** @maxLength 60 */
+  primary_cta_label: string;
+  /** @maxLength 512 */
+  primary_cta_destination: string;
+  /** @maxLength 60 */
+  secondary_cta_label: string;
+  /** @maxLength 512 */
+  secondary_cta_destination: string;
+}
+
+export interface PublicWebsiteUpdate {
+  values: PublicWebsiteValues;
+  /** @minimum 0 */
+  revision: number;
+}
+
+export interface PublicWebsitePreviewInput {
+  values: PublicWebsiteValues;
+}
+
+export interface PublicWebsiteConfiguration {
+  values: PublicWebsiteValues;
+  defaults: PublicWebsiteValues;
+  /** @minimum 0 */
+  revision: number;
+  public_slug: string;
+  public_url: string;
+  preview_url: string;
+  /** @nullable */
+  logo_url: string | null;
+  /** @nullable */
+  hero_image_url: string | null;
+}
+
 export type GeneralSettingsInputPageTitleFormat = typeof GeneralSettingsInputPageTitleFormat[keyof typeof GeneralSettingsInputPageTitleFormat];
 
 
@@ -336,6 +387,19 @@ export type GetPublicSiteDocumentParams = {
  * @maxLength 2048
  */
 path: string;
+};
+
+export type PreviewCurrentPublicWebsite200 = {
+  html: string;
+  /** @nullable */
+  logo_url: string | null;
+  /** @nullable */
+  hero_image_url: string | null;
+};
+
+export type UploadPublicWebsiteAsset201 = {
+  id: string;
+  url: string;
 };
 
 export type ResolveAuthEntryParams = {

@@ -56,9 +56,9 @@ export async function resolvePublicDocument(
     if (typeof row.businessName !== 'string' || typeof row.companyName !== 'string') {
       throw new Error('Invalid public names');
     }
-    return { kind: 'site', status: 200, site: loadSubscriberPublicSiteData({
+    return { kind: 'site', status: 200, site: await loadSubscriberPublicSiteData({
       subscriberId: row.subscriberId, businessName: row.businessName, companyName: row.companyName,
-    }) };
+    }, database) };
   } catch (error) {
     const code = error && typeof error === 'object' ? (error as { code?: unknown }).code : undefined;
     return { kind: 'unavailable', status: 503, errorCode: typeof code === 'string' ? code : 'INTERNAL' };

@@ -128,9 +128,9 @@ try {
         banner: { js: 'import {createRequire} from "node:module"; const require=createRequire(import.meta.url);' },
       });
       module = await import(pathToFileURL(file.pathname).href);
-      const modelA = module.loadSubscriberPublicSiteData({ subscriberId: a.id, businessName: a.business,
+      const modelA = await module.loadSubscriberPublicSiteData({ subscriberId: a.id, businessName: a.business,
         companyName: a.company, email: 'PRIVATE_MODEL_EMAIL', licenceKey: 'PRIVATE_MODEL_LICENCE' });
-      const modelB = module.loadSubscriberPublicSiteData({ subscriberId: b.id, businessName: b.business, companyName: b.company });
+      const modelB = await module.loadSubscriberPublicSiteData({ subscriberId: b.id, businessName: b.business, companyName: b.company });
       assert.equal(modelA.siteName, a.company); assert.equal(modelB.siteName, b.company);
       assert(!JSON.stringify(modelA).includes(a.id) && !JSON.stringify(modelA).includes('PRIVATE_MODEL'));
       assert.notEqual(modelA.services, modelB.services);

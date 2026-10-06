@@ -9,6 +9,7 @@ export function safePublicHref(href: string): string {
 
 export function safePublicImage(image: string | null): string | null {
   if (!image) return null;
+  if (/^\/api\/public\/media\/[a-f0-9-]{36}\.(png|jpg)(?:\?preview=\d{10}\.[a-f0-9]{64})?$/.exec(image)?.[0] === image) return image;
   if (/^\/(?:assets|brand)\/[a-zA-Z0-9/_\-.]+$/.exec(image)?.[0] === image && !image.includes('..')) return image;
   try {
     const url = new URL(image);

@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
 import { adminPath } from "./lib/admin-entry";
+import { initializePublicMedia } from "./lib/public-site/media";
 
 const rawPort = process.env["PORT"] || "3000";
 
@@ -19,6 +20,7 @@ if (!Number.isInteger(port) || port <= 0 || port > 65535) {
 
 try {
   await pool.query("SELECT name FROM schema_migrations LIMIT 1");
+  await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
   const collision = await pool.query(
     "SELECT 1 FROM subscribers WHERE public_slug=lower($1) LIMIT 1", [adminPath.slice(1)],
   );
@@ -28,6 +30,7 @@ try {
   await pool.end();
   process.exit(1);
 }
+await initializePublicMedia();
 const server = app.listen(port, "0.0.0.0", (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");

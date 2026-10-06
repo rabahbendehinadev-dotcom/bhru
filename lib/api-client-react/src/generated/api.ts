@@ -31,11 +31,16 @@ import type {
   PanelAccess,
   PlanInput,
   PlatformState,
+  PreviewCurrentPublicWebsite200,
+  PublicWebsiteConfiguration,
+  PublicWebsitePreviewInput,
+  PublicWebsiteUpdate,
   ResolveAuthEntryParams,
   Subscriber,
   SubscriberUpdate,
   SubscriptionAction,
-  Success
+  Success,
+  UploadPublicWebsiteAsset201
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -152,6 +157,391 @@ export function useGetPublicSiteDocument<TData = Awaited<ReturnType<typeof getPu
 
 
 
+
+export const getGetCurrentPublicWebsiteUrl = () => {
+
+
+
+
+  return `/api/cms/public-website`
+}
+
+export const getCurrentPublicWebsite = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicWebsiteConfiguration> => {
+
+  return customFetch<PublicWebsiteConfiguration>(getGetCurrentPublicWebsiteUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentPublicWebsiteQueryKey = () => {
+    return [
+    `/api/cms/public-website`
+    ] as const;
+    }
+
+
+export const getGetCurrentPublicWebsiteQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentPublicWebsite>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentPublicWebsite>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentPublicWebsiteQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentPublicWebsite>>> = ({ signal }) => getCurrentPublicWebsite({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentPublicWebsite>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentPublicWebsiteQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentPublicWebsite>>>
+export type GetCurrentPublicWebsiteQueryError = ErrorType<void>
+
+
+
+export function useGetCurrentPublicWebsite<TData = Awaited<ReturnType<typeof getCurrentPublicWebsite>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentPublicWebsite>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentPublicWebsiteQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateCurrentPublicWebsiteUrl = () => {
+
+
+
+
+  return `/api/cms/public-website`
+}
+
+export const updateCurrentPublicWebsite = async (publicWebsiteUpdate: PublicWebsiteUpdate, options?: Parameters<typeof customFetch>[1]): Promise<PublicWebsiteConfiguration> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PublicWebsiteConfiguration>(getUpdateCurrentPublicWebsiteUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(publicWebsiteUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateCurrentPublicWebsiteMutationKey = () => ['updateCurrentPublicWebsite'] as const;
+
+export const getUpdateCurrentPublicWebsiteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentPublicWebsite>>, TError,UpdateCurrentPublicWebsiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCurrentPublicWebsite>>, TError,UpdateCurrentPublicWebsiteMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCurrentPublicWebsiteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCurrentPublicWebsite>>, UpdateCurrentPublicWebsiteMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCurrentPublicWebsite(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCurrentPublicWebsiteMutationResult = NonNullable<Awaited<ReturnType<typeof updateCurrentPublicWebsite>>>
+    export type UpdateCurrentPublicWebsiteMutationBody = BodyType<PublicWebsiteUpdate>
+    export type UpdateCurrentPublicWebsiteMutationError = ErrorType<void>
+    export type UpdateCurrentPublicWebsiteMutationVariables = {data: BodyType<PublicWebsiteUpdate>}
+
+    export const useUpdateCurrentPublicWebsite = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentPublicWebsite>>, TError,UpdateCurrentPublicWebsiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCurrentPublicWebsite>>,
+        TError,
+        UpdateCurrentPublicWebsiteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCurrentPublicWebsiteMutationOptions(options));
+    }
+
+export const getPreviewCurrentPublicWebsiteUrl = () => {
+
+
+
+
+  return `/api/cms/public-website/preview`
+}
+
+export const previewCurrentPublicWebsite = async (publicWebsitePreviewInput: PublicWebsitePreviewInput, options?: Parameters<typeof customFetch>[1]): Promise<PreviewCurrentPublicWebsite200> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PreviewCurrentPublicWebsite200>(getPreviewCurrentPublicWebsiteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(publicWebsitePreviewInput)
+  }
+);}
+
+
+
+
+
+export const getPreviewCurrentPublicWebsiteMutationKey = () => ['previewCurrentPublicWebsite'] as const;
+
+export const getPreviewCurrentPublicWebsiteMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewCurrentPublicWebsite>>, TError,PreviewCurrentPublicWebsiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof previewCurrentPublicWebsite>>, TError,PreviewCurrentPublicWebsiteMutationVariables, TContext> => {
+
+const mutationKey = getPreviewCurrentPublicWebsiteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewCurrentPublicWebsite>>, PreviewCurrentPublicWebsiteMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  previewCurrentPublicWebsite(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PreviewCurrentPublicWebsiteMutationResult = NonNullable<Awaited<ReturnType<typeof previewCurrentPublicWebsite>>>
+    export type PreviewCurrentPublicWebsiteMutationBody = BodyType<PublicWebsitePreviewInput>
+    export type PreviewCurrentPublicWebsiteMutationError = ErrorType<unknown>
+    export type PreviewCurrentPublicWebsiteMutationVariables = {data: BodyType<PublicWebsitePreviewInput>}
+
+    export const usePreviewCurrentPublicWebsite = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewCurrentPublicWebsite>>, TError,PreviewCurrentPublicWebsiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof previewCurrentPublicWebsite>>,
+        TError,
+        PreviewCurrentPublicWebsiteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPreviewCurrentPublicWebsiteMutationOptions(options));
+    }
+
+export const getUploadPublicWebsiteAssetUrl = () => {
+
+
+
+
+  return `/api/cms/public-website/assets`
+}
+
+export const uploadPublicWebsiteAsset = async (uploadPublicWebsiteAssetBody: Blob, options?: Parameters<typeof customFetch>[1]): Promise<UploadPublicWebsiteAsset201> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<UploadPublicWebsiteAsset201>(getUploadPublicWebsiteAssetUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'image/png', ...getHeaders(options?.headers) },
+    body: uploadPublicWebsiteAssetBody
+  }
+);}
+
+
+
+
+
+export const getUploadPublicWebsiteAssetMutationKey = () => ['uploadPublicWebsiteAsset'] as const;
+
+export const getUploadPublicWebsiteAssetMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadPublicWebsiteAsset>>, TError,UploadPublicWebsiteAssetMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadPublicWebsiteAsset>>, TError,UploadPublicWebsiteAssetMutationVariables, TContext> => {
+
+const mutationKey = getUploadPublicWebsiteAssetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadPublicWebsiteAsset>>, UploadPublicWebsiteAssetMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadPublicWebsiteAsset(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadPublicWebsiteAssetMutationResult = NonNullable<Awaited<ReturnType<typeof uploadPublicWebsiteAsset>>>
+    export type UploadPublicWebsiteAssetMutationBody = BodyType<Blob>
+    export type UploadPublicWebsiteAssetMutationError = ErrorType<void>
+    export type UploadPublicWebsiteAssetMutationVariables = {data: BodyType<Blob>}
+
+    export const useUploadPublicWebsiteAsset = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadPublicWebsiteAsset>>, TError,UploadPublicWebsiteAssetMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadPublicWebsiteAsset>>,
+        TError,
+        UploadPublicWebsiteAssetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUploadPublicWebsiteAssetMutationOptions(options));
+    }
+
+export const getDeleteUnusedPublicWebsiteAssetUrl = (assetId: string,) => {
+
+
+
+
+  return `/api/cms/public-website/assets/${assetId}`
+}
+
+export const deleteUnusedPublicWebsiteAsset = async (assetId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteUnusedPublicWebsiteAssetUrl(assetId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteUnusedPublicWebsiteAssetMutationKey = () => ['deleteUnusedPublicWebsiteAsset'] as const;
+
+export const getDeleteUnusedPublicWebsiteAssetMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUnusedPublicWebsiteAsset>>, TError,DeleteUnusedPublicWebsiteAssetMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUnusedPublicWebsiteAsset>>, TError,DeleteUnusedPublicWebsiteAssetMutationVariables, TContext> => {
+
+const mutationKey = getDeleteUnusedPublicWebsiteAssetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUnusedPublicWebsiteAsset>>, DeleteUnusedPublicWebsiteAssetMutationVariables> = (props) => {
+          const {assetId} = props ?? {};
+
+          return  deleteUnusedPublicWebsiteAsset(assetId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUnusedPublicWebsiteAssetMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUnusedPublicWebsiteAsset>>>
+
+    export type DeleteUnusedPublicWebsiteAssetMutationError = ErrorType<void>
+    export type DeleteUnusedPublicWebsiteAssetMutationVariables = {assetId: string}
+
+    export const useDeleteUnusedPublicWebsiteAsset = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUnusedPublicWebsiteAsset>>, TError,DeleteUnusedPublicWebsiteAssetMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUnusedPublicWebsiteAsset>>,
+        TError,
+        DeleteUnusedPublicWebsiteAssetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteUnusedPublicWebsiteAssetMutationOptions(options));
+    }
 
 export const getGetCurrentGeneralSettingsUrl = () => {
 

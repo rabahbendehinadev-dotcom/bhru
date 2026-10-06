@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BHRU CMS Phase 1 — Implementation and Verification</title>
+<style>
+body{font:16px/1.65 system-ui,sans-serif;margin:0;background:#f4f6f8;color:#192535}main{max-width:940px;margin:40px auto;padding:36px;background:white;border:1px solid #dce3e9;border-radius:12px}h1{font-size:30px;line-height:1.25}h2{font-size:21px;margin-top:32px}p,li{max-width:85ch}code{font:13px/1.6 ui-monospace,monospace;overflow-wrap:anywhere;background:#f1f4f7;padding:2px 4px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:10px;text-align:left;border-bottom:1px solid #dce3e9;vertical-align:top}.status{display:inline-block;padding:6px 12px;background:#e4f4ed;color:#176346;border-radius:6px;font-weight:700}.note{padding:16px;background:#f7f9fc;border-left:3px solid #8394a8}footer{border-top:1px solid #dce3e9;margin-top:32px;padding-top:16px;color:#536374}@media(max-width:600px){main{margin:0;padding:20px;border-radius:0}h1{font-size:25px}table{font-size:12px}th,td{padding:7px}}
+</style>
+</head>
+<body><main>
+<p class="status">CMS Phase 1 complete — Development / Preview only</p>
+<h1>BHRU: Subscriber Public Website<br>Branding &amp; Hero Management</h1>
+<p>Implemented at <code>CMS / Blog → Public Website</code>, route <code>/m/cms-blog-public-website</code>, using the existing Subscriber Panel and workspace-tab system.</p>
+<p>One frozen Public Template V2 remains shared by all subscribers. There are no separate subscriber website files. Public slug allocation/resolution, authentication, Platform Admin and licence/subscription behavior are unchanged.</p>
+
+<h2>1. Database/schema</h2>
+<p>Additive migration <code>005_subscriber_public_website.sql</code> applied in Development through the existing explicit migration runner:</p>
+<ul>
+<li><code>subscriber_public_sites</code>: one subscriber-owned Branding/Hero configuration, revision counter and timestamps; no unrelated subscriber/account columns overloaded.</li>
+<li><code>public_site_assets</code>: owner, opaque generated key, validated type/size/dimensions. Composite foreign keys prevent cross-subscriber image references.</li>
+<li>No CMS backfill required: existing subscribers retain truthful template defaults until their first explicit save. No subscriber, slug or licence migration updates.</li>
+<li>Future CMS modules can add their own subscriber-scoped tables; none were implemented in this phase.</li>
+</ul>
+
+<h2>2. New endpoints</h2>
+<table><thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>GET /api/cms/public-website</code></td><td>Authenticated owner's values/defaults, revision and immutable public URL.</td></tr>
+<tr><td><code>PUT /api/cms/public-website</code></td><td>Validated save with optimistic revision conflict protection.</td></tr>
+<tr><td><code>POST /api/cms/public-website/preview</code></td><td>Unsaved owned values rendered by the same shared template, with sandboxed iframe preview.</td></tr>
+<tr><td><code>POST /api/cms/public-website/assets</code></td><td>PNG/JPEG binary upload, real decode and normalization.</td></tr>
+<tr><td><code>DELETE /api/cms/public-website/assets/{assetId}</code></td><td>Delete only an owned image not referenced by saved configuration.</td></tr>
+<tr><td><code>GET /api/public/media/{key}</code></td><td>Anonymous published image, or image-specific short-lived signed draft preview; no visitor session access.</td></tr>
+</tbody></table>
+
+<h2>3. Files changed</h2>
+<ul>
+<li>Schema: <code>lib/db/src/migrations/005_subscriber_public_website.sql</code>.</li>
+<li>Backend additions: <code>artifacts/api-server/src/routes/public-website.ts</code>, <code>src/lib/public-site/configuration.ts</code> and <code>src/lib/public-site/media.ts</code>.</li>
+<li>Backend integration: API <code>app.ts</code>, <code>index.ts</code>, <code>routes/index.ts</code>, <code>lib/public-site.ts</code>, and shared public-site <code>data.ts</code>, <code>model.ts</code>, <code>safety.ts</code>, <code>components/hero.ts</code>. Frozen stylesheet and mobile-menu script unchanged.</li>
+<li>Frontend additions: <code>artifacts/bhru/src/pages/public-website.tsx</code>, <code>hooks/use-public-website.ts</code>, <code>components/subscriber/public-website/ImageField.tsx</code> and <code>PublicWebsitePreview.tsx</code>. Navigation/module integration in <code>nav-data.ts</code> and <code>pages/module.tsx</code>.</li>
+<li>Contracts: <code>lib/api-spec/openapi.yaml</code> and regenerated React client/Zod types. Pure-JavaScript <code>pngjs</code>/<code>jpeg-js</code> dependencies and PNG typings added to the API package; lockfile updated.</li>
+<li>Verification: <code>scripts/test-public-website-cms.mjs</code>, <code>test-public-media-storage.mjs</code>, <code>cleanup-public-website-cms.mjs</code>. Existing <code>test-public-sites.mjs</code> assertions retained; two loader calls now await the asynchronous adapter.</li>
+<li>Documentation: <code>BHRU_PUBLIC_MEDIA.md</code>, linked from <code>DOKPLOY_DEPLOYMENT.md</code>. Approved storage boundary recorded in project memory.</li>
+</ul>
+
+<h2>4. Persistent image storage</h2>
+<p>User-approved dedicated filesystem adapter, configured by <code>BHRU_MEDIA_DIR</code>. Development defaults to an ignored local directory. Production requires an absolute configured directory, a writable persistent mount and regular confirmation marker; no silent Development or temporary-directory fallback.</p>
+<p>Required Dokploy setup is documented in <code>BHRU_PUBLIC_MEDIA.md</code>: named persistent volume <code>bhru-public-media</code>, recommended container target <code>/var/lib/bhru/public-media</code>, matching environment variable, UID/GID <code>1000:1000</code>, confirmation marker, and coordinated PostgreSQL/media backups. No VPS host path is hardcoded.</p>
+<p>Accepts PNG/JPEG ≤5 MiB, dimensions ≤4096 per side and ≤8 million pixels. Real decoding, CRC/structure checks, re-encoding and generated UUID keys reject corrupt/mismatched, animated, SVG, executable and trailing content. Original filenames are not storage authority; internal paths are never returned. Saved-image replacement commits before old unreferenced media cleanup.</p>
+<p class="note">Actual Dokploy volume setup, redeployment persistence and backup restoration remain operator prerequisites, not actions performed here. Interrupted processes can leave orphan files/uploads; no unattended garbage collector is introduced in Phase 1.</p>
+
+<h2>5. Subscriber isolation</h2>
+<p>CMS ownership comes only from the authenticated subscriber session and existing eligibility checks. Browser-supplied subscriber/slug fields and query parameters are rejected. Asset ownership is checked before preview/save; database foreign keys provide a second boundary. Reads, writes, uploads and cleanup remain owner-scoped. Public image/document handling does not switch visitor sessions.</p>
+<p>Concurrent saves serialize: one current revision succeeds, the stale save returns 409. Subscriber session changes abort/drop obsolete UI work. Drafts remain component/session-scoped; no browser draft cache was added. Existing CSRF protections are retained, with explicit subscriber request headers on every CMS client call.</p>
+
+<h2>6. PublicSiteModel integration</h2>
+<p>The existing adapter loads CMS data using only the server-resolved public subscriber ID. Saved display name, primary colour, logo, description, hero badge/title/description/image and both CTAs are mapped into PublicSiteModel. Absent optional values use existing safe defaults. The preview invokes the exact same renderer and frozen CSS/menu script with validated unsaved values; only its preview security policy and temporary image URLs differ. No services, testimonials or business claims are fabricated.</p>
+
+<h2>7. Verification results</h2>
+<table><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>
+<tr><td>Existing public-site regressions</td><td>11 groups passed: defaults, eligibility, reserved namespaces/routes, isolation, escaping/CSP, failures, production/Preview parity and PWA behavior.</td></tr>
+<tr><td>CMS backend</td><td>12 groups passed: ownership/slug injection, HEX/CTA validation, image security, cross-owner assets, unsaved preview, save/public refresh, A visiting B, concurrent saves, text escaping, replacement/removal and eligibility/data retention.</td></tr>
+<tr><td>Storage adapter</td><td>4 groups passed: production configuration guard, marker checks, atomic operations/traversal/symlink rejection, scoped expiring signatures.</td></tr>
+<tr><td>Browser journeys</td><td>Passed save/reload, Reset, invalid inputs, PNG/JPEG uploads, size rejection, replacement/removal/fallback, pending-save double-submit guard, A/B isolation, public refresh, Back/Forward and workspace draft/tab preservation.</td></tr>
+<tr><td>Preview/responsiveness</td><td>Desktop and Mobile use the same template. Uploaded image natural dimensions confirmed; no CSP blocks. No horizontal overflow at 1280, 375, 390 or 430px.</td></tr>
+<tr><td>Types/build</td><td>Workspace type checks and production-compatible build passed; final hook correction also passed frontend type checking and build.</td></tr>
+<tr><td>Cleanup</td><td>Owned verification subscribers/configurations/media removed after screenshots. Original business, slug, account, settings and licence data fingerprint unchanged.</td></tr>
+</tbody></table>
+<p>Browser testing found a missing CMS request-header integration, corrected without changing authentication or CSRF behavior. The resumed pass completed successfully. Non-blocking observations: existing hidden-dashboard chart-size warnings and one unclassified dashboard 401 outside the successful CMS flow. Preview updates are intentionally debounced.</p>
+<p>Evidence supplied: saved CMS editor, Desktop Live Preview, Mobile Live Preview and customized anonymous public homepage. These screenshots use temporary isolated test businesses; the example verification URLs are no longer live after cleanup.</p>
+
+<footer><strong>Stopped at CMS Phase 1.</strong> No Services/About/Benefits/Statistics/Contact/Footer/Social/Blog CMS, custom domains or customer authentication. No Git push, no deployment and no production configuration/database changes. Awaiting user approval before Phase 2.</footer>
+</main></body></html>
