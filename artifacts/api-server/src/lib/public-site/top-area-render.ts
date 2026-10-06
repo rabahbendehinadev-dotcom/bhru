@@ -11,7 +11,6 @@ function movement(settings:{display:'static'|'moving';speed:'slow'|'normal'|'fas
     ? ` class="p2-loop" data-ticker data-speed="${{slow:25,normal:45,fast:75}[settings.speed]}" data-pause-hover="${settings.pause_on_hover}" style="--p2-direction:${settings.direction==='right'?'reverse':'normal'}"`
     : '';
 }
-const pause=(moving:boolean)=>moving?'<button type="button" class="p2-ticker-pause" data-ticker-pause aria-pressed="false" hidden>Pause motion</button>':'';
 
 export function renderTopArea(model:PublicSiteModel) {
   const p=model.presentation;if(!p)return '';
@@ -21,21 +20,16 @@ export function renderTopArea(model:PublicSiteModel) {
     return `<li class="p2-logo-card">${link(content,item.href,item.newTab)}</li>`;
   }).join('');
   const logoSettings=p.logoSettings??{display:'static',speed:'normal',direction:'left',pause_on_hover:true};
-  const first=p.announcements[0];
-  const ticker=p.tickerSettings??{
-    display:first?.movement==='scrolling'?'moving':'static',speed:first?.speed??'normal',
-    direction:first?.direction??'left',pause_on_hover:true,background_color:first?.background??'#152238',
-    text_color:first?.color??'#FFFFFF',separator:'•',
-  };
-  const messages=p.announcements.map(item=>
-    `<li class="p2-message">${link(`<bdi>${item.icon?`${e(item.icon)} `:''}${e(item.text)}</bdi>`,item.href)}<span class="p2-separator" aria-hidden="true">${e(ticker.separator)}</span></li>`
-  ).join('');
+  const announcements=p.announcements.map((item,index)=>{
+    const settings={display:item.movement==='scrolling'?'moving' as const:'static' as const,speed:item.speed,direction:item.direction,pause_on_hover:false};
+    const text=link(`<bdi dir="auto">${item.icon?`${e(item.icon)} `:''}${e(item.text)}</bdi>`,item.href);
+    return `<section class="p2-announcement" aria-label="Announcement ${index+1}" style="background:${safePublicColor(item.background,'#152238')};color:${safePublicColor(item.color,'#FFFFFF')}"><div${movement(settings)}>
+      <div class="p2-ticker-track"><ul class="p2-ticker-group p2-message-group"><li class="p2-message">${text}</li></ul></div></div></section>`;
+  }).join('');
   const html=sanitizedTopHTML(p.customHTML);
-  if(!logos&&!messages&&!html)return '';
+  if(!logos&&!announcements&&!html)return '';
   const strip=logos?`<nav class="p2-partner-strip" aria-label="Partner links"><div${movement({...logoSettings,pause_on_hover:false})}>
     <div class="p2-ticker-track"><ul class="p2-ticker-group p2-logo-group">${logos}</ul></div></div></nav>`:'';
-  const announcements=messages?`<section class="p2-announcement" aria-label="Announcements" style="background:${safePublicColor(ticker.background_color,'#152238')};color:${safePublicColor(ticker.text_color,'#FFFFFF')}"><div${movement(ticker)}>
-    <div class="p2-ticker-track"><ul class="p2-ticker-group p2-message-group">${messages}</ul></div>${pause(ticker.display==='moving')}</div></section>`:'';
   return `<div class="p2-top-area">${strip}${announcements}${html?`<div class="p2-custom">${html}</div>`:''}</div>`;
 }
 
@@ -53,14 +47,16 @@ export const TOP_AREA_STYLES=`
 .p2-logo-card img{display:block;flex:none;height:48px;width:100%;max-width:100%;object-fit:contain;object-position:center}
 .p2-logo-card:not(:has(.p2-logo-label)) img{height:56px}
 .p2-logo-label{display:block;flex:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:14px;color:#152238}
-.p2-announcement{width:100%;max-width:100%;overflow-x:auto;font-size:14px;line-height:1.5}
+.p2-announcement{width:100%;min-width:0;max-width:100%;overflow:hidden;font-size:14px;font-weight:600;line-height:1.5}
 .p2-announcement a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.p2-announcement .p2-loop{padding-bottom:0}
 .p2-announcement>div:not([data-ticker]) .p2-ticker-track{width:100%}
 .p2-announcement>div:not([data-ticker]) .p2-message-group{flex-wrap:wrap;justify-content:center;width:100%;box-sizing:border-box}
-.p2-message-group{padding:10px 16px}
-.p2-message{display:flex;align-items:center;flex:none;gap:24px;max-width:100%}
+.p2-message-group{padding:6px 16px;min-height:34px;box-sizing:border-box}
+.p2-message{display:flex;align-items:center;justify-content:center;flex:none;max-width:100%;min-width:0;text-align:center}
+.p2-announcement>div:not([data-ticker]) .p2-message{width:100%}
 .p2-message bdi{overflow-wrap:anywhere}
-.p2-separator{flex:none;padding-right:24px}
+.p2-announcement [data-ticker] .p2-message{padding-inline:24px}
 .p2-loop{position:relative;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin;padding-bottom:28px}
 .p2-loop .p2-message{max-width:none;white-space:nowrap}
 .p2-loop .p2-logo-group{padding-inline:0;padding-right:16px}

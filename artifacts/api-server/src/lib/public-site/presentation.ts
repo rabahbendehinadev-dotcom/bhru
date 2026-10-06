@@ -60,7 +60,6 @@ export function sanitizedTopHTML(html: string, host?: string): string {
 export const emptyPresentation = (): PublicPresentationValues => ({
   logo_strip_enabled:false,announcements_enabled:false,custom_html_enabled:false,custom_html:'',
   logo_strip_settings:{display:'static',speed:'normal',direction:'left',pause_on_hover:true},
-  announcement_ticker_settings:{display:'static',speed:'normal',direction:'left',pause_on_hover:true,background_color:'#152238',text_color:'#FFFFFF',separator:'•'},
   hero_mode:'classic',slider_autoplay:true,slider_interval:5,logos:[],announcements:[],banners:[],
 });
 export function validatePresentation(raw: unknown,host?:string): PublicPresentationValues {
@@ -78,12 +77,21 @@ export function validatePresentation(raw: unknown,host?:string): PublicPresentat
     item.destination=presentationLink(item.destination,host);
   }
   if(values.announcements.some(item=>!item.text)) throw new HttpError(400,'Announcement text is required.');
-  const first=values.announcements.find(item=>item.enabled) ?? values.announcements[0];
   values.logo_strip_settings ??= emptyPresentation().logo_strip_settings!;
-  values.announcement_ticker_settings ??= first
-    ? {display:first.movement==='scrolling'?'moving':'static',speed:first.speed,direction:first.direction,pause_on_hover:true,background_color:first.background_color,text_color:first.text_color,separator:'•'}
-    : emptyPresentation().announcement_ticker_settings!;
-  if(/[\u0000-\u001f\u007f]/.test(values.announcement_ticker_settings.separator)) throw new HttpError(400,'Use a printable ticker separator.');
+  // Legacy shared settings defined the visible appearance of every message.
+  // Materialize that appearance into the existing per-message fields on read,
+  // without mutating the database. The next explicit save stores independent
+  // bars and clears the nullable legacy setting so later edits are not remapped.
+  const legacy=values.announcement_ticker_settings;
+  if(legacy) {
+    if(/[\u0000-\u001f\u007f]/.test(legacy.separator)) throw new HttpError(400,'Use a printable ticker separator.');
+    for(const item of values.announcements) {
+      item.background_color=legacy.background_color;item.text_color=legacy.text_color;
+      item.movement=legacy.display==='moving'?'scrolling':'static';
+      item.speed=legacy.speed;item.direction=legacy.direction;
+    }
+    delete values.announcement_ticker_settings;
+  }
   for(const item of values.announcements) item.icon_text ??= '';
   values.custom_html=sanitizedTopHTML(values.custom_html,host);
   if(values.custom_html.length>4096) throw new HttpError(400,'Sanitized HTML is too long.');
@@ -118,7 +126,7 @@ export async function savePresentation(id:string,values:PublicPresentationValues
   await client.query(`INSERT INTO public_site_presentation(subscriber_id,${settingsFields.join(',')})
     VALUES($1,${settingsFields.map((_,i)=>`$${i+2}`).join(',')})
     ON CONFLICT(subscriber_id) DO UPDATE SET ${settingsFields.map(k=>`${k}=EXCLUDED.${k}`).join(',')},
-    revision=public_site_presentation.revision+1,updated_at=now()`,[id,...settingsFields.map(k=>values[k])]);
+    revision=public_site_presentation.revision+1,updated_at=now()`,[id,...settingsFields.map(k=>values[k] ?? null)]);
   for(const [key,table,columns] of itemTables) {
     await client.query(`DELETE FROM ${table} WHERE subscriber_id=$1`,[id]);
     for(const [order,item] of values[key].entries()) {

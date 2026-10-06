@@ -57,8 +57,14 @@ Common subscribers must not need Advanced HTML to configure Top Area image strip
 
 **How to apply:** Build common Top Area features as native CMS controls. Do not ask subscribers for CSS, JavaScript or HTML, use deprecated marquee, or weaken sanitization to support routine ticker content.
 
-Partner / Image Strip movement must not pause on mouse hover or expose a visitor-facing Pause motion button. Keep reduced-motion and keyboard accessibility; this restriction is specific to partner images, not Announcement Ticker.
+Partner / Image Strip and moving announcement bars must not pause on mouse hover or expose a visitor-facing Pause motion button. Keep reduced-motion and keyboard accessibility.
 
-**Why:** The user explicitly removed these partner-strip behaviors after reviewing the public presentation.
+**Why:** The user explicitly removed these public controls and hover behaviors when refining each Top Area strip.
 
 **How to apply:** Ignore legacy partner hover-pause settings without changing saved data or requiring re-upload. Do not reintroduce this CMS option or public control when refining the carousel.
+
+Each enabled announcement must render as its own compact, full-width bar, stacked below partner images and above the header. Colours, movement, speed and direction belong to each message, not shared global controls. Do not add decorative separator dots at the edges.
+
+**Why:** The user requires visually independent announcement bars with Arabic/RTL and English/LTR support, rather than combining messages into one ticker.
+
+**How to apply:** Keep per-announcement editing simple and preserve existing messages when mapping legacy shared appearance settings. Do not combine separately configured announcements into a shared sequence.

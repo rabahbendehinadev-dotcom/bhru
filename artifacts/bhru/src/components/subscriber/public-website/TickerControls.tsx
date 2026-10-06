@@ -3,8 +3,8 @@ import type { PublicStripSettings, PublicTickerSettings } from '@workspace/api-c
 export const defaultStrip: PublicStripSettings = { display: 'static', speed: 'normal', direction: 'left', pause_on_hover: true };
 export const defaultTicker: PublicTickerSettings = { ...defaultStrip, background_color: '#152238', text_color: '#FFFFFF', separator: '•' };
 
-export function TickerControls({ id, settings, onChange, image = false }: {
-  id: string; settings: PublicStripSettings; onChange: (value: PublicStripSettings) => void; image?: boolean;
+export function TickerControls({ id, settings, onChange, image = false, showPauseOnHover = true }: {
+  id: string; settings: PublicStripSettings; onChange: (value: PublicStripSettings) => void; image?: boolean; showPauseOnHover?: boolean;
 }) {
   return <div className="space-y-3 rounded-md bg-[hsl(var(--muted)/.35)] p-3">
     <fieldset className="space-y-2">
@@ -30,14 +30,14 @@ export function TickerControls({ id, settings, onChange, image = false }: {
           <option value="left">Left</option><option value="right">Right</option>
         </select>
       </label>
-      {!image && <label className="flex min-h-9 items-center gap-2 text-[13px]"><input type="checkbox" checked={settings.pause_on_hover}
+      {!image && showPauseOnHover && <label className="flex min-h-9 items-center gap-2 text-[13px]"><input type="checkbox" checked={settings.pause_on_hover}
         onChange={e => onChange({ ...settings, pause_on_hover: e.target.checked })} data-testid={`check-${id}-pause-hover`} />Pause on hover</label>}
     </div>}
   </div>;
 }
 
-export function TickerColours({ settings, onChange, errors }: {
-  settings: PublicTickerSettings; onChange: (value: PublicTickerSettings) => void; errors: Record<string, string>;
+export function TickerColours({ settings, onChange, errors, showSeparator = true, errorPrefix = 'ticker' }: {
+  settings: PublicTickerSettings; onChange: (value: PublicTickerSettings) => void; errors: Record<string, string>; showSeparator?: boolean; errorPrefix?: string;
 }) {
   return <div className="grid gap-3 sm:grid-cols-2">
     {(['background_color', 'text_color'] as const).map(key => <label key={key} className="block space-y-1">
@@ -50,12 +50,12 @@ export function TickerColours({ settings, onChange, errors }: {
         <input className="input min-w-0" aria-label={`${key} HEX`} value={settings[key]} maxLength={7}
           onChange={e => onChange({ ...settings, [key]: e.target.value })} />
       </div>
-      {errors[`ticker.${key}`] && <span className="gs-err" role="alert">{errors[`ticker.${key}`]}</span>}
+      {errors[`${errorPrefix}.${key}`] && <span className="gs-err" role="alert">{errors[`${errorPrefix}.${key}`]}</span>}
     </label>)}
-    <label className="block space-y-1"><span className="gs-label">Separator character / emoji</span>
+    {showSeparator && <label className="block space-y-1"><span className="gs-label">Separator character / emoji</span>
       <input className="input" value={settings.separator} maxLength={16} placeholder="•"
         onChange={e => onChange({ ...settings, separator: e.target.value })} data-testid="input-ticker-separator" />
       {errors['ticker.separator'] && <span className="gs-err" role="alert">{errors['ticker.separator']}</span>}
-    </label>
+    </label>}
   </div>;
 }

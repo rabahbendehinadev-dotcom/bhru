@@ -1,0 +1,51 @@
+Refine only the Announcement Ticker presentation in Top Area. Do not change Partner/Image Strip, Hero/Banner, authentication, or other modules.
+The current implementation visually combines multiple announcement messages into one ticker area. I want each announcement message to render as its own independent full-width announcement bar.
+Example:
+Bar 1
+SERVICES | Box & Dongle Activation | Credits | UNLOCK | iPhone | Samsung | Xiaomi | Mi Cloud | iCloud | Bypass | FREEFIRE | PUBG
+Bar 2
+🔥 شحن فري فاير و ببجي + خدمات الصامت و IPTV + تفعيل البوكسات والبرامج + خدمات الآيفون والهواتف جملة بأرخص الأسعار 🔥
+They must appear as two clearly separate horizontal bars, not two lines inside the same bar.
+Each announcement must have its own settings
+In CMS, when editing/adding a message, allow:
+- Message text
+- Enable / Disable
+- Background colour
+- Text colour
+- Static or Moving
+- Speed
+- Direction: Left / Right
+- Optional link
+Do not use one global background/text colour for all messages.
+Public design
+Each enabled message renders as a separate full-width strip.
+Make it professional:
+- compact height
+- vertically centered text
+- clean typography
+- medium/semi-bold text
+- no unnecessary large padding
+- full viewport width
+- no horizontal page overflow
+- Arabic/RTL and English/LTR must render correctly
+For moving bars, the text must move continuously and seamlessly across the full width like a professional news ticker.
+Do NOT pause when the mouse is over the bar.
+Do NOT show a Pause motion button.
+Do NOT show stray separator dots at the left/right edges.
+Do not expose technical animation controls on the public website.
+If multiple announcement bars are enabled, stack them vertically:
+Partner/Image Strip
+Announcement Bar 1
+Announcement Bar 2
+Website Header
+Banner
+Each bar must remain visually independent.
+CMS UX
+Replace the current global announcement styling controls with easy-to-manage announcement cards.
+Example:
+Announcement 1
+[Enable] [Edit] [↑] [↓] [Delete]
+Editing a card exposes only that announcement's text, colours, movement, speed, direction and link.
+Keep Add Message clearly visible.
+Preserve existing saved messages and migrate/map their current settings safely if necessary. Do not delete subscriber data.
+Make only this refinement. Minimal type/build validation only. No browser/E2E/full regression tests. Do not push or deploy. Stop for my manual Preview test.
