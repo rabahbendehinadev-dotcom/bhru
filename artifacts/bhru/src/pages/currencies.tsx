@@ -13,8 +13,9 @@ import type { CatalogCurrency } from '@/lib/currency-catalog-search';
 interface CurrencyRow { code: string; name: string; prefix: string; suffix: string; number_format: string; rate: string; enabled: boolean; client_default: boolean; decimals: number; is_base?: boolean; rate_configured?: boolean }
 interface CurrencyConfig { base_currency: string; money_model_version?: 1 | 2; requires_conversion?: boolean; currencies: CurrencyRow[]; catalog: CatalogCurrency[] }
 
-function preview(fmt: string, decimals: number) {
-  return parseNumberFormat(fmt) ? formatScaled(12345678n, 4, { prefix: '', suffix: '', number_format: fmt, decimals }) : 'Invalid number format';
+function preview(currency: { code: string; prefix: string; suffix: string; number_format: string; decimals: number }) {
+  if (!currency.code) return 'Select a currency to preview.';
+  return parseNumberFormat(currency.number_format) ? formatScaled(12345678n, 4, currency) : NUMBER_FORMAT_ERROR;
 }
 const rateError = 'Enter a positive rate up to 999999999 with up to 6 decimal places.';
 
@@ -114,7 +115,7 @@ export default function CurrenciesPage() {
                 <div><label className="lbl" htmlFor="m-format">Format</label><CurrencyFormatSelect id="m-format" className={inp} value={add.number_format} onChange={value => setA('number_format', value)} aria-describedby="m-format-preview" data-testid="select-add-format-mobile" /></div>
                 <div><label className="lbl" htmlFor="m-rate">{add.code === base ? 'Base Rate' : 'Rate'}</label><input id="m-rate" className={`${inp} tabular-nums`} inputMode="decimal" value={add.code === base ? '1.000000' : add.rate} disabled={add.code === base} onChange={(e) => setA('rate', e.target.value)} /><p className="mt-1 text-[11px] text-[hsl(var(--text-secondary))]">{add.code === base ? 'USD is the Base / Reference currency.' : 'Amount of this currency equal to 1 USD.'}</p></div>
               </div>
-              <p id="m-format-preview" aria-live="polite" className={`text-[11.5px] ${parseNumberFormat(add.number_format) ? 'text-[hsl(var(--text-secondary))]' : 'text-danger'}`}>{parseNumberFormat(add.number_format) ? `Preview: ${add.prefix}${preview(add.number_format, add.decimals)}${add.suffix ? ` ${add.suffix}` : ''}` : NUMBER_FORMAT_ERROR}</p>
+              <p id="m-format-preview" aria-live="polite" className="text-[11.5px] text-[hsl(var(--text-secondary))]">Preview: {preview(add)}</p>
               <label className="flex items-center gap-1.5 text-[12px]"><input type="checkbox" checked={add.enabled} disabled={add.client_default} onChange={(e) => setA('enabled', e.target.checked)} />Live</label>
               <label className="flex items-center gap-1.5 text-[12px]"><input type="checkbox" checked={add.client_default} disabled={!add.enabled} onChange={(e) => setA('client_default', e.target.checked)} />Client Default</label>
               {addErr && <p role="alert" className="text-[11.5px] text-danger">{addErr}</p>}
@@ -138,7 +139,7 @@ export default function CurrenciesPage() {
                     <td><input type="checkbox" aria-label="Client Default" checked={add.client_default} disabled={!add.enabled} onChange={(e) => setA('client_default', e.target.checked)} /></td>
                     <td><Btn v="brand" sm disabled={w.pending} onClick={() => void submitAdd()} data-testid="button-add-currency"><Plus size={12} />Add</Btn>{addErr && <p role="alert" className="mt-1 max-w-[180px] text-[11px] text-danger">{addErr}</p>}</td>
                   </tr>
-                  {!locked && <tr className="hidden border-b border-[hsl(var(--border))] md:table-row"><td colSpan={8}><p id="add-format-preview" aria-live="polite" className={`text-[11.5px] ${parseNumberFormat(add.number_format) ? 'text-[hsl(var(--text-secondary))]' : 'text-danger'}`}>{parseNumberFormat(add.number_format) ? `Preview: ${add.prefix}${preview(add.number_format, add.decimals)}${add.suffix ? ` ${add.suffix}` : ''}` : NUMBER_FORMAT_ERROR}</p></td></tr>}
+                  {!locked && <tr className="hidden border-b border-[hsl(var(--border))] md:table-row"><td colSpan={8}><p id="add-format-preview" aria-live="polite" className="text-[11.5px] text-[hsl(var(--text-secondary))]">Preview: {preview(add)}</p></td></tr>}
                   {rows.length === 0 && <tr><td colSpan={8} className="!py-6 text-center text-[12.5px] text-[hsl(var(--text-secondary))]"><Coins size={16} className="mx-auto mb-1 opacity-60" />No currencies yet. Add one above and enter its rate yourself.</td></tr>}
                   {rows.map((r) => {
                     const isBase = r.is_base === true || r.code === base;
@@ -147,7 +148,7 @@ export default function CurrenciesPage() {
                         <td><div className="flex flex-wrap items-center gap-1.5"><b>{r.code}</b><span className="text-[hsl(var(--text-secondary))]">{r.name}</span>{isBase && <Badge tone="violet">Base / Reference</Badge>}</div></td>
                         <td>{r.prefix || '-'}</td>
                         <td>{r.suffix || '-'}</td>
-                        <td className="tabular-nums" title={r.number_format}>{r.prefix}{preview(r.number_format, r.decimals)}{r.suffix}</td>
+                        <td className="tabular-nums" title={r.number_format}>{preview(r)}</td>
                         <td className="tabular-nums">{isBase ? '1.000000' : unconf(r) ? <Badge tone="violet">Require rate</Badge> : r.rate}</td>
                         <td><input type="checkbox" aria-label={`Live ${r.code}`} checked={r.enabled} disabled={locked || w.pending || r.client_default || isBase || (unconf(r) && !r.enabled)} title={r.client_default ? 'Choose another default first' : undefined} onChange={(e) => void quick(r, { enabled: e.target.checked })} data-testid={`switch-enabled-${r.code}`} /></td>
                         <td><input type="radio" name="client-default" className="accent-[hsl(var(--brand))]" aria-label={`Client default ${r.code}`} checked={r.client_default} disabled={locked || w.pending || !r.enabled} onChange={() => { if (!r.client_default) void quick(r, { client_default: true }); }} data-testid={`button-default-${r.code}`} /></td>
@@ -191,7 +192,7 @@ export default function CurrenciesPage() {
                 <input className="input w-full tabular-nums" inputMode="decimal" value={form.code === base ? '1.000000' : form.rate} placeholder={form.code === base ? '' : 'Require rate'} disabled={form.code === base} onChange={(e) => { setFieldErr(''); set('rate', e.target.value); }} data-testid="input-currency-rate" />
               </Field>
             </div>
-            <p id="currency-format-preview" aria-live="polite" className="text-[12px] text-[hsl(var(--text-secondary))]" data-testid="text-format-preview">{parseNumberFormat(form.number_format) ? `Preview: ${form.prefix}${preview(form.number_format, form.decimals)}${form.suffix ? ` ${form.suffix}` : ''}` : NUMBER_FORMAT_ERROR}</p>
+            <p id="currency-format-preview" aria-live="polite" className="text-[12px] text-[hsl(var(--text-secondary))]" data-testid="text-format-preview">Preview: {preview(form)}</p>
             <div className="flex flex-wrap gap-4 text-[12.5px]">
               <label className="flex items-center gap-1.5"><input type="checkbox" checked={form.enabled} disabled={form.client_default} onChange={(e) => set('enabled', e.target.checked)} data-testid="check-currency-enabled" />Enabled</label>
               <label className="flex items-center gap-1.5"><input type="checkbox" checked={form.client_default} disabled={!form.enabled || rows.some(r=>r.code===form.code&&r.client_default)} onChange={(e) => set('client_default', e.target.checked)} data-testid="check-currency-default" />Client default</label>

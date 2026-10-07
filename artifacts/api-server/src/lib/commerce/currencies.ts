@@ -101,6 +101,6 @@ export function currencySnapshot(baseCurrency: string, rows: StoreCurrency[], re
       quantity:i.quantity, unit_price_minor: unit.toString(), line_total_minor: line.toString() };
   });
   return {money_model_version:usdTotal!==undefined?2:1,canonical_scale:usdTotal!==undefined?12:2,rate_scale:6,
-    base_currency: baseCurrency, base_total_minor: baseTotal,base_total_usd_units:usdTotal??null, currency: chosen,
+    base_currency: baseCurrency, base_total_minor: baseTotal,base_total_usd_units:usdTotal??null, currency: {...chosen,presentation_version:2},
     currencies: rows.filter(c => c.enabled), items: displayItems, total_minor: total.toString() };
 }

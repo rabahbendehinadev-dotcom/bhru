@@ -71,3 +71,13 @@ Migrations 001–015 are unchanged. Formats control separators, never monetary
 precision: `1,000` retains currency-owned decimals; `1,000,99` uses comma grouping
 and a comma decimal separator. Existing nonstandard saved formats remain available
 only as a retained choice for their own record, not for new currency additions.
+
+Presentation is shared through `@workspace/currency-presentation` for panel prices,
+Add/Edit previews, server-rendered prices and the embedded public price script.
+Previews use a fixed already-denominated sample, never the exchange rate.
+Symbol prefixes attach to the amount; textual prefixes and suffixes receive a
+space. With neither prefix nor suffix, current prices use the currency code.
+ISO precision controls decimal digits regardless of the selected separators.
+Existing order snapshots retain their earlier presentation rules. Only newly
+created snapshots carry a presentation-version marker for the current rules;
+no historical records are rewritten. This presentation correction needs no migration.

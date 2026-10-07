@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { parseNumberFormat } from './currency-money';
+import { parseNumberFormat, formatCurrencyPresentation } from './currency-money';
 
 /** BigInt-only commercial conversion, shared by all public price nodes and totals. */
 export const STOREFRONT_MONEY_SCRIPT = String.raw`(function(){
@@ -30,10 +30,8 @@ function convert(raw,c){
 }
 function format(value,c){
  var parseFormat=${parseNumberFormat.toString()};
- var sep=parseFormat(c.number_format)||[',','.'],scale=10n**BigInt(c.decimals);
- var w=(value/scale).toString().replace(/\B(?=(\d{3})+(?!\d))/g,sep[0]);
- var f=c.decimals?sep[1]+(value%scale).toString().padStart(c.decimals,'0'):'';
- return c.prefix+w+f+(c.suffix?' '+c.suffix:'');
+ var present=${formatCurrencyPresentation.toString()};
+ return present(value,c.decimals,c,parseFormat(c.number_format)||[',','.'],undefined,historical&&c.presentation_version!==2);
 }
 function render(n){
  var c=selected();if(!c)return;

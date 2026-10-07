@@ -27,9 +27,9 @@ const row = format => ({
 for (const [format, expected] of examples) {
  assert.deepEqual(panelParse(format), parseNumberFormat(format));
  assert.ok(parseNumberFormat(format));
- assert.equal(formatCurrencyMinor(123456n, row(format)), expected);
- assert.equal(formatScaled(1234560000000000n, 12, row(format)), expected);
- assert.equal(formatScaled(1234567800000000n, 12, row(format)), expected.slice(0, -2) + '57');
+ assert.equal(formatCurrencyMinor(123456n, row(format)), expected + ' EUR');
+ assert.equal(formatScaled(1234560000000000n, 12, row(format)), expected + ' EUR');
+ assert.equal(formatScaled(1234567800000000n, 12, row(format)), expected.slice(0, -2) + '57 EUR');
 }
 for (const format of SUPPORTED_NUMBER_FORMATS) {
  assert.ok(canSaveNumberFormat(format));
@@ -136,7 +136,7 @@ for (const [format, expected] of examples) {
   document: { getElementById: () => ({ textContent: JSON.stringify(cfg) }), querySelectorAll: () => [node] },
   localStorage: { getItem: () => null, setItem: () => {} }, window: {},
  });
- assert.equal(node.textContent, expected);
+ assert.equal(node.textContent, expected + ' EUR');
 }
 const page = fs.readFileSync('artifacts/bhru/src/pages/currencies.tsx', 'utf8');
 assert.doesNotMatch(page, /input-(?:add|currency)-format|Type a numeric sample|Accounting Reference|Rate \(1|260|270/);

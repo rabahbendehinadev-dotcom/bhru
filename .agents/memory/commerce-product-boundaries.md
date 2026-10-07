@@ -39,6 +39,15 @@ label “Base Rate”; currency-page reference labels consistently say “Base /
 live previews consistent with saved display formatting, and retain currency-owned
 decimal precision and all conversion/history behavior.
 
+Currency presentation previews are not exchange-rate calculators. They use the
+selected currency's precision and the same prefix/separator/suffix rules as current
+application prices. `1,000` is grouping-only, never a zero-decimal override.
+
+**Why:** The user confirmed the dropdown works and requires consistent, clear previews
+before proceeding to product pricing.
+**How to apply:** Share presentation logic across the panel/server/public displays;
+keep rates out of sample previews and preserve older receipts' original affix rules.
+
 The global catalog is current ISO currency metadata, never a tenant's commercial
 configuration or a copy of obsolete DHRU data. New choices exclude withdrawn codes
 and entries without defined ISO monetary precision; existing currencies and historical snapshots

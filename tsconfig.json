@@ -4,6 +4,9 @@
   "files": [],
   "references": [
     {
+      "path": "./lib/currency-presentation"
+    },
+    {
       "path": "./lib/db"
     },
     {

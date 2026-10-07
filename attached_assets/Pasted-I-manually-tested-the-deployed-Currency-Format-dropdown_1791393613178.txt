@@ -1,0 +1,322 @@
+I manually tested the deployed Currency Format dropdown.
+
+The dropdown itself is now correct, but I want the Currency Preview and format behavior cleaned up before we continue to product pricing.
+
+IMPORTANT:
+This is a focused Currency presentation task.
+
+Do NOT redesign the Currency page.
+Do NOT touch the Currency Catalog.
+Do NOT change exchange-rate calculations or the USD money architecture.
+
+==================================================
+1. CURRENT ISSUE
+==================================================
+
+In Edit DZD I currently have:
+
+Currency: DZD
+Format: 1,000.99
+Rate: 260.000000
+Prefix: empty
+Suffix: empty
+
+The Preview currently shows only:
+
+Preview: 1,234.57
+
+This is technically formatted, but it is not clear enough for the subscriber.
+
+The Preview should clearly demonstrate how this currency will actually be displayed.
+
+==================================================
+2. PREVIEW MUST USE PREFIX + FORMAT + SUFFIX
+==================================================
+
+Use one shared currency presentation formatter.
+
+The Preview must react immediately to:
+
+- Prefix
+- Suffix
+- selected Format
+- currency decimal precision
+
+Example:
+
+Prefix:
+(empty)
+
+Suffix:
+DZD
+
+Format:
+1,000.99
+
+Preview:
+
+1,234.57 DZD
+
+If:
+
+Prefix: $
+Suffix: empty
+
+Preview:
+
+$1,234.57
+
+Avoid ugly concatenation such as:
+
+$1,234.57USD
+
+unless that is literally what the subscriber configured.
+
+Use sensible spacing between a textual prefix/suffix and the amount where appropriate.
+
+The Preview should represent the same presentation rules used by the application.
+
+==================================================
+3. FORMAT DROPDOWN SEMANTICS
+==================================================
+
+Keep exactly these four options:
+
+1000.99
+1,000.99
+1,000,99
+1,000
+
+But inspect and define their behavior clearly.
+
+Expected presentation intent:
+
+A) 1000.99
+No thousands separator.
+Decimal separator = dot.
+
+Example with 2-decimal currency:
+1234.57
+
+B) 1,000.99
+Thousands separator = comma.
+Decimal separator = dot.
+
+Example:
+1,234.57
+
+C) 1,000,99
+Thousands separator = comma.
+Decimal separator = comma.
+
+Example:
+1,234,57
+
+D) 1,000
+Thousands separator = comma.
+
+IMPORTANT:
+Do NOT interpret option D as "zero decimal currency".
+
+Currency decimal precision remains controlled by the currency itself.
+
+For example:
+
+DZD precision = 2
+KWD precision = 3
+JPY precision = 0
+
+The Format dropdown controls PRESENTATION separators, while ISO currency precision controls decimal digits.
+
+If the literal label `1,000` is ambiguous in the current formatter, inspect the original DHRU behavior/source assumptions and implement the safest consistent presentation behavior without changing monetary values.
+
+Do not silently round canonical money just because a presentation format was selected.
+
+==================================================
+4. SHOW BETTER PREVIEW EXAMPLES
+==================================================
+
+Use a sample amount that makes separators obvious.
+
+For example, internally preview:
+
+1234.57
+
+For DZD with 2 decimals:
+
+1000.99
+→ 1234.57
+
+1,000.99
+→ 1,234.57
+
+1,000,99
+→ 1,234,57
+
+For KWD with 3 decimals, the preview should demonstrate 3 decimals.
+
+For JPY with 0 decimals, no decimal digits should appear.
+
+The exact sample may be adapted so the currency precision is visible.
+
+==================================================
+5. RATE MUST NOT AFFECT THIS PREVIEW
+==================================================
+
+The presentation Preview is NOT an exchange-rate calculator.
+
+Do NOT multiply the sample preview by DZD 260.
+
+Rate = 260 means:
+
+1 USD = 260 DZD
+
+but the Format Preview is only demonstrating how a DZD monetary amount is displayed.
+
+Keep exchange-rate conversion separate.
+
+Later we will test actual USD → DZD product conversion.
+
+==================================================
+6. ADD CURRENCY PREVIEW
+==================================================
+
+Apply the same preview behavior to the Add Currency row.
+
+Once a catalog currency is selected, the Preview should know:
+
+- selected currency
+- ISO decimal precision
+- Prefix
+- Suffix
+- Format
+
+and update immediately.
+
+Before a currency is selected, a neutral preview is acceptable.
+
+==================================================
+7. ONE SHARED FORMATTER
+==================================================
+
+Very important:
+
+Do not create a special formatter only for the Preview.
+
+Inspect the current formatting code and make sure the same presentation semantics are shared by:
+
+- Currency Preview
+- Panel money display
+- Product price display
+- Public storefront
+- Cart
+- Checkout
+- applicable order displays
+
+We do not want:
+
+Preview = 1,234,57 DZD
+
+while storefront = 1,234.57 DZD
+
+The selected subscriber currency presentation must be consistent.
+
+Do not change historical order snapshot presentation rules where historical formatting has already been snapshotted.
+
+==================================================
+8. DO NOT CHANGE
+==================================================
+
+Do NOT change:
+
+- 165-currency ISO catalog
+- searchable currency picker
+- DZD/MAD/SAR availability
+- USD Base / Reference
+- USD rate = 1.000000
+- subscriber manual Rate
+- six-decimal exchange rates
+- 12-decimal canonical USD money precision
+- Panel Display Currency architecture
+- Client Default
+- storefront conversion calculations
+- checkout conversion calculations
+- historical order snapshots
+- migration/conversion provenance
+- admin preview authentication/read-only behavior
+
+==================================================
+9. MIGRATIONS
+==================================================
+
+Migrations through 016 already exist.
+
+Do NOT edit migrations 001–016.
+
+This should preferably require NO migration because it is presentation/formatter behavior.
+
+Only create migration 017 if you discover a real schema constraint that makes the required behavior impossible.
+
+Do not create a migration unnecessarily.
+
+==================================================
+10. FOCUSED VALIDATION ONLY
+==================================================
+
+No long E2E/full regression suite.
+
+Check:
+
+DZD:
+precision 2
+
+Format 1000.99
+→ Preview equivalent to 1234.57
+
+Format 1,000.99
+→ Preview equivalent to 1,234.57
+
+Format 1,000,99
+→ Preview equivalent to 1,234,57
+
+Also verify:
+
+KWD uses 3 decimal digits.
+JPY uses 0 decimal digits.
+
+Prefix/Suffix changes update Preview immediately.
+
+Verify the same shared formatting logic is used outside Preview where current money presentation depends on subscriber currency configuration.
+
+==================================================
+11. WORKFLOW
+==================================================
+
+My workflow is:
+
+Replit source
+→ I Git Push
+→ Dokploy/VPS
+→ I manually test bhru.net
+
+Do not access my VPS.
+Do not push.
+Do not deploy.
+
+==================================================
+WHEN FINISHED
+==================================================
+
+Report:
+
+1. Why Preview previously showed only 1,234.57
+2. Exact semantics now used for the four Format choices
+3. How Prefix/Suffix are represented
+4. How ISO decimal precision is respected
+5. Whether Preview and application displays share the same formatter
+6. Files changed
+7. Whether migration 017 was required
+8. Focused validation results
+9. Ready for Git Push → Dokploy
+
+Then STOP.

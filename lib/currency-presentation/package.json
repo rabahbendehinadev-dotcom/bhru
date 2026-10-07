@@ -1,0 +1,13 @@
+{
+  "name": "@workspace/currency-presentation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.mts",
+      "default": "./src/index.mts"
+    }
+  }
+}

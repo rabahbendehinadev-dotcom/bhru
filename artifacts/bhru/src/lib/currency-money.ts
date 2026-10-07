@@ -1,22 +1,11 @@
 /** Pure fixed-decimal helpers. USD inputs here are integer units at scale 12, never decimal dollars. */
-export interface PanelCurrency { code:string;name:string;prefix:string;suffix:string;number_format:string;rate:string;decimals:number;enabled:boolean;client_default:boolean;is_base?:boolean;rate_configured?:boolean }
-export const SUPPORTED_NUMBER_FORMATS = ['1000.99', '1,000.99', '1,000,99', '1,000'] as const;
+import { formatCurrencyPresentation, parseNumberFormat, SUPPORTED_NUMBER_FORMATS, type CurrencyPresentation } from '@workspace/currency-presentation';
+export { parseNumberFormat, SUPPORTED_NUMBER_FORMATS };
+export interface PanelCurrency { code:string;name:string;prefix:string;suffix:string;number_format:string;rate:string;decimals:number;enabled:boolean;client_default:boolean;is_base?:boolean;rate_configured?:boolean;presentation_version?:number }
 export const NUMBER_FORMAT_ERROR = 'Choose a supported number format.';
 export const isSupportedNumberFormat = (value: string) => SUPPORTED_NUMBER_FORMATS.some(format => format === value);
 export function canSaveNumberFormat(value: string, savedValue?: string): boolean {
  return isSupportedNumberFormat(value) || (value === savedValue && parseNumberFormat(value) !== null);
-}
-/** A numeric sample selects separators, not the currency's decimal precision. */
-export function parseNumberFormat(value: string): [string, string] | null {
- const sample = value.trim();
- // Explicit dropdown styles; the grouping-only sample never overrides ISO precision.
- if (sample === '1,000,99') return [',', ','];
- if (sample === '1,000') return [',', '.'];
- if (sample.length > 24) return null;
- const grouped = /^\d{1,3}([., ])\d{3}([.,])\d{2}$/.exec(sample);
- if (grouped) return grouped[1] !== grouped[2] ? [grouped[1]!, grouped[2]!] : null;
- const plain = /^\d{4,18}([.,])\d{2}$/.exec(sample);
- return plain ? ['', plain[1]!] : null;
 }
 export function normalizeCurrencyRate(value: string): string {
  const input = value.trim(), units = rateScaled(input);
@@ -32,14 +21,8 @@ export function rateScaled(rate:string):bigint {
 export function parseUnits(value:string|null|undefined):bigint|null {
  return value!=null&&/^-?\d+$/.test(value)?BigInt(value):null;
 }
-export function formatScaled(value:bigint,scale:number,row:Pick<PanelCurrency,'prefix'|'suffix'|'number_format'|'decimals'>,withCode?:string):string {
- const d=row.decimals,neg=value<0n,abs=neg?-value:value;
- const divisor=10n**BigInt(Math.max(0,scale-d));
- const rounded=scale>=d?(abs+divisor/2n)/divisor:abs*10n**BigInt(d-scale);
- const digits=rounded.toString().padStart(d+1,'0'),whole=d?digits.slice(0,-d):digits,fraction=d?digits.slice(-d):'';
- const [group,decimal]=parseNumberFormat(row.number_format)??[',','.'];
- const body=whole.replace(/\B(?=(\d{3})+(?!\d))/g,group)+(fraction?decimal+fraction:'');
- return `${neg?'-':''}${row.prefix}${body}${row.suffix?` ${row.suffix}`:''}${withCode&&!row.prefix&&!row.suffix?` ${withCode}`:''}`;
+export function formatScaled(value:bigint,scale:number,row:CurrencyPresentation,withCode?:string,legacyAffixes=false):string {
+ return formatCurrencyPresentation(value,scale,row,parseNumberFormat(row.number_format)??[',','.'],withCode,legacyAffixes);
 }
 export function unitsToInput(value:string|null|undefined):string {
  if(value==null||value==='')return '';

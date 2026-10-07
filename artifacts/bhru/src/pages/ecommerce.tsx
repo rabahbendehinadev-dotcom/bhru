@@ -15,7 +15,7 @@ interface Overview { total_products: number; active_products: number; total_orde
 interface Category { id: string; name: string; slug: string; description: string; image_id: string | null; image_url: string | null; enabled: boolean; sort_order: number }
 interface Img { id: string; url: string }
 interface Product { id: string; name: string; slug: string; short_description: string; description: string; category_id: string | null; sku: string; price_minor: string; compare_at_minor: string | null; price_usd_units?: string | null; compare_at_usd_units?: string | null; active: boolean; featured: boolean; in_stock: boolean; stock_quantity: number | null; sort_order: number; images: Img[] }
-interface Snap { currency?: Partial<PanelCurrency> & { code?: string }; code?: string; prefix?: string; suffix?: string; number_format?: string; decimals?: number; total_minor?: string; base_usd_units?: string; canonical_scale?: number; items?: { product_id: string; unit_price_minor: string; line_total_minor: string }[] }
+interface Snap { currency?: Partial<PanelCurrency> & { code?: string }; code?: string; prefix?: string; suffix?: string; number_format?: string; decimals?: number; presentation_version?: number; total_minor?: string; base_usd_units?: string; canonical_scale?: number; items?: { product_id: string; unit_price_minor: string; line_total_minor: string }[] }
 interface OrderRow { currency_snapshot?: Snap | null; id: string; reference: string; customer_name: string; phone: string; email: string; total_minor: string; currency: string; status: string; created_at: string }
 interface OrderDetail extends OrderRow { items: { product_id?: string; product_name: string; sku: string; quantity: number; unit_price_minor: string; line_total_minor: string; image_url: string | null }[]; history: { status: string; created_at: string }[] }
 interface Customer { customer_name: string; phone: string; email: string; order_count: number; last_order_at: string }
@@ -34,7 +34,7 @@ function orderMoney(o: { currency: string; currency_snapshot?: Snap | null }, mi
   const sn = o.currency_snapshot;
   if (!sn) return money(minor, o.currency);
   const c = sn.currency ?? sn;
-  return formatScaled(BigInt(minor), c.decimals ?? 2, { prefix: c.prefix ?? '', suffix: c.suffix ?? '', number_format: c.number_format ?? '1,234.56', decimals: c.decimals ?? 2 }, c.code ?? o.currency);
+  return formatScaled(BigInt(minor), c.decimals ?? 2, { prefix: c.prefix ?? '', suffix: c.suffix ?? '', number_format: c.number_format ?? '1,234.56', decimals: c.decimals ?? 2 }, c.code ?? o.currency, c.presentation_version !== 2);
 }
 
 const StatusPill = ({ s }: { s: string }) => <span className={`badge capitalize ${TONE[s] ?? ''}`}>{s}</span>;

@@ -11,6 +11,7 @@ COPY artifacts/api-server/package.json ./artifacts/api-server/package.json
 COPY lib/api-client-react/package.json ./lib/api-client-react/package.json
 COPY lib/api-zod/package.json ./lib/api-zod/package.json
 COPY lib/db/package.json ./lib/db/package.json
+COPY lib/currency-presentation/package.json ./lib/currency-presentation/package.json
 RUN pnpm --filter @workspace/bhru... --filter @workspace/api-server... install --frozen-lockfile
 
 COPY artifacts/bhru/ ./artifacts/bhru/
@@ -18,6 +19,7 @@ COPY artifacts/api-server/ ./artifacts/api-server/
 COPY lib/api-client-react/ ./lib/api-client-react/
 COPY lib/api-zod/ ./lib/api-zod/
 COPY lib/db/ ./lib/db/
+COPY lib/currency-presentation/ ./lib/currency-presentation/
 COPY scripts/prepare-production.mjs ./scripts/prepare-production.mjs
 COPY tsconfig.base.json ./
 ENV NODE_ENV=production BASE_PATH=/

@@ -16,6 +16,9 @@
   },
   "references": [
     {
+      "path": "../../lib/currency-presentation"
+    },
+    {
       "path": "../../lib/api-client-react"
     }
   ]

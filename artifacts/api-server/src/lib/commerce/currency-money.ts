@@ -1,25 +1,15 @@
+import { formatCurrencyPresentation, parseNumberFormat, SUPPORTED_NUMBER_FORMATS } from '@workspace/currency-presentation';
+export { formatCurrencyPresentation, parseNumberFormat, SUPPORTED_NUMBER_FORMATS };
 export interface StoreCurrency {
   code: string; name: string; prefix: string; suffix: string; number_format: string;
   rate: string; decimals: number; enabled: boolean; client_default: boolean; is_base?: boolean; rate_configured?: boolean;
+  presentation_version?: number;
 }
 export const MAX_MINOR = 9223372036854775807n;
 export const USD_SCALE = 12;
 export const USD_FACTOR = 1000000000000n;
 export const RATE_FACTOR = 1000000n;
 export const MAX_USD_UNITS = 9999999999990000000000n;
-export const SUPPORTED_NUMBER_FORMATS = ['1000.99', '1,000.99', '1,000,99', '1,000'] as const;
-/** Numeric samples select separators only; precision still belongs to the currency. */
-export function parseNumberFormat(value: string): [string, string] | null {
- const sample = value.trim();
- // Explicit dropdown styles; the grouping-only sample never overrides ISO precision.
- if (sample === '1,000,99') return [',', ','];
- if (sample === '1,000') return [',', '.'];
- if (sample.length > 24) return null;
- const grouped = /^\d{1,3}([., ])\d{3}([.,])\d{2}$/.exec(sample);
- if (grouped) return grouped[1] !== grouped[2] ? [grouped[1]!, grouped[2]!] : null;
- const plain = /^\d{4,18}([.,])\d{2}$/.exec(sample);
- return plain ? ['', plain[1]!] : null;
-}
 export function parseUsd(value: string): bigint {
   if (!/^\d{1,10}(?:\.\d{1,12})?$/.test(value)) throw new RangeError('Use a USD amount with at most 12 decimal places.');
   const [whole, fraction = ''] = value.split('.');
@@ -44,9 +34,5 @@ export function convertMinor(baseMinor: string | bigint, currency: StoreCurrency
   return result;
 }
 export function formatCurrencyMinor(minor: string | bigint, currency: StoreCurrency): string {
-  const scale = 10n ** BigInt(currency.decimals), value = BigInt(minor);
-  const [group, decimal] = parseNumberFormat(currency.number_format) ?? [',', '.'];
-  const whole = (value / scale).toString().replace(/\B(?=(\d{3})+(?!\d))/g, group);
-  const fraction = currency.decimals ? decimal + (value % scale).toString().padStart(currency.decimals, '0') : '';
-  return currency.prefix + whole + fraction + (currency.suffix ? ' ' + currency.suffix : '');
+  return formatCurrencyPresentation(BigInt(minor),currency.decimals,currency,parseNumberFormat(currency.number_format)??[',','.']);
 }
