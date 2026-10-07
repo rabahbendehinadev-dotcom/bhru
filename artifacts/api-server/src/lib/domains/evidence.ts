@@ -15,7 +15,13 @@ export function evaluateDns(row:DomainRow,e:DnsEvidence,c=domainConfig()){
   return {ownership,routes,error:!ownership?'The ownership TXT record is missing or does not match.':!c.ready?'BHRU DNS infrastructure is not configured yet.':!routes?'DNS must resolve only to the BHRU edge addresses. Check CNAME/A records and remove conflicting AAAA records.':null};
 }
 export async function collectDns(row:DomainRow){
+  // External domain checks must not inherit Docker's embedded DNS. This
+  // instance does not alter Node's global resolver or internal service lookup.
   const r=new Resolver({timeout:3000,tries:1});
+  const servers=(process.env.BHRU_DOMAIN_DNS_SERVERS||'1.1.1.1,8.8.8.8')
+    .split(',').map(server=>server.trim()).filter(Boolean);
+  if(!servers.length)throw new Error('BHRU_DOMAIN_DNS_SERVERS must contain DNS server addresses');
+  r.setServers(servers);
   async function optional<T>(f:()=>Promise<T[]>):Promise<T[]>{
     try{return await f();}catch(e){if(['ENODATA','ENOTFOUND'].includes((e as {code?:string}).code||''))return [];throw e;}
   }

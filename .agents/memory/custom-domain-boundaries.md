@@ -16,3 +16,13 @@ does not establish that these exist on the live VPS. See BHRU_CUSTOM_DOMAINS.md.
 
 Registrar choice customizes instructions only; never request registrar passwords.
 The user performs Git Push, Dokploy deployment and live DNS/TLS/manual acceptance.
+
+External custom-domain checks must use a dedicated, explicitly configured public
+DNS resolver; never change Node's global resolver or Docker service-name lookup.
+
+**Why:** Production evidence showed Docker's default resolver returning ENOTFOUND
+for a valid public TXT record while an explicit public resolver in the same
+container resolved it correctly.
+**How to apply:** Keep public TXT/A/AAAA/CNAME checks isolated from internal
+database/upstream resolution. Missing records and temporary resolver failures
+must remain distinct, fail-closed verification outcomes.

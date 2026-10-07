@@ -133,6 +133,7 @@ BHRU_DOMAIN_LIMIT=2
 BHRU_PLATFORM_HOSTS=bhru.net,www.bhru.net
 BHRU_DOMAIN_CNAME_TARGET=<CANONICAL-TARGET-YOU-CONFIGURED>
 BHRU_DOMAIN_EDGE_IPS=<PUBLIC-IPV4>[,<PUBLIC-IPV6>]
+BHRU_DOMAIN_DNS_SERVERS=1.1.1.1,8.8.8.8
 BHRU_DOMAIN_TRAEFIK_DIR=/var/lib/bhru-domains
 BHRU_DOMAIN_UPSTREAM=http://<ACTUAL-BHRU-SERVICE-NAME>:3000
 BHRU_DOMAIN_CERT_RESOLVER=<EXISTING-OR-NEW-RESOLVER-NAME>
@@ -145,6 +146,17 @@ private admin-path settings and media variables unchanged. No new customer
 credential or registrar API key is needed. Without DNS configuration the UI still
 permits registration and TXT setup but cannot activate domains. Without a routing
 integration, verified domains remain SSL pending/error rather than falsely Active.
+
+`BHRU_DOMAIN_DNS_SERVERS` is optional: unset or empty uses `1.1.1.1,8.8.8.8`.
+It accepts comma-separated DNS server addresses, with whitespace trimmed.
+Only the dedicated Custom Domains resolver uses these servers for TXT, CNAME,
+A and AAAA checks. It never calls the global `dns.setServers()` and does not
+change PostgreSQL, internal Docker service-name or other application resolution.
+Allow outbound DNS to the selected resolvers (UDP/TCP port 53 for the defaults).
+Invalid resolver configuration fails verification rather than falling back to
+Docker DNS. ENOTFOUND/ENODATA mean a missing record; timeouts, SERVFAIL and other
+temporary failures use the existing retryable verification error path and cannot
+mark a domain verified.
 
 Use one application/controller replica initially. If later scaling replicas,
 they must see the same shared dynamic directory and database; the leader lock
