@@ -11,7 +11,7 @@ import { STOREFRONT_MONEY_HASH } from './storefront-money-script';
 import { currencies } from './currencies';
 
 /** Optional overlay: unentitled/default home documents remain byte-for-byte V2. */
-export async function tryCommerceDocument(req:Request,res:Response,path:unknown):Promise<boolean> {
+export async function tryCommerceDocument(req:Request,res:Response,path:unknown,customRoot=false):Promise<boolean> {
   if(typeof path!=='string')return false;
   const match=/^\/([a-z0-9]+(?:-[a-z0-9]+)*)(?:\/(product\/([a-z0-9]+(?:-[a-z0-9]+)*)|cart|checkout|confirmation))?$/.exec(path);
   if(!match||classifyPublicPath(`/${match[1]}`).kind!=='slug')return false;
@@ -32,7 +32,7 @@ export async function tryCommerceDocument(req:Request,res:Response,path:unknown)
         data=(await products(store.id,client,{publicOnly:true,slug:match[3]})).data[0];
         if(!data)return {document:await resolvePublicDocument('/not/a/public/site',client)};
       }
-      return {html:renderCommerceDocument(document.site,slug,store.settings,view as 'home'|'product'|'cart'|'checkout'|'confirmation',data,await categories(store.id,client,true),undefined,await currencies(store.id,client)),site:document.site};
+      return {html:renderCommerceDocument(document.site,slug,store.settings,view as 'home'|'product'|'cart'|'checkout'|'confirmation',data,await categories(store.id,client,true),undefined,await currencies(store.id,client),customRoot),site:document.site};
     });
     if(!result) {
       if(!leaf)return false;

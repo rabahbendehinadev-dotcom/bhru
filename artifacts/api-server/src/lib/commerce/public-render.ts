@@ -128,7 +128,7 @@ const CSS = `.cx{padding:44px 0;scroll-margin-top:84px}.cx *{min-width:0}.cx h1,
 @media(max-width:420px){.cx-hdr-products{display:none}.cx-hdr-link{padding:0 9px}}
 @media(prefers-reduced-motion:reduce){.cx *{transition:none!important;scroll-behavior:auto!important}}`;
 
-export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, settings: StoreSettings, view: View, data: any, categories: any[], tenantPreferences?: Partial<StorefrontPreferences>, configuredCurrencies?: StoreCurrency[]): string {
+export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, settings: StoreSettings, view: View, data: any, categories: any[], tenantPreferences?: Partial<StorefrontPreferences>, configuredCurrencies?: StoreCurrency[],customRoot=false): string {
   const slug = slugIn.replace(SLUG, '');
   const cats = (Array.isArray(categories) ? categories : []) as Cat[];
   let html = renderPublicHome(model);
@@ -169,12 +169,14 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
     .replace(PUBLIC_MENU_SCRIPT, () => STOREFRONT_MENU_SCRIPT);
 
   const cfg = {
-    slug, currency: settings.currency, view,money_model_version:settings.money_model_version??1,
+    slug, ...(customRoot?{publicBase:''}:{}),currency: settings.currency, view,money_model_version:settings.money_model_version??1,
     settings: { email_mode: settings.email_mode, address_mode: settings.address_mode, show_state: !!settings.show_state, show_city: !!settings.show_city, show_note: !!settings.show_note },
     page: view === 'home' ? num(data?.page, 1) : 1,
     categories: view === 'home' ? cats.map(c => ({ id: c.id, name: c.name })) : [],
   };
   html = html.replace('</style></head>', () => `${CSS}${view === 'home' ? PUBLIC_CATALOG_STYLES : ''}${STOREFRONT_HEADER_STYLES}</style></head>`);
+  if(customRoot)html=html.replace(new RegExp(`\\b(href|action|data-url|data-cx-product)=(["'])/${slug}((?:[/#?][^"']*)?)\\2`,'g'),
+    (_match,attr,quote,tail)=>`${attr}=${quote}${tail.startsWith('/')?tail:'/'+tail}${quote}`);
   const tail = `${live}${STOREFRONT_AUTH_NOTICE}<script type="application/json" id="sf-config">${inlineJSON({ slug, view, ...preferences })}</script><script>${STOREFRONT_MONEY_SCRIPT}</script><script type="application/json" id="cx-config">${inlineJSON(cfg)}</script><script>${COMMERCE_SCRIPT}</script><script>${STOREFRONT_HEADER_SCRIPT}</script>`;
   const end = html.lastIndexOf('</body>');
   return end >= 0 ? html.slice(0, end) + tail + html.slice(end) : html + tail;

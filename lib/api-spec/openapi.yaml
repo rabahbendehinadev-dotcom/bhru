@@ -11,6 +11,72 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /domains:
+    get:
+      operationId: getCustomDomains
+      responses:
+        "200":
+          description: Subscriber domains and setup instructions
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomDomainConfiguration" }
+    post:
+      operationId: addCustomDomain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NewDomainInput" }
+      responses:
+        "201":
+          description: Domain registered, not yet verified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomDomainConfiguration" }
+  /domains/{id}:
+    delete:
+      operationId: removeCustomDomain
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Mapping removed, website retained
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomDomainConfiguration" }
+  /domains/{id}/verify:
+    post:
+      operationId: verifyCustomDomain
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Actual DNS and TLS evidence
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomDomainConfiguration" }
+  /domains/{id}/primary:
+    post:
+      operationId: setPrimaryCustomDomain
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Primary domain changed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomDomainConfiguration" }
+  /domains/{id}/renew-verification:
+    post:
+      operationId: renewCustomDomainVerification
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: New TXT challenge; old activation revoked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomDomainConfiguration" }
   /admin/summary:
     get:
       operationId: getAdminSummary
@@ -513,6 +579,46 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    NewDomainInput:
+      type: object
+      required: [hostname]
+      properties:
+        hostname: { type: string, maxLength: 2048 }
+    CustomDomainConfiguration:
+      type: object
+      required: [enabled, limit, ready, configuration_message, public_url, domains]
+      properties:
+        enabled: { type: boolean }
+        limit: { type: integer }
+        ready: { type: boolean }
+        configuration_message: { type: string }
+        public_url: { type: string }
+        domains:
+          type: array
+          items: { $ref: "#/components/schemas/CustomDomainRecord" }
+    CustomDomainRecord:
+      type: object
+      required: [id, hostname, status, dns_status, tls_status, is_primary, created_at, last_checked_at, last_error, instructions]
+      properties:
+        id: { type: string, format: uuid }
+        hostname: { type: string }
+        status: { type: string }
+        dns_status: { type: string }
+        tls_status: { type: string }
+        is_primary: { type: boolean }
+        created_at: { type: string }
+        last_checked_at: { type: [string, "null"] }
+        last_error: { type: [string, "null"] }
+        instructions:
+          type: array
+          items:
+            type: object
+            required: [type, name, value, ttl]
+            properties:
+              type: { type: string }
+              name: { type: string }
+              value: { type: string }
+              ttl: { type: string }
     PublicWebsiteUpdate:
       type: object
       additionalProperties: false

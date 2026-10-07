@@ -7,7 +7,7 @@ The intended default public website URL is `https://bhru.net/{subscriber-slug}`,
 
 **Why:** The user specified automatic URLs without a registration slug picker and stated that existing customer links must not break.
 
-**How to apply:** Preserve this URL and lifetime model in future work. Phase 1 is approved; Phase 2 resolution must stay intact. Phase 3 authorizes a shared public template only; CMS requires visual approval first, and customer features/custom domains remain deferred.
+**How to apply:** Preserve this URL and lifetime model in future work. Keep existing slug resolution intact. Custom domains are now explicitly authorized as additional mappings to the same site; see custom-domain-boundaries.md. Do not infer approval for unrelated customer features.
 
 Keep one versioned normalization policy for registration and migration/backfill; never silently renormalize already-assigned URLs.
 

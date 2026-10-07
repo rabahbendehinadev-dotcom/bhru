@@ -8,6 +8,186 @@
 import * as zod from 'zod';
 
 
+export const GetCustomDomainsResponse = zod.object({
+  "enabled": zod.boolean(),
+  "limit": zod.number().int(),
+  "ready": zod.boolean(),
+  "configuration_message": zod.string(),
+  "public_url": zod.string(),
+  "domains": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "hostname": zod.string(),
+  "status": zod.string(),
+  "dns_status": zod.string(),
+  "tls_status": zod.string(),
+  "is_primary": zod.boolean(),
+  "created_at": zod.string(),
+  "last_checked_at": zod.string().nullable(),
+  "last_error": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string(),
+  "name": zod.string(),
+  "value": zod.string(),
+  "ttl": zod.string()
+}))
+}))
+})
+
+
+export const addCustomDomainBodyHostnameMax = 2048;
+
+
+
+export const AddCustomDomainBody = zod.object({
+  "hostname": zod.string().max(addCustomDomainBodyHostnameMax)
+})
+
+export const AddCustomDomainResponse = zod.object({
+  "enabled": zod.boolean(),
+  "limit": zod.number().int(),
+  "ready": zod.boolean(),
+  "configuration_message": zod.string(),
+  "public_url": zod.string(),
+  "domains": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "hostname": zod.string(),
+  "status": zod.string(),
+  "dns_status": zod.string(),
+  "tls_status": zod.string(),
+  "is_primary": zod.boolean(),
+  "created_at": zod.string(),
+  "last_checked_at": zod.string().nullable(),
+  "last_error": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string(),
+  "name": zod.string(),
+  "value": zod.string(),
+  "ttl": zod.string()
+}))
+}))
+})
+
+
+export const RemoveCustomDomainParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const RemoveCustomDomainResponse = zod.object({
+  "enabled": zod.boolean(),
+  "limit": zod.number().int(),
+  "ready": zod.boolean(),
+  "configuration_message": zod.string(),
+  "public_url": zod.string(),
+  "domains": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "hostname": zod.string(),
+  "status": zod.string(),
+  "dns_status": zod.string(),
+  "tls_status": zod.string(),
+  "is_primary": zod.boolean(),
+  "created_at": zod.string(),
+  "last_checked_at": zod.string().nullable(),
+  "last_error": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string(),
+  "name": zod.string(),
+  "value": zod.string(),
+  "ttl": zod.string()
+}))
+}))
+})
+
+
+export const VerifyCustomDomainParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const VerifyCustomDomainResponse = zod.object({
+  "enabled": zod.boolean(),
+  "limit": zod.number().int(),
+  "ready": zod.boolean(),
+  "configuration_message": zod.string(),
+  "public_url": zod.string(),
+  "domains": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "hostname": zod.string(),
+  "status": zod.string(),
+  "dns_status": zod.string(),
+  "tls_status": zod.string(),
+  "is_primary": zod.boolean(),
+  "created_at": zod.string(),
+  "last_checked_at": zod.string().nullable(),
+  "last_error": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string(),
+  "name": zod.string(),
+  "value": zod.string(),
+  "ttl": zod.string()
+}))
+}))
+})
+
+
+export const SetPrimaryCustomDomainParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const SetPrimaryCustomDomainResponse = zod.object({
+  "enabled": zod.boolean(),
+  "limit": zod.number().int(),
+  "ready": zod.boolean(),
+  "configuration_message": zod.string(),
+  "public_url": zod.string(),
+  "domains": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "hostname": zod.string(),
+  "status": zod.string(),
+  "dns_status": zod.string(),
+  "tls_status": zod.string(),
+  "is_primary": zod.boolean(),
+  "created_at": zod.string(),
+  "last_checked_at": zod.string().nullable(),
+  "last_error": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string(),
+  "name": zod.string(),
+  "value": zod.string(),
+  "ttl": zod.string()
+}))
+}))
+})
+
+
+export const RenewCustomDomainVerificationParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const RenewCustomDomainVerificationResponse = zod.object({
+  "enabled": zod.boolean(),
+  "limit": zod.number().int(),
+  "ready": zod.boolean(),
+  "configuration_message": zod.string(),
+  "public_url": zod.string(),
+  "domains": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "hostname": zod.string(),
+  "status": zod.string(),
+  "dns_status": zod.string(),
+  "tls_status": zod.string(),
+  "is_primary": zod.boolean(),
+  "created_at": zod.string(),
+  "last_checked_at": zod.string().nullable(),
+  "last_error": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string(),
+  "name": zod.string(),
+  "value": zod.string(),
+  "ttl": zod.string()
+}))
+}))
+})
+
+
 export const getAdminSummaryResponsePublicWebsitesMin = 0;
 
 export const getAdminSummaryResponseModulesItemEnabledMin = 0;

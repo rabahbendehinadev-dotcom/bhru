@@ -3,6 +3,7 @@ import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
 import { adminPath } from "./lib/admin-entry";
 import { initializePublicMedia } from "./lib/public-site/media";
+import { startDomainController } from "./lib/domains/controller";
 
 const rawPort = process.env["PORT"] || "3000";
 
@@ -21,6 +22,7 @@ if (!Number.isInteger(port) || port <= 0 || port > 65535) {
 try {
   await pool.query("SELECT name FROM schema_migrations LIMIT 1");
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
+  await pool.query("SELECT hostname,check_generation,dns_checked_at FROM subscriber_custom_domains LIMIT 0");
   await pool.query("SELECT subscriber_id,logo_strip_settings,announcement_ticker_settings FROM public_site_presentation LIMIT 0");
   await pool.query("SELECT icon_text FROM public_site_announcements LIMIT 0");
   await pool.query("SELECT subscriber_id FROM subscriber_modules LIMIT 0");
@@ -44,6 +46,7 @@ const server = app.listen(port, "0.0.0.0", (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  startDomainController();
 });
 for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => {
   server.close(() => { pool.end().then(() => process.exit(0)); });

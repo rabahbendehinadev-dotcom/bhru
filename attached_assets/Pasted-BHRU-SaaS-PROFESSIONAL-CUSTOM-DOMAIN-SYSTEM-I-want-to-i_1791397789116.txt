@@ -1,0 +1,590 @@
+BHRU SaaS — PROFESSIONAL CUSTOM DOMAIN SYSTEM
+
+I want to implement Custom Domains for BHRU subscribers.
+
+IMPORTANT:
+BHRU is a multi-tenant SaaS.
+This feature must work automatically and safely for every subscriber, not only one account.
+
+I am providing screenshots of Replit's custom-domain onboarding only as UX/workflow reference.
+
+DO NOT copy Replit branding or UI pixel-for-pixel.
+Build an original BHRU implementation with the same professional onboarding concept.
+
+CURRENT PRODUCTION ARCHITECTURE:
+- Main domain: bhru.net
+- Public subscriber storefront currently works as:
+  https://bhru.net/{public_slug}
+- Application is deployed on my VPS through Dokploy.
+- Reverse proxy is Traefik.
+- BHRU is a shared multi-tenant application.
+- PostgreSQL is shared by the current SaaS architecture.
+- Public tenants are resolved by subscriber/public_slug today.
+- Do NOT create one application/container per subscriber.
+- Do NOT require me to manually configure every customer domain in Dokploy.
+
+WORKFLOW:
+- Source code only.
+- Do NOT access or modify my VPS database.
+- Do NOT push to GitHub.
+- Do NOT deploy.
+- I will Git Push → Dokploy → manually test on VPS.
+- Focused technical checks only.
+- No long E2E/full regression suite.
+
+==================================================
+PHASE 0 — INSPECT BEFORE IMPLEMENTING
+==================================================
+
+Before changing code, inspect the current repository and determine:
+
+1. How bhru.net and /{public_slug} public routing currently works.
+2. How public requests resolve subscriber_id.
+3. Current Docker/Dokploy/Traefik configuration present in the repository.
+4. Current trusted proxy / Host / forwarded-header handling.
+5. Whether the current production architecture can accept arbitrary verified customer Host headers without manually adding a Traefik router for every domain.
+6. How TLS certificates can realistically be provisioned for dynamic custom domains in this architecture.
+
+Do NOT invent infrastructure behavior.
+
+If dynamic arbitrary-domain TLS cannot safely work with the current Traefik/Dokploy configuration using application code alone, clearly identify the missing infrastructure component/configuration.
+
+Then implement everything that can safely be implemented in the application and document the exact VPS/Dokploy/Traefik requirement separately.
+
+==================================================
+1. BHRU CUSTOM DOMAIN PAGE
+==================================================
+
+Add a professional subscriber page, preferably:
+
+Settings → Domains
+
+or:
+Settings → Custom Domain
+
+Design it in BHRU's existing light SaaS style.
+
+Main section:
+
+Custom Domains
+
+Description:
+"Connect a domain or subdomain you already own to your BHRU public website."
+
+Show existing domains as cards/table with:
+
+Domain
+Status
+DNS status
+SSL status
+Primary
+Added date
+Actions
+
+Main button:
+
++ Add domain
+
+==================================================
+2. ADD DOMAIN EXPERIENCE
+==================================================
+
+When subscriber clicks Add domain:
+
+Show a modal/wizard inspired by the supplied Replit workflow.
+
+Step 1:
+
+"Use a domain you already own"
+
+Input example:
+store.example.com
+example.com
+
+Button:
+Continue
+
+Normalize the domain safely:
+- lowercase
+- remove protocol
+- remove path/query
+- remove trailing dot
+- handle www consistently
+- validate hostname
+- support IDN safely using canonical ASCII/punycode representation internally
+
+Never accept:
+- http://...
+- https://...
+as stored domain values.
+
+Store only canonical hostname representation.
+
+==================================================
+3. ANALYZING STATE
+==================================================
+
+After Continue show a polished temporary state:
+
+Analyzing...
+example.com
+
+"Checking the domain and preparing DNS instructions."
+
+Do NOT fake successful verification.
+
+This screen can analyze the hostname and determine the correct setup flow, but actual DNS verification must come from real DNS evidence.
+
+==================================================
+4. CHOOSE DOMAIN PROVIDER
+==================================================
+
+Next step should resemble the workflow in my screenshots:
+
+Choose your domain provider
+
+"Select your provider to continue with DNS setup"
+
+Show provider cards for common providers:
+
+Cloudflare
+GoDaddy
+Hostinger
+
+Also provide:
+
+Other provider / Setup manually
+
+IMPORTANT:
+Provider selection is primarily for customized instructions.
+
+Do NOT request the customer's registrar password.
+Do NOT request Cloudflare/GoDaddy/Hostinger login credentials.
+
+Initial implementation should remain DNS-based and provider-independent.
+
+==================================================
+5. DNS INSTRUCTIONS
+==================================================
+
+Generate clear DNS instructions for the exact domain type.
+
+For a subdomain such as:
+
+shop.customer.com
+
+prefer a CNAME-style onboarding architecture if supported by the infrastructure.
+
+Example concept:
+
+Type: CNAME
+Name: shop
+Target: <BHRU canonical custom-domain target>
+
+For apex/root domains such as:
+
+customer.com
+
+do NOT blindly instruct users to create an invalid apex CNAME.
+
+Detect root/apex versus subdomain and provide a supported configuration such as the infrastructure-approved A/AAAA, ALIAS/ANAME/CNAME-flattening strategy.
+
+The canonical BHRU target MUST come from configuration.
+
+Do not hardcode a temporary Replit hostname.
+
+Provide:
+
+Type
+Name/Host
+Value/Target
+TTL recommendation
+
+Each value should have a Copy button.
+
+Provider-specific screens may explain exactly where the customer should enter these values.
+
+==================================================
+6. OWNERSHIP VERIFICATION
+==================================================
+
+Do NOT consider a domain verified only because it resolves to BHRU.
+
+Implement explicit domain ownership verification.
+
+Generate a cryptographically random verification token per domain.
+
+Example concept:
+
+TXT
+_bhru-verify.customer.com
+bhru-verification=<random-token>
+
+The exact record design may be adapted after inspecting the architecture.
+
+Statuses:
+
+Pending setup
+Waiting for DNS
+Verifying
+Verified
+SSL pending
+Active
+DNS error
+SSL error
+
+Button:
+
+Verify DNS
+
+The server performs DNS verification.
+
+Do not trust a client-side "verified" flag.
+
+Verification tokens:
+- tenant/domain scoped
+- not guessable
+- safe to regenerate when appropriate
+
+==================================================
+7. DOMAIN DATA MODEL
+==================================================
+
+Create a proper tenant-scoped custom-domain model.
+
+Conceptually include:
+
+id
+subscriber_id
+hostname
+canonical_hostname
+verification_token/hash as appropriate
+verification_status
+dns_status
+tls_status
+is_primary
+created_at
+verified_at
+activated_at
+last_checked_at
+last_error
+
+Use the actual project conventions/schema.
+
+Database requirements:
+
+- globally unique canonical hostname
+- one domain cannot belong to two subscribers
+- subscriber can only manage its own domains
+- exactly one Primary domain per subscriber when applicable
+- public_slug remains immutable and continues working
+
+Use an additive migration.
+
+Do NOT alter old migrations.
+
+==================================================
+8. DOMAIN LIMIT
+==================================================
+
+Build this as SaaS entitlement-ready.
+
+Do not hardcode assumptions that every plan always receives unlimited domains.
+
+Create a clean domain-limit boundary that can later connect to BHRU Plans/Add-ons.
+
+For now use a reasonable configured default, but architect it so Platform Admin can later control:
+
+Custom Domain module enabled/disabled
+Maximum custom domains
+
+Do not build the complete billing system in this task.
+
+==================================================
+9. PUBLIC REQUEST RESOLUTION
+==================================================
+
+This is critical.
+
+Existing:
+
+https://bhru.net/unlockgab
+
+must continue working.
+
+If unlockgab later owns:
+
+store.unlockgab.com
+
+then visiting:
+
+https://store.unlockgab.com
+
+must render the SAME subscriber public website directly.
+
+DO NOT redirect the browser to:
+bhru.net/unlockgab
+
+The custom hostname must remain visible.
+
+Resolve tenant using the normalized trusted request Host.
+
+Concept:
+
+Host
+→ verified ACTIVE custom-domain lookup
+→ subscriber_id
+→ existing public-site renderer/data
+
+Do NOT duplicate the public website implementation.
+
+Both:
+bhru.net/{public_slug}
+
+and:
+custom-domain.com
+
+must use the SAME public rendering/data pipeline.
+
+==================================================
+10. HOST HEADER SECURITY
+==================================================
+
+Treat Host routing as a security boundary.
+
+Implement safe normalization and allowlisting.
+
+Only route a custom hostname when:
+
+- it exists in the BHRU database
+- ownership is verified
+- domain status is Active
+- it belongs to exactly one subscriber
+
+Unknown Host headers must NOT fall back to another subscriber.
+
+Do not derive tenant identity from arbitrary client-supplied headers such as:
+X-Subscriber-ID.
+
+Respect the actual trusted-proxy configuration.
+
+Prevent:
+- Host header tenant spoofing
+- cross-tenant cache contamination
+- open redirects
+- domain collisions
+- duplicate domains
+- malformed Unicode/IDN hostnames
+
+==================================================
+11. WWW / ROOT DOMAIN BEHAVIOR
+==================================================
+
+Handle these explicitly:
+
+example.com
+www.example.com
+
+Do not silently assume they are the same DNS hostname.
+
+Allow a subscriber to configure the desired canonical/primary hostname.
+
+If both are verified and configured, optionally support a safe canonical redirect:
+
+www.example.com
+→ example.com
+
+or vice versa.
+
+Never redirect one tenant to another tenant.
+
+==================================================
+12. SSL / HTTPS
+==================================================
+
+Professional Custom Domains require HTTPS.
+
+Investigate the current Traefik/Dokploy architecture before claiming this is automatic.
+
+Desired final lifecycle:
+
+DNS verified
+→ TLS provisioning
+→ HTTPS available
+→ domain Active
+
+If current Traefik/Dokploy cannot dynamically provision certificates for database-created hostnames without configuration changes/redeploys, DO NOT fake this functionality.
+
+Instead:
+
+A. implement application domain registration/verification correctly
+
+and
+
+B. document the exact production architecture/configuration needed for automatic TLS.
+
+The final design should target:
+
+No manual certificate installation for each subscriber.
+
+Certificates should renew automatically.
+
+==================================================
+13. DOMAIN REMOVAL
+==================================================
+
+Subscriber can remove a custom domain.
+
+Require confirmation.
+
+Removal must immediately stop custom-host tenant resolution.
+
+Do NOT delete:
+- subscriber
+- public website
+- products
+- services
+- orders
+- media
+- public_slug
+
+The normal:
+
+bhru.net/{public_slug}
+
+must continue working.
+
+==================================================
+14. PRIMARY DOMAIN
+==================================================
+
+Allow:
+
+Set as Primary
+
+Primary means BHRU can use that hostname when generating public-site links.
+
+Changing Primary must NOT rewrite historical orders or stored historical URLs unnecessarily.
+
+If no active custom domain exists:
+
+canonical public URL remains:
+https://bhru.net/{public_slug}
+
+==================================================
+15. ADMIN / PLATFORM PREPARATION
+==================================================
+
+Prepare the architecture so Platform Admin can later see:
+
+Subscriber
+Domain
+Verification
+DNS
+SSL
+Status
+
+and potentially enable/disable the Custom Domain module.
+
+Do not redesign Platform Admin in this task.
+
+==================================================
+16. NEW SUBSCRIBER / MULTI-TENANT TEST
+==================================================
+
+Fresh Subscriber A:
+
+public_slug = tenant-a
+
+Add:
+shop-a.example.com
+
+Verify ownership.
+
+Expected:
+shop-a.example.com → Tenant A public website.
+
+Fresh Subscriber B:
+
+public_slug = tenant-b
+
+Add:
+shop-b.example.com
+
+Expected:
+shop-b.example.com → Tenant B only.
+
+Test attempts to:
+- register A's hostname on B
+- forge Host
+- access unverified domain
+- access removed domain
+
+They must fail safely.
+
+No tenant data leakage.
+
+==================================================
+17. UI QUALITY
+==================================================
+
+I want the onboarding quality shown in my Replit screenshots:
+
+Add Domain
+→ Analyzing
+→ Choose Provider
+→ DNS Setup
+→ Verify
+→ SSL
+→ Active
+
+But use original BHRU visual design.
+
+Desktop and mobile responsive.
+
+Use clear status badges and actionable instructions.
+
+Avoid technical jargon where the customer does not need it.
+
+==================================================
+18. IMPORTANT SaaS RULE
+==================================================
+
+This is not a one-account feature.
+
+BHRU is multi-tenant SaaS.
+
+Do not consider the feature complete because it works for one subscriber.
+
+All persistence, verification, routing and permissions must be tenant-safe and work for brand-new subscribers.
+
+==================================================
+19. REPORT BEFORE I DEPLOY
+==================================================
+
+When finished report:
+
+1. Existing custom-domain/Traefik architecture discovered.
+2. Final domain architecture implemented.
+3. Database migration created.
+4. Domain normalization rules.
+5. Ownership verification method.
+6. Root-domain DNS strategy.
+7. Subdomain DNS strategy.
+8. Host → subscriber resolution logic.
+9. Tenant-isolation protections.
+10. SSL/TLS strategy.
+11. Whether automatic TLS works with my CURRENT Dokploy/Traefik configuration or requires one infrastructure change.
+12. Exact infrastructure change required, if any.
+13. Files changed.
+14. Focused checks performed.
+15. Exact manual test I should perform after Git Push → Dokploy.
+
+STOP after source implementation/report.
+
+DO NOT:
+- push
+- deploy
+- access my VPS database
+- change production
+- run a long E2E/full regression suite.

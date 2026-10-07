@@ -5,6 +5,7 @@ import { normalizePublicSite, type PublicSiteModel, type PublicSiteNames } from 
 import { safePublicLink } from './safety';
 import { publicImageUrl, previewImageUrl } from './media';
 import { adminPath } from '../admin-entry';
+import { primaryPublicURL } from '../domains/service';
 
 export const valueSchema = UpdateCurrentPublicWebsiteBody.shape.values.strict();
 export const websiteFields = Object.keys(valueSchema.shape) as (keyof PublicWebsiteValues)[];
@@ -86,7 +87,7 @@ export async function websiteConfiguration(id: string, client: Pick<PoolClient,'
       primary_cta_label: model.primaryCTA.label, primary_cta_destination: model.primaryCTA.href,
       secondary_cta_label: model.secondaryCTA.label, secondary_cta_destination: model.secondaryCTA.href },
     revision: row?.revision ?? 0, public_slug: names.public_slug,
-    public_url: `https://bhru.net/${names.public_slug}`, preview_url: `/${names.public_slug}`,
+    public_url: await primaryPublicURL(id,names.public_slug,client), preview_url: `/${names.public_slug}`,
     logo_url: values.logo_asset_id ? previewImageUrl(values.logo_asset_id, images.get(values.logo_asset_id)!) : null,
     hero_image_url: values.hero_asset_id ? previewImageUrl(values.hero_asset_id, images.get(values.hero_asset_id)!) : null,
   };

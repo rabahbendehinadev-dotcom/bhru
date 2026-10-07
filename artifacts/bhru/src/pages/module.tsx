@@ -9,6 +9,7 @@ import GeneralSettingsPage from '@/pages/general-settings';
 import EcommercePage from '@/pages/ecommerce';
 import CurrenciesPage from '@/pages/currencies';
 import PublicWebsitePage from '@/pages/public-website';
+import CustomDomainsPage from '@/pages/custom-domains';
 
 function Crumbs({ items }: { items: string[] }) {
   return (
@@ -49,6 +50,10 @@ export default function Module() {
 
   if (r.slug === 'cms-blog-public-website') {
     return <><Crumbs items={r.crumbs} /><PublicWebsitePage /></>;
+  }
+
+  if (r.slug === 'domains') {
+    return <><Crumbs items={r.crumbs} /><CustomDomainsPage /></>;
   }
 
   const isStaff = r.entry.id === 'online-staff' && !r.child;

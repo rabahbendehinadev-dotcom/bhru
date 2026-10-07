@@ -29,12 +29,14 @@ import type {
   CommerceEnvelope,
   CommerceInput,
   CredentialsInput,
+  CustomDomainConfiguration,
   GeneralSettings,
   GeneralSettingsInput,
   GetCommerceResourceParams,
   GetPublicCommerceCatalogParams,
   GetPublicSiteDocumentParams,
   HealthStatus,
+  NewDomainInput,
   PanelAccess,
   PlanInput,
   PlatformState,
@@ -78,6 +80,431 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetCustomDomainsUrl = () => {
+
+
+
+
+  return `/api/domains`
+}
+
+export const getCustomDomains = async ( options?: Parameters<typeof customFetch>[1]): Promise<CustomDomainConfiguration> => {
+
+  return customFetch<CustomDomainConfiguration>(getGetCustomDomainsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomDomainsQueryKey = () => {
+    return [
+    `/api/domains`
+    ] as const;
+    }
+
+
+export const getGetCustomDomainsQueryOptions = <TData = Awaited<ReturnType<typeof getCustomDomains>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomDomains>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomDomainsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomDomains>>> = ({ signal }) => getCustomDomains({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomDomains>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomDomainsQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomDomains>>>
+export type GetCustomDomainsQueryError = ErrorType<unknown>
+
+
+
+export function useGetCustomDomains<TData = Awaited<ReturnType<typeof getCustomDomains>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomDomains>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomDomainsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getAddCustomDomainUrl = () => {
+
+
+
+
+  return `/api/domains`
+}
+
+export const addCustomDomain = async (newDomainInput: NewDomainInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomDomainConfiguration> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomDomainConfiguration>(getAddCustomDomainUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(newDomainInput)
+  }
+);}
+
+
+
+
+
+export const getAddCustomDomainMutationKey = () => ['addCustomDomain'] as const;
+
+export const getAddCustomDomainMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCustomDomain>>, TError,AddCustomDomainMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addCustomDomain>>, TError,AddCustomDomainMutationVariables, TContext> => {
+
+const mutationKey = getAddCustomDomainMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addCustomDomain>>, AddCustomDomainMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  addCustomDomain(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddCustomDomainMutationResult = NonNullable<Awaited<ReturnType<typeof addCustomDomain>>>
+    export type AddCustomDomainMutationBody = BodyType<NewDomainInput>
+    export type AddCustomDomainMutationError = ErrorType<unknown>
+    export type AddCustomDomainMutationVariables = {data: BodyType<NewDomainInput>}
+
+    export const useAddCustomDomain = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCustomDomain>>, TError,AddCustomDomainMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addCustomDomain>>,
+        TError,
+        AddCustomDomainMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAddCustomDomainMutationOptions(options));
+    }
+
+export const getRemoveCustomDomainUrl = (id: string,) => {
+
+
+
+
+  return `/api/domains/${id}`
+}
+
+export const removeCustomDomain = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CustomDomainConfiguration> => {
+
+  return customFetch<CustomDomainConfiguration>(getRemoveCustomDomainUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRemoveCustomDomainMutationKey = () => ['removeCustomDomain'] as const;
+
+export const getRemoveCustomDomainMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCustomDomain>>, TError,RemoveCustomDomainMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeCustomDomain>>, TError,RemoveCustomDomainMutationVariables, TContext> => {
+
+const mutationKey = getRemoveCustomDomainMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeCustomDomain>>, RemoveCustomDomainMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  removeCustomDomain(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveCustomDomainMutationResult = NonNullable<Awaited<ReturnType<typeof removeCustomDomain>>>
+
+    export type RemoveCustomDomainMutationError = ErrorType<unknown>
+    export type RemoveCustomDomainMutationVariables = {id: string}
+
+    export const useRemoveCustomDomain = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCustomDomain>>, TError,RemoveCustomDomainMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeCustomDomain>>,
+        TError,
+        RemoveCustomDomainMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRemoveCustomDomainMutationOptions(options));
+    }
+
+export const getVerifyCustomDomainUrl = (id: string,) => {
+
+
+
+
+  return `/api/domains/${id}/verify`
+}
+
+export const verifyCustomDomain = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CustomDomainConfiguration> => {
+
+  return customFetch<CustomDomainConfiguration>(getVerifyCustomDomainUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getVerifyCustomDomainMutationKey = () => ['verifyCustomDomain'] as const;
+
+export const getVerifyCustomDomainMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCustomDomain>>, TError,VerifyCustomDomainMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyCustomDomain>>, TError,VerifyCustomDomainMutationVariables, TContext> => {
+
+const mutationKey = getVerifyCustomDomainMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyCustomDomain>>, VerifyCustomDomainMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  verifyCustomDomain(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyCustomDomainMutationResult = NonNullable<Awaited<ReturnType<typeof verifyCustomDomain>>>
+
+    export type VerifyCustomDomainMutationError = ErrorType<unknown>
+    export type VerifyCustomDomainMutationVariables = {id: string}
+
+    export const useVerifyCustomDomain = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCustomDomain>>, TError,VerifyCustomDomainMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyCustomDomain>>,
+        TError,
+        VerifyCustomDomainMutationVariables,
+        TContext
+      > => {
+      return useMutation(getVerifyCustomDomainMutationOptions(options));
+    }
+
+export const getSetPrimaryCustomDomainUrl = (id: string,) => {
+
+
+
+
+  return `/api/domains/${id}/primary`
+}
+
+export const setPrimaryCustomDomain = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CustomDomainConfiguration> => {
+
+  return customFetch<CustomDomainConfiguration>(getSetPrimaryCustomDomainUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSetPrimaryCustomDomainMutationKey = () => ['setPrimaryCustomDomain'] as const;
+
+export const getSetPrimaryCustomDomainMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPrimaryCustomDomain>>, TError,SetPrimaryCustomDomainMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setPrimaryCustomDomain>>, TError,SetPrimaryCustomDomainMutationVariables, TContext> => {
+
+const mutationKey = getSetPrimaryCustomDomainMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setPrimaryCustomDomain>>, SetPrimaryCustomDomainMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  setPrimaryCustomDomain(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetPrimaryCustomDomainMutationResult = NonNullable<Awaited<ReturnType<typeof setPrimaryCustomDomain>>>
+
+    export type SetPrimaryCustomDomainMutationError = ErrorType<unknown>
+    export type SetPrimaryCustomDomainMutationVariables = {id: string}
+
+    export const useSetPrimaryCustomDomain = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPrimaryCustomDomain>>, TError,SetPrimaryCustomDomainMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setPrimaryCustomDomain>>,
+        TError,
+        SetPrimaryCustomDomainMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetPrimaryCustomDomainMutationOptions(options));
+    }
+
+export const getRenewCustomDomainVerificationUrl = (id: string,) => {
+
+
+
+
+  return `/api/domains/${id}/renew-verification`
+}
+
+export const renewCustomDomainVerification = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CustomDomainConfiguration> => {
+
+  return customFetch<CustomDomainConfiguration>(getRenewCustomDomainVerificationUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRenewCustomDomainVerificationMutationKey = () => ['renewCustomDomainVerification'] as const;
+
+export const getRenewCustomDomainVerificationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renewCustomDomainVerification>>, TError,RenewCustomDomainVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof renewCustomDomainVerification>>, TError,RenewCustomDomainVerificationMutationVariables, TContext> => {
+
+const mutationKey = getRenewCustomDomainVerificationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renewCustomDomainVerification>>, RenewCustomDomainVerificationMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  renewCustomDomainVerification(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenewCustomDomainVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof renewCustomDomainVerification>>>
+
+    export type RenewCustomDomainVerificationMutationError = ErrorType<unknown>
+    export type RenewCustomDomainVerificationMutationVariables = {id: string}
+
+    export const useRenewCustomDomainVerification = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renewCustomDomainVerification>>, TError,RenewCustomDomainVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof renewCustomDomainVerification>>,
+        TError,
+        RenewCustomDomainVerificationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRenewCustomDomainVerificationMutationOptions(options));
+    }
 
 export const getGetAdminSummaryUrl = () => {
 

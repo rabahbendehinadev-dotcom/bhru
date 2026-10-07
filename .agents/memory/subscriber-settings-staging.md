@@ -15,7 +15,7 @@ The user approved General Settings persistence with the ownership rule: 1 Subscr
 
 **How to apply:** Derive normal subscriber settings ownership from the authenticated session, never a browser-selected identifier. Company Name and Site Name are presentation settings and must not silently rename the subscriber business identity.
 
-Site Link and Site SSL Link are compatibility configuration only. Custom domains, DNS, SSL provisioning, slugs, redirect behaviour, payment processing, module functionality and multiple servers remain separate, unapproved phases.
+Site Link and Site SSL Link remain compatibility configuration only, never routing authority. Custom domains are now separately authorized through Settings → Domains; see custom-domain-boundaries.md. Other capabilities require their own explicit approval rather than being inferred from these compatibility fields.
 
 **Why:** The user explicitly restricted this phase to safely persisting General Settings, with no domain or business-function implementation.
 

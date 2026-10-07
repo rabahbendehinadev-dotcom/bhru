@@ -5,6 +5,42 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface NewDomainInput {
+  /** @maxLength 2048 */
+  hostname: string;
+}
+
+export type CustomDomainRecordInstructionsItem = {
+  type: string;
+  name: string;
+  value: string;
+  ttl: string;
+};
+
+export interface CustomDomainRecord {
+  id: string;
+  hostname: string;
+  status: string;
+  dns_status: string;
+  tls_status: string;
+  is_primary: boolean;
+  created_at: string;
+  /** @nullable */
+  last_checked_at: string | null;
+  /** @nullable */
+  last_error: string | null;
+  instructions: CustomDomainRecordInstructionsItem[];
+}
+
+export interface CustomDomainConfiguration {
+  enabled: boolean;
+  limit: number;
+  ready: boolean;
+  configuration_message: string;
+  public_url: string;
+  domains: CustomDomainRecord[];
+}
+
 export interface PublicWebsiteValues {
   /** @maxLength 120 */
   display_name: string;

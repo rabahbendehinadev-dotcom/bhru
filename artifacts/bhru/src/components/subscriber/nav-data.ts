@@ -62,6 +62,7 @@ export const NAV_DATA: NavEntryDef[] = [
       'API Settings', 'System Administrator', 'Product Feature']),
     ...col(2, ['Field Settings', 'Country - Provider', 'Brand - Model', 'MEP', 'Manufacture - Warehouse', 'Provider - Model - MEP', 'PRD',
       'Recharge Voucher', 'Promotion Codes', 'Site Notification']),
+    { label: 'Domains', slug: 'domains', column: 2 },
   ] },
   { id: 'store', label: 'Store', children: [] },
   { id: 'help', label: 'Help', children: ['Self Update', 'License Information', 'General FAQ', 'Dhru Customer Hub', 'PHP Information'].map((label) => ({ label })) },

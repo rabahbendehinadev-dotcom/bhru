@@ -11,6 +11,7 @@ import { publicSiteNavigation, resolvePublicDocument, writePublicDocument } from
 import { publicMediaRouter } from "./routes/public-website";
 import { publicCommerceRouter } from "./routes/commerce";
 import { tryCommerceDocument, commerceNavigation } from "./lib/commerce/navigation";
+import { customDomainGateway } from "./lib/domains/gateway";
 
 const app: Express = express();
 app.disable("x-powered-by");
@@ -43,6 +44,7 @@ app.use((req, res, next) => {
   next();
 });
 // Public documents deliberately finish before session/account middleware.
+app.use(customDomainGateway);
 // The 204 response means "existing application namespace", never public data.
 app.get("/api/public/site-document", async (req, res) => {
   if(await tryCommerceDocument(req,res,req.query.path))return;
