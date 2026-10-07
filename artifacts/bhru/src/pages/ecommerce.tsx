@@ -7,15 +7,17 @@ import {
   errText, minorToDecimal, money, newId, slugOf, uploadCommerceAsset, useCommerceAccess, useCommerceList,
   useCommerceWrite, useRefreshAccessOnFocus,
 } from '@/hooks/use-commerce';
+import { formatScaled, unitsToInput, usePanelMoney, type PanelCurrency } from '@/hooks/use-panel-money';
 
 interface Settings { enabled: boolean; title: string; currency: string; featured_first: boolean; email_mode: Mode; address_mode: Mode; show_state: boolean; show_city: boolean; show_note: boolean; whatsapp: string; confirmation_message: string; public_slug: string }
 type Mode = 'hidden' | 'optional' | 'required';
 interface Overview { total_products: number; active_products: number; total_orders: number; new_orders: number; completed_orders: number; recent_orders: OrderRow[]; public_slug: string }
 interface Category { id: string; name: string; slug: string; description: string; image_id: string | null; image_url: string | null; enabled: boolean; sort_order: number }
 interface Img { id: string; url: string }
-interface Product { id: string; name: string; slug: string; short_description: string; description: string; category_id: string | null; sku: string; price_minor: string; compare_at_minor: string | null; active: boolean; featured: boolean; in_stock: boolean; stock_quantity: number | null; sort_order: number; images: Img[] }
-interface OrderRow { id: string; reference: string; customer_name: string; phone: string; email: string; total_minor: string; currency: string; status: string; created_at: string }
-interface OrderDetail extends OrderRow { items: { product_name: string; sku: string; quantity: number; unit_price_minor: string; line_total_minor: string; image_url: string | null }[]; history: { status: string; created_at: string }[] }
+interface Product { id: string; name: string; slug: string; short_description: string; description: string; category_id: string | null; sku: string; price_minor: string; compare_at_minor: string | null; price_usd_units?: string | null; compare_at_usd_units?: string | null; active: boolean; featured: boolean; in_stock: boolean; stock_quantity: number | null; sort_order: number; images: Img[] }
+interface Snap { currency?: Partial<PanelCurrency> & { code?: string }; code?: string; prefix?: string; suffix?: string; number_format?: string; decimals?: number; total_minor?: string; base_usd_units?: string; canonical_scale?: number; items?: { product_id: string; unit_price_minor: string; line_total_minor: string }[] }
+interface OrderRow { currency_snapshot?: Snap | null; id: string; reference: string; customer_name: string; phone: string; email: string; total_minor: string; currency: string; status: string; created_at: string }
+interface OrderDetail extends OrderRow { items: { product_id?: string; product_name: string; sku: string; quantity: number; unit_price_minor: string; line_total_minor: string; image_url: string | null }[]; history: { status: string; created_at: string }[] }
 interface Customer { customer_name: string; phone: string; email: string; order_count: number; last_order_at: string }
 
 const SECTIONS = ['Overview', 'Products', 'Categories', 'Orders', 'Customers', 'Settings'] as const;
@@ -25,6 +27,15 @@ const STATUSES = ['new', 'confirmed', 'processing', 'completed', 'cancelled'];
 const TONE: Record<string, string> = { new: 'bg-primary/20 text-[hsl(217_95%_72%)]', confirmed: 'bg-violet/20 text-[hsl(262_90%_77%)]', processing: 'bg-warn/20 text-[hsl(30_95%_62%)]', completed: 'bg-ok/20 text-[hsl(152_60%_58%)]', cancelled: 'bg-danger/20 text-[hsl(0_90%_72%)]' };
 const when = (s: string) => { const d = new Date(s); return Number.isNaN(+d) ? '-' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); };
 const DECIMAL = /^\d{1,12}(\.\d{1,2})?$/;
+const DECIMAL12 = /^\d{1,10}(\.\d{1,12})?$/;
+/** Historical order money: always the snapshot's converted customer amount, never current panel rates. */
+function orderMoney(o: { currency: string; currency_snapshot?: Snap | null }, minor: string | undefined | null): string {
+  if (minor == null) return '-';
+  const sn = o.currency_snapshot;
+  if (!sn) return money(minor, o.currency);
+  const c = sn.currency ?? sn;
+  return formatScaled(BigInt(minor), c.decimals ?? 2, { prefix: c.prefix ?? '', suffix: c.suffix ?? '', number_format: c.number_format ?? '1,234.56', decimals: c.decimals ?? 2 }, c.code ?? o.currency);
+}
 
 const StatusPill = ({ s }: { s: string }) => <span className={`badge capitalize ${TONE[s] ?? ''}`}>{s}</span>;
 
@@ -90,7 +101,7 @@ function OverviewSection({ go }: { go: (s: Section) => void }) {
         <div className="flex items-center justify-between border-b p-3"><div className="text-[13px] font-semibold">Recent orders</div><button className="link" onClick={() => go('Orders')}>View all</button></div>
         {o.recent_orders.length === 0 ? <EmptyState compact title="No orders yet" description="Orders placed from your public store will appear here." /> : (
           <div className="scroll-thin overflow-x-auto"><table className="tbl"><thead><tr><th>Reference</th><th>Customer</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
-            <tbody>{o.recent_orders.map((r) => <tr key={r.id} data-testid={`row-recent-order-${r.id}`}><td className="font-mono">{r.reference}</td><td>{r.customer_name}</td><td>{money(r.total_minor, r.currency)}</td><td><StatusPill s={r.status} /></td><td>{when(r.created_at)}</td></tr>)}</tbody></table></div>
+            <tbody>{o.recent_orders.map((r) => <tr key={r.id} data-testid={`row-recent-order-${r.id}`}><td className="font-mono">{r.reference}</td><td>{r.customer_name}</td><td>{orderMoney(r, r.currency_snapshot?.total_minor ?? r.total_minor)}</td><td><StatusPill s={r.status} /></td><td>{when(r.created_at)}</td></tr>)}</tbody></table></div>
         )}
       </Card>
     </div>
@@ -135,10 +146,13 @@ function ImageUploader({ images, max, onChange, setError }: { images: Img[]; max
 /* ---------------- Products ---------------- */
 function ProductForm({ initial, categories, currency, onClose }: { initial: Product | null; categories: Category[]; currency: string; onClose: () => void }) {
   const w = useCommerceWrite();
+  const pm = usePanelMoney();
+  const legacy = pm.legacy;
+  const v2 = pm.v2||currency==='USD';
   const [id] = useState(() => initial?.id ?? newId());
   const [f, setF] = useState({
     name: initial?.name ?? '', slug: initial?.slug ?? '', short_description: initial?.short_description ?? '', description: initial?.description ?? '',
-    category_id: initial?.category_id ?? '', sku: initial?.sku ?? '', price: minorToDecimal(initial?.price_minor), compare_at: minorToDecimal(initial?.compare_at_minor),
+    category_id: initial?.category_id ?? '', sku: initial?.sku ?? '', price: initial?.price_usd_units != null ? unitsToInput(initial.price_usd_units) : minorToDecimal(initial?.price_minor), compare_at: initial?.compare_at_usd_units != null ? unitsToInput(initial.compare_at_usd_units) : minorToDecimal(initial?.compare_at_minor),
     active: initial?.active ?? true, featured: initial?.featured ?? false, in_stock: initial?.in_stock ?? true,
     stock_quantity: initial?.stock_quantity == null ? '' : String(initial.stock_quantity), sort_order: String(initial?.sort_order ?? 0),
   });
@@ -149,8 +163,10 @@ function ProductForm({ initial, categories, currency, onClose }: { initial: Prod
   const submit = async () => {
     if (!f.name.trim()) return setErr('Enter a product name.');
     if (!f.slug.trim()) return setErr('Enter a URL slug.');
-    if (!DECIMAL.test(f.price)) return setErr('Price must be a number with up to two decimals.');
-    if (f.compare_at && !DECIMAL.test(f.compare_at)) return setErr('Compare-at price must be a number with up to two decimals.');
+    if (legacy) return setErr('Prices cannot be saved until your account is migrated to USD base pricing.');
+    const RX = v2 ? DECIMAL12 : DECIMAL; const dp = v2 ? 'twelve' : 'two';
+    if (!RX.test(f.price)) return setErr(`Selling price must be a USD number with up to ${dp} decimals.`);
+    if (f.compare_at && !RX.test(f.compare_at)) return setErr(`Compare-at price must be a USD number with up to ${dp} decimals.`);
     if (f.stock_quantity !== '' && !/^\d{1,9}$/.test(f.stock_quantity)) return setErr('Stock must be a whole number or empty.');
     if (!/^-?\d{1,6}$/.test(f.sort_order)) return setErr('Sort order must be a whole number.');
     setErr('');
@@ -166,14 +182,15 @@ function ProductForm({ initial, categories, currency, onClose }: { initial: Prod
   };
   return (
     <Modal open onClose={onClose} title={initial ? 'Edit product' : 'New product'} width={640}
-      footer={<><Btn onClick={onClose} data-testid="button-product-cancel">Cancel</Btn><Btn v="primary" disabled={w.pending} onClick={() => void submit()} data-testid="button-product-save">{w.pending ? 'Saving...' : 'Save product'}</Btn></>}>
+      footer={<><Btn onClick={onClose} data-testid="button-product-cancel">Cancel</Btn><Btn v="primary" disabled={w.pending || legacy} onClick={() => void submit()} data-testid="button-product-save">{w.pending ? 'Saving...' : 'Save product'}</Btn></>}>
       <div className="max-h-[68dvh] space-y-3 overflow-y-auto pr-1 scroll-thin">
         <Banner error={err} />
+        {legacy && <div role="status" className="rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-[12px]" data-testid="text-product-legacy">Prices are shown in the legacy model. New price writes are blocked pending migration.</div>}
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Name"><input className="input" maxLength={160} value={f.name} onChange={(e) => { set('name', e.target.value); if (!slugTouched) set('slug', slugOf(e.target.value)); }} data-testid="input-product-name" /></Field>
           <Field label="URL slug"><input className="input" value={f.slug} onChange={(e) => { setSlugTouched(true); set('slug', slugOf(e.target.value)); }} data-testid="input-product-slug" /></Field>
-          <Field label={`Price (${currency})`}><input className="input" inputMode="decimal" value={f.price} onChange={(e) => set('price', e.target.value)} placeholder="0.00" data-testid="input-product-price" /></Field>
-          <Field label="Compare-at price" hint="Optional original price shown struck through."><input className="input" inputMode="decimal" value={f.compare_at} onChange={(e) => set('compare_at', e.target.value)} placeholder="0.00" data-testid="input-product-compare" /></Field>
+          <Field label={v2 ? 'Selling Price (USD)' : `Price (${currency})`}><input className="input" inputMode="decimal" value={f.price} onChange={(e) => set('price', e.target.value)} placeholder="0.00" data-testid="input-product-price" /></Field>
+          <Field label={v2 ? 'Compare-at Price (USD)' : 'Compare-at price'} hint="Optional original price shown struck through."><input className="input" inputMode="decimal" value={f.compare_at} onChange={(e) => set('compare_at', e.target.value)} placeholder="0.00" data-testid="input-product-compare" /></Field>
           <Field label="Category"><select className="input" value={f.category_id} onChange={(e) => set('category_id', e.target.value)} data-testid="select-product-category"><option value="">No category</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}{c.enabled ? '' : ' (disabled)'}</option>)}</select></Field>
           <Field label="SKU"><input className="input" value={f.sku} onChange={(e) => set('sku', e.target.value)} data-testid="input-product-sku" /></Field>
           <Field label="Stock quantity" hint="Leave empty to not track stock."><input className="input" inputMode="numeric" value={f.stock_quantity} onChange={(e) => set('stock_quantity', e.target.value)} data-testid="input-product-stock" /></Field>
@@ -205,6 +222,7 @@ function ProductsSection() {
   const [del, setDel] = useState<Product | null>(null);
   const [err, setErr] = useState('');
   const cur = set.rows?.currency ?? 'USD';
+  const pm = usePanelMoney();
   const catName = (id: string | null) => cats.rows?.find((c) => c.id === id)?.name ?? '-';
   return (
     <Card>
@@ -221,7 +239,7 @@ function ProductsSection() {
                 <td>{p.images[0] ? <img src={p.images[0].url} alt="" className="h-9 w-9 rounded object-cover" /> : <div className="h-9 w-9 rounded bg-[hsl(var(--muted))]" />}</td>
                 <td><div className="font-semibold">{p.name}</div><div className="text-[10.5px] text-muted-foreground">{p.sku || p.slug}</div></td>
                 <td>{catName(p.category_id)}</td>
-                <td>{money(p.price_minor, cur)}{p.compare_at_minor && <div className="text-[10.5px] text-muted-foreground line-through">{money(p.compare_at_minor, cur)}</div>}</td>
+                <td>{pm.v2 ? pm.formatUsd(p.price_usd_units) : money(p.price_minor, cur)}{pm.v2 ? (p.compare_at_usd_units && <div className="text-[10.5px] text-muted-foreground line-through">{pm.formatUsd(p.compare_at_usd_units)}</div>) : (p.compare_at_minor && <div className="text-[10.5px] text-muted-foreground line-through">{money(p.compare_at_minor, cur)}</div>)}</td>
                 <td>{p.in_stock ? (p.stock_quantity == null ? 'In stock' : p.stock_quantity) : <span className="text-danger">Out</span>}</td>
                 <td><span className={`badge ${p.active ? TONE.completed : TONE.cancelled}`}>{p.active ? 'Active' : 'Inactive'}</span>{p.featured && <span className="badge ml-1 bg-brand/20">Featured</span>}</td>
                 <td><Btn sm className="w-8 px-0" aria-label="Archive product" onClick={(e) => { e.stopPropagation(); setDel(p); }} data-testid={`button-archive-product-${p.id}`}><Trash2 size={13} /></Btn></td>
@@ -296,6 +314,8 @@ function CategoriesSection() {
 }
 
 /* ---------------- Orders ---------------- */
+const snapItem = (o: OrderDetail, it: OrderDetail['items'][number]) => it.product_id ? o.currency_snapshot?.items?.find((x) => x.product_id === it.product_id) : undefined;
+
 function OrderDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
   const q = useCommerceList<OrderDetail>('orders', { id });
   const w = useCommerceWrite();
@@ -316,9 +336,9 @@ function OrderDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
           <div className="space-y-1.5">{o.items.map((it, i) => (
             <div key={i} className="flex items-center gap-2 rounded-md border p-2 text-[12px]">
               {it.image_url ? <img src={it.image_url} alt="" className="h-9 w-9 rounded object-cover" /> : <div className="h-9 w-9 rounded bg-[hsl(var(--muted))]" />}
-              <div className="min-w-0 flex-1"><div className="truncate font-medium">{it.product_name}</div><div className="text-[10.5px] text-muted-foreground">{it.sku && `${it.sku} - `}{it.quantity} x {money(it.unit_price_minor, o.currency)}</div></div>
-              <div className="font-medium">{money(it.line_total_minor, o.currency)}</div></div>))}
-            <div className="flex justify-between px-1 text-[13px] font-semibold"><span>Total</span><span data-testid="text-order-total">{money(o.total_minor, o.currency)}</span></div></div>
+              <div className="min-w-0 flex-1"><div className="truncate font-medium">{it.product_name}</div><div className="text-[10.5px] text-muted-foreground">{it.sku && `${it.sku} - `}{it.quantity} x {orderMoney(o, snapItem(o, it)?.unit_price_minor ?? it.unit_price_minor)}</div></div>
+              <div className="font-medium">{orderMoney(o, snapItem(o, it)?.line_total_minor ?? it.line_total_minor)}</div></div>))}
+            <div className="flex justify-between px-1 text-[13px] font-semibold"><span>Total</span><span data-testid="text-order-total">{orderMoney(o, o.currency_snapshot?.total_minor ?? o.total_minor)}</span></div></div>
           <div><div className="lbl">History</div><ul className="space-y-1 text-[12px]">{o.history.map((h, i) => <li key={i} className="flex items-center gap-2"><StatusPill s={h.status} /><span className="text-muted-foreground">{when(h.created_at)}</span></li>)}</ul></div>
         </div>
       )}
@@ -340,7 +360,7 @@ function OrdersSection() {
       {q.isLoading ? <Loading /> : q.isError || !q.rows ? <Failure message={errText(q.error)} onRetry={() => void q.refetch()} /> :
         q.rows.length === 0 ? <EmptyState compact title={search || status ? 'No orders match' : 'No orders yet'} description={search || status ? 'Try a different search or filter.' : 'Orders from your public store will appear here.'} /> : (
           <div className="scroll-thin overflow-x-auto"><table className="tbl"><thead><tr><th>Reference</th><th>Customer</th><th>Phone</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
-            <tbody>{q.rows.map((r) => <tr key={r.id} className="hov" onClick={() => setOpen(r.id)} data-testid={`row-order-${r.id}`}><td className="font-mono">{r.reference}</td><td>{r.customer_name}</td><td>{r.phone}</td><td>{money(r.total_minor, r.currency)}</td><td><StatusPill s={r.status} /></td><td>{when(r.created_at)}</td></tr>)}</tbody></table></div>
+            <tbody>{q.rows.map((r) => <tr key={r.id} className="hov" onClick={() => setOpen(r.id)} data-testid={`row-order-${r.id}`}><td className="font-mono">{r.reference}</td><td>{r.customer_name}</td><td>{r.phone}</td><td>{orderMoney(r, r.currency_snapshot?.total_minor ?? r.total_minor)}</td><td><StatusPill s={r.status} /></td><td>{when(r.created_at)}</td></tr>)}</tbody></table></div>
         )}
       <Paging page={page} hasMore={q.hasMore} onPage={setPage} />
       {open && <OrderDetailModal id={open} onClose={() => setOpen(null)} />}
@@ -369,6 +389,7 @@ function CustomersSection() {
 /* ---------------- Settings ---------------- */
 function SettingsForm({ initial }: { initial: Settings }) {
   const w = useCommerceWrite();
+  const pm = usePanelMoney();
   const [f, setF] = useState<Settings>(initial);
   const [err, setErr] = useState('');
   const [saved, setSaved] = useState(false);
@@ -379,7 +400,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
     setErr('');
     const { public_slug: _slug, ...body } = f;
     void _slug;
-    try { await w.save('settings', { ...body, title: f.title.trim(), whatsapp: f.whatsapp.trim(), confirmation_message: f.confirmation_message.trim() }); setSaved(true); } catch (e) { setErr(errText(e)); }
+    try { await w.save('settings', { ...body, ...(pm.v2 ? { currency: 'USD' } : {}), title: f.title.trim(), whatsapp: f.whatsapp.trim(), confirmation_message: f.confirmation_message.trim() }); setSaved(true); } catch (e) { setErr(errText(e)); }
   };
   const mode = (label: string, k: 'email_mode' | 'address_mode') => (
     <Field label={label}><select className="input capitalize" value={f[k]} onChange={(e) => set(k, e.target.value as Mode)} data-testid={`select-${k}`}>{(['hidden', 'optional', 'required'] as Mode[]).map((m) => <option key={m} value={m}>{m}</option>)}</select></Field>
@@ -391,7 +412,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
       <Toggle id="toggle-store-enabled" label="Store is open to customers" checked={f.enabled} onChange={(v) => set('enabled', v)} />
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Store title"><input className="input" value={f.title} onChange={(e) => set('title', e.target.value)} data-testid="input-store-title" /></Field>
-        <Field label="Currency" hint="Cannot be changed once products or orders exist."><select className="input" value={f.currency} onChange={(e) => set('currency', e.target.value)} data-testid="select-currency">{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
+        pm.v2 ? <Field label="Currency" hint="Prices are stored in USD. Display currencies are managed under Currencies."><div className="input flex items-center gap-2" data-testid="text-currency-base"><b>USD</b><span className="badge">BASE / REFERENCE</span></div></Field> : <Field label="Currency" hint="Cannot be changed once products or orders exist."><select className="input" value={f.currency} onChange={(e) => set('currency', e.target.value)} data-testid="select-currency">{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
         {mode('Customer email', 'email_mode')}{mode('Customer address', 'address_mode')}
         <Field label="WhatsApp number"><input className="input" value={f.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} data-testid="input-whatsapp" /></Field>
       </div>

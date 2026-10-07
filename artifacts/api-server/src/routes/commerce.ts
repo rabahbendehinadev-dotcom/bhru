@@ -3,11 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { z } from '@workspace/api-zod';
 import { pool } from '@workspace/db';
 import { requireAdmin, HttpError, rateLimit } from '../lib/auth';
-import { currencyConfig, saveCurrency, deleteCurrency, currencies } from '../lib/commerce/currencies';
+import { currencyConfig, saveCurrency, deleteCurrency, currencies,saveDisplayCurrency,requireUsdModel } from '../lib/commerce/currencies';
+import { parseUsd,usdCents } from '../lib/commerce/currency-money';
 import { transaction, audit } from '../lib/platform';
 import { subscriberContext, requireCommerce, storeSettings, ownedAssets, categories, products, orderDetail, publicStore, COMMERCE_SAVED_REFERENCE } from '../lib/commerce/data';
 import { uuid, productInput, categoryInput, settingsInput, statusInput, minor, PAGE_SIZE, linesInput } from '../lib/commerce/validation';
-import { quote, createOrder } from '../lib/commerce/checkout';
+import { quote, createOrder,customerQuote } from '../lib/commerce/checkout';
 import { MAX_IMAGE_BYTES, normalizeImage, writeImage, removeImage, previewImageUrl } from '../lib/public-site/media';
 
 const router=Router();
@@ -38,7 +39,7 @@ router.put('/platform/subscribers/:id/modules/ecommerce',async(req,res)=>{
 router.get('/commerce/:resource',async(req,res)=>{
   const user=subscriberContext(req),q=pagination.parse(req.query),id=user.subscriber_id;
   res.json(await transaction(async client=>{
-    if(req.params.resource==='currencies')return {data:await currencyConfig(id,client)};
+    if(req.params.resource==='currencies')return {data:await currencyConfig(id,client,user.id)};
     await requireCommerce(id,client);
     const publicSlug=(await client.query('SELECT public_slug FROM subscribers WHERE id=$1',[id])).rows[0]?.public_slug;
     switch(req.params.resource) {
@@ -50,11 +51,11 @@ router.get('/commerce/:resource',async(req,res)=>{
           (SELECT count(*)::int FROM store_products WHERE subscriber_id=$1 AND active AND NOT archived) active_products,
           count(*)::int total_orders,count(*) FILTER(WHERE status IN ('new','confirmed'))::int new_orders,
           count(*) FILTER(WHERE status='completed')::int completed_orders FROM store_orders WHERE subscriber_id=$1`,[id])).rows[0];
-        return {data:{...counts,public_slug:publicSlug,recent_orders:(await client.query('SELECT id,reference,customer_name,phone,total_minor,currency,status,created_at FROM store_orders WHERE subscriber_id=$1 ORDER BY created_at DESC LIMIT 6',[id])).rows}};
+        return {data:{...counts,public_slug:publicSlug,recent_orders:(await client.query('SELECT id,reference,customer_name,phone,total_minor,currency,currency_snapshot,status,created_at FROM store_orders WHERE subscriber_id=$1 ORDER BY created_at DESC LIMIT 6',[id])).rows}};
       }
       case 'orders': {
         if(q.id)return {data:await orderDetail(id,q.id,client)};
-        const rows=(await client.query(`SELECT id,reference,customer_name,phone,total_minor,currency,status,created_at
+        const rows=(await client.query(`SELECT id,reference,customer_name,phone,total_minor,currency,currency_snapshot,status,created_at
           FROM store_orders WHERE subscriber_id=$1 AND ($2::text IS NULL OR status=$2)
           AND ($3::text IS NULL OR reference ILIKE $3 OR customer_name ILIKE $3 OR phone ILIKE $3)
           ORDER BY created_at DESC LIMIT $4 OFFSET $5`,[id,q.status??null,q.search?`%${q.search}%`:null,PAGE_SIZE+1,(q.page-1)*PAGE_SIZE])).rows;
@@ -77,21 +78,28 @@ router.post('/commerce/:resource',async(req,res,next)=>{
   const data=await transaction(async client=>{
     await client.query('SELECT id FROM subscribers WHERE id=$1 FOR UPDATE',[id]);
     if(req.params.resource==='currencies')return saveCurrency(id,req.body,client);
+    if(req.params.resource==='display-currency')return saveDisplayCurrency(id,user.id,req.body,client);
     await requireCommerce(id,client);
     switch(req.params.resource) {
       case 'products': {
-        const v=productInput.parse(req.body),pid=v.id??randomUUID(),price=minor(v.price),compare=v.compare_at===null?null:minor(v.compare_at);
+        await requireUsdModel(id,client);
+        const v=productInput.parse(req.body),pid=v.id??randomUUID();
+        let usd:bigint,compareUsd:bigint|null;
+        try {usd=parseUsd(v.price);compareUsd=v.compare_at===null?null:parseUsd(v.compare_at);}
+        catch {throw new HttpError(400,'Enter a valid USD price with at most 12 decimals within the price limit.');}
+        const price=usdCents(usd),compare=compareUsd===null?null:usdCents(compareUsd);
+        if(compareUsd!==null&&compareUsd<usd)throw new HttpError(400,'Compare-at price must not be lower than selling price.');
         if(compare!==null&&compare<price)throw new HttpError(400,'Compare-at price must not be lower than price.');
         if(v.category_id&&!(await client.query('SELECT id FROM store_categories WHERE subscriber_id=$1 AND id=$2',[id,v.category_id])).rowCount)throw new HttpError(400,'Category is not owned by this store.');
         await ownedAssets(id,v.image_ids,client);
         if(v.id&&!(await client.query('SELECT id FROM store_products WHERE subscriber_id=$1 AND id=$2 AND NOT archived',[id,v.id])).rowCount)throw new HttpError(404,'Product not found.');
-        await client.query(`INSERT INTO store_products(id,subscriber_id,category_id,name,slug,short_description,description,sku,price_minor,compare_at_minor,active,featured,in_stock,stock_quantity,sort_order)
-          VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+        await client.query(`INSERT INTO store_products(id,subscriber_id,category_id,name,slug,short_description,description,sku,price_minor,compare_at_minor,active,featured,in_stock,stock_quantity,sort_order,price_usd_units,compare_at_usd_units)
+          VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
           ON CONFLICT(id) DO UPDATE SET category_id=EXCLUDED.category_id,name=EXCLUDED.name,slug=EXCLUDED.slug,short_description=EXCLUDED.short_description,
-          description=EXCLUDED.description,sku=EXCLUDED.sku,price_minor=EXCLUDED.price_minor,compare_at_minor=EXCLUDED.compare_at_minor,
+          description=EXCLUDED.description,sku=EXCLUDED.sku,price_minor=EXCLUDED.price_minor,compare_at_minor=EXCLUDED.compare_at_minor,price_usd_units=EXCLUDED.price_usd_units,compare_at_usd_units=EXCLUDED.compare_at_usd_units,
           active=EXCLUDED.active,featured=EXCLUDED.featured,in_stock=EXCLUDED.in_stock,stock_quantity=EXCLUDED.stock_quantity,sort_order=EXCLUDED.sort_order,updated_at=now()
           WHERE store_products.subscriber_id=EXCLUDED.subscriber_id`,
-          [pid,id,v.category_id,v.name,v.slug,v.short_description,v.description,v.sku,price.toString(),compare?.toString()??null,v.active,v.featured,v.in_stock,v.stock_quantity,v.sort_order]);
+          [pid,id,v.category_id,v.name,v.slug,v.short_description,v.description,v.sku,price.toString(),compare?.toString()??null,v.active,v.featured,v.in_stock,v.stock_quantity,v.sort_order,usd.toString(),compareUsd?.toString()??null]);
         await client.query('DELETE FROM store_product_images WHERE subscriber_id=$1 AND product_id=$2',[id,pid]);
         for(const [order,asset] of v.image_ids.entries())await client.query('INSERT INTO store_product_images(subscriber_id,product_id,asset_id,sort_order) VALUES($1,$2,$3,$4)',[id,pid,asset,order]);
         return {id:pid};
@@ -107,12 +115,7 @@ router.post('/commerce/:resource',async(req,res,next)=>{
       }
       case 'settings': {
         const v=settingsInput.parse(req.body),previous=await storeSettings(id,client);
-        if(v.currency!==previous.currency&&(await client.query('SELECT 1 FROM store_products WHERE subscriber_id=$1 UNION ALL SELECT 1 FROM store_orders WHERE subscriber_id=$1 LIMIT 1',[id])).rowCount)throw new HttpError(409,'Currency cannot change once products or orders exist.');
-        if(v.currency!==previous.currency) {
-          const configured=await currencies(id,client);
-          if(configured.length!==1||!configured[0]?.is_base)throw new HttpError(409,'Keep only the base currency before changing it; manual rates cannot be rebased automatically.');
-          await client.query('UPDATE subscriber_currencies SET code=$2,name=$2,suffix=$2 WHERE subscriber_id=$1 AND is_base',[id,v.currency]);
-        }
+        if(v.currency!==previous.currency)throw new HttpError(409,'The accounting reference cannot be changed in Store Settings. USD is permanent; legacy conversion requires approval.');
         const fields=Object.keys(v),values=Object.values(v);
         await client.query(`INSERT INTO store_settings(subscriber_id,${fields.join(',')}) VALUES($1,${values.map((_,i)=>`$${i+2}`).join(',')})
           ON CONFLICT(subscriber_id) DO UPDATE SET ${fields.map(k=>`${k}=EXCLUDED.${k}`).join(',')},updated_at=now()`,[id,...values]);
@@ -195,7 +198,7 @@ publicCommerceRouter.get('/api/public/commerce/:slug/catalog',async(req,res)=>{
 });
 publicCommerceRouter.post('/api/public/commerce/:slug/quote',async(req,res)=>{
   const input=linesInput.parse(req.body);
-  res.json({data:await transaction(async client=>{const store=await publicStore(String(req.params.slug),client);return quote(store.id,input,store.settings.currency,client);})});
+    res.json({data:await transaction(async client=>{const store=await publicStore(String(req.params.slug),client);return customerQuote(await quote(store.id,input,store.settings.currency,client,false,store.settings.money_model_version??1));})});
 });
 publicCommerceRouter.post('/api/public/commerce/:slug/orders',async(req,res)=>{
   await rateLimit(`commerce-order:${req.ip}`,30);

@@ -1,0 +1,609 @@
+Approved.
+
+Implement the new BHRU currency architecture based on your analysis.
+
+IMPORTANT:
+Work in Development / Replit Preview only.
+
+DO NOT push.
+DO NOT deploy.
+DO NOT modify Production.
+DO NOT run long browser/E2E/full regression suites.
+I will manually test the UI.
+
+The objective is to FINALIZE the currency architecture before we begin provider API service integrations.
+
+==================================================
+1. PERMANENT BHRU BASE CURRENCY
+==================================================
+
+From now on:
+
+USD = permanent system Base / Reference Currency.
+
+Base USD rate:
+
+1 USD = 1.000000 USD
+
+This is an architectural accounting/pricing reference.
+
+Do NOT allow subscribers to change the Base / Reference currency.
+
+Remove/disable any normal Store Settings workflow that can change the accounting reference.
+
+Clearly distinguish:
+
+BASE / REFERENCE
+CLIENT DEFAULT
+PANEL DISPLAY CURRENCY
+
+These are three different concepts.
+
+==================================================
+2. CURRENCY RATE MEANING
+==================================================
+
+All subscriber manual rates must use ONE simple rule:
+
+RATE = number of currency units for 1 USD.
+
+Examples:
+
+USD = 1.000000
+
+DZD = 260.000000
+means:
+1 USD = 260 DZD
+
+EUR = 0.860000
+means:
+1 USD = 0.86 EUR
+
+The subscriber should never need to understand reverse-rate mathematics.
+
+USD rate is permanently 1.000000 and cannot be edited.
+
+Non-USD rates are manually editable.
+
+No bank rates.
+No external FX API.
+No automatic rate update.
+
+==================================================
+3. SIMPLE DHRU-LIKE CURRENCY PAGE
+==================================================
+
+Keep the page simple and operational.
+
+I want a compact table similar in usability to DHRU.
+
+Columns:
+
+CODE
+PREFIX
+SUFFIX
+FORMAT
+RATE
+LIVE
+CLIENT DEFAULT
+ACTION
+
+At the top/bottom as appropriate:
+
+Accounting Reference: USD
+Rate: 1.000000
+
+Clearly mark USD:
+
+BASE / REFERENCE
+
+The subscriber can:
+
+- Add Currency
+- Edit Currency
+- Edit Rate
+- Enable / Disable
+- Set Client Default
+- Delete non-required currencies
+
+Clicking Edit should expose a simple editor.
+
+For DZD, for example:
+
+Code: DZD
+Prefix:
+Suffix: DZD
+Format: 1,000.00
+Rate: 260.000000
+Live: Enable
+Client Default: Enable/Disable
+
+Save
+
+Do NOT over-engineer this screen.
+
+==================================================
+4. CLIENT DEFAULT
+==================================================
+
+Client Default is independent from Base Currency.
+
+Example:
+
+BASE:
+USD
+
+CLIENT DEFAULT:
+DZD
+
+This means internal reference remains USD while customers initially see DZD.
+
+Exactly ONE enabled currency must be Client Default.
+
+Subscriber can change Client Default at any time.
+
+Example:
+
+USD
+DZD
+EUR
+
+Client Default can be any enabled currency.
+
+==================================================
+5. PANEL DISPLAY CURRENCY
+==================================================
+
+Add a currency selector to the subscriber panel/header.
+
+Example:
+
+USD ▼
+
+Available choices:
+USD
+DZD
+EUR
+
+Only enabled subscriber currencies should appear.
+
+This selector controls DISPLAY only.
+
+Example canonical product/service selling price:
+
+50 USD
+
+Panel Display = USD:
+$50.00
+
+Panel Display = DZD
+with rate 260:
+
+13,000 DZD
+
+Panel Display = EUR
+with rate 0.86:
+
+43.00 EUR
+
+CRITICAL:
+
+Changing Panel Display Currency MUST NOT modify:
+
+- canonical price
+- product price
+- service price
+- provider cost
+- margin
+- database price
+- historical order
+- exchange rates
+
+It is presentation only.
+
+Persist the subscriber user's preferred Panel Display Currency.
+
+If that currency later becomes disabled/deleted, safely fall back to USD or the appropriate enabled default.
+
+==================================================
+6. PRICE EDITING RULE
+==================================================
+
+Do NOT create ambiguous price inputs.
+
+When creating/editing a Product or Service, clearly show the denomination of the price being entered.
+
+Canonical business pricing is USD.
+
+Example:
+
+Selling Price (USD)
+[ 50.00 ]
+
+Do NOT allow switching Panel Display Currency to reinterpret:
+
+50 USD
+
+as:
+
+50 DZD
+
+The display selector is NOT an input-denomination selector.
+
+==================================================
+7. HIGH-PRECISION CANONICAL USD MONEY
+==================================================
+
+Implement the higher-precision canonical USD model recommended in your analysis.
+
+Do not restrict canonical migrated/API values to USD cents internally.
+
+We will soon import provider services where costs may contain values such as:
+
+0.125 USD
+0.4875 USD
+1.0032 USD
+19.230769 USD
+
+The database/model must preserve sufficient precision for:
+
+- provider cost
+- canonical selling price
+- margins
+- legacy conversions
+- future API pricing
+
+Presentation can still round according to the configured currency format.
+
+Use integer/fixed-decimal arithmetic.
+
+DO NOT introduce floating-point money calculations.
+
+Document the chosen internal precision.
+
+==================================================
+8. PREPARE FOR FUTURE PROVIDER API COSTS
+==================================================
+
+The architecture must support this future flow:
+
+Provider API
+↓
+provider_cost_usd
+↓
+pricing / markup / margin
+↓
+canonical_selling_price_usd
+↓
+currency conversion for presentation
+↓
+customer/panel display
+
+Example:
+
+Provider sends:
+
+cost = 1.00 USD
+
+Subscriber pricing later determines:
+
+selling price = 1.10 USD
+
+If DZD rate = 260:
+
+Customer sees:
+286 DZD
+
+But internally:
+
+provider_cost_usd = 1.00
+selling_price_usd = 1.10
+
+Changing DZD rate later MUST NOT change either USD value.
+
+Do not implement provider API import yet.
+
+Only make the currency/money architecture ready for it.
+
+==================================================
+9. STOREFRONT CUSTOMER CURRENCY
+==================================================
+
+Public storefront currency selector should use subscriber-enabled currencies.
+
+First visit:
+
+use Client Default.
+
+Example:
+
+Base = USD
+Client Default = DZD
+
+Customer initially sees DZD.
+
+Customer may switch:
+
+DZD → USD → EUR
+
+Persist visitor choice using the existing tenant-separated preference mechanism.
+
+Changing customer currency only changes presentation.
+
+==================================================
+10. CHECKOUT
+==================================================
+
+Checkout must calculate from canonical USD values.
+
+Then convert using the selected customer currency and the current subscriber commercial rate.
+
+Server remains authoritative.
+
+Never trust a price calculated only by the browser.
+
+Preserve the existing protection against stale/changed submitted rates.
+
+==================================================
+11. ORDER SNAPSHOTS
+==================================================
+
+Orders must permanently preserve what happened at checkout.
+
+Store immutable information sufficient to reconstruct:
+
+canonical/base USD amounts
+customer-selected currency
+rate used at checkout
+format/precision used
+converted unit price
+converted line totals
+converted order total
+
+Example:
+
+Order date:
+Customer currency = DZD
+Rate = 260
+
+Tomorrow subscriber changes:
+
+260 → 270
+
+The old order MUST continue showing the original order economics.
+
+Never recalculate historical orders using today's rate.
+
+==================================================
+12. HISTORICAL / LEGACY SAFETY
+==================================================
+
+Do NOT blindly reinterpret old DZD values as USD.
+
+Implement the schema preparation and safe compatibility model you recommended.
+
+For Development subscribers that have:
+
+0 products
+0 orders
+
+they may be safely initialized/rebased to the new USD architecture if your verified conditions are satisfied.
+
+For any subscriber containing existing monetary business data:
+
+DO NOT automatically guess a conversion rate.
+
+The conversion must require an explicit approved basis.
+
+Missing conversion basis must BLOCK automatic cutover.
+
+Preserve legacy order interpretation.
+
+Do not mutate historical order snapshots.
+
+==================================================
+13. MIGRATION
+==================================================
+
+Create NEW additive migration(s) after existing migration 011.
+
+DO NOT modify migrations 001–011.
+
+The migration should support:
+
+- permanent USD reference architecture
+- six-decimal commercial rates
+- high-precision canonical USD pricing
+- money-model/version metadata
+- legacy conversion provenance
+- constraints required for the new model
+
+Keep schema preparation and risky legacy data conversion logically separated.
+
+Migration must remain compatible with our production startup flow:
+
+node migrate.mjs && exec node index.mjs
+
+Future Dokploy deployments must still automatically apply pending migrations safely.
+
+==================================================
+14. E-COMMERCE COMPATIBILITY
+==================================================
+
+Update existing E-Commerce money handling to use the finalized model.
+
+Do NOT redesign E-Commerce.
+
+Preserve:
+
+Products
+Categories
+Orders
+Customers
+Settings
+Cart
+Guest checkout
+Confirmation
+
+Only update currency/money semantics where required.
+
+==================================================
+15. PUBLIC WEBSITE
+==================================================
+
+Preserve the existing public website.
+
+Do not redesign:
+
+Top Area
+Ticker
+Partner Strip
+Hero/Banner
+CMS
+public slug routing
+
+Only update currency display where necessary.
+
+==================================================
+16. UI REQUIREMENT
+==================================================
+
+The Currency screen should remain visually compact.
+
+Do not create large cards for every currency.
+
+Use a professional table/list similar to the DHRU workflow we discussed.
+
+Example:
+
+---------------------------------------------------------
+CODE | PREFIX | SUFFIX | FORMAT | RATE | LIVE | DEFAULT
+---------------------------------------------------------
+USD    $         -       1,000.00  1.000000 ✓    ○
+       BASE / REFERENCE
+
+DZD    -        DZD      1,000.00 260.000000 ✓    ●
+
+EUR    €         -       1,000.00   0.860000 ✓    ○
+---------------------------------------------------------
+
+Actions:
+Edit
+Delete
+
+Rate should be easy to edit.
+
+==================================================
+17. DO NOT IMPLEMENT THESE YET
+==================================================
+
+Do NOT implement:
+
+- Provider API integration
+- API service import
+- automatic exchange rates
+- bank FX
+- provider markup rules
+- reseller pricing
+- automatic service price synchronization
+
+Those come AFTER this currency foundation is approved.
+
+==================================================
+18. VALIDATION
+==================================================
+
+Keep automated validation short.
+
+Run only necessary:
+
+- type checks
+- build/compile checks
+- migration sanity
+- money calculation unit checks
+
+Do NOT spend time on:
+
+- full browser E2E
+- huge regression suite
+- long visual automation
+
+I will perform manual acceptance.
+
+==================================================
+19. MANUAL TEST EXAMPLE I EXPECT
+==================================================
+
+I want to be able to manually configure:
+
+Base:
+USD = 1.000000
+
+DZD:
+260.000000
+
+EUR:
+0.860000
+
+Client Default:
+DZD
+
+Then create a product:
+
+Selling Price (USD):
+50.00
+
+Expected:
+
+Panel USD:
+50.00 USD
+
+Panel DZD:
+13,000 DZD
+
+Panel EUR:
+43.00 EUR
+
+Public site initial:
+13,000 DZD
+
+Customer selects USD:
+50.00 USD
+
+Customer selects EUR:
+43.00 EUR
+
+Then change DZD rate:
+
+260 → 270
+
+Expected current display:
+
+13,500 DZD
+
+BUT any already completed historical order must retain its original saved rate and original displayed total.
+
+==================================================
+20. WHEN FINISHED
+==================================================
+
+Stop in Development / Replit Preview.
+
+DO NOT PUSH.
+DO NOT DEPLOY.
+DO NOT TOUCH PRODUCTION.
+
+Give me a concise report containing:
+
+1. Exact money model implemented
+2. New migration number/name
+3. Internal USD precision chosen
+4. Currency rate semantics
+5. Client Default behavior
+6. Panel Display Currency behavior
+7. Storefront currency behavior
+8. Historical order protection
+9. Legacy DZD migration behavior
+10. Exact paths where I should manually test
+
+Then STOP and wait for my manual approval.

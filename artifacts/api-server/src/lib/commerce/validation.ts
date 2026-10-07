@@ -4,7 +4,7 @@ import { HttpError } from '../auth';
 export const uuid=z.string().uuid();
 const text=(max:number)=>z.string().trim().max(max).regex(/^[^\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]*$/,'Unsupported characters');
 const slug=text(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-const money=z.string().regex(/^\d{1,10}(?:\.\d{1,2})?$/,'Use a positive decimal amount with at most two decimal places');
+const money=z.string().regex(/^\d{1,10}(?:\.\d{1,12})?$/,'Use a USD amount with at most twelve decimal places');
 export function minor(value:string):bigint {
   const [whole,fraction='']=value.split('.');
   const result=BigInt(whole!)*100n+BigInt(fraction.padEnd(2,'0'));
@@ -32,8 +32,8 @@ export const orderInput=linesInput.extend({
   checkout_key:uuid,customer_name:text(160).min(2),phone:text(25).regex(/^\+?[0-9 ()-]{7,25}$/),
   email:text(254).default(''),state:text(120).default(''),city:text(120).default(''),
   address:text(500).default(''),note:text(1000).default(''),
-  currency_rate:z.string().regex(/^\d{1,9}(?:\.\d{1,5})?$/).optional(),
+  currency_rate:z.string().regex(/^\d{1,9}(?:\.\d{1,6})?$/).optional(),
 }).strict();
 export const DEFAULT_STORE={enabled:false,title:'Our Products',currency:'USD',featured_first:true,email_mode:'optional',address_mode:'optional',show_state:true,show_city:true,show_note:true,whatsapp:'',confirmation_message:'Thank you. Your order has been received.'};
-export type StoreSettings=typeof DEFAULT_STORE & {subscriber_id?:string};
+export type StoreSettings=typeof DEFAULT_STORE & {subscriber_id?:string;money_model_version?:number};
 export const PAGE_SIZE=24;

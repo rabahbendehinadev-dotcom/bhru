@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAdminPath } from '@/lib/admin-entry';
 import { titleForLocation } from './nav-catalog';
 import { ThemeToggle } from './ThemeToggle';
+import { PanelCurrencySelector } from './PanelCurrencySelector';
 import { EmptyState } from './EmptyState';
 import { InstallOption } from './PwaInstall';
 import { usePopover } from './popover';
@@ -54,6 +55,7 @@ export function MobileHeader({ owner, onOpenMenu, onOpenSearch, menuOpen, menuBt
             </div>
             <div className="my-1 border-t border-[hsl(var(--border))]" />
             <button type="button" className="sl-mrow" onClick={() => { acct.setOpen(false); onOpenSearch(); }} data-testid="button-search-mobile"><Search size={18} />Search pages</button>
+            <div className="sl-mrow justify-between"><PanelCurrencySelector className="w-full justify-between text-[14px]" /></div>
             <div className="sl-mrow justify-between"><span>Theme</span><ThemeToggle /></div>
             <InstallOption />
             <div className="my-1 border-t border-[hsl(var(--border))]" />

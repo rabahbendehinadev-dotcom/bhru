@@ -5,11 +5,11 @@ import { EmptyState } from '@/components/subscriber/EmptyState';
 import { useWorkspacePage } from '@/components/subscriber/workspace/WorkspacePageContext';
 import { useCommerceList, useCommerceWrite, errText } from '@/hooks/use-commerce';
 
-interface CurrencyRow { code: string; name: string; prefix: string; suffix: string; number_format: string; rate: string; enabled: boolean; client_default: boolean; decimals: number }
-interface CurrencyConfig { base_currency: string; currencies: CurrencyRow[]; catalog: { code: string; name: string; decimals: number }[] }
+interface CurrencyRow { code: string; name: string; prefix: string; suffix: string; number_format: string; rate: string; enabled: boolean; client_default: boolean; decimals: number; is_base?: boolean; rate_configured?: boolean }
+interface CurrencyConfig { base_currency: string; money_model_version?: 1 | 2; requires_conversion?: boolean; currencies: CurrencyRow[]; catalog: { code: string; name: string; decimals: number }[] }
 
 const FORMATS = ['1,234.56', '1.234,56', '1 234,56', '1234.56'];
-const RATE_RE = /^\d{1,9}(\.\d{1,5})?$/;
+const RATE_RE = /^\d{1,9}(\.\d{1,6})?$/;
 
 function preview(fmt: string, decimals: number) {
   const [i, f] = (1234.5678).toFixed(Math.max(0, decimals)).split('.');
@@ -35,6 +35,8 @@ export default function CurrenciesPage() {
   const [addErr, setAddErr] = useState('');
 
   const rows = cfg?.currencies ?? [];
+  const locked = cfg?.requires_conversion === true;
+  const unconf = (r: CurrencyRow) => r.rate_configured === false;
   const base = cfg?.base_currency ?? '';
   const available = useMemo(() => {
     const have = new Set(rows.map((r) => r.code));
@@ -42,23 +44,25 @@ export default function CurrenciesPage() {
     return (cfg?.catalog ?? []).filter((c) => !have.has(c.code) && (!s || c.code.toLowerCase().includes(s) || c.name.toLowerCase().includes(s))).slice(0, 80);
   }, [cfg, rows, search]);
 
-  const openEdit = (r: CurrencyRow) => { setErr(''); setFieldErr(''); setForm({ ...r, isNew: false }); };
+  const openEdit = (r: CurrencyRow) => { if (locked) return; setErr(''); setFieldErr(''); setForm({ ...r, rate: unconf(r) ? '' : r.rate, isNew: false }); };
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
-  const payload = (f: Form) => ({ code: f.code, name: f.name.trim(), prefix: f.prefix, suffix: f.suffix, number_format: f.number_format, rate: f.rate.trim(), enabled: f.enabled, client_default: f.client_default });
+  const payload = (f: Form) => ({ code: f.code, name: f.name.trim(), prefix: f.prefix, suffix: f.suffix, number_format: f.number_format, rate: f.code === base ? '1.000000' : f.rate.trim(), enabled: f.enabled, client_default: f.client_default });
 
   const submit = async () => {
     if (!form) return;
     setErr(''); setFieldErr('');
     if (!form.code) { setErr('Choose a currency from the catalog.'); return; }
     const isBase = form.code === base;
-    const rate = isBase ? '1.00000' : form.rate.trim();
-    if (!isBase && (!RATE_RE.test(rate) || Number(rate) <= 0)) { setFieldErr('Enter a positive rate with up to 5 decimal places.'); return; }
+    const rate = isBase ? '1.000000' : form.rate.trim();
+    if (!isBase && (!RATE_RE.test(rate) || Number(rate) <= 0)) { setFieldErr('Enter a positive rate with up to 6 decimal places.'); return; }
     try { await w.save('currencies', payload({ ...form, rate })); setForm(null); } catch (e) { setErr(errText(e)); }
   };
 
   const quick = async (r: CurrencyRow, patch: Partial<CurrencyRow>) => {
     setRowErr('');
+    if (locked) return;
+    if (unconf(r) && patch.enabled) { setRowErr(`${r.code}: Enter a rate first (Edit), then enable.`); return; }
     try { await w.save('currencies', payload({ ...r, ...patch, isNew: false })); } catch (e) { setRowErr(`${r.code}: ${errText(e)}`); }
   };
 
@@ -72,7 +76,7 @@ export default function CurrenciesPage() {
     setAddErr('');
     if (!add.code) { setAddErr('Choose a currency from the catalog.'); return; }
     const rate = add.rate.trim();
-    if (!RATE_RE.test(rate) || Number(rate) <= 0) { setAddErr('Enter a positive rate with up to 5 decimal places.'); return; }
+    if (!RATE_RE.test(rate) || Number(rate) <= 0) { setAddErr('Enter a positive rate with up to 6 decimal places.'); return; }
     try { await w.save('currencies', payload({ ...add, rate, client_default: false })); setAdd(blank); setSearch(''); } catch (e) { setAddErr(errText(e)); }
   };
   const inp = 'input !h-8 !text-[12.5px]';
@@ -92,9 +96,10 @@ export default function CurrenciesPage() {
     <div className="min-w-0 max-w-full space-y-3" data-testid="page-currencies">
       <div className="min-w-0">
         <h1 className="text-[22px] font-bold leading-tight tracking-tight" data-testid="text-page-title">Currencies</h1>
-        <p className="mt-0.5 text-[12.5px] text-[hsl(var(--text-secondary))]">Manual storefront rates relative to the accounting reference{base ? ` ${base}` : ''}. They are not bank exchange rates.</p>
+        <p className="mt-0.5 text-[12.5px] text-[hsl(var(--text-secondary))]">{locked ? 'Legacy reference rates are preserved pending approved conversion.' : 'Rate = currency units for 1 USD (for example, DZD 260.000000).'} Manual commercial rates, not bank exchange rates.</p>
       </div>
-      {base && <div className="flex flex-wrap items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))]" data-testid="text-reference"><Badge tone="violet">Accounting Reference</Badge><b className="text-[hsl(var(--foreground))]">{base}</b> fixed at rate 1. Client Default below is chosen independently.</div>}
+      {base && <div className="flex flex-wrap items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))]" data-testid="text-reference"><Badge tone="violet">{cfg?.money_model_version === 2 ? 'Base / Reference' : 'Accounting Reference'}</Badge><b className="text-[hsl(var(--foreground))]">{base}</b> fixed at rate 1.000000. Client Default below is chosen independently.</div>}
+      {locked && <div role="status" className="rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-[12.5px]" data-testid="text-conversion-required"><b>Currency conversion required.</b> Legacy prices are still stored in the old currency model. Currency and product reference edits are disabled until your account is migrated to USD base pricing.</div>}
       {rowErr && <div role="alert" className="flex items-start gap-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12.5px] text-danger" data-testid="text-row-error"><AlertCircle size={14} className="mt-0.5 shrink-0" />{rowErr}</div>}
 
       <div className="sl-surface min-w-0 max-w-full overflow-hidden" data-testid="currencies-list">
@@ -104,7 +109,7 @@ export default function CurrenciesPage() {
           <EmptyState icon={<AlertCircle size={18} />} title="Currencies could not be loaded" description={errText(q.error)} action={<Btn onClick={() => void q.refetch()} data-testid="button-retry-currencies">Retry</Btn>} />
         ) : (
           <>
-            <div className="space-y-2 border-b border-[hsl(var(--border))] p-3 md:hidden" data-testid="add-currency-mobile">
+            <div className={`space-y-2 border-b border-[hsl(var(--border))] p-3 md:hidden ${locked ? 'hidden' : ''}`} data-testid="add-currency-mobile">
               <div className="text-[12.5px] font-semibold">Add currency</div>
               <div><label className="lbl">Currency</label>{addFields}</div>
               <div className="grid grid-cols-2 gap-2">
@@ -125,7 +130,7 @@ export default function CurrenciesPage() {
                   </tr>
                 </thead>
                 <tbody className="[&>tr>td]:px-3 [&>tr>td]:py-1.5 [&>tr>td]:align-middle">
-                  <tr className="hidden border-b border-[hsl(var(--border))] bg-[hsl(var(--brand)/.06)] md:table-row" data-testid="row-add-currency">
+                  <tr className={`hidden border-b border-[hsl(var(--border))] bg-[hsl(var(--brand)/.06)] ${locked ? '' : 'md:table-row'}`} data-testid="row-add-currency">
                     <td className="min-w-[200px]">{addFields}</td>
                     <td><input className={`${inp} w-16`} aria-label="Prefix" maxLength={24} value={add.prefix} onChange={(e) => setA('prefix', e.target.value)} data-testid="input-add-prefix" /></td>
                     <td><input className={`${inp} w-20`} aria-label="Suffix" maxLength={24} value={add.suffix} onChange={(e) => setA('suffix', e.target.value)} data-testid="input-add-suffix" /></td>
@@ -137,19 +142,19 @@ export default function CurrenciesPage() {
                   </tr>
                   {rows.length === 0 && <tr><td colSpan={8} className="!py-6 text-center text-[12.5px] text-[hsl(var(--text-secondary))]"><Coins size={16} className="mx-auto mb-1 opacity-60" />No currencies yet. Add one above and enter its rate yourself.</td></tr>}
                   {rows.map((r) => {
-                    const isBase = r.code === base;
+                    const isBase = r.is_base === true || r.code === base;
                     return (
                       <tr key={r.code} className="border-b border-[hsl(var(--border))] last:border-0 hover:bg-white/[.03]" data-testid={`row-currency-${r.code}`}>
                         <td><div className="flex flex-wrap items-center gap-1.5"><b>{r.code}</b><span className="text-[hsl(var(--text-secondary))]">{r.name}</span>{isBase && <Badge tone="violet">Accounting Reference</Badge>}</div></td>
                         <td>{r.prefix || '-'}</td>
                         <td>{r.suffix || '-'}</td>
                         <td className="tabular-nums" title={r.number_format}>{r.prefix}{preview(r.number_format, r.decimals)}{r.suffix}</td>
-                        <td className="tabular-nums">{isBase ? '1.00000' : r.rate}</td>
-                        <td><input type="checkbox" aria-label={`Live ${r.code}`} checked={r.enabled} disabled={w.pending || r.client_default} title={r.client_default ? 'Choose another default first' : undefined} onChange={(e) => void quick(r, { enabled: e.target.checked })} data-testid={`switch-enabled-${r.code}`} /></td>
-                        <td><input type="radio" name="client-default" className="accent-[hsl(var(--brand))]" aria-label={`Client default ${r.code}`} checked={r.client_default} disabled={w.pending || !r.enabled} onChange={() => { if (!r.client_default) void quick(r, { client_default: true }); }} data-testid={`button-default-${r.code}`} /></td>
+                        <td className="tabular-nums">{isBase ? '1.000000' : unconf(r) ? <Badge tone="violet">Require rate</Badge> : r.rate}</td>
+                        <td><input type="checkbox" aria-label={`Live ${r.code}`} checked={r.enabled} disabled={locked || w.pending || r.client_default || isBase || (unconf(r) && !r.enabled)} title={r.client_default ? 'Choose another default first' : undefined} onChange={(e) => void quick(r, { enabled: e.target.checked })} data-testid={`switch-enabled-${r.code}`} /></td>
+                        <td><input type="radio" name="client-default" className="accent-[hsl(var(--brand))]" aria-label={`Client default ${r.code}`} checked={r.client_default} disabled={locked || w.pending || !r.enabled} onChange={() => { if (!r.client_default) void quick(r, { client_default: true }); }} data-testid={`button-default-${r.code}`} /></td>
                         <td><div className="flex gap-1.5">
-                          <Btn sm onClick={() => openEdit(r)} data-testid={`button-edit-${r.code}`}><Pencil size={12} />Edit</Btn>
-                          <Btn sm v="danger" disabled={w.pending || r.client_default} onClick={() => setDel(r)} aria-label={`Delete ${r.code}`} data-testid={`button-delete-${r.code}`}><Trash2 size={12} /></Btn>
+                          <Btn sm disabled={locked} onClick={() => openEdit(r)} data-testid={`button-edit-${r.code}`}><Pencil size={12} />Edit</Btn>
+                          <Btn sm v="danger" disabled={locked || w.pending || r.client_default || isBase} onClick={() => setDel(r)} aria-label={`Delete ${r.code}`} data-testid={`button-delete-${r.code}`}><Trash2 size={12} /></Btn>
                         </div></td>
                       </tr>
                     );
@@ -195,8 +200,8 @@ export default function CurrenciesPage() {
                   {FORMATS.map((f) => <option key={f} value={f}>{fmtLabel(f)}</option>)}
                 </select>
               </Field>
-              <Field label={`Rate (1 ${base} = ? ${form.code || 'unit'})`} error={fieldErr} hint={form.code === base ? 'Base currency rate is always 1.' : 'Enter manually, up to 5 decimals.'}>
-                <input className="input w-full tabular-nums" inputMode="decimal" value={form.code === base ? '1.00000' : form.rate} disabled={form.code === base} onChange={(e) => set('rate', e.target.value)} data-testid="input-currency-rate" />
+              <Field label={`Rate (1 ${base} = ? ${form.code || 'unit'})`} error={fieldErr} hint={form.code === base ? 'Base currency rate is always 1.000000 and cannot be changed.' : 'Enter manually, up to 6 decimals.'}>
+                <input className="input w-full tabular-nums" inputMode="decimal" value={form.code === base ? '1.000000' : form.rate} placeholder={form.code === base ? '' : 'Require rate'} disabled={form.code === base} onChange={(e) => set('rate', e.target.value)} data-testid="input-currency-rate" />
               </Field>
             </div>
             <p className="text-[12px] text-[hsl(var(--text-secondary))]" data-testid="text-format-preview">Preview: {form.prefix}{preview(form.number_format, form.decimals)}{form.suffix}</p>

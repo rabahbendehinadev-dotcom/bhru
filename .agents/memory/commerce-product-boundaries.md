@@ -17,8 +17,8 @@ Visitor language/currency preferences must be scoped to the subscriber. Unavaila
 must explicitly fall back to English. Currency conversion uses each subscriber's manually
 configured commercial rates, never bank rates, invented rates or an external FX API.
 Keep authoritative base prices and base order totals intact; retain immutable currency/rate
-snapshots for confirmation and historical display. Only the Client Default entry is protected
-against disabling/deletion; base prices remain anchored independently of currency visibility.
+snapshots for confirmation and historical display. Client Default must remain enabled; the
+finalized USD foundation also keeps the USD reference entry permanent and available.
 
 USD must become the system/accounting Base / Reference Currency, permanently at rate
 1.000000. This is distinct from Client Default, which may be any enabled subscriber currency.
@@ -27,7 +27,14 @@ currency selection are display preferences only; they must not rewrite canonical
 provider costs, margins or historical orders. Future provider costs remain conceptually USD.
 Existing DZD-denominated amounts must never simply be relabelled USD: legacy conversion
 requires an explicitly approved, value-preserving migration strategy. No automatic cutover
-of existing businesses is authorized by this architectural decision alone.
+of populated non-USD businesses is authorized. The user approved safe initialization only
+for verified empty Development businesses; ambiguous legacy currency configuration stays blocked.
+
+Use 12-decimal canonical USD precision and six-decimal manual rates in future provider work.
+**Why:** Cent-only storage cannot preserve provider costs or reciprocally converted legacy
+prices; extra canonical precision prevents early rounding from changing business economics.
+**How to apply:** Keep provider costs and selling amounts in the same precise USD domain;
+round only presentation, and never promote a cents compatibility projection to authority.
 
 **Why:** The user now requires USD as the reference for future service-provider API costs,
 while explicitly protecting the economic meaning of existing prices and order snapshots.
@@ -39,7 +46,8 @@ licence eligibility, immutable public slug, independent admin authorization and 
 adapter; do not reinterpret an unavailable module as permission to delete data or change core SaaS behavior.
 
 Commercial conversion rounds the unit price once and sums quantity-multiplied lines.
-Existing private order amounts stay base-valued, with immutable commercial display snapshots.
+Historical order views display the original customer snapshot, independently of current panel
+currency or rates. Legacy orders without snapshots keep their original denomination.
 
 **Why:** Displayed unit × quantity must equal displayed line totals, and adding visitor currencies
 must not silently change the units of existing subscriber reports or historical orders.

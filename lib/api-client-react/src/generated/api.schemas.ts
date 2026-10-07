@@ -617,7 +617,7 @@ export interface CommerceEnvelope {
 }
 
 /**
- * Resource-specific input, strictly validated by the server. Money inputs are decimal strings; server stores integer minor units.
+ * Strict resource inputs. Products price/compare_at are canonical USD decimal strings, max 12 decimals; price_usd_units is the authoritative 10^12-scaled integer in model 2. price_minor is a derived cents projection only. Currency rates are manual target units per USD, max six decimals. display-currency accepts {code} and persists a user display preference only. Model 1 amounts retain their legacy denomination. Quotes/snapshots expose money_model_version, canonical_scale and immutable converted customer amounts.
  */
 export interface CommerceInput { [key: string]: unknown }
 

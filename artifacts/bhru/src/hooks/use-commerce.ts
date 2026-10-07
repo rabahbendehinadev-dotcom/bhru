@@ -8,7 +8,7 @@ import {
 } from '@workspace/api-client-react';
 
 export type Resource = 'overview' | 'products' | 'categories' | 'orders' | 'customers' | 'settings' | 'currencies';
-type Writable = 'products' | 'categories' | 'settings' | 'orders' | 'currencies';
+type Writable = 'products' | 'categories' | 'settings' | 'orders' | 'currencies' | 'display-currency';
 
 export const subReq = (extra: { headers?: Record<string, string> } = {}) => ({
   credentials: 'same-origin' as const,
@@ -34,7 +34,7 @@ export function useCommerceEnabled() {
 
 export function useCommerceList<T = unknown>(resource: Resource, params?: GetCommerceResourceParams, enabled = true) {
   const { session } = useStore();
-  const q = useGetCommerceResource(resource, params, { request: subReq(), query: { queryKey: ['/api/commerce', session.role, session.subscriberId, resource, params ?? {}], enabled: enabled && session.role === 'subscriber', refetchOnWindowFocus: true } });
+  const q = useGetCommerceResource(resource, params, { request: subReq(), query: { queryKey: ['/api/commerce', session.role, session.subscriberId, resource, params ?? {}], enabled: enabled && session.role === 'subscriber', refetchOnWindowFocus: true,staleTime:0,refetchOnMount:'always',refetchInterval:resource==='currencies'?60000:false,gcTime:resource==='currencies'?0:undefined } });
   return { ...q, rows: (q.data?.data ?? undefined) as T | undefined, hasMore: q.data?.has_more === true };
 }
 

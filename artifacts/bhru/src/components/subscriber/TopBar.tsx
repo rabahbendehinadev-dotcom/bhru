@@ -7,6 +7,7 @@ import { useAdminPath } from '@/lib/admin-entry';
 import { useCommerceEnabled } from '@/hooks/use-commerce';
 import { SEARCH_INDEX } from './nav-catalog';
 import { ThemeToggle } from './ThemeToggle';
+import { PanelCurrencySelector } from './PanelCurrencySelector';
 import { EmptyState } from './EmptyState';
 import { ServerClock } from './ServerClock';
 import { InstallOption } from './PwaInstall';
@@ -90,6 +91,7 @@ export function TopBar({ business, owner, onToggleSidebar, onOpenSearch }: { bus
 
       <div className="ml-auto flex items-center gap-1 sm:gap-3">
         <button className="sl-icon-btn md:hidden" onClick={onOpenSearch} aria-label="Search pages"><Search size={15} /></button>
+<PanelCurrencySelector />
         <ThemeToggle />
         <ServerClock />
         <div className="relative" ref={bell.ref}>

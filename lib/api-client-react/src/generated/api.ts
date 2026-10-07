@@ -454,7 +454,7 @@ export function useGetCommerceResource<TData = Awaited<ReturnType<typeof getComm
 
 
 
-export const getSaveCommerceResourceUrl = (resource: 'products' | 'categories' | 'settings' | 'orders' | 'currencies',) => {
+export const getSaveCommerceResourceUrl = (resource: 'products' | 'categories' | 'settings' | 'orders' | 'currencies' | 'display-currency',) => {
 
 
 
@@ -462,7 +462,7 @@ export const getSaveCommerceResourceUrl = (resource: 'products' | 'categories' |
   return `/api/commerce/${resource}`
 }
 
-export const saveCommerceResource = async (resource: 'products' | 'categories' | 'settings' | 'orders' | 'currencies',
+export const saveCommerceResource = async (resource: 'products' | 'categories' | 'settings' | 'orders' | 'currencies' | 'display-currency',
     commerceInput: CommerceInput, options?: Parameters<typeof customFetch>[1]): Promise<CommerceEnvelope> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
@@ -524,7 +524,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SaveCommerceResourceMutationResult = NonNullable<Awaited<ReturnType<typeof saveCommerceResource>>>
     export type SaveCommerceResourceMutationBody = BodyType<CommerceInput>
     export type SaveCommerceResourceMutationError = ErrorType<unknown>
-    export type SaveCommerceResourceMutationVariables = {resource: 'products' | 'categories' | 'settings' | 'orders' | 'currencies';data: BodyType<CommerceInput>}
+    export type SaveCommerceResourceMutationVariables = {resource: 'products' | 'categories' | 'settings' | 'orders' | 'currencies' | 'display-currency';data: BodyType<CommerceInput>}
 
     export const useSaveCommerceResource = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCommerceResource>>, TError,SaveCommerceResourceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}

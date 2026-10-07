@@ -23,7 +23,7 @@ export async function requireCommerce(id:string,client:DB=pool) {
 export async function storeSettings(id:string,client:DB=pool):Promise<StoreSettings> {
   const row=(await client.query('SELECT * FROM store_settings WHERE subscriber_id=$1 FOR SHARE',[id])).rows[0];
   if(!row)throw new HttpError(503,'Store settings are unavailable. Apply the currency initialization migration.');
-  return Object.fromEntries(Object.keys(DEFAULT_STORE).map(key=>[key,row[key]])) as StoreSettings;
+  return {...Object.fromEntries(Object.keys(DEFAULT_STORE).map(key=>[key,row[key]])),money_model_version:row.money_model_version} as StoreSettings;
 }
 export async function publicStore(slug:string,client:DB=pool) {
   if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||slug.length>63) throw new HttpError(404,'Store not available.');
@@ -61,7 +61,7 @@ export async function products(id:string,client:DB=pool,options:{page?:number;se
     WHERE i.subscriber_id=p.subscriber_id AND i.product_id=p.id),'[]'::json) AS images
     FROM store_products p WHERE ${where} ORDER BY ${options.featuredFirst?'p.featured DESC,':''}p.sort_order,p.created_at DESC
     LIMIT $${params.length-1} OFFSET $${params.length}`,params)).rows;
-  const data=rows.slice(0,PAGE_SIZE).map(({subscriber_id,...r})=>({...r,images:r.images.map((a:{id:string;key:string;width:number;height:number})=>({id:a.id,url:(options.publicOnly?publicImageUrl:previewImageUrl)(a.id,a.key),width:a.width,height:a.height}))}));
+  const data=rows.slice(0,PAGE_SIZE).map(({subscriber_id,provider_cost_usd_units,...r})=>({...r,...(options.publicOnly?{}:{provider_cost_usd_units}),images:r.images.map((a:{id:string;key:string;width:number;height:number})=>({id:a.id,url:(options.publicOnly?publicImageUrl:previewImageUrl)(a.id,a.key),width:a.width,height:a.height}))}));
   return {data,page:options.page??1,has_more:rows.length>PAGE_SIZE};
 }
 export async function orderDetail(id:string,orderId:string,client:DB=pool) {

@@ -5,24 +5,26 @@ export const STOREFRONT_MONEY_SCRIPT = String.raw`(function(){
 'use strict';
 var cfg;try{cfg=JSON.parse(document.getElementById('sf-config').textContent);}catch(e){return;}
 var key='bhru-storefront-preferences:'+cfg.slug,rows=cfg.currencies.slice(),selectedCode=cfg.defaultCurrency;
-var historical=false,lockedToBase=false,historicalReadOnly=false,MAX=9223372036854775807n;
+var historical=false,lockedToBase=false,historicalReadOnly=false,MAX=9223372036854775807n,moneyScale=cfg.moneyScale||2;
 if(cfg.view==='confirmation'){
  var receipt;try{receipt=JSON.parse(sessionStorage.getItem('bhru-receipt:'+cfg.slug)||'null');}catch(e){}
  if(receipt){
   historical=true;
   if(receipt.currency_snapshot&&receipt.currency_snapshot.currencies){
-   var savedRows=receipt.currency_snapshot.currencies;
-   rows=rows.map(function(c){return savedRows.filter(function(s){return s.code===c.code;})[0];}).filter(Boolean);
-   if(!rows.length){rows=[receipt.currency_snapshot.currency];selectedCode=rows[0].code;historicalReadOnly=true;}
-  }else{rows=rows.filter(function(c){return c.code===receipt.currency&&c.is_base;});lockedToBase=true;}
+   rows=[receipt.currency_snapshot.currency];selectedCode=rows[0].code;cfg.defaultCurrency=selectedCode;
+   moneyScale=receipt.currency_snapshot.canonical_scale||2;historicalReadOnly=true;
+  }else{
+   rows=[{code:receipt.currency,name:receipt.currency,prefix:'',suffix:receipt.currency,number_format:'1,234.56',rate:'1.000000',decimals:2,enabled:true,client_default:true,is_base:true}];
+   selectedCode=receipt.currency;cfg.defaultCurrency=selectedCode;moneyScale=2;lockedToBase=true;historicalReadOnly=true;
+  }
  }
 }
 function getSaved(){try{return JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){return {};}}
 var saved=getSaved();if(rows.some(function(c){return c.code===saved.currency;}))selectedCode=saved.currency;
 function selected(){return rows.filter(function(c){return c.code===selectedCode;})[0]||rows.filter(function(c){return c.code===cfg.defaultCurrency;})[0]||rows.filter(function(c){return c.is_base;})[0]||rows[0];}
 function convert(raw,c){
- var parts=c.rate.split('.'),units=BigInt(parts[0])*100000n+BigInt((parts[1]||'').padEnd(5,'0'));
- var d=10000000n,answer=(BigInt(raw)*units*10n**BigInt(c.decimals)+d/2n)/d;
+ var parts=c.rate.split('.'),units=BigInt(parts[0])*1000000n+BigInt((parts[1]||'').padEnd(6,'0'));
+ var d=10n**BigInt(moneyScale)*1000000n,answer=(BigInt(raw)*units*10n**BigInt(c.decimals)+d/2n)/d;
  if(answer<0n||answer>MAX)throw new Error('Converted amount exceeds safe money limit');return answer;
 }
 function format(value,c){
@@ -54,6 +56,7 @@ function select(code){
 }
 function resolve(snapshot,requestedCode){
  if(historical||!snapshot)return;
+ moneyScale=snapshot.canonical_scale||2;
  rows=snapshot.currencies;cfg.defaultCurrency=(rows.filter(function(c){return c.client_default;})[0]||snapshot.currency).code;
  if(selectedCode===requestedCode||!rows.some(function(c){return c.code===selectedCode;}))selectedCode=snapshot.currency.code;
  select(selectedCode);

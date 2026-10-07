@@ -50,7 +50,7 @@ function sync(){
  var notes=[];
  if(cfg.translatedLanguages.indexOf(lang.code)===-1)notes.push(lang.name+' selected. Translations are not available yet; storefront content remains English.');
  if(money&&money.historical)notes.push('Order totals use the commercial rates saved at order submission.');
- if(money&&money.historicalReadOnly)notes.push('This order keeps its original currency: no currently enabled currency has a saved historical rate.');
+ if(money&&money.historicalReadOnly)notes.push('This receipt retains its original customer currency and recorded order economics.');
  var notice=header.querySelector('[data-sf-notice]');notice.textContent=notes.join(' ');notice.hidden=!notes.length;
  window.bhruStorefrontContext=Object.freeze({store:cfg.slug,requestedLanguage:lang.code,contentLanguage:'en',direction:lang.rtl?'rtl':'ltr',requestedCurrency:selected.currency,displayCurrency:selected.currency,baseCurrency:cfg.baseCurrency,rate:currency?currency.rate:null,conversionAvailable:!!currency,conversionSource:'subscriber-manual'});
 }
