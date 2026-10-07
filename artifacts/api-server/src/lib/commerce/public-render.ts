@@ -5,6 +5,7 @@ import { renderServices } from '../public-site/components/services';
 import { renderCta } from '../public-site/components/cta';
 import type { StoreSettings } from './validation';
 import { COMMERCE_SCRIPT } from './public-script';
+import { PUBLIC_CATALOG_STYLES } from './public-catalog-styles';
 
 type View = 'home' | 'product' | 'cart' | 'checkout' | 'confirmation';
 interface Img { id?: string; url: string; width?: number; height?: number }
@@ -161,7 +162,7 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
     page: view === 'home' ? num(data?.page, 1) : 1,
     categories: view === 'home' ? cats.map(c => ({ id: c.id, name: c.name })) : [],
   };
-  html = html.replace('</style></head>', () => `${CSS}</style></head>`);
+  html = html.replace('</style></head>', () => `${CSS}${view === 'home' ? PUBLIC_CATALOG_STYLES : ''}</style></head>`);
   const tail = `${live}<script type="application/json" id="cx-config">${inlineJSON(cfg)}</script><script>${COMMERCE_SCRIPT}</script>`;
   const end = html.lastIndexOf('</body>');
   return end >= 0 ? html.slice(0, end) + tail + html.slice(end) : html + tail;

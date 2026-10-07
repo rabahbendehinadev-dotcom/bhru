@@ -1,0 +1,77 @@
+Improve ONLY the public E-Commerce product catalog UI.
+
+Do not change database schema, migrations, APIs, checkout, cart logic, orders,
+entitlements, CMS, Hero/Banner, Top Area, authentication or private admin.
+
+The current public product grid works functionally, but visually it is too large
+and leaves unused empty space on desktop.
+
+GOAL:
+Make the catalog feel like a modern professional marketplace similar in density
+and polish to AliExpress, while keeping the existing BHRU visual identity.
+
+DESKTOP PRODUCT GRID
+- Use the available content width efficiently.
+- Responsive auto-fit grid.
+- Target approximately:
+  - large desktop: 5 products per row when space permits
+  - normal desktop: 4 products
+  - tablet: 3 products
+  - mobile: 2 products per row
+  - very narrow mobile: 2 compact cards if still readable
+- Do not leave a large empty area on the right when more products can fit.
+
+PRODUCT CARDS
+Make cards more compact and consistent.
+
+Image area:
+- All cards must have exactly the same image-area height/aspect ratio.
+- Product images must never change card dimensions.
+- Use object-fit: contain.
+- Center images.
+- Neutral/light image background.
+- Add internal padding.
+- Never crop logos/product artwork.
+- Lazy-load non-visible product images.
+- Keep card layout stable while images load.
+
+Card content:
+- Product name: maximum 2 lines with ellipsis.
+- Category: small muted text.
+- Price must be visually prominent.
+- Availability/stock should be small and secondary.
+- Reduce unnecessary vertical whitespace.
+- Keep every card in a row visually aligned.
+- Add to Cart button should remain aligned at the bottom of every card.
+
+INTERACTION
+- Whole product card/image/name can open the existing product detail page.
+- Keep Add to Cart working independently.
+- Add a subtle hover elevation/border effect on desktop.
+- Do not introduce heavy animations.
+
+CATALOG CONTAINER
+- Give the product catalog a proper centered max-width container.
+- Use consistent gaps between cards.
+- Keep category filters above the products.
+- Improve spacing between header, filters and first product row.
+- Do not create fake products or promotional content.
+
+IMPORTANT:
+The catalog must automatically handle 1, 5, 20, 100+ products without manual layout changes.
+
+MOBILE
+This is important:
+- Aim for an AliExpress-style compact 2-column product grid.
+- Image proportions must stay consistent.
+- Product name and price must remain readable.
+- Add-to-cart must remain usable without making cards excessively tall.
+- No horizontal page overflow.
+
+Do not redesign the rest of the public website.
+
+Do not run browser/E2E/full regression suites.
+Only run the minimum type/build checks necessary to confirm the change compiles.
+
+Then stop and report exactly which public storefront files were changed.
+Do not push or deploy.
