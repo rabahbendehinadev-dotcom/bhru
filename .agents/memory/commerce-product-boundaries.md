@@ -54,3 +54,13 @@ must not silently change the units of existing subscriber reports or historical 
 
 **How to apply:** Keep the same rounding boundary across all public pages; future reporting must
 explicitly distinguish base values from the commercial currency snapshot.
+
+Migration verification must identify the subscriber shown in the user's runtime before claiming
+that their account was initialized. Aggregate Development counts can consist entirely of
+verification accounts and do not establish the state of a subscriber in another environment.
+
+**Why:** A successful empty-account migration report did not match the user's currency screen;
+the subscriber shown was absent from the inspected Development database.
+**How to apply:** Verify runtime environment and tenant identity first, then inspect that tenant's
+money/version, full product/order counts and currency configuration. Never use an aggregate
+success count as evidence that a particular subscriber was migrated.

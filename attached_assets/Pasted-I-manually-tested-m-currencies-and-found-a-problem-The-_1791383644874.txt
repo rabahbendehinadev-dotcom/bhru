@@ -1,0 +1,83 @@
+I manually tested /m/currencies and found a problem.
+
+The current subscriber "unlock Gab" is still showing:
+
+Accounting Reference: DZD
+DZD rate: 1.000000
+USD rate: 1.000000
+
+And the page shows:
+
+"Currency conversion required. Legacy prices are still stored in the old currency model. Currency and product reference edits are disabled until your account is migrated to USD base pricing."
+
+This does NOT match the implementation report.
+
+You reported that:
+- Development has 22 USD-model stores
+- 21 former DZD stores were safely initialized
+- Product/order counts are zero
+- migration 013 safely initializes empty subscribers to USD
+
+But this subscriber is visibly still using DZD as Accounting Reference.
+
+DO NOT change data manually yet.
+
+Investigate this exact subscriber and explain why migration 013 did not move it to the USD model.
+
+Check:
+
+1. subscriber/account identity for "unlock Gab"
+2. store_settings.currency
+3. currency rows
+4. money model/version metadata
+5. product count
+6. order count
+7. any other condition that makes the account non-empty or blocks safe USD initialization
+8. whether migration 013 actually ran for this subscriber
+9. whether the UI is reading stale/legacy state
+10. whether there is a mismatch between the migration state and runtime API state
+
+IMPORTANT:
+
+If this subscriber truly has:
+- zero products
+- zero orders
+- no monetary business data requiring preservation
+
+then it should NOT remain blocked behind a legacy conversion warning.
+
+For a genuinely empty subscriber, the expected final state is:
+
+Accounting Reference:
+USD
+
+USD:
+Rate = 1.000000
+BASE / REFERENCE
+
+DZD:
+available as a normal non-base currency
+Rate manually configurable, e.g. 260.000000
+
+Then I must be able to:
+- edit DZD rate
+- set DZD Client Default
+- keep USD as permanent Base
+- test Panel Display Currency
+
+Do not guess a DZD/USD conversion rate.
+
+If DZD is retained after safe empty-account initialization, it can remain configured but should require the subscriber to enter its commercial rate manually.
+
+Do not touch populated legacy subscribers.
+
+Do not push.
+Do not deploy.
+Do not touch Production.
+Do not run long tests.
+
+First investigate this exact mismatch.
+
+If the account is confirmed empty and the fix is deterministic and safe, fix the Development initialization/runtime issue and report exactly what was wrong and what you changed.
+
+Then stop so I can manually retest /m/currencies.
