@@ -34,6 +34,6 @@ export const orderInput=linesInput.extend({
   address:text(500).default(''),note:text(1000).default(''),
   currency_rate:z.string().regex(/^\d{1,9}(?:\.\d{1,5})?$/).optional(),
 }).strict();
-export const DEFAULT_STORE={enabled:false,title:'Our Products',currency:'DZD',featured_first:true,email_mode:'optional',address_mode:'optional',show_state:true,show_city:true,show_note:true,whatsapp:'',confirmation_message:'Thank you. Your order has been received.'};
+export const DEFAULT_STORE={enabled:false,title:'Our Products',currency:'USD',featured_first:true,email_mode:'optional',address_mode:'optional',show_state:true,show_city:true,show_note:true,whatsapp:'',confirmation_message:'Thank you. Your order has been received.'};
 export type StoreSettings=typeof DEFAULT_STORE & {subscriber_id?:string};
 export const PAGE_SIZE=24;

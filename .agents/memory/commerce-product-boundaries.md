@@ -20,6 +20,14 @@ Keep authoritative base prices and base order totals intact; retain immutable cu
 snapshots for confirmation and historical display. Only the Client Default entry is protected
 against disabling/deletion; base prices remain anchored independently of currency visibility.
 
+New subscribers start with USD as both the initial accounting reference and enabled Client
+Default, at identity rate 1, with `$` prefix and `USD` suffix. Do not force DZD. Each tenant may
+choose another enabled Client Default without changing the accounting reference or repricing
+products. Preserve existing tenants' saved currencies, commercial rates and defaults.
+
+**Why:** The user explicitly requires a freely selectable tenant-owned storefront default and
+USD initialization for new subscribers only, never a silent conversion of existing businesses.
+
 **Why:** The user explicitly defined these product boundaries for the first commerce phase.
 
 **How to apply:** Preserve these boundaries in future commerce work. Reuse the existing subscriber

@@ -1,0 +1,321 @@
+Modify ONLY the existing BHRU Currencies module.
+
+Do not redesign unrelated pages.
+Do not change authentication, Platform Admin, E-Commerce architecture, public-site CMS, slugs, media storage, or existing migration history.
+Do not run browser/E2E/full regression tests. I will test manually.
+
+GOAL
+Rework Settings → Currencies so its behavior and compact layout are closer to the supplied DHRU Currencies reference screenshot.
+
+IMPORTANT BUSINESS RULE
+
+BHRU must NOT force DZD as the subscriber's default currency.
+
+For NEW subscribers:
+- USD must be created as the initial/default currency.
+- USD rate = 1.00000.
+- USD enabled = true.
+- USD Client Default = true.
+
+Each subscriber must then be free to choose their own Client Default currency later.
+
+Examples:
+USD may remain default.
+Or subscriber may change default to DZD, EUR, GBP, etc.
+
+This setting belongs to each subscriber/tenant independently.
+
+==================================================
+1. REDESIGN CURRENCIES PAGE
+==================================================
+
+Replace the current large currency cards with a compact ERP-style table similar to the supplied DHRU screenshot.
+
+Desktop columns:
+
+Code
+Prefix
+Suffix
+Format
+Rate
+Live
+Client Default
+Action
+
+At the top provide an inline "Add Currency" row.
+
+Currency:
+searchable/selectable standard currency list.
+
+Prefix:
+optional prefix displayed before amount.
+Examples:
+$
+€
+£
+
+Suffix:
+optional suffix displayed after amount.
+Examples:
+USD
+DZD
+EUR
+
+Format:
+select/input for formatting examples such as:
+1,000.99
+1.000,99
+1000.99
+
+Rate:
+manual commercial exchange rate.
+
+Live:
+enabled/disabled toggle.
+
+Client Default:
+radio/select action allowing the subscriber to choose the default currency.
+
+Action:
+Edit
+Delete where allowed.
+
+Keep the visual style consistent with the existing white BHRU subscriber ERP:
+white background,
+compact rows,
+subtle borders,
+small professional controls,
+BHRU orange only for primary actions/active state.
+
+Do not copy the old DHRU blue theme.
+
+On mobile, make the currency management responsive and usable.
+Do not create page-level horizontal overflow.
+
+==================================================
+2. DEFAULT CURRENCY
+==================================================
+
+There must always be exactly ONE enabled Client Default currency per subscriber.
+
+The subscriber can change it themselves.
+
+When selecting another currency as Client Default:
+
+1. validate that currency is enabled;
+2. set it as Client Default;
+3. atomically remove Client Default from the previous currency;
+4. persist immediately/safely;
+5. update public storefront behavior.
+
+Never allow:
+- two Client Defaults;
+- zero Client Defaults;
+- deleting the current Client Default;
+- disabling the current Client Default.
+
+To delete/disable it, user must first choose another default.
+
+==================================================
+3. NEW SUBSCRIBER DEFAULT = USD
+==================================================
+
+Change initialization behavior for NEW subscribers only.
+
+New subscribers should receive:
+
+USD
+Prefix: $
+Suffix: USD
+Format: 1,000.99
+Rate: 1.00000
+Enabled: true
+Client Default: true
+
+IMPORTANT:
+Do NOT silently modify existing subscriber currency configurations.
+
+Existing subscribers must retain their saved data.
+
+If a migration/backfill is required, preserve existing tenants exactly.
+
+==================================================
+4. MANUAL RATES
+==================================================
+
+Do NOT use external FX APIs.
+
+The subscriber controls their own commercial exchange rates manually.
+
+Example if USD is the default/base reference:
+
+USD = 1.00000
+DZD = 260.00000
+EUR = subscriber-defined value
+
+Do not invent rates.
+
+The Rate field must be editable.
+
+Keep integer-money/BigInt safety already implemented for commerce calculations.
+
+==================================================
+5. PUBLIC CUSTOMER CURRENCY SELECTOR
+==================================================
+
+The public website/storefront must use the subscriber's enabled currencies.
+
+When a visitor first opens the website:
+
+use the subscriber's Client Default currency.
+
+Example:
+Client Default = USD
+
+Visitor initially sees:
+$20.00
+
+If DZD is enabled, the visitor can open the currency selector and choose DZD.
+
+Then all public monetary displays must switch consistently:
+
+homepage product prices
+product detail
+cart
+checkout
+order totals
+
+Do NOT change the underlying product base price merely because the visitor changed display currency.
+
+Persist visitor currency selection using the existing tenant-separated storefront preference storage.
+
+If the selected currency later becomes disabled/deleted:
+fallback automatically to current Client Default.
+
+==================================================
+6. ORDERS
+==================================================
+
+Keep immutable currency snapshots for orders.
+
+An order must retain:
+currency code,
+rate used,
+prefix/suffix,
+number format,
+calculated totals
+
+as they existed when the order was submitted.
+
+Changing currency settings later must NOT rewrite old orders.
+
+==================================================
+7. BASE / DEFAULT CONCEPT
+==================================================
+
+Review the current implementation carefully because the UI currently exposes DZD as "Base".
+
+Do not hard-code DZD anywhere.
+
+If the architecture requires an internal accounting/base currency, keep that concern separate from "Client Default".
+
+The public storefront default must always come from the subscriber's selected Client Default.
+
+If an internal base/reference currency is necessary for conversion calculations, make the relationship explicit and safe rather than assuming DZD.
+
+For new subscribers, USD should be the initial reference/default.
+
+Do not perform destructive conversion of existing product prices.
+
+==================================================
+8. OPTIONAL PRECISION SETTING
+==================================================
+
+Under the table add a compact setting similar to DHRU:
+
+Credit / Currency Precision
+
+Allow sensible values such as:
+0
+2
+3
+4
+
+Default should remain compatible with existing BHRU money formatting.
+
+Do not allow this setting to corrupt integer stored money.
+
+It controls display precision only unless the current architecture already safely supports more.
+
+==================================================
+9. DO NOT ADD RESET PRICING YET
+==================================================
+
+The DHRU screenshot contains "Reset Currency Price".
+
+Do NOT implement destructive bulk price recalculation in this task.
+
+We will decide that behavior separately.
+
+==================================================
+10. DATABASE / TENANT SAFETY
+==================================================
+
+Every currency row/settings record must remain subscriber-owned.
+
+Subscriber A must never read or modify Subscriber B currencies.
+
+Use existing tenant ownership patterns.
+
+Use an additive migration only if necessary.
+
+Never edit migrations 001–010 already applied.
+
+If schema work is required, create the next migration number.
+
+Do not seed fake rates.
+
+Do not modify production.
+
+==================================================
+11. KEEP EXISTING WORKING FEATURES
+==================================================
+
+Preserve:
+- public currency selector
+- commerce conversion
+- cart
+- checkout
+- confirmation
+- immutable order currency snapshots
+- RTL/language behavior
+- storefront tenant preference storage
+
+Refactor only where required to support the new default-currency model and UI.
+
+==================================================
+12. FINISHING
+==================================================
+
+Run only:
+- type checks
+- build / compile checks required for changed code
+- migration syntax/integrity checks if a migration was added
+
+Do NOT run:
+- browser automation
+- E2E
+- full regression suite
+- production deployment
+
+At completion report:
+
+1. exact files changed
+2. whether a new migration was required
+3. exact rule used for new subscriber USD initialization
+4. how Client Default switching works
+5. how existing subscribers were preserved
+6. how storefront currency selection works
+7. any remaining manual-test items
+
+Then STOP so I can manually test in Replit Preview.

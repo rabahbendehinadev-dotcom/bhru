@@ -20,7 +20,9 @@ export async function currencyConfig(id: string, client: PoolClient) {
   return { base_currency: await baseCurrency(id,client), currencies: rows, catalog: currencyCatalog };
 }
 async function baseCurrency(id: string,client: PoolClient): Promise<string> {
-  return (await client.query("SELECT coalesce((SELECT currency FROM store_settings WHERE subscriber_id=$1),'DZD') AS code",[id])).rows[0].code;
+  const row=(await client.query('SELECT currency AS code FROM store_settings WHERE subscriber_id=$1',[id])).rows[0];
+  if(!row)throw new HttpError(503,'Accounting reference is unavailable. Apply the currency initialization migration.');
+  return row.code;
 }
 export async function saveCurrency(id: string, raw: unknown, client: PoolClient) {
   const input = currencyInput.parse(raw);

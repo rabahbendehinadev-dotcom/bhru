@@ -22,7 +22,8 @@ export async function requireCommerce(id:string,client:DB=pool) {
 }
 export async function storeSettings(id:string,client:DB=pool):Promise<StoreSettings> {
   const row=(await client.query('SELECT * FROM store_settings WHERE subscriber_id=$1 FOR SHARE',[id])).rows[0];
-  return row ? Object.fromEntries(Object.keys(DEFAULT_STORE).map(key=>[key,row[key]])) as StoreSettings : {...DEFAULT_STORE};
+  if(!row)throw new HttpError(503,'Store settings are unavailable. Apply the currency initialization migration.');
+  return Object.fromEntries(Object.keys(DEFAULT_STORE).map(key=>[key,row[key]])) as StoreSettings;
 }
 export async function publicStore(slug:string,client:DB=pool) {
   if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||slug.length>63) throw new HttpError(404,'Store not available.');
