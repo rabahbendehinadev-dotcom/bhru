@@ -1,0 +1,84 @@
+We have identified a production-only DNS resolution issue in the BHRU Custom Domains verification flow.
+
+Confirmed production evidence:
+
+1. On the VPS host, public DNS resolves correctly:
+
+dig +short TXT _bhru-verify.businesshubs.net @1.1.1.1
+dig +short TXT _bhru-verify.businesshubs.net @8.8.8.8
+
+Both return the expected ownership token.
+
+2. Inside the BHRU Docker container, Node's default resolver fails:
+
+require('dns').promises.resolveTxt('_bhru-verify.businesshubs.net')
+
+returns:
+ENOTFOUND
+
+3. Inside the same container, an explicit public DNS Resolver works immediately:
+
+const dns = require('dns');
+const r = new dns.promises.Resolver();
+r.setServers(['1.1.1.1', '8.8.8.8']);
+
+r.resolveTxt('_bhru-verify.businesshubs.net')
+
+returns the correct TXT token.
+
+TASK:
+
+Fix the Custom Domains public DNS verification implementation so it does not depend only on Docker's default embedded DNS resolver.
+
+Requirements:
+
+- Create/use a dedicated DNS resolver only for external/public custom-domain checks.
+- Default DNS servers:
+  1.1.1.1
+  8.8.8.8
+
+- Make them configurable through an environment variable such as:
+  BHRU_DOMAIN_DNS_SERVERS=1.1.1.1,8.8.8.8
+
+- Do NOT use dns.setServers() globally.
+- Do NOT change DNS resolution globally for the Node process.
+- Do NOT affect internal Docker/service-name resolution such as:
+  bhru-bhrudb-33flhl
+  bhru-bhrufront-kjnnli
+
+- Only the Custom Domains external verification layer should use the dedicated resolver.
+
+Use it consistently for all public DNS checks involved in Custom Domains, including where applicable:
+- TXT ownership verification
+- A
+- AAAA
+- CNAME
+
+Preserve exactly:
+- existing ownership-token logic
+- current rate limiting
+- tenant isolation
+- domain normalization
+- domain limits
+- Traefik generation
+- SSL lifecycle
+- current API/UI behavior
+
+Handle DNS errors cleanly:
+- ENOTFOUND / ENODATA = record missing
+- ETIMEOUT / SERVFAIL / temporary resolver failures = retryable DNS verification failure
+- never incorrectly mark a domain verified on DNS errors
+
+Do not create a migration unless absolutely necessary.
+
+Run only focused TypeScript/build checks for the affected backend code.
+
+Do not redesign the UI.
+Do not touch unrelated modules.
+Do not push or deploy.
+
+At the end, report:
+1. files changed
+2. exact resolver behavior
+3. whether a new env var is required
+4. focused checks performed
