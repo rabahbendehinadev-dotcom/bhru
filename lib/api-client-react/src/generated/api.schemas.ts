@@ -576,6 +576,49 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface CommerceAsset {
+  id: string;
+  url: string;
+  width?: number;
+  height?: number;
+}
+
+export interface CommerceAccess {
+  enabled: boolean;
+}
+
+export interface CommerceEnvelope {
+  data: unknown;
+  page?: number;
+  has_more?: boolean;
+}
+
+/**
+ * Resource-specific input, strictly validated by the server. Money inputs are decimal strings; server stores integer minor units.
+ */
+export interface CommerceInput { [key: string]: unknown }
+
+export type GetCommerceResourceParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @maxLength 100
+ */
+search?: string;
+status?: string;
+id?: string;
+};
+
+export type GetPublicCommerceCatalogParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+category?: string;
+};
+
 export type GetPublicSiteDocumentParams = {
 /**
  * @maxLength 2048

@@ -8,6 +8,141 @@
 import * as zod from 'zod';
 
 
+export const UploadCommerceAssetResponse = zod.object({
+  "id": zod.string().uuid(),
+  "url": zod.string(),
+  "width": zod.number().int().optional(),
+  "height": zod.number().int().optional()
+})
+
+
+export const DeleteCommerceAssetParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const DeleteCommerceAssetResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+export const GetCommerceAccessResponse = zod.object({
+  "enabled": zod.boolean()
+})
+
+
+export const GetCommerceResourceParams = zod.object({
+  "resource": zod.enum(['overview', 'products', 'categories', 'orders', 'customers', 'settings'])
+})
+
+
+export const getCommerceResourceQuerySearchMax = 100;
+
+
+
+export const GetCommerceResourceQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).optional(),
+  "search": zod.coerce.string().max(getCommerceResourceQuerySearchMax).optional(),
+  "status": zod.coerce.string().optional(),
+  "id": zod.coerce.string().uuid().optional()
+})
+
+export const GetCommerceResourceResponse = zod.object({
+  "data": zod.unknown(),
+  "page": zod.number().int().optional(),
+  "has_more": zod.boolean().optional()
+})
+
+
+export const SaveCommerceResourceParams = zod.object({
+  "resource": zod.enum(['products', 'categories', 'settings', 'orders'])
+})
+
+export const SaveCommerceResourceBody = zod.record(zod.string(), zod.unknown()).describe('Resource-specific input, strictly validated by the server. Money inputs are decimal strings; server stores integer minor units.')
+
+export const SaveCommerceResourceResponse = zod.object({
+  "data": zod.unknown(),
+  "page": zod.number().int().optional(),
+  "has_more": zod.boolean().optional()
+})
+
+
+export const ArchiveCommerceResourceParams = zod.object({
+  "resource": zod.enum(['products', 'categories']),
+  "id": zod.coerce.string().uuid()
+})
+
+export const ArchiveCommerceResourceResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+export const GetSubscriberCommerceModuleParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetSubscriberCommerceModuleResponse = zod.object({
+  "enabled": zod.boolean()
+})
+
+
+export const SetSubscriberCommerceModuleParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const SetSubscriberCommerceModuleBody = zod.object({
+  "enabled": zod.boolean()
+})
+
+export const SetSubscriberCommerceModuleResponse = zod.object({
+  "enabled": zod.boolean()
+})
+
+
+export const GetPublicCommerceCatalogParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+
+
+
+export const GetPublicCommerceCatalogQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).optional(),
+  "category": zod.coerce.string().uuid().optional()
+})
+
+export const GetPublicCommerceCatalogResponse = zod.object({
+  "data": zod.unknown(),
+  "page": zod.number().int().optional(),
+  "has_more": zod.boolean().optional()
+})
+
+
+export const QuotePublicCommerceCartParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const QuotePublicCommerceCartBody = zod.record(zod.string(), zod.unknown()).describe('Resource-specific input, strictly validated by the server. Money inputs are decimal strings; server stores integer minor units.')
+
+export const QuotePublicCommerceCartResponse = zod.object({
+  "data": zod.unknown(),
+  "page": zod.number().int().optional(),
+  "has_more": zod.boolean().optional()
+})
+
+
+export const CreatePublicCommerceOrderParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const CreatePublicCommerceOrderBody = zod.record(zod.string(), zod.unknown()).describe('Resource-specific input, strictly validated by the server. Money inputs are decimal strings; server stores integer minor units.')
+
+export const CreatePublicCommerceOrderResponse = zod.object({
+  "data": zod.unknown(),
+  "page": zod.number().int().optional(),
+  "has_more": zod.boolean().optional()
+})
+
+
 /**
  * Uses only public business/company names. Never loads session ownership,
  * account state, licence details or admin metadata. Existing application

@@ -37,6 +37,7 @@ export const NAV_DATA: NavEntryDef[] = [
     ...grp('Remote Service', ['Accepted Remote Orders', 'Remote Orders History']),
   ] },
   { id: 'inventory', label: 'Inventory', children: [{ label: 'Digital Inventory' }] },
+  { id: 'ecommerce', label: 'E-Commerce', href: '/m/ecommerce', children: [] },
   { id: 'cms-blog', label: 'CMS / Blog', children: ['Menu Manager', 'Custom Pages', 'Index Banner', 'Page Content', 'Testimonial', 'Gallery', 'Announcements', 'Blog', 'Flash Popup'].map((label): NavChildDef => ({ label })).concat([{ label: 'Public Website', slug: 'cms-blog-public-website' }]) },
   { id: 'reports-graphs', label: 'Reports/Graphs', children: [
     ...col(1, ['Top User by Income', 'Todays 10 Service by Revenue', 'Todays 10 Service by Orders', 'Top 10 Service by Revenue', 'Top 10 Service by Orders',

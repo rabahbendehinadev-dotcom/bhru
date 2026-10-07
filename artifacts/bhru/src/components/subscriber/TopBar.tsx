@@ -4,6 +4,7 @@ import { Bell, Check, ChevronDown, LogOut, Menu, Search, Server } from 'lucide-r
 import { logout, useStore, errorMessage } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminPath } from '@/lib/admin-entry';
+import { useCommerceEnabled } from '@/hooks/use-commerce';
 import { SEARCH_INDEX } from './nav-catalog';
 import { ThemeToggle } from './ThemeToggle';
 import { EmptyState } from './EmptyState';
@@ -19,10 +20,11 @@ export function SearchPalette({ onClose }: { onClose: () => void }) {
   const selected = useRef<HTMLButtonElement>(null);
   useEffect(() => { selected.current?.scrollIntoView({ block: 'nearest' }); }, [idx, q]);
   const [, nav] = useLocation();
+  const commerce = useCommerceEnabled();
   const res = useMemo(() => {
     const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    return SEARCH_INDEX.filter((r) => { const hay = `${r.label} ${r.context}`.toLowerCase(); return terms.every((w) => hay.includes(w)); });
-  }, [q]);
+    return SEARCH_INDEX.filter((r) => (commerce || r.href !== '/m/ecommerce') && (() => { const hay = `${r.label} ${r.context}`.toLowerCase(); return terms.every((w) => hay.includes(w)); })());
+  }, [q, commerce]);
   const go = (href: string) => { onClose(); nav(href); };
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/40 p-4 pt-[12vh]" onMouseDown={onClose}>

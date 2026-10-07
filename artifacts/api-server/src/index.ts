@@ -23,6 +23,8 @@ try {
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
   await pool.query("SELECT subscriber_id,logo_strip_settings,announcement_ticker_settings FROM public_site_presentation LIMIT 0");
   await pool.query("SELECT icon_text FROM public_site_announcements LIMIT 0");
+  await pool.query("SELECT subscriber_id FROM subscriber_modules LIMIT 0");
+  await pool.query("SELECT id FROM store_orders LIMIT 0");
   const collision = await pool.query(
     "SELECT 1 FROM subscribers WHERE public_slug=lower($1) LIMIT 1", [adminPath.slice(1)],
   );

@@ -1,0 +1,1158 @@
+We are now starting a NEW major BHRU feature:
+
+========================================================
+BHRU E-COMMERCE MODULE
+Professional optional storefront for subscriber websites
+========================================================
+
+IMPORTANT CONTEXT
+
+BHRU is a multi-tenant SaaS.
+
+Each subscriber already has:
+- private subscriber panel
+- public website at /{public_slug}
+- shared frozen public website architecture
+- CMS / Blog → Public Website
+- branding
+- Partner / Image Strip
+- independent Announcement Ticker Rows
+- Hero / Banner slider
+- persistent subscriber-owned media
+- licence/subscription architecture
+- separate Platform Admin
+
+The existing Public Website / Top Area / Hero / Banner implementation is APPROVED.
+
+DO NOT redesign, rewrite, or break those existing features.
+
+This new E-Commerce feature must be an OPTIONAL MODULE layered cleanly onto the existing public website.
+
+========================================================
+1. PRODUCT VISION
+========================================================
+
+I want BHRU subscribers to be able to turn their public website into a professional online store similar in usability to modern hosted commerce platforms.
+
+A subscriber with the E-Commerce module enabled should be able to:
+
+- create products
+- upload product images
+- organize products into categories
+- set prices
+- manage availability
+- display products publicly
+- let visitors browse products
+- add products to a cart
+- change quantities
+- checkout WITHOUT creating an account
+- collect customer information
+- receive the order inside the subscriber panel
+- manage the order lifecycle
+
+This must remain fully multi-tenant.
+
+Subscriber A must NEVER see or modify Subscriber B's:
+- products
+- categories
+- images
+- carts/order data
+- customers
+- settings
+
+Public Store A must NEVER render Store B data.
+
+========================================================
+2. THIS IS A PAID OPTIONAL MODULE
+========================================================
+
+E-Commerce must NOT automatically be available to every subscriber.
+
+Create it as a subscriber module/entitlement.
+
+Conceptually:
+
+E-Commerce Module
+- enabled
+- disabled
+
+Only Platform Admin can grant or revoke the module for a subscriber.
+
+Subscriber users must NOT be able to activate the paid module themselves.
+
+When disabled:
+- subscriber store-management UI must not be usable
+- public shop/catalog/cart/checkout routes must not expose a functional store
+- existing normal public website continues working
+- existing data must NOT be deleted
+
+When re-enabled:
+- previous store data must still exist
+
+IMPORTANT:
+Module disable/revoke = access restriction.
+It must NEVER delete products, orders or store configuration.
+
+========================================================
+3. PLATFORM ADMIN CONTROL
+========================================================
+
+Extend the existing independent Platform Admin architecture.
+
+Add a clean module/entitlement control for:
+
+E-Commerce
+
+Platform Admin should be able to see whether E-Commerce is:
+- Enabled
+- Disabled
+
+and change it for the selected subscriber.
+
+Do NOT couple this to public-site CMS toggles.
+
+This is a SaaS entitlement controlled by Platform Admin.
+
+Design the entitlement architecture so more paid modules can be added later without rebuilding the system.
+
+Examples of future modules:
+- E-Commerce
+- API
+- Advanced Reports
+- Custom Domain
+- WhatsApp automation
+- other premium modules
+
+Do NOT implement those future modules now.
+
+Only make the architecture extensible.
+
+========================================================
+4. SUBSCRIBER PANEL NAVIGATION
+========================================================
+
+When E-Commerce is enabled, expose a professional store-management area in the subscriber panel.
+
+Use the existing BHRU shell/workspace/tab architecture.
+
+Do not create a second dashboard system.
+
+Create an E-Commerce workspace with sections such as:
+
+Store Overview
+Products
+Categories
+Orders
+Customers
+Store Settings
+
+Keep the UI consistent with the current BHRU panel.
+
+If the module is disabled:
+do not show normal functional store management.
+
+If a stale/direct route is opened, enforce entitlement server-side.
+
+Frontend hiding is NOT security.
+
+========================================================
+5. STORE OVERVIEW
+========================================================
+
+Create a compact professional Store Overview.
+
+Useful information:
+
+- total products
+- active products
+- orders
+- new/pending orders
+- completed orders
+- recent orders
+
+Do not fabricate financial analytics.
+
+Only show values supported by actual stored order data.
+
+Keep this first version lightweight.
+
+========================================================
+6. PRODUCT MANAGEMENT
+========================================================
+
+Create professional product CRUD.
+
+Each product should support:
+
+CORE
+- Product name
+- Slug
+- Short description
+- Full description
+- Category
+- SKU optional
+- Price
+- Compare-at / old price optional
+- Currency based on store settings
+- Active / Draft
+- Featured
+- Sort/order position
+
+IMAGES
+- Main product image
+- Additional gallery images
+
+Use the existing secure subscriber-owned persistent media architecture.
+
+Do NOT create an unrelated second insecure upload system.
+
+Images must be subscriber-owned.
+
+Product image ownership must be enforced server-side.
+
+PRODUCT AVAILABILITY
+For Phase 1 support:
+
+- In stock
+- Out of stock
+
+Also support optional stock quantity if it fits cleanly into the architecture.
+
+Do not build a complex warehouse/ERP inventory engine.
+
+========================================================
+7. PRODUCT VARIANTS — DESIGN FOR THEM, KEEP PHASE 1 SAFE
+========================================================
+
+The data model should not block future variants such as:
+
+iPhone 15
+- 128GB
+- 256GB
+
+Colour:
+- Black
+- Blue
+
+But do NOT turn Phase 1 into a huge variant engine if it risks stability.
+
+If implementing variants now would significantly expand scope:
+prepare the architecture for variants and report them as Phase 2.
+
+Do not fake incomplete variant support.
+
+========================================================
+8. CATEGORIES
+========================================================
+
+Subscriber can create/manage categories.
+
+Each category:
+
+- name
+- slug
+- optional description
+- optional image
+- enabled/disabled
+- sort position
+
+Products may belong to a category.
+
+Category ownership must be subscriber-scoped.
+
+Public store should allow category filtering.
+
+========================================================
+9. PUBLIC WEBSITE INTEGRATION
+========================================================
+
+This is extremely important.
+
+DO NOT replace the current public website.
+
+The store must integrate BELOW the approved Top Area + Header + Hero/Banner.
+
+Expected page order:
+
+TOP AREA
+Partner/Image Strip
+Announcement Tickers
+
+HEADER / NAVIGATION
+
+HERO OR BANNER
+
+--------------------------
+STORE CONTENT STARTS HERE
+--------------------------
+
+Featured / Recent Products
+Categories / Filters
+Product cards
+Store browsing
+
+Existing subscriber branding must continue to apply.
+
+The result must feel like ONE website, not an iframe or a second unrelated application.
+
+========================================================
+10. PUBLIC PRODUCT SECTION
+========================================================
+
+When E-Commerce is enabled and products exist, show a professional product section below the Banner/Hero.
+
+Example:
+
+Our Products
+[ All ] [ Category 1 ] [ Category 2 ] ...
+
+Product grid:
+
+┌─────────────────┐
+│                 │
+│  PRODUCT IMAGE  │
+│                 │
+├─────────────────┤
+│ Product name    │
+│ 2,500 DZD       │
+│ [ Add to cart ] │
+└─────────────────┘
+
+Cards should be modern and clean.
+
+Desktop:
+responsive multi-column grid.
+
+Mobile:
+optimized one/two-column layout depending on available width.
+
+Avoid giant cards.
+
+Images:
+- stable dimensions
+- no layout shift
+- lazy load below fold
+- preserve aspect ratio
+- professional object-fit behavior
+
+========================================================
+11. PRODUCT DETAIL PAGE
+========================================================
+
+Create a public product route scoped through the subscriber public site.
+
+Do NOT use globally ambiguous product URLs.
+
+The route must resolve BOTH:
+- subscriber/public site
+- product
+
+Example conceptual structure:
+
+/{public_slug}/product/{product_slug}
+
+Product page should show:
+
+- image/gallery
+- product name
+- price
+- old price if configured
+- description
+- stock/availability
+- quantity selector
+- Add to Cart
+- Buy Now
+
+Optional:
+- related products from same subscriber/category
+
+Never leak related products from another subscriber.
+
+========================================================
+12. CART
+========================================================
+
+Create a real guest cart.
+
+Visitors DO NOT need an account.
+
+Cart features:
+
+- Add to Cart
+- Remove
+- increase quantity
+- decrease quantity
+- line subtotal
+- order subtotal
+- cart count in header
+- View Cart
+- Checkout
+
+The cart must remain scoped to the current public store.
+
+A visitor must not accidentally carry products from Subscriber A into Subscriber B checkout.
+
+Choose a clean architecture for guest cart persistence.
+
+It may use browser storage where appropriate, but server-side order creation must NEVER trust client-supplied product prices.
+
+IMPORTANT SECURITY RULE:
+
+At checkout, product price/name/availability must be resolved again from the server/database.
+
+Never trust:
+- price from localStorage
+- price from hidden input
+- subtotal sent by browser
+
+The server calculates authoritative totals.
+
+========================================================
+13. CART UX
+========================================================
+
+Add a professional cart access point to the public header when E-Commerce is enabled.
+
+Example:
+
+🛒 Cart (3)
+
+Desktop:
+may open a compact cart drawer or cart page.
+
+Mobile:
+must remain easy to access.
+
+Do not overcrowd the existing navigation.
+
+The cart UI should show:
+- thumbnail
+- name
+- quantity
+- price
+- remove
+- subtotal
+- Checkout CTA
+
+========================================================
+14. GUEST CHECKOUT
+========================================================
+
+This is one of the most important requirements.
+
+CUSTOMERS MUST BE ABLE TO ORDER WITHOUT REGISTERING.
+
+No account creation required.
+
+Checkout form Phase 1:
+
+Required:
+- Full name
+- Phone number
+
+Optional/configurable:
+- Email
+- Wilaya / State
+- City
+- Full address
+- Customer note
+
+The store owner should be able to configure which optional fields are shown/required where practical.
+
+For the initial implementation, at minimum:
+Full Name + Phone are mandatory.
+
+Show order summary before confirmation.
+
+========================================================
+15. ORDER CREATION
+========================================================
+
+When customer confirms checkout:
+
+Create an immutable order snapshot.
+
+The order must belong to the subscriber/store.
+
+Generate a human-friendly order reference.
+
+Example:
+ORD-20261007-XXXX
+
+Do not rely only on sequential public database IDs.
+
+Order must snapshot important purchase information so later product edits do not corrupt historical orders.
+
+Order snapshot should include:
+
+- product ID reference where applicable
+- product name at purchase
+- SKU if present
+- unit price at purchase
+- quantity
+- line total
+
+Order should also store:
+
+- customer full name
+- phone
+- email if supplied
+- wilaya/state
+- city
+- address
+- note
+- subtotal
+- total
+- currency
+- created time
+- status
+
+Server calculates totals.
+
+========================================================
+16. ORDER STATUS
+========================================================
+
+Phase 1 order statuses:
+
+New
+Confirmed
+Processing
+Completed
+Cancelled
+
+Use stable internal status values and translated/display labels separately.
+
+Subscriber can update status from panel.
+
+Maintain created_at / updated_at.
+
+If simple and safe, maintain a lightweight order status history/audit trail.
+
+Do not build an oversized workflow engine.
+
+========================================================
+17. SUBSCRIBER ORDERS PANEL
+========================================================
+
+Create a professional Orders page.
+
+Order list should include:
+
+- Order reference
+- Customer
+- Phone
+- Total
+- Currency
+- Status
+- Date/time
+
+Provide:
+
+- search
+- status filter
+- newest-first default
+- order details
+
+Order details:
+
+Customer
+---------
+Name
+Phone
+Email
+Address
+Note
+
+Items
+-----
+Image
+Product
+Qty
+Unit price
+Line total
+
+Summary
+-------
+Subtotal
+Total
+Currency
+
+Order
+-----
+Reference
+Created
+Status
+
+Allow status update.
+
+Do NOT allow one subscriber to access another subscriber's order by changing an ID in the URL/API.
+
+Server-side ownership checks are mandatory.
+
+========================================================
+18. CUSTOMERS
+========================================================
+
+Do NOT require customer accounts.
+
+For store owner convenience, provide a Customers view derived from guest orders.
+
+At minimum display:
+
+- Name
+- Phone
+- Email if available
+- Number of orders
+- Last order date
+
+Do not invent identity matching beyond reasonable identifiers.
+
+Phone number can be the primary practical grouping identifier for Phase 1.
+
+Do not create passwords/accounts for these customers.
+
+========================================================
+19. STORE SETTINGS
+========================================================
+
+Create Store Settings.
+
+Phase 1:
+
+STORE
+- Store enabled/disabled by subscriber, ONLY if Platform Admin entitlement exists
+- Products section title
+- Featured/recent product behavior if needed
+
+CURRENCY
+- Store currency
+
+CHECKOUT
+- Phone required
+- Email visibility/requirement
+- Address visibility/requirement
+- Wilaya/State visibility
+- City visibility
+- Customer note visibility
+
+CONTACT
+- WhatsApp number optional
+
+ORDER SETTINGS
+- optional order confirmation message
+
+Important:
+Subscriber's "Store enabled" toggle is NOT the paid entitlement.
+
+There are two levels:
+
+Platform Admin:
+E-Commerce entitlement = permission to use module
+
+Subscriber:
+Store enabled = whether they currently want the public store visible
+
+If entitlement = disabled:
+subscriber cannot override it.
+
+========================================================
+20. WHATSAPP
+========================================================
+
+Prepare clean optional WhatsApp support.
+
+After successful order creation, the confirmation page may show:
+
+"Contact us on WhatsApp"
+
+using the subscriber's configured WhatsApp number.
+
+Do NOT make WhatsApp the source of truth for orders.
+
+The order MUST already exist in BHRU before any WhatsApp action.
+
+Do NOT implement external WhatsApp API automation in this phase.
+
+========================================================
+21. CHECKOUT SUCCESS PAGE
+========================================================
+
+After successful order:
+
+Show professional confirmation:
+
+Order received successfully.
+
+Order reference:
+ORD-...
+
+Customer:
+...
+
+Total:
+...
+
+Status:
+New
+
+Buttons:
+- Continue Shopping
+- WhatsApp (only if configured)
+
+Prevent accidental duplicate order creation on browser refresh.
+
+Use a safe POST/order creation flow and redirect/confirmation pattern.
+
+========================================================
+22. PUBLIC NAVIGATION
+========================================================
+
+When E-Commerce is enabled, integrate useful store navigation into the existing public website.
+
+Potential items:
+
+Home
+Products
+Categories
+Cart
+Login
+
+Do NOT destroy the existing navigation.
+
+Keep desktop and mobile clean.
+
+The existing public Customer Login behavior remains separate unless there is an explicitly implemented customer-account system later.
+
+Guest checkout must not depend on Login.
+
+========================================================
+23. EMPTY STATES
+========================================================
+
+Handle empty states professionally.
+
+Examples:
+
+No products:
+"No products are available yet."
+
+Empty cart:
+"Your cart is empty."
+
+No orders:
+"No orders yet."
+
+No categories:
+do not render a broken category navigation.
+
+Never expose technical errors to public users.
+
+========================================================
+24. MULTI-TENANT SECURITY
+========================================================
+
+This is critical.
+
+EVERY private store query/mutation must derive subscriber ownership from authenticated server context.
+
+Never trust a subscriber_id supplied by frontend.
+
+EVERY public store lookup must resolve the subscriber through the public site/slug first.
+
+Then all:
+- products
+- categories
+- settings
+must be constrained to that subscriber.
+
+Orders created through public checkout must use the subscriber resolved from the public route.
+
+Do not accept arbitrary subscriber IDs from checkout.
+
+Enforce ownership in SQL/query layer where practical.
+
+========================================================
+25. ENTITLEMENT SECURITY
+========================================================
+
+Every relevant private E-Commerce API must verify:
+
+1. authenticated subscriber
+2. E-Commerce entitlement enabled
+
+Every public commerce API must verify:
+
+1. public subscriber/store resolution
+2. E-Commerce entitlement enabled
+3. subscriber store enabled
+
+Do not rely only on frontend navigation visibility.
+
+========================================================
+26. PRICE / MONEY SAFETY
+========================================================
+
+Do not use floating-point arithmetic for authoritative money calculations.
+
+Use a safe database/application representation:
+- integer minor units where appropriate
+OR
+- proper fixed decimal numeric representation
+
+Follow the existing project conventions if they already safely support money.
+
+Server calculates:
+quantity × authoritative unit price.
+
+Never trust browser totals.
+
+========================================================
+27. DATABASE DESIGN
+========================================================
+
+Inspect the existing schema and architecture first.
+
+Use ADDITIVE migrations only.
+
+Do not edit migrations 001–007.
+
+Use the next migration number(s), beginning with 008 if required.
+
+Design clean subscriber-owned tables.
+
+Likely concepts:
+
+subscriber_modules / entitlements
+store_settings
+store_categories
+store_products
+store_product_images
+store_orders
+store_order_items
+
+Potential status history only if useful and lightweight.
+
+Do not blindly use these names if existing project conventions suggest better names.
+
+Foreign keys and deletion behavior must be intentional.
+
+Historical orders must not disappear merely because a product is later deleted/archived.
+
+Prefer safe archival/deactivation behavior for products used in orders.
+
+========================================================
+28. MEDIA
+========================================================
+
+Reuse the existing:
+
+BHRU_MEDIA_DIR
+
+and the current subscriber-owned media/storage adapter.
+
+Do not create a separate local upload directory that will disappear after Dokploy redeploy.
+
+Product/category images must survive container replacement.
+
+Respect current production persistent volume architecture.
+
+Use safe image validation.
+
+Optimize new product images appropriately without degrading them excessively.
+
+========================================================
+29. PUBLIC PERFORMANCE
+========================================================
+
+Do not repeat the previous image-loading problem.
+
+Product listing must be performance-conscious.
+
+Requirements:
+
+- explicit image dimensions/aspect ratio
+- lazy load offscreen product images
+- stable layout before image load
+- sensible image optimization
+- browser caching consistent with existing public media security model
+- no massive eager download of all product images
+
+Do not load the entire product catalog on initial page load if it becomes large.
+
+Design pagination/load-more capability.
+
+========================================================
+30. MOBILE FIRST
+========================================================
+
+The store must be genuinely usable on phones.
+
+Important mobile flows:
+
+Browse products
+→ Product detail
+→ Add to Cart
+→ Cart
+→ Checkout
+→ Confirmation
+
+No horizontal page overflow.
+
+Touch targets must be comfortable.
+
+Checkout form must not require zooming.
+
+Cart and product controls must not be tiny.
+
+Do not make desktop-only hover interactions essential.
+
+========================================================
+31. VISUAL DESIGN
+========================================================
+
+Keep the visual identity connected to the subscriber's existing public website.
+
+Use subscriber primary colour where appropriate for:
+- buttons
+- active states
+- price accents
+- badges
+
+But preserve accessible contrast.
+
+Professional style:
+- clean cards
+- subtle borders
+- reasonable shadows
+- consistent radius
+- clear typography
+- generous but not excessive spacing
+
+Do NOT make it look like an admin dashboard on the public site.
+
+It should look like a real customer-facing online shop.
+
+========================================================
+32. DO NOT BUILD PAYMENT GATEWAYS YET
+========================================================
+
+Phase 1 checkout is order submission.
+
+Do NOT implement:
+- Stripe
+- PayPal
+- Chargily
+- BaridiMob automation
+- crypto gateways
+- card processing
+
+Prepare architecture so payment methods can be added later.
+
+Order payment state can be designed for future use if appropriate, but do not build fake payment processing.
+
+========================================================
+33. DO NOT BUILD SHIPPING INTEGRATIONS YET
+========================================================
+
+Do not integrate shipping companies in this phase.
+
+Address fields should make future delivery integration possible.
+
+Shipping/delivery providers will be a later phase.
+
+========================================================
+34. PRESERVE EXISTING BHRU FEATURES
+========================================================
+
+Absolutely do not regress:
+
+- subscriber authentication
+- Platform Admin private entry
+- licences
+- public_slug
+- existing public website
+- CMS Phase 1
+- Top Area
+- Partner/Image Strip
+- Announcement Ticker Rows
+- Hero/Banner
+- persistent media
+- current deployment startup migration architecture
+
+Do not redesign approved sections.
+
+========================================================
+35. DEPLOYMENT / MIGRATIONS
+========================================================
+
+Development/Preview ONLY.
+
+Do NOT:
+- git push
+- deploy
+- touch production
+- run commands against production database
+
+If migration 008+ is required:
+apply it only to Development database.
+
+Remember production startup now runs:
+
+node migrate.mjs && exec node index.mjs
+
+so future production deployment can automatically apply approved additive migrations.
+
+Do not change this deployment startup architecture.
+
+========================================================
+36. DEVELOPMENT WORKFLOW — IMPORTANT
+========================================================
+
+Do NOT spend a long time running browser/E2E/full regression suites.
+
+I will perform manual UX testing myself.
+
+Your workflow:
+
+1. Inspect existing architecture.
+2. Produce a short implementation plan.
+3. Implement Phase 1.
+4. Apply additive migration(s) to Development only.
+5. Run ONLY:
+   - relevant type checks
+   - build/compile checks
+   - minimal API/startup sanity checks
+6. Start/restart Preview.
+7. STOP.
+
+Do not repeatedly run long test suites.
+
+Do not push.
+Do not deploy.
+
+========================================================
+37. MANUAL TEST DATA
+========================================================
+
+Make the UI ready for me to manually create:
+
+Category:
+Tools
+
+Product:
+Chimera Tool
+
+Price:
+5000 DZD
+
+Then I should be able to manually test:
+
+Public website
+→ Products
+→ Chimera Tool
+→ Add to Cart
+→ Cart
+→ Checkout without login
+→ enter customer name + phone
+→ Place Order
+→ receive confirmation/reference
+→ Subscriber Panel → Orders
+→ find the same order/customer
+→ update status
+
+Do NOT automatically create fake production-like subscriber data unless required for Development testing.
+
+========================================================
+38. DEFINITION OF DONE FOR THIS PHASE
+========================================================
+
+Phase 1 is complete only when the architecture supports this real flow:
+
+PLATFORM ADMIN
+Enable E-Commerce for Subscriber A
+
+↓
+
+SUBSCRIBER A
+Open E-Commerce
+Create category
+Create product
+Upload image
+Set price
+Publish product
+Enable Store
+
+↓
+
+PUBLIC SITE A
+Banner/Top Area remains unchanged
+Products appear below existing public content
+
+↓
+
+VISITOR
+Open product
+Add to Cart
+Checkout WITHOUT ACCOUNT
+Enter Name + Phone
+Place Order
+
+↓
+
+SERVER
+Revalidates product and authoritative price
+Creates tenant-owned order + immutable line snapshots
+Generates order reference
+
+↓
+
+VISITOR
+Sees confirmation
+
+↓
+
+SUBSCRIBER A PANEL
+Order appears with:
+customer
+phone
+items
+total
+status
+date
+
+↓
+
+Subscriber A updates order status
+
+↓
+
+Subscriber B can NEVER access any of this data.
+
+========================================================
+39. STOP CONDITIONS
+========================================================
+
+If you discover that implementing this safely requires changing an approved core architecture, STOP and report the conflict before changing it.
+
+If there is an unclear architectural choice with serious data/security consequences, STOP and explain the options.
+
+Otherwise implement the complete Phase 1 described above.
+
+At completion give me a concise report containing:
+
+- files changed
+- migration(s) added
+- tables added
+- routes/APIs added
+- subscriber UI added
+- public UI added
+- Platform Admin entitlement control added
+- media/storage reuse confirmation
+- tenant isolation approach
+- manual Preview test path
+- anything deliberately deferred to Phase 2
+
+Do not push.
+Do not deploy.
+Production must remain untouched.

@@ -9,6 +9,8 @@ import { logger } from "./lib/logger";
 import { adminPath, isAdminEntry } from "./lib/admin-entry";
 import { publicSiteNavigation, resolvePublicDocument, writePublicDocument } from "./lib/public-site";
 import { publicMediaRouter } from "./routes/public-website";
+import { publicCommerceRouter } from "./routes/commerce";
+import { tryCommerceDocument, commerceNavigation } from "./lib/commerce/navigation";
 
 const app: Express = express();
 app.disable("x-powered-by");
@@ -43,11 +45,16 @@ app.use((req, res, next) => {
 // Public documents deliberately finish before session/account middleware.
 // The 204 response means "existing application namespace", never public data.
 app.get("/api/public/site-document", async (req, res) => {
+  if(await tryCommerceDocument(req,res,req.query.path))return;
   writePublicDocument(req, res, await resolvePublicDocument(req.query.path));
 });
-if (process.env.NODE_ENV === "production") app.use(publicSiteNavigation);
+if (process.env.NODE_ENV === "production") {
+  app.use(commerceNavigation);
+  app.use(publicSiteNavigation);
+}
 app.use(publicMediaRouter);
 app.use(express.json({ limit: "32kb" }));
+app.use(publicCommerceRouter);
 app.use(cookieParser());
 app.get("/healthz", async (_req, res) => {
   await pool.query("SELECT 1");

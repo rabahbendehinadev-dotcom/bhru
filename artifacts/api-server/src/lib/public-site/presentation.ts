@@ -7,6 +7,7 @@ import { safePublicLink } from './safety';
 import { previewImageUrl, publicImageUrl } from './media';
 import { ownedImages, emptyWebsiteValues } from './configuration';
 import type { PublicSiteModel } from './model';
+import { COMMERCE_SAVED_REFERENCE, COMMERCE_PUBLISHED_REFERENCE } from '../commerce/data';
 
 const generated = UpdateCurrentPublicPresentationBody.shape.values;
 export const presentationSchema = generated.extend({
@@ -154,12 +155,16 @@ export async function attachPresentation(model:PublicSiteModel,id:string,client:
 }
 /** All persisted references protect media, including disabled items. Alias a is trusted. */
 export const SAVED_MEDIA_REFERENCE=`(
+  ${COMMERCE_SAVED_REFERENCE}
+  OR
   EXISTS(SELECT 1 FROM subscriber_public_sites c WHERE c.subscriber_id=a.subscriber_id AND (c.logo_asset_id=a.id OR c.hero_asset_id=a.id))
   OR EXISTS(SELECT 1 FROM public_site_partner_logos x WHERE x.subscriber_id=a.subscriber_id AND x.asset_id=a.id)
   OR EXISTS(SELECT 1 FROM public_site_banners x WHERE x.subscriber_id=a.subscriber_id AND x.asset_id=a.id)
 )`;
 /** Only enabled, publicly rendered Phase 2 items get unsigned public access. */
 export const PUBLISHED_MEDIA_REFERENCE=`(
+  ${COMMERCE_PUBLISHED_REFERENCE}
+  OR
   EXISTS(SELECT 1 FROM subscriber_public_sites c WHERE c.subscriber_id=a.subscriber_id AND (c.logo_asset_id=a.id OR c.hero_asset_id=a.id))
   OR EXISTS(SELECT 1 FROM public_site_partner_logos x JOIN public_site_presentation p USING(subscriber_id)
     WHERE x.subscriber_id=a.subscriber_id AND x.asset_id=a.id AND x.enabled AND p.logo_strip_enabled)

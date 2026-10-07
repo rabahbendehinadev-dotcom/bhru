@@ -23,9 +23,15 @@ import type {
   AccountInput,
   AdminCredentialsInput,
   AuthEntry,
+  CommerceAccess,
+  CommerceAsset,
+  CommerceEnvelope,
+  CommerceInput,
   CredentialsInput,
   GeneralSettings,
   GeneralSettingsInput,
+  GetCommerceResourceParams,
+  GetPublicCommerceCatalogParams,
   GetPublicSiteDocumentParams,
   HealthStatus,
   PanelAccess,
@@ -71,6 +77,866 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getUploadCommerceAssetUrl = () => {
+
+
+
+
+  return `/api/commerce/assets`
+}
+
+export const uploadCommerceAsset = async (uploadCommerceAssetBody: Blob, options?: Parameters<typeof customFetch>[1]): Promise<CommerceAsset> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommerceAsset>(getUploadCommerceAssetUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'image/png', ...getHeaders(options?.headers) },
+    body: uploadCommerceAssetBody
+  }
+);}
+
+
+
+
+
+export const getUploadCommerceAssetMutationKey = () => ['uploadCommerceAsset'] as const;
+
+export const getUploadCommerceAssetMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCommerceAsset>>, TError,UploadCommerceAssetMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadCommerceAsset>>, TError,UploadCommerceAssetMutationVariables, TContext> => {
+
+const mutationKey = getUploadCommerceAssetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadCommerceAsset>>, UploadCommerceAssetMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadCommerceAsset(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadCommerceAssetMutationResult = NonNullable<Awaited<ReturnType<typeof uploadCommerceAsset>>>
+    export type UploadCommerceAssetMutationBody = BodyType<Blob>
+    export type UploadCommerceAssetMutationError = ErrorType<unknown>
+    export type UploadCommerceAssetMutationVariables = {data: BodyType<Blob>}
+
+    export const useUploadCommerceAsset = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCommerceAsset>>, TError,UploadCommerceAssetMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadCommerceAsset>>,
+        TError,
+        UploadCommerceAssetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUploadCommerceAssetMutationOptions(options));
+    }
+
+export const getDeleteCommerceAssetUrl = (id: string,) => {
+
+
+
+
+  return `/api/commerce/assets/${id}`
+}
+
+export const deleteCommerceAsset = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<Success> => {
+
+  return customFetch<Success>(getDeleteCommerceAssetUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteCommerceAssetMutationKey = () => ['deleteCommerceAsset'] as const;
+
+export const getDeleteCommerceAssetMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCommerceAsset>>, TError,DeleteCommerceAssetMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCommerceAsset>>, TError,DeleteCommerceAssetMutationVariables, TContext> => {
+
+const mutationKey = getDeleteCommerceAssetMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCommerceAsset>>, DeleteCommerceAssetMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteCommerceAsset(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCommerceAssetMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCommerceAsset>>>
+
+    export type DeleteCommerceAssetMutationError = ErrorType<unknown>
+    export type DeleteCommerceAssetMutationVariables = {id: string}
+
+    export const useDeleteCommerceAsset = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCommerceAsset>>, TError,DeleteCommerceAssetMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCommerceAsset>>,
+        TError,
+        DeleteCommerceAssetMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteCommerceAssetMutationOptions(options));
+    }
+
+export const getGetCommerceAccessUrl = () => {
+
+
+
+
+  return `/api/commerce/access`
+}
+
+export const getCommerceAccess = async ( options?: Parameters<typeof customFetch>[1]): Promise<CommerceAccess> => {
+
+  return customFetch<CommerceAccess>(getGetCommerceAccessUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCommerceAccessQueryKey = () => {
+    return [
+    `/api/commerce/access`
+    ] as const;
+    }
+
+
+export const getGetCommerceAccessQueryOptions = <TData = Awaited<ReturnType<typeof getCommerceAccess>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCommerceAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommerceAccessQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommerceAccess>>> = ({ signal }) => getCommerceAccess({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommerceAccess>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCommerceAccessQueryResult = NonNullable<Awaited<ReturnType<typeof getCommerceAccess>>>
+export type GetCommerceAccessQueryError = ErrorType<unknown>
+
+
+
+export function useGetCommerceAccess<TData = Awaited<ReturnType<typeof getCommerceAccess>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCommerceAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCommerceAccessQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetCommerceResourceUrl = (resource: 'overview' | 'products' | 'categories' | 'orders' | 'customers' | 'settings',
+    params?: GetCommerceResourceParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/commerce/${resource}?${stringifiedParams}` : `/api/commerce/${resource}`
+}
+
+export const getCommerceResource = async (resource: 'overview' | 'products' | 'categories' | 'orders' | 'customers' | 'settings',
+    params?: GetCommerceResourceParams, options?: Parameters<typeof customFetch>[1]): Promise<CommerceEnvelope> => {
+
+  return customFetch<CommerceEnvelope>(getGetCommerceResourceUrl(resource,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCommerceResourceQueryKey = (resource: 'overview' | 'products' | 'categories' | 'orders' | 'customers' | 'settings',
+    params?: GetCommerceResourceParams,) => {
+    return [
+    `/api/commerce/${resource}`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCommerceResourceQueryOptions = <TData = Awaited<ReturnType<typeof getCommerceResource>>, TError = ErrorType<unknown>>(resource: 'overview' | 'products' | 'categories' | 'orders' | 'customers' | 'settings',
+    params?: GetCommerceResourceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCommerceResource>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommerceResourceQueryKey(resource,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommerceResource>>> = ({ signal }) => getCommerceResource(resource,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: resource !== null && resource !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommerceResource>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCommerceResourceQueryResult = NonNullable<Awaited<ReturnType<typeof getCommerceResource>>>
+export type GetCommerceResourceQueryError = ErrorType<unknown>
+
+
+
+export function useGetCommerceResource<TData = Awaited<ReturnType<typeof getCommerceResource>>, TError = ErrorType<unknown>>(
+ resource: 'overview' | 'products' | 'categories' | 'orders' | 'customers' | 'settings',
+    params?: GetCommerceResourceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCommerceResource>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCommerceResourceQueryOptions(resource,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveCommerceResourceUrl = (resource: 'products' | 'categories' | 'settings' | 'orders',) => {
+
+
+
+
+  return `/api/commerce/${resource}`
+}
+
+export const saveCommerceResource = async (resource: 'products' | 'categories' | 'settings' | 'orders',
+    commerceInput: CommerceInput, options?: Parameters<typeof customFetch>[1]): Promise<CommerceEnvelope> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommerceEnvelope>(getSaveCommerceResourceUrl(resource),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commerceInput)
+  }
+);}
+
+
+
+
+
+export const getSaveCommerceResourceMutationKey = () => ['saveCommerceResource'] as const;
+
+export const getSaveCommerceResourceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCommerceResource>>, TError,SaveCommerceResourceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveCommerceResource>>, TError,SaveCommerceResourceMutationVariables, TContext> => {
+
+const mutationKey = getSaveCommerceResourceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveCommerceResource>>, SaveCommerceResourceMutationVariables> = (props) => {
+          const {resource,data} = props ?? {};
+
+          return  saveCommerceResource(resource,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveCommerceResourceMutationResult = NonNullable<Awaited<ReturnType<typeof saveCommerceResource>>>
+    export type SaveCommerceResourceMutationBody = BodyType<CommerceInput>
+    export type SaveCommerceResourceMutationError = ErrorType<unknown>
+    export type SaveCommerceResourceMutationVariables = {resource: 'products' | 'categories' | 'settings' | 'orders';data: BodyType<CommerceInput>}
+
+    export const useSaveCommerceResource = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCommerceResource>>, TError,SaveCommerceResourceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveCommerceResource>>,
+        TError,
+        SaveCommerceResourceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveCommerceResourceMutationOptions(options));
+    }
+
+export const getArchiveCommerceResourceUrl = (resource: 'products' | 'categories',
+    id: string,) => {
+
+
+
+
+  return `/api/commerce/${resource}/${id}`
+}
+
+export const archiveCommerceResource = async (resource: 'products' | 'categories',
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<Success> => {
+
+  return customFetch<Success>(getArchiveCommerceResourceUrl(resource,id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getArchiveCommerceResourceMutationKey = () => ['archiveCommerceResource'] as const;
+
+export const getArchiveCommerceResourceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof archiveCommerceResource>>, TError,ArchiveCommerceResourceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof archiveCommerceResource>>, TError,ArchiveCommerceResourceMutationVariables, TContext> => {
+
+const mutationKey = getArchiveCommerceResourceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof archiveCommerceResource>>, ArchiveCommerceResourceMutationVariables> = (props) => {
+          const {resource,id} = props ?? {};
+
+          return  archiveCommerceResource(resource,id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ArchiveCommerceResourceMutationResult = NonNullable<Awaited<ReturnType<typeof archiveCommerceResource>>>
+
+    export type ArchiveCommerceResourceMutationError = ErrorType<unknown>
+    export type ArchiveCommerceResourceMutationVariables = {resource: 'products' | 'categories';id: string}
+
+    export const useArchiveCommerceResource = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof archiveCommerceResource>>, TError,ArchiveCommerceResourceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof archiveCommerceResource>>,
+        TError,
+        ArchiveCommerceResourceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getArchiveCommerceResourceMutationOptions(options));
+    }
+
+export const getGetSubscriberCommerceModuleUrl = (id: string,) => {
+
+
+
+
+  return `/api/platform/subscribers/${id}/modules/ecommerce`
+}
+
+export const getSubscriberCommerceModule = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CommerceAccess> => {
+
+  return customFetch<CommerceAccess>(getGetSubscriberCommerceModuleUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSubscriberCommerceModuleQueryKey = (id: string,) => {
+    return [
+    `/api/platform/subscribers/${id}/modules/ecommerce`
+    ] as const;
+    }
+
+
+export const getGetSubscriberCommerceModuleQueryOptions = <TData = Awaited<ReturnType<typeof getSubscriberCommerceModule>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSubscriberCommerceModule>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSubscriberCommerceModuleQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSubscriberCommerceModule>>> = ({ signal }) => getSubscriberCommerceModule(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSubscriberCommerceModule>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSubscriberCommerceModuleQueryResult = NonNullable<Awaited<ReturnType<typeof getSubscriberCommerceModule>>>
+export type GetSubscriberCommerceModuleQueryError = ErrorType<unknown>
+
+
+
+export function useGetSubscriberCommerceModule<TData = Awaited<ReturnType<typeof getSubscriberCommerceModule>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSubscriberCommerceModule>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSubscriberCommerceModuleQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSetSubscriberCommerceModuleUrl = (id: string,) => {
+
+
+
+
+  return `/api/platform/subscribers/${id}/modules/ecommerce`
+}
+
+export const setSubscriberCommerceModule = async (id: string,
+    commerceAccess: CommerceAccess, options?: Parameters<typeof customFetch>[1]): Promise<CommerceAccess> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommerceAccess>(getSetSubscriberCommerceModuleUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commerceAccess)
+  }
+);}
+
+
+
+
+
+export const getSetSubscriberCommerceModuleMutationKey = () => ['setSubscriberCommerceModule'] as const;
+
+export const getSetSubscriberCommerceModuleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setSubscriberCommerceModule>>, TError,SetSubscriberCommerceModuleMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setSubscriberCommerceModule>>, TError,SetSubscriberCommerceModuleMutationVariables, TContext> => {
+
+const mutationKey = getSetSubscriberCommerceModuleMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setSubscriberCommerceModule>>, SetSubscriberCommerceModuleMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  setSubscriberCommerceModule(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetSubscriberCommerceModuleMutationResult = NonNullable<Awaited<ReturnType<typeof setSubscriberCommerceModule>>>
+    export type SetSubscriberCommerceModuleMutationBody = BodyType<CommerceAccess>
+    export type SetSubscriberCommerceModuleMutationError = ErrorType<unknown>
+    export type SetSubscriberCommerceModuleMutationVariables = {id: string;data: BodyType<CommerceAccess>}
+
+    export const useSetSubscriberCommerceModule = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setSubscriberCommerceModule>>, TError,SetSubscriberCommerceModuleMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setSubscriberCommerceModule>>,
+        TError,
+        SetSubscriberCommerceModuleMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetSubscriberCommerceModuleMutationOptions(options));
+    }
+
+export const getGetPublicCommerceCatalogUrl = (slug: string,
+    params?: GetPublicCommerceCatalogParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/public/commerce/${slug}/catalog?${stringifiedParams}` : `/api/public/commerce/${slug}/catalog`
+}
+
+export const getPublicCommerceCatalog = async (slug: string,
+    params?: GetPublicCommerceCatalogParams, options?: Parameters<typeof customFetch>[1]): Promise<CommerceEnvelope> => {
+
+  return customFetch<CommerceEnvelope>(getGetPublicCommerceCatalogUrl(slug,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicCommerceCatalogQueryKey = (slug: string,
+    params?: GetPublicCommerceCatalogParams,) => {
+    return [
+    `/api/public/commerce/${slug}/catalog`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPublicCommerceCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getPublicCommerceCatalog>>, TError = ErrorType<unknown>>(slug: string,
+    params?: GetPublicCommerceCatalogParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicCommerceCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicCommerceCatalogQueryKey(slug,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicCommerceCatalog>>> = ({ signal }) => getPublicCommerceCatalog(slug,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicCommerceCatalog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicCommerceCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicCommerceCatalog>>>
+export type GetPublicCommerceCatalogQueryError = ErrorType<unknown>
+
+
+
+export function useGetPublicCommerceCatalog<TData = Awaited<ReturnType<typeof getPublicCommerceCatalog>>, TError = ErrorType<unknown>>(
+ slug: string,
+    params?: GetPublicCommerceCatalogParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicCommerceCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicCommerceCatalogQueryOptions(slug,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getQuotePublicCommerceCartUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/commerce/${slug}/quote`
+}
+
+export const quotePublicCommerceCart = async (slug: string,
+    commerceInput: CommerceInput, options?: Parameters<typeof customFetch>[1]): Promise<CommerceEnvelope> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommerceEnvelope>(getQuotePublicCommerceCartUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commerceInput)
+  }
+);}
+
+
+
+
+
+export const getQuotePublicCommerceCartMutationKey = () => ['quotePublicCommerceCart'] as const;
+
+export const getQuotePublicCommerceCartMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quotePublicCommerceCart>>, TError,QuotePublicCommerceCartMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof quotePublicCommerceCart>>, TError,QuotePublicCommerceCartMutationVariables, TContext> => {
+
+const mutationKey = getQuotePublicCommerceCartMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof quotePublicCommerceCart>>, QuotePublicCommerceCartMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  quotePublicCommerceCart(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type QuotePublicCommerceCartMutationResult = NonNullable<Awaited<ReturnType<typeof quotePublicCommerceCart>>>
+    export type QuotePublicCommerceCartMutationBody = BodyType<CommerceInput>
+    export type QuotePublicCommerceCartMutationError = ErrorType<unknown>
+    export type QuotePublicCommerceCartMutationVariables = {slug: string;data: BodyType<CommerceInput>}
+
+    export const useQuotePublicCommerceCart = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quotePublicCommerceCart>>, TError,QuotePublicCommerceCartMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof quotePublicCommerceCart>>,
+        TError,
+        QuotePublicCommerceCartMutationVariables,
+        TContext
+      > => {
+      return useMutation(getQuotePublicCommerceCartMutationOptions(options));
+    }
+
+export const getCreatePublicCommerceOrderUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/commerce/${slug}/orders`
+}
+
+export const createPublicCommerceOrder = async (slug: string,
+    commerceInput: CommerceInput, options?: Parameters<typeof customFetch>[1]): Promise<CommerceEnvelope> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommerceEnvelope>(getCreatePublicCommerceOrderUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commerceInput)
+  }
+);}
+
+
+
+
+
+export const getCreatePublicCommerceOrderMutationKey = () => ['createPublicCommerceOrder'] as const;
+
+export const getCreatePublicCommerceOrderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPublicCommerceOrder>>, TError,CreatePublicCommerceOrderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPublicCommerceOrder>>, TError,CreatePublicCommerceOrderMutationVariables, TContext> => {
+
+const mutationKey = getCreatePublicCommerceOrderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPublicCommerceOrder>>, CreatePublicCommerceOrderMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  createPublicCommerceOrder(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePublicCommerceOrderMutationResult = NonNullable<Awaited<ReturnType<typeof createPublicCommerceOrder>>>
+    export type CreatePublicCommerceOrderMutationBody = BodyType<CommerceInput>
+    export type CreatePublicCommerceOrderMutationError = ErrorType<unknown>
+    export type CreatePublicCommerceOrderMutationVariables = {slug: string;data: BodyType<CommerceInput>}
+
+    export const useCreatePublicCommerceOrder = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPublicCommerceOrder>>, TError,CreatePublicCommerceOrderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createPublicCommerceOrder>>,
+        TError,
+        CreatePublicCommerceOrderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreatePublicCommerceOrderMutationOptions(options));
+    }
 
 export const getGetPublicSiteDocumentUrl = (params: GetPublicSiteDocumentParams,) => {
   const normalizedParams = new URLSearchParams();

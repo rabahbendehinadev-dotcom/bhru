@@ -4,6 +4,7 @@ import authRouter from "./auth";
 import platformRouter from "./platform";
 import generalSettingsRouter from "./general-settings";
 import publicWebsiteRouter from "./public-website";
+import commerceRouter from "./commerce";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(authRouter);
 router.use(platformRouter);
 router.use(generalSettingsRouter);
 router.use(publicWebsiteRouter);
+router.use(commerceRouter);
 
 export default router;

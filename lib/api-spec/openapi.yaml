@@ -11,6 +11,155 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /commerce/assets:
+    post:
+      operationId: uploadCommerceAsset
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema: { type: string, format: binary }
+          image/jpeg:
+            schema: { type: string, format: binary }
+      responses:
+        "201":
+          description: Normalized subscriber-owned store image
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceAsset" }
+  /commerce/assets/{id}:
+    delete:
+      operationId: deleteCommerceAsset
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Unreferenced owned image removed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+  /commerce/access:
+    get:
+      operationId: getCommerceAccess
+      responses:
+        "200":
+          description: Current subscriber module entitlement
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceAccess" }
+  /commerce/{resource}:
+    get:
+      operationId: getCommerceResource
+      parameters:
+        - { name: resource, in: path, required: true, schema: { type: string, enum: [overview, products, categories, orders, customers, settings] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: search, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Tenant-owned resource page or detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceEnvelope" }
+    post:
+      operationId: saveCommerceResource
+      parameters:
+        - { name: resource, in: path, required: true, schema: { type: string, enum: [products, categories, settings, orders] } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommerceInput" }
+      responses:
+        "200":
+          description: Saved tenant-owned resource; resource-specific strict server validation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceEnvelope" }
+  /commerce/{resource}/{id}:
+    delete:
+      operationId: archiveCommerceResource
+      parameters:
+        - { name: resource, in: path, required: true, schema: { type: string, enum: [products, categories] } }
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Product archived or category disabled; historical data preserved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+  /platform/subscribers/{id}/modules/ecommerce:
+    get:
+      operationId: getSubscriberCommerceModule
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Independent Platform Admin module control
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceAccess" }
+    put:
+      operationId: setSubscriberCommerceModule
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommerceAccess" }
+      responses:
+        "200":
+          description: Entitlement saved without deleting any store data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceAccess" }
+  /public/commerce/{slug}/catalog:
+    get:
+      operationId: getPublicCommerceCatalog
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: category, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Eligible enabled public store; paginated allowlisted catalogue
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceEnvelope" }
+  /public/commerce/{slug}/quote:
+    post:
+      operationId: quotePublicCommerceCart
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommerceInput" }
+      responses:
+        "200":
+          description: Server-priced guest cart
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceEnvelope" }
+  /public/commerce/{slug}/orders:
+    post:
+      operationId: createPublicCommerceOrder
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommerceInput" }
+      responses:
+        "201":
+          description: Idempotent guest order with immutable authoritative snapshots
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommerceEnvelope" }
   /public/site-document:
     get:
       operationId: getPublicSiteDocument
@@ -693,4 +842,28 @@ components:
           type: string
       required:
         - status
+    CommerceAsset:
+      type: object
+      required: [id, url]
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+    CommerceAccess:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+    CommerceEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: {}
+        page: { type: integer }
+        has_more: { type: boolean }
+    CommerceInput:
+      type: object
+      additionalProperties: true
+      description: Resource-specific input, strictly validated by the server. Money inputs are decimal strings; server stores integer minor units.
 

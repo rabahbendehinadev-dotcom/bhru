@@ -4,6 +4,7 @@ import { ChevronRight, Search, X } from 'lucide-react';
 import { NAV, entryIsActive, hasFlyout, isDesktopNav } from './nav-catalog';
 import { FlyoutMenu } from './FlyoutMenu';
 import { Wordmark } from './Wordmark';
+import { useCommerceEnabled } from '@/hooks/use-commerce';
 import { OnlineStaffBadge, useOnlineStaff } from './OnlineStaff';
 
 interface Props { collapsed: boolean; mobileOpen: boolean; onCloseMobile: () => void; onOpenSearch: () => void }
@@ -15,6 +16,7 @@ export function Sidebar({ collapsed, onCloseMobile, onOpenSearch }: Props) {
   const timer = useRef<number | undefined>(undefined);
   const [left, setLeft] = useState(232);
   const staff = useOnlineStaff();
+  const commerce = useCommerceEnabled();
 
   const cancel = () => window.clearTimeout(timer.current);
   const scheduleClose = () => { cancel(); timer.current = window.setTimeout(() => setOpen(null), 320); };
@@ -51,7 +53,7 @@ export function Sidebar({ collapsed, onCloseMobile, onOpenSearch }: Props) {
         </div>
       )}
       <nav className="scroll-thin flex-1 overflow-y-auto px-2.5 pb-3" aria-label="Main">
-        {NAV.map((c) => {
+        {NAV.filter((c) => c.id !== 'ecommerce' || commerce).map((c) => {
           const on = open?.id === c.id;
           const fly = hasFlyout(c);
           return (

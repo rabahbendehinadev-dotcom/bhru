@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useCommerceEnabled } from '@/hooks/use-commerce';
 import { NAV, entryIsActive, hasFlyout, isDesktopNav } from './nav-catalog';
 import { NavItemList } from './NavItemList';
 import { Wordmark } from './Wordmark';
@@ -17,6 +18,7 @@ export function MobileDrawer({ open, onClose, returnFocus }: Props) {
   closeRef.current = onClose;
   const first = useRef(true);
   const staff = useOnlineStaff();
+  const commerce = useCommerceEnabled();
 
   useEffect(() => { if (!first.current) closeRef.current(); first.current = false; }, [loc]);
   useEffect(() => {
@@ -70,7 +72,7 @@ export function MobileDrawer({ open, onClose, returnFocus }: Props) {
           </nav>
         ) : (
           <nav className="scroll-thin sl-drawer-scroll" aria-label="Main">
-            {NAV.map((c) => {
+            {NAV.filter((c) => c.id !== 'ecommerce' || commerce).map((c) => {
               const inner = (
                 <>
                   <span className="sl-fly-tile">{c.icon}</span>

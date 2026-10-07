@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import {
   LayoutDashboard, Users, Boxes, ShoppingCart, ShoppingBag, Package, Newspaper, BarChart3, Wrench, LifeBuoy,
-  MessageCircle, Settings, Store, HelpCircle, UserCheck,
+  MessageCircle, Settings, ShoppingBasket, Store, HelpCircle, UserCheck,
 } from 'lucide-react';
 import { NAV_DATA, type NavColumn } from './nav-data';
 
@@ -15,7 +15,7 @@ const ICONS: Record<string, ReactNode> = {
   orders: <ShoppingCart size={s} />, 'retail-orders-cart': <ShoppingBag size={s} />, inventory: <Package size={s} />,
   'cms-blog': <Newspaper size={s} />, 'reports-graphs': <BarChart3 size={s} />, utilities: <Wrench size={s} />,
   support: <LifeBuoy size={s} />, 'online-user-live-chat': <MessageCircle size={s} />, settings: <Settings size={s} />,
-  store: <Store size={s} />, help: <HelpCircle size={s} />, 'online-staff': <UserCheck size={s} />,
+  ecommerce: <ShoppingBasket size={s} />, store: <Store size={s} />, help: <HelpCircle size={s} />, 'online-staff': <UserCheck size={s} />,
 };
 
 /** Central nav config: single source for sidebar, flyouts, drawer, search, titles, breadcrumbs and route resolution. */

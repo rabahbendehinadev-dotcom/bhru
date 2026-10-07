@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useGetSubscriberCommerceModule, useSetSubscriberCommerceModule, getGetSubscriberCommerceModuleQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Search, MoreHorizontal, Users, UserCheck, Clock, PauseCircle, XCircle, X, Hourglass } from 'lucide-react';
 import { AdminShell } from '@/components/bhru/shells';
 import { Card, PlanBadge, SubStatus, Pager, Btn } from '@/components/bhru/ui';
@@ -32,6 +34,27 @@ export const Expiry = ({ sub }: { sub: Subscriber }) => {
   return <div className="leading-tight">{fmtDate(sub.expiresAt)}<div className={cn('text-[10.5px]', d! < 0 ? 'text-danger' : d! <= 14 ? 'text-warn' : 'text-ok')}>{d! < 0 ? 'Expired' : `${d} days`}</div></div>;
 };
 
+const adminReq = { credentials: 'same-origin' as const, headers: { 'X-BHRU-Request': '1', 'X-BHRU-Auth': 'admin' } };
+
+function CommerceToggle({ id }: { id: string }) {
+  const qc = useQueryClient();
+  const key = getGetSubscriberCommerceModuleQueryKey(id);
+  const q = useGetSubscriberCommerceModule(id, { request: adminReq, query: { queryKey: key } });
+  const m = useSetSubscriberCommerceModule({ request: adminReq, mutation: { onSuccess: (d) => { qc.setQueryData(key, d); void qc.invalidateQueries({ queryKey: key }); } } });
+  const on = q.data?.enabled === true;
+  return (
+    <div className="border-t p-3.5" data-testid="panel-commerce-module">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0"><div className="text-[11.5px] font-semibold">E-Commerce module</div><div className="text-[11px] text-muted-foreground">{q.isLoading ? 'Loading...' : q.isError ? 'Could not load module state.' : on ? 'Enabled for this subscriber.' : 'Disabled for this subscriber.'}</div></div>
+        {q.isError ? <Btn sm onClick={() => void q.refetch()} data-testid="button-commerce-module-retry">Retry</Btn> : (
+          <Btn sm v={on ? 'danger' : 'primary'} disabled={q.isLoading || m.isPending} onClick={() => m.mutate({ id, data: { enabled: !on } })} data-testid="button-commerce-module-toggle">{m.isPending ? 'Saving...' : on ? 'Disable' : 'Enable'}</Btn>
+        )}
+      </div>
+      {m.isError && <p className="mt-1.5 text-[11px] text-danger" role="alert">{m.error instanceof Error ? m.error.message : 'Could not update the module.'}</p>}
+    </div>
+  );
+}
+
 function Detail({ sub, onClose }: { sub: Subscriber; onClose: () => void }) {
   const rows: [string, React.ReactNode][] = [
     ['Business owner', sub.owner], ['Email', sub.email], ['Username', sub.username], ['Phone', sub.phone], ['Country', sub.country],
@@ -52,6 +75,7 @@ function Detail({ sub, onClose }: { sub: Subscriber; onClose: () => void }) {
         {rows.map(([k, v]) => <div key={k} className="grid grid-cols-[110px_1fr] items-center gap-2"><dt className="text-muted-foreground">{k}</dt><dd className="min-w-0 truncate">{v}</dd></div>)}
       </dl>
       <div className="border-t p-3.5"><SubActions sub={sub} /></div>
+      <CommerceToggle id={sub.id} />
       <div className="border-t p-3.5"><div className="mb-1 text-[11.5px] font-semibold">Notes</div><div className="rounded-md border bg-background p-2.5 text-[12px] text-muted-foreground" data-testid="text-detail-notes">{sub.notes || 'No notes.'}</div></div>
     </Card>
   );

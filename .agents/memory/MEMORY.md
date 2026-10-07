@@ -12,3 +12,4 @@
 - [Temporary test module resolution](temporary-test-module-resolution.md) — Pino transport lookup is caller-relative; scratch bundles can fail while the app remains healthy.
 - [Public website product boundaries](public-website-product-boundaries.md) — Path-based automatic URLs, stable slugs, one shared template; future custom hostnames map to the same business.
 - [Public media portability](public-media-portability.md) — User chose a configurable persistent Dokploy-mounted directory, with a safe Development equivalent and no hardcoded VPS host path.
+- [Commerce product boundaries](commerce-product-boundaries.md) — Optional paid module; admin-only grants, separate store opening, guest orders and retained data on revocation.

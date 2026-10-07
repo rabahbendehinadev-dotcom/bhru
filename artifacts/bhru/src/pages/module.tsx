@@ -6,6 +6,7 @@ import { resolveSlug } from '@/components/subscriber/nav-catalog';
 import { OnlineStaffList, useOnlineStaff } from '@/components/subscriber/OnlineStaff';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import GeneralSettingsPage from '@/pages/general-settings';
+import EcommercePage from '@/pages/ecommerce';
 import PublicWebsitePage from '@/pages/public-website';
 
 function Crumbs({ items }: { items: string[] }) {
@@ -38,6 +39,8 @@ export default function Module() {
   if (r.entry.id === 'settings' && r.child?.label === 'General Settings') {
     return <><Crumbs items={r.crumbs} /><GeneralSettingsPage /></>;
   }
+
+  if (r.slug === 'ecommerce') return <EcommercePage />;
 
   if (r.slug === 'cms-blog-public-website') {
     return <><Crumbs items={r.crumbs} /><PublicWebsitePage /></>;
