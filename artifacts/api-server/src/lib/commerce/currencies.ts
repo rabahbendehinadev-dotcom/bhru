@@ -1,13 +1,13 @@
 import type { PoolClient } from '@workspace/db';
 import { z } from '@workspace/api-zod';
 import { HttpError } from '../auth';
-import { type StoreCurrency, convertMinor, MAX_MINOR, rateUnits, parseNumberFormat } from './currency-money';
+import { type StoreCurrency, convertMinor, MAX_MINOR, rateUnits, parseNumberFormat, SUPPORTED_NUMBER_FORMATS } from './currency-money';
 import { currencyCatalog } from './currency-catalog';
 
 const text = (n: number) => z.string().trim().max(n).regex(/^[^\u0000-\u001f\u007f]*$/);
 export const currencyInput = z.object({
   code: z.string().regex(/^[A-Z]{3}$/), name: text(100).min(1), prefix: text(24), suffix: text(24),
-  number_format: z.string().trim().max(24).refine(v => parseNumberFormat(v) !== null, 'Use a number sample such as 1,000.99 or 1000,99, with different grouping and decimal separators.'),
+  number_format: z.string().trim().max(24).refine(v => parseNumberFormat(v) !== null, 'Choose a supported number format.'),
   rate: z.string().trim().regex(/^\d{1,9}(?:\.\d{1,6})?$/, 'Enter a positive manual rate with up to 6 decimal places.')
     .refine(v => /^\d{1,9}(?:\.\d{1,6})?$/.test(v)&&rateUnits(v)>0n && rateUnits(v)<=999999999000000n, 'Enter a positive manual rate up to 999999999 with six decimal places.')
     .transform(v => { const [whole, fraction = ''] = v.split('.'); return `${BigInt(whole!).toString()}.${fraction.padEnd(6, '0')}`; }),
@@ -53,6 +53,10 @@ export async function saveCurrency(id: string, raw: unknown, client: PoolClient)
   const rows = await currencies(id, client), old = rows.find(c => c.code === input.code);
   if (input.create_only && old) throw new HttpError(409, 'This currency is already configured. Use Edit instead.');
   if (!standard && !old) throw new HttpError(400, 'Choose an active currency from the supported currency catalog.');
+  // Grandfather only this row's unchanged persisted style; never accept new custom strings.
+  if (!SUPPORTED_NUMBER_FORMATS.some(format => format === input.number_format) && old?.number_format !== input.number_format) {
+    throw new HttpError(400, 'Choose a supported number format. Only an unchanged saved format can be retained.');
+  }
   const isBase = input.code === await baseCurrency(id,client);
   if (input.client_default && !input.enabled) throw new HttpError(400, 'The Client Default currency must be enabled.');
   if (isBase && !/^0*1(?:\.0+)?$/.test(input.rate)) {

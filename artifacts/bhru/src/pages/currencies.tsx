@@ -5,7 +5,8 @@ import { EmptyState } from '@/components/subscriber/EmptyState';
 import { useWorkspacePage } from '@/components/subscriber/workspace/WorkspacePageContext';
 import { useCommerceList, useCommerceWrite, errText } from '@/hooks/use-commerce';
 import { useStore } from '@/lib/store';
-import { formatScaled, parseNumberFormat, normalizeCurrencyRate, NUMBER_FORMAT_ERROR } from '@/lib/currency-money';
+import { formatScaled, parseNumberFormat, normalizeCurrencyRate, NUMBER_FORMAT_ERROR, canSaveNumberFormat, isSupportedNumberFormat } from '@/lib/currency-money';
+import { CurrencyFormatSelect } from '@/components/subscriber/CurrencyFormatSelect';
 import { CurrencyCatalogPicker } from '@/components/subscriber/CurrencyCatalogPicker';
 import type { CatalogCurrency } from '@/lib/currency-catalog-search';
 
@@ -50,7 +51,7 @@ export default function CurrenciesPage() {
     if (!form || locked) return;
     setErr(''); setFieldErr('');
     if (!form.code) { setErr('Choose a currency from the catalog.'); return; }
-    if (!parseNumberFormat(form.number_format)) { setErr(NUMBER_FORMAT_ERROR); return; }
+    if (!canSaveNumberFormat(form.number_format, form.isNew ? undefined : rows.find(row => row.code === form.code)?.number_format)) { setErr(NUMBER_FORMAT_ERROR); return; }
     const isBase = form.code === base;
     let rate: string;
     try { rate = isBase ? '1.000000' : normalizeCurrencyRate(form.rate); }
@@ -74,7 +75,7 @@ export default function CurrenciesPage() {
     setAddErr('');
     if (!add.code) { setAddErr('Choose a currency from the catalog.'); return; }
     if (rows.some(row => row.code === add.code)) { setAddErr('This currency is already configured. Use Edit instead.'); return; }
-    if (!parseNumberFormat(add.number_format)) { setAddErr(NUMBER_FORMAT_ERROR); return; }
+    if (!isSupportedNumberFormat(add.number_format)) { setAddErr(NUMBER_FORMAT_ERROR); return; }
     let rate: string;
     try { rate = add.code === base ? '1.000000' : normalizeCurrencyRate(add.rate); }
     catch { setAddErr(rateError); return; }
@@ -110,7 +111,7 @@ export default function CurrenciesPage() {
               <div className="grid grid-cols-2 gap-2">
                 <div><label className="lbl" htmlFor="m-prefix">Prefix</label><input id="m-prefix" className={inp} maxLength={24} value={add.prefix} onChange={(e) => setA('prefix', e.target.value)} /></div>
                 <div><label className="lbl" htmlFor="m-suffix">Suffix</label><input id="m-suffix" className={inp} maxLength={24} value={add.suffix} onChange={(e) => setA('suffix', e.target.value)} /></div>
-                <div><label className="lbl" htmlFor="m-format">Format</label><input id="m-format" className={inp} maxLength={24} value={add.number_format} onChange={(e) => setA('number_format', e.target.value)} aria-invalid={!parseNumberFormat(add.number_format)} aria-describedby="m-format-preview" data-testid="input-add-format-mobile" /></div>
+                <div><label className="lbl" htmlFor="m-format">Format</label><CurrencyFormatSelect id="m-format" className={inp} value={add.number_format} onChange={value => setA('number_format', value)} aria-describedby="m-format-preview" data-testid="select-add-format-mobile" /></div>
                 <div><label className="lbl" htmlFor="m-rate">{add.code === base ? 'Base Rate' : 'Rate'}</label><input id="m-rate" className={`${inp} tabular-nums`} inputMode="decimal" value={add.code === base ? '1.000000' : add.rate} disabled={add.code === base} onChange={(e) => setA('rate', e.target.value)} /><p className="mt-1 text-[11px] text-[hsl(var(--text-secondary))]">{add.code === base ? 'USD is the Base / Reference currency.' : 'Amount of this currency equal to 1 USD.'}</p></div>
               </div>
               <p id="m-format-preview" aria-live="polite" className={`text-[11.5px] ${parseNumberFormat(add.number_format) ? 'text-[hsl(var(--text-secondary))]' : 'text-danger'}`}>{parseNumberFormat(add.number_format) ? `Preview: ${add.prefix}${preview(add.number_format, add.decimals)}${add.suffix ? ` ${add.suffix}` : ''}` : NUMBER_FORMAT_ERROR}</p>
@@ -131,7 +132,7 @@ export default function CurrenciesPage() {
                     <td className="min-w-[200px]">{addFields}</td>
                     <td><input className={`${inp} w-16`} aria-label="Prefix" maxLength={24} value={add.prefix} onChange={(e) => setA('prefix', e.target.value)} data-testid="input-add-prefix" /></td>
                     <td><input className={`${inp} w-20`} aria-label="Suffix" maxLength={24} value={add.suffix} onChange={(e) => setA('suffix', e.target.value)} data-testid="input-add-suffix" /></td>
-                    <td><input className={`${inp} w-28`} aria-label="Format" maxLength={24} value={add.number_format} onChange={(e) => setA('number_format', e.target.value)} aria-invalid={!parseNumberFormat(add.number_format)} aria-describedby="add-format-preview" data-testid="input-add-format" /></td>
+                    <td><CurrencyFormatSelect className={`${inp} w-28`} value={add.number_format} onChange={value => setA('number_format', value)} aria-describedby="add-format-preview" data-testid="select-add-format" /></td>
                     <td><input className={`${inp} w-24 tabular-nums`} aria-label={add.code === base ? 'Base Rate' : 'Rate'} inputMode="decimal" placeholder="Rate" value={add.code === base ? '1.000000' : add.rate} disabled={add.code === base} onChange={(e) => setA('rate', e.target.value)} data-testid="input-add-rate" /><p className="mt-1 max-w-[150px] text-[11px] text-[hsl(var(--text-secondary))]">{add.code === base ? 'USD is the Base / Reference currency.' : 'Amount of this currency equal to 1 USD.'}</p></td>
                     <td><input type="checkbox" aria-label="Live" checked={add.enabled} disabled={add.client_default} onChange={(e) => setA('enabled', e.target.checked)} /></td>
                     <td><input type="checkbox" aria-label="Client Default" checked={add.client_default} disabled={!add.enabled} onChange={(e) => setA('client_default', e.target.checked)} /></td>
@@ -180,14 +181,17 @@ export default function CurrenciesPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Prefix"><input className="input w-full" value={form.prefix} maxLength={24} onChange={(e) => set('prefix', e.target.value)} data-testid="input-currency-prefix" /></Field>
               <Field label="Suffix"><input className="input w-full" value={form.suffix} maxLength={24} onChange={(e) => set('suffix', e.target.value)} data-testid="input-currency-suffix" /></Field>
-              <Field label="Number format" error={!parseNumberFormat(form.number_format) ? NUMBER_FORMAT_ERROR : undefined} hint="Type a numeric sample. Decimal places follow the currency.">
-                <input className="input w-full" maxLength={24} value={form.number_format} onChange={(e) => set('number_format', e.target.value)} aria-invalid={!parseNumberFormat(form.number_format)} aria-describedby="currency-format-preview" data-testid="input-currency-format" />
+              <Field label="Number format" hint="Choose presentation separators. Decimal places follow the currency.">
+                <CurrencyFormatSelect className="input w-full" value={form.number_format}
+                  savedValue={form.isNew ? undefined : rows.find(row => row.code === form.code)?.number_format}
+                  onChange={value => set('number_format', value)} aria-describedby="currency-format-preview" data-testid="select-currency-format" />
+                {!isSupportedNumberFormat(form.number_format) && <p className="mt-1 text-[11.5px] text-[hsl(var(--text-secondary))]">Your saved format is preserved. Select a standard option only if you want to change it.</p>}
               </Field>
               <Field label={form.code === base ? 'Base Rate' : 'Rate'} error={fieldErr} hint={form.code === base ? 'USD is the Base / Reference currency.' : 'Amount of this currency equal to 1 USD.'}>
                 <input className="input w-full tabular-nums" inputMode="decimal" value={form.code === base ? '1.000000' : form.rate} placeholder={form.code === base ? '' : 'Require rate'} disabled={form.code === base} onChange={(e) => { setFieldErr(''); set('rate', e.target.value); }} data-testid="input-currency-rate" />
               </Field>
             </div>
-            <p id="currency-format-preview" aria-live="polite" className="text-[12px] text-[hsl(var(--text-secondary))]" data-testid="text-format-preview">{parseNumberFormat(form.number_format) ? `Preview: ${form.prefix}${preview(form.number_format, form.decimals)}${form.suffix ? ` ${form.suffix}` : ''}` : 'Enter a valid number format to preview.'}</p>
+            <p id="currency-format-preview" aria-live="polite" className="text-[12px] text-[hsl(var(--text-secondary))]" data-testid="text-format-preview">{parseNumberFormat(form.number_format) ? `Preview: ${form.prefix}${preview(form.number_format, form.decimals)}${form.suffix ? ` ${form.suffix}` : ''}` : NUMBER_FORMAT_ERROR}</p>
             <div className="flex flex-wrap gap-4 text-[12.5px]">
               <label className="flex items-center gap-1.5"><input type="checkbox" checked={form.enabled} disabled={form.client_default} onChange={(e) => set('enabled', e.target.checked)} data-testid="check-currency-enabled" />Enabled</label>
               <label className="flex items-center gap-1.5"><input type="checkbox" checked={form.client_default} disabled={!form.enabled || rows.some(r=>r.code===form.code&&r.client_default)} onChange={(e) => set('client_default', e.target.checked)} data-testid="check-currency-default" />Client default</label>

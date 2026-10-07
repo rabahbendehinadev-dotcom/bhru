@@ -29,13 +29,13 @@ Client Default; Panel Display Currency remains a separate user preference.
 **How to apply:** Explain rates generically as currency units per USD; do not invent FX,
 add country-based currency defaults or force DZD as Client Default.
 
-Currency Number Format must be manually typed, not chosen from a dropdown, in both
-the inline Add form and Edit modal. Prefix/suffix remain editable. USD uses the
+Currency Number Format must be a dropdown in both the inline Add form and Edit
+modal: 1000.99, 1,000.99, 1,000,99, 1,000. Nonstandard saved styles must remain
+preserved, not silently rewritten. Prefix/suffix and commercial rates remain manually editable. USD uses the
 label “Base Rate”; currency-page reference labels consistently say “Base / Reference”.
 
-**Why:** The user explicitly rejected dropdown-only presentation and requested
-DHRU-style manual configuration without imposing commercial-rate preferences.
-**How to apply:** Validate numeric separator samples on client and server, keep
+**Why:** The user rechecked DHRU and explicitly corrected their earlier free-text requirement.
+**How to apply:** Offer only supported new styles, retain unchanged saved styles, keep
 live previews consistent with saved display formatting, and retain currency-owned
 decimal precision and all conversion/history behavior.
 

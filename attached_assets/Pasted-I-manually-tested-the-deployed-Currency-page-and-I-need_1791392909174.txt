@@ -1,0 +1,263 @@
+I manually tested the deployed Currency page and I need one correction.
+
+IMPORTANT:
+Earlier I requested Number Format to be a free-text input.
+That requirement was incorrect.
+
+I have now rechecked the original DHRU Currency interface and confirmed that FORMAT is a DROPDOWN.
+
+I want BHRU to follow that behavior.
+
+==================================================
+1. CHANGE FORMAT BACK TO A DROPDOWN
+==================================================
+
+On:
+
+Settings → Currencies
+
+replace the current editable Format text input with a dropdown/select.
+
+Apply this in BOTH:
+
+- Add Currency row
+- Edit Currency modal
+
+The subscriber should select a supported format instead of typing an arbitrary format.
+
+==================================================
+2. FORMAT OPTIONS
+==================================================
+
+Use these DHRU-style options as the initial supported choices:
+
+1000.99
+1,000.99
+1,000,99
+1,000
+
+Display them exactly and clearly in the dropdown.
+
+IMPORTANT:
+Before implementing, inspect the current BHRU money formatter and migration 015.
+
+Do not create formatting semantics that conflict with how BHRU actually parses/displays decimal and thousands separators.
+
+The selected option must produce the same visible result everywhere:
+- Currency preview
+- Products
+- Panel monetary displays
+- Public storefront
+- Cart
+- Checkout
+- Order display where applicable
+
+==================================================
+3. DEFAULT FORMAT
+==================================================
+
+For normal decimal currencies, use:
+
+1,000.99
+
+as the sensible initial presentation default where appropriate.
+
+But preserve existing saved subscriber format choices.
+
+Do NOT rewrite existing currency configurations unnecessarily.
+
+For currencies whose official minor-unit precision differs, such as JPY/KWD/BHD/JOD, continue respecting the currency's monetary decimal precision.
+
+Format controls presentation separators; it must not corrupt the currency's actual precision.
+
+==================================================
+4. RATE MUST NOT BECOME A DROPDOWN
+==================================================
+
+Do NOT change Rate.
+
+Rate must remain a manually typed input.
+
+Example:
+
+DZD
+Rate: [ 260 ]
+
+Another subscriber can enter:
+
+DZD
+Rate: [ 270 ]
+
+BHRU must not suggest, prefill or automatically update exchange rates.
+
+USD remains:
+
+Base / Reference
+Base Rate = 1.000000
+read-only
+
+==================================================
+5. PREFIX / SUFFIX
+==================================================
+
+Prefix and Suffix remain manually editable.
+
+Do not turn them into dropdowns.
+
+So the intended UX is:
+
+Currency → searchable catalog selector
+Prefix → text input
+Suffix → text input
+Format → DROPDOWN
+Rate → manual input
+Live → checkbox
+Client Default → checkbox
+
+==================================================
+6. REMOVE FREE-TEXT FORMAT LOGIC
+==================================================
+
+Since Format is no longer arbitrary free text:
+
+remove UI behavior that allows custom format strings.
+
+Simplify validation back to the supported format set.
+
+However, be careful with existing data.
+
+Do not break an existing subscriber record merely because migration 015 previously allowed additional manual formats.
+
+If an existing saved value is one of the supported formats, load it normally.
+
+If an existing value falls outside the new dropdown set, preserve it safely and do not silently rewrite monetary data. Inspect the current Development/source behavior and choose a backward-compatible handling strategy.
+
+==================================================
+7. MIGRATION 015
+==================================================
+
+Migration 015 has already been deployed to my VPS.
+
+DO NOT edit migration 015.
+
+If no database constraint change is necessary, create no new migration.
+
+If a new DB constraint is genuinely required, use the next additive migration after 015.
+
+Do not modify any checksum-tracked previous migration.
+
+==================================================
+8. KEEP THE CURRENCY CATALOG WORK
+==================================================
+
+Do NOT touch or regress the new global Currency Catalog.
+
+It is working correctly in Production.
+
+Keep:
+
+- comprehensive ISO currency catalog
+- searchable picker
+- DZD
+- MAD
+- SAR
+- AED
+- QAR
+- KWD
+- BHD
+- OMR
+- JOD
+- TND
+- LYD
+- official minor-unit precision
+- duplicate prevention
+- configured-only Panel Display Currency
+- configured-only storefront currencies
+
+Do not revert any of that work.
+
+==================================================
+9. DO NOT CHANGE MONEY ARCHITECTURE
+==================================================
+
+Do NOT change:
+
+- USD permanent Base / Reference
+- USD rate 1.000000
+- canonical USD pricing
+- 12-decimal internal precision
+- six-decimal manual exchange rates
+- Client Default behavior
+- Panel Display Currency behavior
+- storefront conversion
+- checkout calculations
+- historical order snapshots
+- legacy conversion
+- conversion provenance
+- admin Preview read-only behavior
+
+This task is a FORMAT UX correction.
+
+==================================================
+10. ACCEPTANCE CHECK
+==================================================
+
+Do focused checks only.
+No long E2E/full regression suite.
+
+Verify:
+
+Add Currency:
+Format is a dropdown.
+
+Edit Currency:
+Format is a dropdown.
+
+Dropdown contains:
+
+1000.99
+1,000.99
+1,000,99
+1,000
+
+Select each option and verify Preview changes correctly.
+
+Verify Rate remains manually typed.
+
+Verify DZD can keep a subscriber-defined rate such as 260 or 270.
+
+Verify the new Currency Catalog/search remains unchanged.
+
+Verify existing saved formats continue to load safely.
+
+==================================================
+11. MY WORKFLOW
+==================================================
+
+Remember:
+
+Replit source
+→ I Git Push
+→ Dokploy/VPS
+→ I manually test on bhru.net
+
+Do NOT access my VPS database.
+Do NOT push.
+Do NOT deploy.
+
+==================================================
+WHEN FINISHED
+==================================================
+
+Report only:
+
+1. What changed in Format
+2. Exact dropdown options
+3. How existing saved formats are preserved
+4. Confirmation Rate remains manual
+5. Files changed
+6. Whether a new migration was required
+7. Focused validation result
+8. Ready for Git Push → Dokploy
+
+Then STOP.

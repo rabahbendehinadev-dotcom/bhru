@@ -29,7 +29,8 @@ Search inside the picker matches code, name, country and symbol without an
 
 The catalog contains **no exchange rates**, tenant settings or presentation
 overrides. Choosing an entry sets its code/name/precision and clears the unsaved
-rate. Prefix, suffix and format remain editable. A new subscriber still receives
+rate. Prefix and suffix remain manually editable; format uses the supported
+dropdown, with a retained option for an existing nonstandard saved style. A new subscriber still receives
 only USD, enabled, Base / Reference at 1.000000 and initial Client Default.
 
 New currency additions are validated against selectable catalog entries on the
@@ -62,5 +63,11 @@ snapshot update. The JSON records its source date and XML SHA-256. The generator
 rejects conflicting precision and precisions beyond the current 0–4 schema
 support, requiring explicit review instead of guessing.
 
-No migration 016 is needed: existing code, Unicode and precision constraints
-already support the selectable catalog. Migrations 001–015 are unchanged.
+The catalog itself requires no migration: code, Unicode and precision constraints
+already support its entries. The separate Format dropdown correction adds
+`016_currency_format_dropdown.sql` solely to accept the literal choices `1,000,99`
+and `1,000`, while retaining the complete previous format constraint domain.
+Migrations 001–015 are unchanged. Formats control separators, never monetary
+precision: `1,000` retains currency-owned decimals; `1,000,99` uses comma grouping
+and a comma decimal separator. Existing nonstandard saved formats remain available
+only as a retained choice for their own record, not for new currency additions.

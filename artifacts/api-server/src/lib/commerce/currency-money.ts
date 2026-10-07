@@ -7,9 +7,13 @@ export const USD_SCALE = 12;
 export const USD_FACTOR = 1000000000000n;
 export const RATE_FACTOR = 1000000n;
 export const MAX_USD_UNITS = 9999999999990000000000n;
+export const SUPPORTED_NUMBER_FORMATS = ['1000.99', '1,000.99', '1,000,99', '1,000'] as const;
 /** Numeric samples select separators only; precision still belongs to the currency. */
 export function parseNumberFormat(value: string): [string, string] | null {
  const sample = value.trim();
+ // Explicit dropdown styles; the grouping-only sample never overrides ISO precision.
+ if (sample === '1,000,99') return [',', ','];
+ if (sample === '1,000') return [',', '.'];
  if (sample.length > 24) return null;
  const grouped = /^\d{1,3}([., ])\d{3}([.,])\d{2}$/.exec(sample);
  if (grouped) return grouped[1] !== grouped[2] ? [grouped[1]!, grouped[2]!] : null;

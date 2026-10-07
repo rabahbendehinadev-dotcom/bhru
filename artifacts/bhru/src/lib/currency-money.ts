@@ -1,9 +1,17 @@
 /** Pure fixed-decimal helpers. USD inputs here are integer units at scale 12, never decimal dollars. */
 export interface PanelCurrency { code:string;name:string;prefix:string;suffix:string;number_format:string;rate:string;decimals:number;enabled:boolean;client_default:boolean;is_base?:boolean;rate_configured?:boolean }
-export const NUMBER_FORMAT_ERROR = 'Use a number sample such as 1,000.99 or 1000,99, with different grouping and decimal separators.';
+export const SUPPORTED_NUMBER_FORMATS = ['1000.99', '1,000.99', '1,000,99', '1,000'] as const;
+export const NUMBER_FORMAT_ERROR = 'Choose a supported number format.';
+export const isSupportedNumberFormat = (value: string) => SUPPORTED_NUMBER_FORMATS.some(format => format === value);
+export function canSaveNumberFormat(value: string, savedValue?: string): boolean {
+ return isSupportedNumberFormat(value) || (value === savedValue && parseNumberFormat(value) !== null);
+}
 /** A numeric sample selects separators, not the currency's decimal precision. */
 export function parseNumberFormat(value: string): [string, string] | null {
  const sample = value.trim();
+ // Explicit dropdown styles; the grouping-only sample never overrides ISO precision.
+ if (sample === '1,000,99') return [',', ','];
+ if (sample === '1,000') return [',', '.'];
  if (sample.length > 24) return null;
  const grouped = /^\d{1,3}([., ])\d{3}([.,])\d{2}$/.exec(sample);
  if (grouped) return grouped[1] !== grouped[2] ? [grouped[1]!, grouped[2]!] : null;
