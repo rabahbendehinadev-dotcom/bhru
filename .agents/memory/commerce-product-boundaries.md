@@ -12,6 +12,11 @@ Commerce-enabled public homepages use the E-Commerce catalog as their sole produ
 subscribers must not re-enter products in CMS. Replace the legacy placeholder services and
 device-service CTA only on commerce homepages; retain non-commerce presentation for compatibility.
 
+Public header Login/Register are customer actions, never subscriber or Platform Admin entry points.
+Visitor language/currency preferences must be scoped to the subscriber. Unavailable translations
+must explicitly fall back to English; requested currencies must never be treated as converted
+prices without a real conversion source. Keep authoritative base prices and order totals intact.
+
 **Why:** The user explicitly defined these product boundaries for the first commerce phase.
 
 **How to apply:** Preserve these boundaries in future commerce work. Reuse the existing subscriber

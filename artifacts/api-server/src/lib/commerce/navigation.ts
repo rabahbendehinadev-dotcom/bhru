@@ -6,6 +6,7 @@ import { publicScriptSources } from '../public-site/presentation-render';
 import { publicStore, products, categories } from './data';
 import { renderCommerceDocument } from './public-render';
 import { COMMERCE_SCRIPT_HASH } from './public-script';
+import { STOREFRONT_HEADER_HASH, STOREFRONT_MENU_HASH } from './storefront-header-script';
 
 /** Optional overlay: unentitled/default home documents remain byte-for-byte V2. */
 export async function tryCommerceDocument(req:Request,res:Response,path:unknown):Promise<boolean> {
@@ -38,7 +39,7 @@ export async function tryCommerceDocument(req:Request,res:Response,path:unknown)
     if(result.document){writePublicDocument(req,res,result.document);return true;}
     res.setHeader('Cache-Control','no-store');
     res.setHeader('X-Robots-Tag','noindex, nofollow');
-    res.setHeader('Content-Security-Policy',`default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https: data:; script-src ${publicScriptSources(result.site)} ${COMMERCE_SCRIPT_HASH}; connect-src 'self'; base-uri 'none'; form-action 'self'`);
+    res.setHeader('Content-Security-Policy',`default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https: data:; script-src ${publicScriptSources(result.site)} ${COMMERCE_SCRIPT_HASH} ${STOREFRONT_HEADER_HASH} ${STOREFRONT_MENU_HASH}; connect-src 'self'; base-uri 'none'; form-action 'self'`);
     res.status(200).type('html').end(result.html);return true;
   }catch(error) {
     req.log.error({code:'COMMERCE_DOCUMENT'},'Public store temporarily unavailable');

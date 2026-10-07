@@ -6,6 +6,10 @@ import { renderCta } from '../public-site/components/cta';
 import type { StoreSettings } from './validation';
 import { COMMERCE_SCRIPT } from './public-script';
 import { PUBLIC_CATALOG_STYLES } from './public-catalog-styles';
+import { storefrontPreferences, type StorefrontPreferences } from './storefront-preferences';
+import { renderStorefrontHeader, STOREFRONT_AUTH_NOTICE, STOREFRONT_HEADER_STYLES } from './storefront-header';
+import { STOREFRONT_HEADER_SCRIPT, STOREFRONT_MENU_SCRIPT } from './storefront-header-script';
+import { PUBLIC_MENU_SCRIPT } from '../public-site/mobile-menu';
 
 type View = 'home' | 'product' | 'cart' | 'checkout' | 'confirmation';
 interface Img { id?: string; url: string; width?: number; height?: number }
@@ -119,7 +123,7 @@ const CSS = `.cx{padding:44px 0;scroll-margin-top:84px}.cx *{min-width:0}.cx h1,
 @media(max-width:420px){.cx-hdr-products{display:none}.cx-hdr-link{padding:0 9px}}
 @media(prefers-reduced-motion:reduce){.cx *{transition:none!important;scroll-behavior:auto!important}}`;
 
-export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, settings: StoreSettings, view: View, data: any, categories: any[]): string {
+export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, settings: StoreSettings, view: View, data: any, categories: any[], tenantPreferences?: Partial<StorefrontPreferences>): string {
   const slug = slugIn.replace(SLUG, '');
   const cats = (Array.isArray(categories) ? categories : []) as Cat[];
   let html = renderPublicHome(model);
@@ -149,12 +153,9 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
     html = html.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${e(titles[view] ?? settings.title)} | ${e(model.siteName)}</title>`);
   }
 
-  // Header access (commerce documents only): products link and cart count; existing header structure is untouched.
-  const cartLink = `<a class="cx-hdr-link" href="/${slug}/cart" data-cx-cart-link aria-label="Cart"><span class="cx-hdr-products">Cart</span><span data-cx-count>0</span></a>`;
-  html = html.replace('<nav class="nav-desktop" aria-label="Primary">', m => `${m}<a href="/${slug}#store-products">Products</a>`)
-    .replace('<nav aria-label="Mobile">', m => `${m}<a href="/${slug}#store-products">Products</a>`)
-    .replace('<a class="login" href="#customer-access">', m => `${cartLink}${m}`)
-    .replace('<a class="login" href="/' + slug + '#customer-access">', m => `${cartLink}${m}`);
+  const preferences = storefrontPreferences(settings.currency, tenantPreferences);
+  html = html.replace(/<header class="site-header">[\s\S]*?<\/header>/, () => renderStorefrontHeader(model, slug, preferences))
+    .replace(PUBLIC_MENU_SCRIPT, () => STOREFRONT_MENU_SCRIPT);
 
   const cfg = {
     slug, currency: settings.currency, view,
@@ -162,8 +163,8 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
     page: view === 'home' ? num(data?.page, 1) : 1,
     categories: view === 'home' ? cats.map(c => ({ id: c.id, name: c.name })) : [],
   };
-  html = html.replace('</style></head>', () => `${CSS}${view === 'home' ? PUBLIC_CATALOG_STYLES : ''}</style></head>`);
-  const tail = `${live}<script type="application/json" id="cx-config">${inlineJSON(cfg)}</script><script>${COMMERCE_SCRIPT}</script>`;
+  html = html.replace('</style></head>', () => `${CSS}${view === 'home' ? PUBLIC_CATALOG_STYLES : ''}${STOREFRONT_HEADER_STYLES}</style></head>`);
+  const tail = `${live}${STOREFRONT_AUTH_NOTICE}<script type="application/json" id="cx-config">${inlineJSON(cfg)}</script><script>${COMMERCE_SCRIPT}</script><script type="application/json" id="sf-config">${inlineJSON({ slug, ...preferences })}</script><script>${STOREFRONT_HEADER_SCRIPT}</script>`;
   const end = html.lastIndexOf('</body>');
   return end >= 0 ? html.slice(0, end) + tail + html.slice(end) : html + tail;
 }
