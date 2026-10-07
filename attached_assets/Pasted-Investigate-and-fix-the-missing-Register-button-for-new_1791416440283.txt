@@ -1,0 +1,76 @@
+Investigate and fix the missing Register button for newly created BHRU subscribers.
+
+Observed production behavior:
+
+- A newly created subscriber/public website shows the Login button in the header.
+- The Register button is missing.
+- It is missing both:
+  1. in CMS / Blog → Public Website → Live Preview
+  2. on the actual public URL
+
+This means it is not a browser/cache issue.
+
+TASK
+
+First inspect the current implementation and identify exactly what controls visibility of:
+- Login
+- Register
+
+Check:
+- fresh subscriber initialization
+- public website/default settings
+- database defaults
+- API serialization
+- frontend rendering
+- any customer-auth / registration availability flag
+
+Compare the default state expected by the current public website implementation.
+
+DESIRED DEFAULT BEHAVIOR
+
+For every newly created subscriber:
+
+- Login button should be visible by default.
+- Register button should be visible by default.
+- Both should appear in the public website header.
+- The CMS Live Preview and the real public website must match.
+
+IMPORTANT
+
+Do not hardcode this for one subscriber.
+Fix the default behavior for ALL future subscribers.
+
+For existing subscribers:
+- Preserve any explicit choice they already saved.
+- If the Register visibility field is missing/null because the subscriber was created with an incomplete default configuration, safely initialize it to the intended default.
+- Do not overwrite an explicit false value if the subscriber intentionally disabled registration.
+
+Also verify that the Register button points to the correct PUBLIC CUSTOMER registration flow.
+It must NEVER route a public visitor to:
+- subscriber owner registration
+- BHRU platform registration
+- platform admin authentication
+
+If public customer registration already exists, use its correct route.
+If it does not yet exist, report that clearly before inventing a route.
+
+Do not redesign the header.
+Do not change unrelated CMS/public-site styling.
+Do not touch custom-domain infrastructure.
+Do not push or deploy.
+
+Only create a migration if the actual database schema/default requires one.
+
+Run focused:
+- backend TypeScript check if backend changes
+- frontend TypeScript/build check for affected public-site code
+
+At the end report:
+1. exact root cause
+2. files changed
+3. whether a migration was required
+4. behavior for fresh subscribers
+5. behavior for existing subscribers
+6. exact Login route
+7. exact Register route
+8. focused checks performed
