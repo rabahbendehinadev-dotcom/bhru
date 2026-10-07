@@ -1,14 +1,14 @@
 import { escapeHTML, safePublicImage } from '../public-site/safety';
 import type { PublicSiteModel } from '../public-site/model';
 import { renderPublicHome } from '../public-site/homepage';
-import { renderBanner } from '../public-site/presentation-render';
-import { renderHero } from '../public-site/components/hero';
+import { renderServices } from '../public-site/components/services';
+import { renderCta } from '../public-site/components/cta';
 import type { StoreSettings } from './validation';
 import { COMMERCE_SCRIPT } from './public-script';
 
 type View = 'home' | 'product' | 'cart' | 'checkout' | 'confirmation';
 interface Img { id?: string; url: string; width?: number; height?: number }
-interface Prod { id: string; name: string; slug: string; short_description?: string; description?: string; sku?: string; price_minor: string; compare_at_minor?: string | null; featured?: boolean; in_stock: boolean; stock_quantity?: number | null; images?: Img[] }
+interface Prod { id: string; name: string; slug: string; category_id?: string | null; short_description?: string; description?: string; sku?: string; price_minor: string; compare_at_minor?: string | null; featured?: boolean; in_stock: boolean; stock_quantity?: number | null; images?: Img[] }
 interface Cat { id: string; name: string; description?: string; image_url?: string | null }
 
 const e = escapeHTML;
@@ -33,22 +33,24 @@ function image(img: Img | undefined, alt: string, extra = ''): string {
   return `<img src="${e(src)}" alt="${e(alt)}" width="${num(img.width, 600)}" height="${num(img.height, 600)}" loading="lazy" decoding="async"${extra}>`;
 }
 
-function card(p: Prod, slug: string, cur: string): string {
+function card(p: Prod, slug: string, cur: string, cats: Cat[]): string {
   const href = `/${slug}/product/${encodeURIComponent(p.slug)}`;
   const max = maxQty(p);
+  const category = cats.find(c => c.id === p.category_id);
+  const categoryLabel = category ? `<p class="cx-muted">${e(category.name)}</p>` : '';
   const was = p.compare_at_minor && isBigger(p.compare_at_minor, p.price_minor) ? `<s class="cx-was">${e(formatMinor(p.compare_at_minor, cur))}</s>` : '';
   const action = max > 0
     ? `<button class="cx-btn cx-btn-solid" type="button" data-cx-add="${e(p.id)}" data-max="${max}" aria-label="Add ${e(p.name)} to cart">Add to cart</button>`
     : '<p class="cx-out">Out of stock</p>';
-  return `<li class="cx-card"><a class="cx-media" href="${e(href)}">${image(p.images?.[0], p.name)}${p.featured ? '<span class="cx-flag">Featured</span>' : ''}</a><div class="cx-body"><h3 class="cx-name"><a href="${e(href)}">${e(p.name)}</a></h3><p class="cx-price"><strong>${e(formatMinor(p.price_minor, cur))}</strong>${was}</p>${action}</div></li>`;
+  return `<li class="cx-card" data-cx-product="${e(href)}"><a class="cx-media" href="${e(href)}">${image(p.images?.[0], p.name)}${p.featured ? '<span class="cx-flag">Featured</span>' : ''}</a><div class="cx-body"><h3 class="cx-name"><a href="${e(href)}">${e(p.name)}</a></h3>${categoryLabel}<p class="cx-price"><strong>${e(formatMinor(p.price_minor, cur))}</strong>${was}</p>${max > 0 ? '<p class="cx-ok">In stock</p>' : ''}${action}</div></li>`;
 }
 
 function homeSection(slug: string, s: StoreSettings, data: any, cats: Cat[]): string {
   const rows: Prod[] = Array.isArray(data?.data) ? data.data : [];
   const chips = cats.length
     ? `<div class="cx-chips" role="group" aria-label="Filter by category"><button class="cx-chip" type="button" data-cx-cat="" aria-pressed="true">All</button>${cats.map(c => `<button class="cx-chip" type="button" data-cx-cat="${e(c.id)}" aria-pressed="false">${e(c.name)}</button>`).join('')}</div>` : '';
-  return `<section class="cx cx-store" id="store-products" aria-labelledby="cx-title"><div class="wrap"><div class="cx-head"><h2 id="cx-title">${e(s.title)}</h2><a class="cx-btn" href="/${slug}/cart" data-cx-cart-link aria-label="Cart">View cart (<span data-cx-count>0</span>)</a></div>${chips}
-<ul class="cx-grid" id="cx-grid">${rows.map(p => card(p, slug, s.currency)).join('')}</ul>
+  return `<section class="cx cx-store" id="store-products" aria-labelledby="cx-title"><span id="services" aria-hidden="true"></span><div class="wrap"><div class="cx-head"><h2 id="cx-title">${e(s.title)}</h2><a class="cx-btn" href="/${slug}/cart" data-cx-cart-link aria-label="Cart">View cart (<span data-cx-count>0</span>)</a></div>${chips}
+<ul class="cx-grid" id="cx-grid">${rows.map(p => card(p, slug, s.currency, cats)).join('')}</ul>
 <p class="cx-empty" id="cx-empty"${rows.length ? ' hidden' : ''}>No products are available yet. Please check back soon.</p>
 <p class="cx-muted" id="cx-home-status" role="status"></p>
 <div class="cx-more"><button class="cx-btn" type="button" id="cx-more" data-page="${num(data?.page, 1)}"${data?.has_more ? '' : ' hidden'}>Load more products</button></div></div></section>`;
@@ -81,13 +83,13 @@ function shell(title: string, id: string): string {
 }
 
 const CSS = `.cx{padding:44px 0;scroll-margin-top:84px}.cx *{min-width:0}.cx h1,.cx h2,.cx h3{line-height:1.2;letter-spacing:-.02em}
-.cx-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.cx-head h1,.cx-head h2{font-size:clamp(24px,4vw,34px);margin:0}
+.cx-store>#services{display:block;scroll-margin-top:84px}.cx-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.cx-head h1,.cx-head h2{font-size:clamp(24px,4vw,34px);margin:0}
 .cx-muted{color:var(--muted);font-size:14px}.cx-empty,.cx-out{color:var(--muted)}.cx-out{font-weight:600;font-size:14px}.cx-ok{color:var(--accent);font-weight:600;font-size:14px}
 .cx-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:center}
 .cx-btn:hover{border-color:var(--accent)}.cx-btn-solid{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.cx-btn:disabled{opacity:.5;cursor:not-allowed}.cx-wide{width:100%}
 .cx-btn:focus-visible,.cx-chip:focus-visible,.cx-step:focus-visible,.cx-thumb:focus-visible,.cx-link:focus-visible,.cx-field input:focus-visible,.cx-field textarea:focus-visible,.cx-qty-in:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .cx-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.cx-chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:600;font-size:14px;cursor:pointer}.cx-chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.cx-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cx-card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--sh)}
+.cx-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cx-card{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--sh);cursor:pointer;overflow-wrap:anywhere}.cx-card .cx-muted,.cx-card .cx-ok{margin:0}
 .cx-media{position:relative;display:block;aspect-ratio:1/1;background:var(--line)}.cx-media img{width:100%;height:100%;object-fit:cover;display:block}
 .cx-ph{display:grid;place-items:center;width:100%;height:100%;min-height:72px;color:var(--muted);font-size:13px;background:var(--line)}.cx-ph-sm{width:72px;height:72px;border-radius:10px;flex:none}
 .cx-flag{position:absolute;left:8px;top:8px;background:var(--ink);color:var(--bg);font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
@@ -130,9 +132,12 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
 
   const live = '<div id="cx-live" class="cx-sr" role="status" aria-live="polite"></div>';
   if (view === 'home') {
-    const hero = renderBanner(model) || renderHero(model);
-    const at = hero ? html.indexOf(hero) : -1;
-    if (at >= 0) html = html.slice(0, at + hero.length) + content + html.slice(at + hero.length);
+    // Replace only the legacy placeholder area; preserve the surrounding V2 sections.
+    const cta = renderCta(model);
+    // The CTA renderer also contains the existing Login overlay. Keep that untouched.
+    const deviceCta = cta.slice(0, cta.indexOf('</section>') + '</section>'.length);
+    html = html.replace(renderServices(model), () => content).replace(deviceCta, '')
+      .replace('<footer', '<span id="contact" aria-hidden="true"></span><footer');
   } else {
     const a = html.indexOf('<main>'), b = html.indexOf('</main>');
     if (a >= 0 && b > a) html = html.slice(0, a + 6) + content + html.slice(b);
@@ -154,6 +159,7 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
     slug, currency: settings.currency, view,
     settings: { email_mode: settings.email_mode, address_mode: settings.address_mode, show_state: !!settings.show_state, show_city: !!settings.show_city, show_note: !!settings.show_note },
     page: view === 'home' ? num(data?.page, 1) : 1,
+    categories: view === 'home' ? cats.map(c => ({ id: c.id, name: c.name })) : [],
   };
   html = html.replace('</style></head>', () => `${CSS}</style></head>`);
   const tail = `${live}<script type="application/json" id="cx-config">${inlineJSON(cfg)}</script><script>${COMMERCE_SCRIPT}</script>`;

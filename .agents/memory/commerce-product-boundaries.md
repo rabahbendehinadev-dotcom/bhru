@@ -8,6 +8,10 @@ Subscriber Store Open is a separate setting. Revocation restricts access and nev
 saved business data. Phase 1 uses guest order submission, not payment collection or customer accounts.
 Variants, payment gateways, shipping integrations and custom domains are deferred.
 
+Commerce-enabled public homepages use the E-Commerce catalog as their sole product source:
+subscribers must not re-enter products in CMS. Replace the legacy placeholder services and
+device-service CTA only on commerce homepages; retain non-commerce presentation for compatibility.
+
 **Why:** The user explicitly defined these product boundaries for the first commerce phase.
 
 **How to apply:** Preserve these boundaries in future commerce work. Reuse the existing subscriber
