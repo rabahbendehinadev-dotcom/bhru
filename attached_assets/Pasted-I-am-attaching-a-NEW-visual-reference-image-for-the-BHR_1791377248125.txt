@@ -1,0 +1,484 @@
+I am attaching a NEW visual reference image for the BHRU public Login / Register landing page.
+
+IMPORTANT:
+The current BHRU landing page is already functional, but visually it is NOT close enough to the reference I previously requested.
+
+I want you to now perform a serious visual redesign based directly on the attached reference.
+
+This task is FRONTEND / UI ONLY.
+
+DO NOT redesign backend architecture.
+DO NOT change authentication logic.
+DO NOT change registration logic.
+DO NOT change subscriber approval/licence logic.
+DO NOT change Platform Admin.
+DO NOT change database schema.
+DO NOT create migrations.
+DO NOT touch currencies yet.
+DO NOT touch E-Commerce backend.
+DO NOT push.
+DO NOT deploy.
+DO NOT run long browser/E2E/full regression suites.
+
+I will manually test the page myself.
+
+==================================================
+1. PRIMARY OBJECTIVE
+==================================================
+
+Rebuild the public BHRU Login / Register landing page so that it is visually very close to the attached reference image, while keeping the existing BHRU functionality.
+
+The attached image is the MAIN visual target.
+
+Do not just take inspiration from it.
+
+Study:
+- overall composition
+- spacing
+- proportions
+- typography hierarchy
+- card sizes
+- hero composition
+- orange/white/navy balance
+- dashboard mockup placement
+- mobile mockup placement
+- login card placement
+- feature cards
+- shadows
+- border radiuses
+- background decoration
+- section density
+- alignment
+- whitespace
+- responsive behavior
+
+I want the final page to feel at least as polished as the reference.
+
+It must NOT look like a generic AI-generated SaaS template.
+
+BHRU should have its own identity.
+
+==================================================
+2. VISUAL DIRECTION
+==================================================
+
+Use a LIGHT professional interface.
+
+Main visual identity:
+
+- White / very light neutral background
+- BHRU orange as primary accent
+- Deep navy/dark blue typography
+- Very subtle warm orange gradients
+- Soft professional shadows
+- Thin neutral borders
+- Clean rounded cards
+- Generous but controlled whitespace
+- Modern SaaS/ERP appearance
+
+Do NOT return to the previous dark login-page design.
+
+Avoid:
+- excessive gradients
+- glassmorphism everywhere
+- huge empty areas
+- random decorative blobs
+- excessive animations
+- giant rounded cards
+- fake statistics
+- fake customer testimonials
+- fake companies
+- fake claims
+- generic AI-style illustrations
+
+The page must feel like a real commercial ERP/SaaS product.
+
+==================================================
+3. DESKTOP HERO — FOLLOW THE REFERENCE
+==================================================
+
+The first desktop viewport should closely follow the attached reference.
+
+Use a 3-part composition:
+
+LEFT:
+Strong BHRU marketing message.
+
+CENTER:
+A professional visual representation of the actual BHRU product.
+
+RIGHT:
+Real Login / Register authentication card.
+
+The composition should immediately explain:
+
+BHRU = platform + ERP/panel + storefront + authentication.
+
+==================================================
+4. HEADER
+==================================================
+
+Create a clean premium header.
+
+LEFT:
+BHRU logo
+Small subtitle:
+“SaaS for Unlock Servers”
+
+CENTER navigation:
+Features
+Solutions
+Pricing
+Help
+Contact
+
+RIGHT:
+Language selector if appropriate
+Light/Dark control only if already supported safely
+Sign in button
+
+Keep the header compact and elegant.
+
+Do not make it visually heavy.
+
+==================================================
+5. HERO LEFT SIDE
+==================================================
+
+Use a small orange eyebrow:
+
+ALL-IN-ONE PLATFORM FOR UNLOCK & SERVER BUSINESSES
+
+Main headline:
+
+Manage, sell and
+grow your business
+with BHRU.
+
+“BHRU.” should use the orange brand accent.
+
+Supporting text should clearly explain that BHRU manages:
+
+- products/services
+- orders
+- customers
+- public website
+- e-commerce
+- currencies
+- business operations
+
+Primary CTA:
+Create an account
+
+Secondary CTA:
+Explore features
+
+Under the buttons, add only small factual benefit labels such as:
+
+Easy to use
+Powerful modules
+Built for growth
+
+Do not invent statistics.
+
+==================================================
+6. CENTER PRODUCT VISUAL — VERY IMPORTANT
+==================================================
+
+This is one of the biggest differences between the current implementation and the attached reference.
+
+The current page relies too much on flat illustrative HTML panels.
+
+I want a PREMIUM PRODUCT SHOWCASE.
+
+Create a realistic laptop/browser-style mockup showing the ACTUAL BHRU subscriber interface.
+
+It should visually resemble the real BHRU panel:
+- BHRU logo
+- sidebar
+- Dashboard
+- Products
+- Orders
+- E-Commerce
+- CMS / Blog
+- Currencies
+- Settings
+- useful dashboard cards/tables
+
+Also include a smaller mobile storefront mockup in front/alongside the desktop mockup.
+
+The mobile preview can show:
+- product image
+- product title
+- price
+- Add to Cart
+- bottom/navigation elements
+
+IMPORTANT:
+Use the real BHRU visual language.
+
+Do NOT use random stock dashboard screenshots.
+Do NOT use another company's UI.
+Do NOT fabricate another brand.
+
+If implementing literal screenshot images is unnecessary, construct high-quality HTML/CSS product mockups that visually represent the REAL BHRU interface.
+
+They must look polished enough to feel like product screenshots, not wireframes.
+
+==================================================
+7. LOGIN / REGISTER CARD
+==================================================
+
+The authentication card on the RIGHT should be a major element, just like the attached reference.
+
+Top:
+BHRU logo
+
+Tabs:
+Sign in
+Create an account
+
+Sign-in mode:
+
+Welcome back
+Sign in to your BHRU panel.
+
+Email or username
+Password
+Show/hide password
+Remember me if supported
+Forgot password ONLY if actually supported
+
+Large orange:
+Sign in
+
+Bottom:
+New to BHRU? Create an account →
+
+Registration mode must use the EXISTING registration flow and fields.
+
+Do not create fake authentication behavior.
+
+Switching between Sign in and Create account should feel immediate and polished.
+
+==================================================
+8. FEATURE MODULE CARDS
+==================================================
+
+Below / integrated with the hero, reproduce the professional module-card layout visible in the reference.
+
+Suggested real BHRU modules:
+
+E-Commerce
+CMS / Blog
+Products & Services
+Customers
+Orders
+Currencies
+Reports & Analytics
+Utilities
+
+Each card:
+- distinct clean icon
+- module name
+- very short explanation
+- optional Learn more interaction
+
+Keep cards compact.
+
+Do not create giant marketing cards.
+
+==================================================
+9. INTERACTIVE MODULE EXPLORER
+==================================================
+
+The existing section:
+“Every part of the business, in one panel”
+
+can remain, but redesign it to visually match the new page.
+
+Tabs/options can include:
+
+E-Commerce
+Catalogue
+Orders
+Public Site
+Currencies
+Workspace
+
+When the visitor selects one, show a concise explanation and visual preview.
+
+Do not duplicate information unnecessarily.
+
+==================================================
+10. FROM SIGN-UP TO SELLING
+==================================================
+
+Keep the real workflow:
+
+01 — Create your account
+02 — Get approved
+03 — Set up your business
+
+Style this as a clean horizontal process/timeline on desktop.
+
+On mobile, stack it vertically.
+
+Do not invent additional approval/payment behavior.
+
+==================================================
+11. REAL PRODUCT VISUALS
+==================================================
+
+The previous implementation was missing the strong visual/product-image feeling of the reference.
+
+Correct this.
+
+The page should SHOW the product, not only describe it.
+
+Use visual representations of:
+- BHRU subscriber dashboard
+- public storefront
+- product management
+- order management
+- currencies
+- mobile storefront
+
+Where possible, reuse the real current BHRU design language/components rather than creating unrelated fake interfaces.
+
+==================================================
+12. RESPONSIVE MOBILE DESIGN
+==================================================
+
+Do not simply shrink the desktop version.
+
+Design mobile intentionally.
+
+Recommended order:
+
+Header
+Hero headline
+CTA buttons
+Product/mobile visual
+Authentication card
+Feature cards
+Module explorer
+3-step process
+
+Requirements:
+- no horizontal overflow
+- no clipped text
+- no tiny controls
+- comfortable touch targets
+- proper spacing
+- authentication fields full width
+- readable typography
+- cards stacked cleanly
+
+Target common widths:
+375px
+390px
+430px
+
+But DO NOT spend time running a full browser suite.
+Implement responsively and I will test manually.
+
+==================================================
+13. PRESERVE EXISTING FUNCTIONALITY
+==================================================
+
+CRITICAL:
+
+This redesign must NOT break:
+
+- /login
+- registration
+- subscriber sessions
+- logout
+- Pending account behavior
+- Active/Suspended/etc. account handling
+- licence behavior
+- private Platform Admin route
+- public subscriber websites
+- CMS
+- E-Commerce
+- currencies
+- existing API contracts
+
+This is primarily a presentation-layer redesign.
+
+Reuse existing authentication APIs.
+
+==================================================
+14. DO NOT WORK ON CURRENCIES YET
+==================================================
+
+Currency architecture is our NEXT task.
+
+Do not modify:
+- accounting reference currency
+- Client Default currency
+- manual rates
+- currency conversion
+- storefront currency selector
+- API service currencies
+
+Leave all currency logic exactly as it is for now.
+
+==================================================
+15. QUALITY BAR
+==================================================
+
+Before finishing, compare your implementation visually against the attached image.
+
+Ask yourself:
+
+Does the first screen have the same professional density?
+
+Is there a real product visual in the center?
+
+Does the authentication card feel integrated rather than pasted onto the page?
+
+Are the feature cards polished?
+
+Does BHRU look like a serious commercial SaaS/ERP platform?
+
+Does it look custom-designed rather than generated from a generic SaaS template?
+
+If not, refine it before stopping.
+
+I prefer you spend effort on DESIGN QUALITY rather than running a large automated test suite.
+
+==================================================
+16. TESTING — KEEP IT SHORT
+==================================================
+
+Do only quick technical checks necessary to ensure the page compiles/starts.
+
+Do NOT run:
+- full regression suite
+- browser E2E suite
+- long automated visual testing
+- unrelated backend tests
+
+I WILL DO THE VISUAL AND FUNCTIONAL ACCEPTANCE TEST MYSELF.
+
+==================================================
+17. WHEN FINISHED
+==================================================
+
+Stop in Development / Replit Preview.
+
+Do NOT push.
+Do NOT deploy.
+Do NOT modify production.
+
+Give me only a concise report:
+
+1. What was visually redesigned
+2. Which files were changed
+3. Confirmation that auth/backend behavior was preserved
+4. Exact Preview URL/path to inspect
+5. Any real limitation that remains
+
+Then STOP and wait for my manual review.

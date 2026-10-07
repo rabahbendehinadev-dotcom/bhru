@@ -26,3 +26,9 @@ The public subscriber authentication experience is BHRU's primary commercial ent
 **Why:** The user explicitly requested an intentional premium BHRU SaaS entrance and rejected generic landing-page claims and fake OAuth/recovery controls.
 
 **How to apply:** Keep subscriber public presentation separate from the private administrator entry and protected panel. Distinguish illustrative product previews from live account data, and do not present scaffold-only modules as working capabilities.
+
+The public Login/Register visual reference is a close composition target, not loose inspiration: marketing left, framed desktop/mobile product showcase center, authentication right, and compact module cards below.
+
+**Why:** The user rejected the earlier flat editor-like previews and loose interpretation of the reference. They want screenshot-quality BHRU product presentation, without changing working authentication.
+
+**How to apply:** Preserve recognizable subscriber/storefront visual language in the showcase. For presentation-only revisions, keep verification short and leave functional/visual acceptance to the user; do not repeat account-creation tests.
