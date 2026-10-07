@@ -4,6 +4,8 @@ import type { PoolClient } from '@workspace/db';
 import { HttpError } from '../auth';
 import { publicImageUrl } from '../public-site/media';
 import { linesInput, orderInput, type StoreSettings } from './validation';
+import { currencies, currencySnapshot } from './currencies';
+import { rateUnits } from './currency-money';
 
 export async function quote(id:string,input:z.infer<typeof linesInput>,currency:string,client:PoolClient,locking=false) {
   const ids=input.items.map(i=>i.product_id);
@@ -27,7 +29,9 @@ export async function quote(id:string,input:z.infer<typeof linesInput>,currency:
     return [{product_id:p.id,product_name:p.name,sku:p.sku,unit_price_minor:String(p.price_minor),quantity,
       line_total_minor:amount.toString(),image_key:p.image_key,image_url:p.image_key?publicImageUrl(p.image_key.slice(0,36),p.image_key):''}];
   });
-  return {items,subtotal_minor:subtotal.toString(),total_minor:subtotal.toString(),currency};
+  const configured=await currencies(id,client);
+  const snapshot=currencySnapshot(currency,configured,input.currency,items,subtotal.toString());
+  return {items,subtotal_minor:subtotal.toString(),total_minor:subtotal.toString(),currency,currency_snapshot:snapshot};
 }
 export async function createOrder(id:string,raw:unknown,settings:StoreSettings,client:PoolClient) {
   const input=orderInput.parse(raw);
@@ -45,9 +49,9 @@ export async function createOrder(id:string,raw:unknown,settings:StoreSettings,c
   const requestHash=createHash('sha256').update(JSON.stringify(input)).digest('hex');
   // Serialize a retry key before stock is touched, including simultaneous POSTs.
   await client.query('SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))',[id,input.checkout_key]);
-  const prior=(await client.query('SELECT reference,customer_name,total_minor,currency,status,request_hash FROM store_orders WHERE subscriber_id=$1 AND checkout_key=$2',[id,input.checkout_key])).rows[0];
+  const prior=(await client.query('SELECT reference,customer_name,total_minor,currency,status,request_hash,currency_snapshot FROM store_orders WHERE subscriber_id=$1 AND checkout_key=$2',[id,input.checkout_key])).rows[0];
   const receipt=(order:Record<string,unknown>)=>({
-    reference:order.reference,customer_name:order.customer_name,total_minor:order.total_minor,currency:order.currency,status:order.status,
+    reference:order.reference,customer_name:order.customer_name,total_minor:order.total_minor,currency:order.currency,status:order.status,currency_snapshot:order.currency_snapshot,
     confirmation_message:settings.confirmation_message,whatsapp:settings.whatsapp,
   });
   if(prior) {
@@ -55,11 +59,15 @@ export async function createOrder(id:string,raw:unknown,settings:StoreSettings,c
     return receipt(prior);
   }
   const priced=await quote(id,input,settings.currency,client,true);
+  const selected=priced.currency_snapshot.currency;
+  if(input.currency&&(selected.code!==input.currency||(input.currency_rate&&rateUnits(input.currency_rate)!==rateUnits(selected.rate)))) {
+    throw new HttpError(409,'Currency or manual rate changed. Reload checkout and review the totals before submitting.');
+  }
   const orderId=randomUUID();
   const reference=`ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${randomBytes(8).toString('hex').toUpperCase()}`;
-  await client.query(`INSERT INTO store_orders(id,subscriber_id,reference,checkout_key,request_hash,customer_name,phone,email,state,city,address,note,subtotal_minor,total_minor,currency)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
-    [orderId,id,reference,input.checkout_key,requestHash,input.customer_name,input.phone,input.email,input.state,input.city,input.address,input.note,priced.subtotal_minor,priced.total_minor,settings.currency]);
+  await client.query(`INSERT INTO store_orders(id,subscriber_id,reference,checkout_key,request_hash,customer_name,phone,email,state,city,address,note,subtotal_minor,total_minor,currency,currency_snapshot)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+    [orderId,id,reference,input.checkout_key,requestHash,input.customer_name,input.phone,input.email,input.state,input.city,input.address,input.note,priced.subtotal_minor,priced.total_minor,settings.currency,JSON.stringify(priced.currency_snapshot)]);
   for(const line of priced.items) {
     await client.query(`INSERT INTO store_order_items(id,subscriber_id,order_id,product_id,product_name,sku,image_key,unit_price_minor,quantity,line_total_minor)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
@@ -67,5 +75,5 @@ export async function createOrder(id:string,raw:unknown,settings:StoreSettings,c
     await client.query('UPDATE store_products SET stock_quantity=stock_quantity-$3,updated_at=now() WHERE subscriber_id=$1 AND id=$2 AND stock_quantity IS NOT NULL',[id,line.product_id,line.quantity]);
   }
   await client.query("INSERT INTO store_order_status_history(subscriber_id,order_id,status) VALUES($1,$2,'new')",[id,orderId]);
-  return receipt({reference,customer_name:input.customer_name,total_minor:priced.total_minor,currency:settings.currency,status:'new'});
+  return receipt({reference,customer_name:input.customer_name,total_minor:priced.total_minor,currency:settings.currency,status:'new',currency_snapshot:priced.currency_snapshot});
 }

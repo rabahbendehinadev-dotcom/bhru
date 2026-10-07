@@ -27,11 +27,12 @@ export const settingsInput=z.object({
   confirmation_message:text(500),
 }).strict();
 export const statusInput=z.object({id:uuid,status:z.enum(['new','confirmed','processing','completed','cancelled'])}).strict();
-export const linesInput=z.object({items:z.object({product_id:uuid,quantity:z.number().int().min(1).max(99)}).strict().array().min(1).max(50)}).strict();
+export const linesInput=z.object({items:z.object({product_id:uuid,quantity:z.number().int().min(1).max(99)}).strict().array().min(1).max(50),currency:z.string().regex(/^[A-Z]{3}$/).optional()}).strict();
 export const orderInput=linesInput.extend({
   checkout_key:uuid,customer_name:text(160).min(2),phone:text(25).regex(/^\+?[0-9 ()-]{7,25}$/),
   email:text(254).default(''),state:text(120).default(''),city:text(120).default(''),
   address:text(500).default(''),note:text(1000).default(''),
+  currency_rate:z.string().regex(/^\d{1,9}(?:\.\d{1,5})?$/).optional(),
 }).strict();
 export const DEFAULT_STORE={enabled:false,title:'Our Products',currency:'DZD',featured_first:true,email_mode:'optional',address_mode:'optional',show_state:true,show_city:true,show_note:true,whatsapp:'',confirmation_message:'Thank you. Your order has been received.'};
 export type StoreSettings=typeof DEFAULT_STORE & {subscriber_id?:string};

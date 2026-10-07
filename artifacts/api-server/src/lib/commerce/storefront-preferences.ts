@@ -1,4 +1,5 @@
-/** Presentation preferences only. Future tenant configuration feeds this adapter, not global mutable state. */
+import type { StoreCurrency } from './currency-money';
+/** Tenant-scoped presentation preferences; commercial currencies come from persisted settings. */
 export const STOREFRONT_LANGUAGES = [
   ['en', 'English', 'gb'], ['fr', 'French', 'fr'], ['ar', 'Arabic', 'sa'],
   ['de', 'German', 'de'], ['es', 'Spanish', 'es'], ['it', 'Italian', 'it'],
@@ -16,16 +17,16 @@ export interface StorefrontPreferences {
   enabledCurrencies: string[];
 }
 
-export function storefrontPreferences(baseCurrency: string, tenant: Partial<StorefrontPreferences> = {}) {
+export function storefrontPreferences(baseCurrency: string, tenant: Partial<StorefrontPreferences> = {}, configured: StoreCurrency[] = []) {
   const known = new Set<string>(STOREFRONT_LANGUAGES.map(l => l[0]));
   const enabledLanguages = (tenant.enabledLanguages ?? [...known]).filter(l => known.has(l));
   if (!enabledLanguages.includes('en')) enabledLanguages.unshift('en');
   const defaultLanguage = enabledLanguages.includes(tenant.defaultLanguage ?? '') ? tenant.defaultLanguage! : 'en';
-  const enabledCurrencies = [...new Set((tenant.enabledCurrencies ?? ['DZD', 'USD', 'EUR', 'GBP']).filter(c => /^[A-Z]{3}$/.test(c)).concat(baseCurrency))];
+  const rows = configured.length ? configured.filter(c => c.enabled) : [{ code:baseCurrency,name:baseCurrency,prefix:'',suffix:baseCurrency,number_format:'1,234.56',rate:'1.00000',decimals:2,enabled:true,client_default:true,is_base:true }];
+  const enabledCurrencies = rows.map(c => c.code);
   return {
-    defaultLanguage, enabledLanguages, enabledCurrencies, baseCurrency, defaultCurrency: baseCurrency,
-    // Only English storefront copy exists today. No rates or translated-content claims.
-    translatedLanguages: ['en'], conversionEnabled: false,
+    defaultLanguage, enabledLanguages, enabledCurrencies, baseCurrency, defaultCurrency: rows.find(c => c.client_default)?.code ?? baseCurrency,
+    currencies:rows, translatedLanguages: ['en'], conversionEnabled: true,
     languages: STOREFRONT_LANGUAGES.filter(l => enabledLanguages.includes(l[0])).map(([code, name, flag]) => ({ code, name, flag, rtl: code === 'ar' || code === 'he' })),
   };
 }

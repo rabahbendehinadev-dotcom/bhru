@@ -7,8 +7,8 @@ import {
   type GetCommerceResourceParams,
 } from '@workspace/api-client-react';
 
-export type Resource = 'overview' | 'products' | 'categories' | 'orders' | 'customers' | 'settings';
-type Writable = 'products' | 'categories' | 'settings' | 'orders';
+export type Resource = 'overview' | 'products' | 'categories' | 'orders' | 'customers' | 'settings' | 'currencies';
+type Writable = 'products' | 'categories' | 'settings' | 'orders' | 'currencies';
 
 export const subReq = (extra: { headers?: Record<string, string> } = {}) => ({
   credentials: 'same-origin' as const,
@@ -46,7 +46,7 @@ export function useCommerceWrite() {
   const archive = useArchiveCommerceResource({ request: subReq(), mutation: { onSuccess: refetch } });
   return {
     save: (resource: Writable, data: Record<string, unknown>) => save.mutateAsync({ resource, data }),
-    archive: (resource: 'products' | 'categories', id: string) => archive.mutateAsync({ resource, id }),
+    archive: (resource: 'products' | 'categories' | 'currencies', id: string) => archive.mutateAsync({ resource, id }),
     pending: save.isPending || archive.isPending,
   };
 }

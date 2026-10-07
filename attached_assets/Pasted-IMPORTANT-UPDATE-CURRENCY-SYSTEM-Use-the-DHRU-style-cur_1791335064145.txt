@@ -1,0 +1,115 @@
+IMPORTANT UPDATE — CURRENCY SYSTEM
+
+Use the DHRU-style currency management model shown in the provided reference,
+but implement it with the existing modern BHRU UI.
+
+Do NOT make currencies a fixed global DZD/USD/EUR/GBP selector.
+
+Each BHRU subscriber must manage their own storefront currencies.
+
+Add:
+
+Settings → Currencies
+
+This must be tenant-owned and isolated per subscriber.
+
+Each currency must support:
+
+- Currency code (USD, DZD, EUR, GBP, etc.)
+- Currency name
+- Prefix
+- Suffix
+- Number format
+- Exchange rate
+- Enabled / Live
+- Client Default
+
+Example:
+
+USD
+Rate: 1.00000
+Enabled: Yes
+Client Default: Yes
+
+DZD
+Rate: 260.00000
+Suffix: DZD
+Enabled: Yes
+Client Default: No
+
+The exchange rate is MANUAL for now.
+
+Do NOT connect to an external FX API.
+Do NOT use bank exchange rates.
+Do NOT invent exchange rates.
+
+The subscriber decides the commercial exchange rate.
+
+Allow the subscriber to:
+
+- Add a currency from a broad currency list
+- Edit a currency
+- Delete a non-default currency
+- Enable/disable it
+- Set one currency as Client Default
+- Change Prefix/Suffix
+- Change display format
+- Change manual exchange rate
+
+Exactly ONE currency must be the Client Default.
+
+Prevent deleting the current default currency until another default is selected.
+
+PUBLIC STOREFRONT
+
+The public currency dropdown must show ONLY currencies enabled by that subscriber.
+
+When a visitor changes currency:
+
+displayedPrice = basePrice × configuredRate
+
+Use the project's safe integer-money architecture and do not introduce
+floating-point order-total errors.
+
+The selected currency must remain consistent across:
+
+- Homepage product cards
+- Product detail
+- Cart
+- Checkout
+- Order confirmation
+
+Changing display currency must NEVER mutate the stored base product price.
+
+Persist the visitor's selected currency.
+
+If the visitor has no saved currency, use that subscriber's Client Default.
+
+If a previously selected currency becomes disabled, automatically fall back
+to Client Default.
+
+Orders must preserve enough currency/rate information as an immutable snapshot
+so a later exchange-rate change cannot alter historical order totals.
+
+CURRENCY LIST
+
+Provide a broad searchable list of standard world currencies similar to the
+DHRU reference rather than only four hard-coded currencies.
+
+Keep the architecture extensible.
+
+SCOPE
+
+Continue the previously requested:
+- public Login / Register
+- language dropdown with flags
+- storefront language persistence
+
+Do not redesign the approved storefront or E-Commerce product grid.
+
+Development/Preview only.
+Do not push or deploy.
+Do not run browser/E2E/full regression suites.
+Run only minimum compile/type/build checks.
+
+Stop for manual review when finished.

@@ -14,11 +14,23 @@ device-service CTA only on commerce homepages; retain non-commerce presentation 
 
 Public header Login/Register are customer actions, never subscriber or Platform Admin entry points.
 Visitor language/currency preferences must be scoped to the subscriber. Unavailable translations
-must explicitly fall back to English; requested currencies must never be treated as converted
-prices without a real conversion source. Keep authoritative base prices and order totals intact.
+must explicitly fall back to English. Currency conversion uses each subscriber's manually
+configured commercial rates, never bank rates, invented rates or an external FX API.
+Keep authoritative base prices and base order totals intact; retain immutable currency/rate
+snapshots for confirmation and historical display. Only the Client Default entry is protected
+against disabling/deletion; base prices remain anchored independently of currency visibility.
 
 **Why:** The user explicitly defined these product boundaries for the first commerce phase.
 
 **How to apply:** Preserve these boundaries in future commerce work. Reuse the existing subscriber
 licence eligibility, immutable public slug, independent admin authorization and persistent media
 adapter; do not reinterpret an unavailable module as permission to delete data or change core SaaS behavior.
+
+Commercial conversion rounds the unit price once and sums quantity-multiplied lines.
+Existing private order amounts stay base-valued, with immutable commercial display snapshots.
+
+**Why:** Displayed unit × quantity must equal displayed line totals, and adding visitor currencies
+must not silently change the units of existing subscriber reports or historical orders.
+
+**How to apply:** Keep the same rounding boundary across all public pages; future reporting must
+explicitly distinguish base values from the commercial currency snapshot.

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from '@workspace/api-zod';
 import { pool } from '@workspace/db';
 import { requireAdmin, HttpError, rateLimit } from '../lib/auth';
+import { currencyConfig, saveCurrency, deleteCurrency, currencies } from '../lib/commerce/currencies';
 import { transaction, audit } from '../lib/platform';
 import { subscriberContext, requireCommerce, storeSettings, ownedAssets, categories, products, orderDetail, publicStore, COMMERCE_SAVED_REFERENCE } from '../lib/commerce/data';
 import { uuid, productInput, categoryInput, settingsInput, statusInput, minor, PAGE_SIZE, linesInput } from '../lib/commerce/validation';
@@ -37,6 +38,7 @@ router.put('/platform/subscribers/:id/modules/ecommerce',async(req,res)=>{
 router.get('/commerce/:resource',async(req,res)=>{
   const user=subscriberContext(req),q=pagination.parse(req.query),id=user.subscriber_id;
   res.json(await transaction(async client=>{
+    if(req.params.resource==='currencies')return {data:await currencyConfig(id,client)};
     await requireCommerce(id,client);
     const publicSlug=(await client.query('SELECT public_slug FROM subscribers WHERE id=$1',[id])).rows[0]?.public_slug;
     switch(req.params.resource) {
@@ -74,6 +76,7 @@ router.post('/commerce/:resource',async(req,res,next)=>{
   const user=subscriberContext(req),id=user.subscriber_id;
   const data=await transaction(async client=>{
     await client.query('SELECT id FROM subscribers WHERE id=$1 FOR UPDATE',[id]);
+    if(req.params.resource==='currencies')return saveCurrency(id,req.body,client);
     await requireCommerce(id,client);
     switch(req.params.resource) {
       case 'products': {
@@ -105,6 +108,11 @@ router.post('/commerce/:resource',async(req,res,next)=>{
       case 'settings': {
         const v=settingsInput.parse(req.body),previous=await storeSettings(id,client);
         if(v.currency!==previous.currency&&(await client.query('SELECT 1 FROM store_products WHERE subscriber_id=$1 UNION ALL SELECT 1 FROM store_orders WHERE subscriber_id=$1 LIMIT 1',[id])).rowCount)throw new HttpError(409,'Currency cannot change once products or orders exist.');
+        if(v.currency!==previous.currency) {
+          const configured=await currencies(id,client);
+          if(configured.length!==1||!configured[0]?.is_base)throw new HttpError(409,'Keep only the base currency before changing it; manual rates cannot be rebased automatically.');
+          await client.query('UPDATE subscriber_currencies SET code=$2,name=$2,suffix=$2 WHERE subscriber_id=$1 AND is_base',[id,v.currency]);
+        }
         const fields=Object.keys(v),values=Object.values(v);
         await client.query(`INSERT INTO store_settings(subscriber_id,${fields.join(',')}) VALUES($1,${values.map((_,i)=>`$${i+2}`).join(',')})
           ON CONFLICT(subscriber_id) DO UPDATE SET ${fields.map(k=>`${k}=EXCLUDED.${k}`).join(',')},updated_at=now()`,[id,...values]);
@@ -125,6 +133,14 @@ router.post('/commerce/:resource',async(req,res,next)=>{
 });
 router.delete('/commerce/:resource/:id',async(req,res,next)=>{
   if(req.params.resource==='assets'){next();return;}
+  if(req.params.resource==='currencies'){
+    const user=subscriberContext(req);
+    await transaction(async client=>{
+      await client.query('SELECT id FROM subscribers WHERE id=$1 FOR UPDATE',[user.subscriber_id]);
+      await deleteCurrency(user.subscriber_id,String(req.params.id),client);
+    });
+    res.json({ok:true});return;
+  }
   const user=subscriberContext(req),id=uuid.parse(req.params.id);
   await transaction(async client=>{
     await requireCommerce(user.subscriber_id,client);

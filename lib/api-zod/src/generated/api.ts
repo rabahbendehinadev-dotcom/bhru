@@ -31,7 +31,7 @@ export const GetCommerceAccessResponse = zod.object({
 
 
 export const GetCommerceResourceParams = zod.object({
-  "resource": zod.enum(['overview', 'products', 'categories', 'orders', 'customers', 'settings'])
+  "resource": zod.enum(['overview', 'products', 'categories', 'orders', 'customers', 'settings', 'currencies'])
 })
 
 
@@ -54,7 +54,7 @@ export const GetCommerceResourceResponse = zod.object({
 
 
 export const SaveCommerceResourceParams = zod.object({
-  "resource": zod.enum(['products', 'categories', 'settings', 'orders'])
+  "resource": zod.enum(['products', 'categories', 'settings', 'orders', 'currencies'])
 })
 
 export const SaveCommerceResourceBody = zod.record(zod.string(), zod.unknown()).describe('Resource-specific input, strictly validated by the server. Money inputs are decimal strings; server stores integer minor units.')
@@ -67,8 +67,8 @@ export const SaveCommerceResourceResponse = zod.object({
 
 
 export const ArchiveCommerceResourceParams = zod.object({
-  "resource": zod.enum(['products', 'categories']),
-  "id": zod.coerce.string().uuid()
+  "resource": zod.enum(['products', 'categories', 'currencies']),
+  "id": zod.coerce.string()
 })
 
 export const ArchiveCommerceResourceResponse = zod.object({

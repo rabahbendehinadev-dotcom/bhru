@@ -51,7 +51,7 @@ paths:
     get:
       operationId: getCommerceResource
       parameters:
-        - { name: resource, in: path, required: true, schema: { type: string, enum: [overview, products, categories, orders, customers, settings] } }
+        - { name: resource, in: path, required: true, schema: { type: string, enum: [overview, products, categories, orders, customers, settings, currencies] } }
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
         - { name: search, in: query, schema: { type: string, maxLength: 100 } }
         - { name: status, in: query, schema: { type: string } }
@@ -65,7 +65,7 @@ paths:
     post:
       operationId: saveCommerceResource
       parameters:
-        - { name: resource, in: path, required: true, schema: { type: string, enum: [products, categories, settings, orders] } }
+        - { name: resource, in: path, required: true, schema: { type: string, enum: [products, categories, settings, orders, currencies] } }
       requestBody:
         required: true
         content:
@@ -81,8 +81,8 @@ paths:
     delete:
       operationId: archiveCommerceResource
       parameters:
-        - { name: resource, in: path, required: true, schema: { type: string, enum: [products, categories] } }
-        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: resource, in: path, required: true, schema: { type: string, enum: [products, categories, currencies] } }
+        - { name: id, in: path, required: true, schema: { type: string, description: "UUID for products/categories; ISO currency code for currencies" } }
       responses:
         "200":
           description: Product archived or category disabled; historical data preserved

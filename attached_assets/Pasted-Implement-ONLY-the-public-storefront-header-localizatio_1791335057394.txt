@@ -1,0 +1,210 @@
+Implement ONLY the public storefront header localization/currency/auth controls.
+
+Do NOT redesign the approved public website or E-Commerce catalog.
+Do NOT modify Platform Admin, subscriber workspace, CMS editor, products,
+orders, checkout logic, Hero/Banner, Top Area or existing visual identity.
+
+The goal is to improve the PUBLIC CUSTOMER website header.
+
+==================================================
+1. LOGIN + REGISTER
+==================================================
+
+The public header currently does not provide the complete customer auth navigation.
+
+Add two clear customer actions:
+
+- Login
+- Register
+
+Desktop:
+Show:
+[ Login ] [ Register ]
+
+They must be customer/storefront authentication actions.
+They must NOT link to the BHRU subscriber/owner login or Platform Admin.
+
+If customer authentication is not implemented yet:
+- Do NOT fake authentication.
+- Add the visible UI/navigation structure safely.
+- Report that customer authentication backend still needs implementation.
+
+Mobile:
+Put Login and Register clearly inside the mobile menu.
+
+==================================================
+2. LANGUAGE SELECTOR WITH FLAGS
+==================================================
+
+Add a professional language selector to the public storefront header.
+
+The selector must show:
+- country/language flag
+- language name
+- dropdown indicator
+
+The opened dropdown should visually behave like the provided DHRU reference:
+a clean vertical list with flag + language name.
+
+Support these languages in the selector:
+
+English
+French
+Arabic
+German
+Spanish
+Italian
+Portuguese
+Turkish
+Dutch
+Russian
+Chinese
+Vietnamese
+Thai
+Polish
+Swedish
+Danish
+Czech
+Albanian
+Ukrainian
+Hebrew
+Bengali
+Gujarati
+Kannada
+Afrikaans
+
+Use proper flag icons/assets rather than emoji if the project already has a suitable
+lightweight flag solution. Do not add a heavy UI library just for flags.
+
+IMPORTANT:
+Do not claim that a language is translated unless its storefront translations exist.
+
+Architecture must allow us to add translations progressively.
+
+The selector can list supported/configured languages, but unavailable translations
+must have an honest fallback behavior rather than displaying broken/mixed UI.
+
+Arabic:
+- support RTL layout when Arabic is selected
+- header/dropdowns/product UI must remain usable
+
+Other languages:
+- LTR unless the language requires RTL.
+
+Persist selected language for the visitor so changing/reloading pages does not reset it.
+
+==================================================
+3. CURRENCY SELECTOR
+==================================================
+
+Add a separate currency selector next to the language selector.
+
+Initial currencies:
+
+DZD
+USD
+EUR
+GBP
+
+Architecture must allow more currencies later.
+
+The subscriber must have one base/store currency.
+Displayed storefront prices must be formatted consistently.
+
+IMPORTANT:
+Do not invent exchange rates and do not hard-code fake conversion rates.
+
+If currency conversion infrastructure does not exist yet:
+- implement the selector and clean currency architecture/settings
+- preserve the original/base price
+- clearly report what conversion source/configuration is still required before
+  converted prices can be enabled.
+
+Never modify the stored product base price just because the visitor changes currency.
+
+Currency choice must persist for the visitor across:
+- homepage
+- product details
+- cart
+- checkout
+- confirmation
+
+All displayed totals must use the same selected currency/conversion context.
+
+==================================================
+4. HEADER LAYOUT
+==================================================
+
+Desktop target:
+
+[Logo / Business]
+             [Home] [Products/Services ...]
+             [Currency ▼] [Flag Language ▼]
+             [Login] [Register]
+
+Keep it clean and compact.
+
+Mobile:
+- do not overcrowd the top bar
+- language/currency/auth controls should be accessible cleanly from the mobile menu.
+
+Dropdowns:
+- professional spacing
+- scrollable if needed
+- suitable max-height
+- keyboard accessible
+- click outside closes
+- Escape closes
+- selected item visibly marked
+- no horizontal overflow on mobile
+
+==================================================
+5. TENANT / SUBSCRIBER CONTROL
+==================================================
+
+This is a multi-tenant SaaS.
+
+Do not make these settings global for every subscriber.
+
+Prepare the architecture so each subscriber can later configure:
+- default language
+- enabled languages
+- base/default currency
+- enabled currencies
+
+Do not expose another subscriber's settings/data.
+
+==================================================
+6. SAFETY / SCOPE
+==================================================
+
+Do not change:
+- approved product-card design
+- public product grid
+- E-Commerce business logic
+- existing orders
+- CMS Hero/Banner
+- Top Area
+- private BHRU authentication
+- Platform Admin private URL
+- licences/entitlements
+- existing media/storage behavior
+
+Do NOT run browser/E2E/full regression suites.
+
+Run only minimum type/build checks needed to ensure compilation.
+
+Development/Preview only.
+Do not push.
+Do not deploy.
+Do not touch Production.
+
+At the end report:
+1. exactly what was implemented,
+2. which files changed,
+3. whether customer Login/Register backend already existed or still needs implementation,
+4. how language selection is persisted,
+5. how currency selection is persisted,
+6. whether real currency conversion already exists or still needs a conversion source/configuration.
+
+Then STOP for manual review.

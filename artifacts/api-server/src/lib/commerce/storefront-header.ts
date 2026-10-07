@@ -8,8 +8,8 @@ const e = escapeHTML;
 
 function selectors(p: Preferences, suffix: string): string {
   return `<div class="sf-selectors">
-<details class="sf-picker" data-sf-picker="currency"><summary aria-label="Choose currency"><span data-sf-currency>${e(p.baseCurrency)}</span><span aria-hidden="true">▾</span></summary>
-<div class="sf-options" role="group" aria-label="Currencies">${p.enabledCurrencies.map(c => `<button type="button" data-sf-currency-option="${e(c)}" aria-pressed="${c === p.baseCurrency}">${e(c)}${c === p.baseCurrency ? ' <small>Store currency</small>' : ' <small>Conversion unavailable</small>'}</button>`).join('')}</div></details>
+<details class="sf-picker" data-sf-picker="currency"><summary aria-label="Choose currency"><span data-sf-currency>${e(p.defaultCurrency)}</span><span aria-hidden="true">▾</span></summary>
+<div class="sf-options" role="group" aria-label="Currencies">${p.currencies.map(c => `<button type="button" data-sf-currency-option="${e(c.code)}" aria-pressed="${c.code === p.defaultCurrency}">${e(c.code)} <small>${e(c.name)}${c.client_default ? ' · Default' : ''}</small></button>`).join('')}</div></details>
 <details class="sf-picker" data-sf-picker="language"><summary aria-label="Choose language"><img data-sf-flag src="https://flagcdn.com/w40/gb.png" alt="" width="20" height="14"><span data-sf-language>English</span><span aria-hidden="true">▾</span></summary>
 <div class="sf-options" role="group" aria-label="Languages" id="sf-languages-${suffix}">${p.languages.map(l => `<button type="button" data-sf-language-option="${e(l.code)}" aria-pressed="${l.code === 'en'}"><img src="https://flagcdn.com/w40/${l.flag}.png" alt="" width="20" height="14" loading="lazy"><span>${e(l.name)}</span>${l.code !== 'en' ? '<small>English fallback</small>' : ''}</button>`).join('')}</div></details>
 </div>`;

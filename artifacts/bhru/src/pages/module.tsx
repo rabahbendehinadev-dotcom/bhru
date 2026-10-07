@@ -7,6 +7,7 @@ import { OnlineStaffList, useOnlineStaff } from '@/components/subscriber/OnlineS
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import GeneralSettingsPage from '@/pages/general-settings';
 import EcommercePage from '@/pages/ecommerce';
+import CurrenciesPage from '@/pages/currencies';
 import PublicWebsitePage from '@/pages/public-website';
 
 function Crumbs({ items }: { items: string[] }) {
@@ -38,6 +39,10 @@ export default function Module() {
 
   if (r.entry.id === 'settings' && r.child?.label === 'General Settings') {
     return <><Crumbs items={r.crumbs} /><GeneralSettingsPage /></>;
+  }
+
+  if (r.entry.id === 'settings' && r.child?.label === 'Currencies') {
+    return <><Crumbs items={r.crumbs} /><CurrenciesPage /></>;
   }
 
   if (r.slug === 'ecommerce') return <EcommercePage />;

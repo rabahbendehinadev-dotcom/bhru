@@ -7,6 +7,8 @@ import { publicStore, products, categories } from './data';
 import { renderCommerceDocument } from './public-render';
 import { COMMERCE_SCRIPT_HASH } from './public-script';
 import { STOREFRONT_HEADER_HASH, STOREFRONT_MENU_HASH } from './storefront-header-script';
+import { STOREFRONT_MONEY_HASH } from './storefront-money-script';
+import { currencies } from './currencies';
 
 /** Optional overlay: unentitled/default home documents remain byte-for-byte V2. */
 export async function tryCommerceDocument(req:Request,res:Response,path:unknown):Promise<boolean> {
@@ -30,7 +32,7 @@ export async function tryCommerceDocument(req:Request,res:Response,path:unknown)
         data=(await products(store.id,client,{publicOnly:true,slug:match[3]})).data[0];
         if(!data)return {document:await resolvePublicDocument('/not/a/public/site',client)};
       }
-      return {html:renderCommerceDocument(document.site,slug,store.settings,view as 'home'|'product'|'cart'|'checkout'|'confirmation',data,await categories(store.id,client,true)),site:document.site};
+      return {html:renderCommerceDocument(document.site,slug,store.settings,view as 'home'|'product'|'cart'|'checkout'|'confirmation',data,await categories(store.id,client,true),undefined,await currencies(store.id,client)),site:document.site};
     });
     if(!result) {
       if(!leaf)return false;
@@ -39,7 +41,7 @@ export async function tryCommerceDocument(req:Request,res:Response,path:unknown)
     if(result.document){writePublicDocument(req,res,result.document);return true;}
     res.setHeader('Cache-Control','no-store');
     res.setHeader('X-Robots-Tag','noindex, nofollow');
-    res.setHeader('Content-Security-Policy',`default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https: data:; script-src ${publicScriptSources(result.site)} ${COMMERCE_SCRIPT_HASH} ${STOREFRONT_HEADER_HASH} ${STOREFRONT_MENU_HASH}; connect-src 'self'; base-uri 'none'; form-action 'self'`);
+    res.setHeader('Content-Security-Policy',`default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https: data:; script-src ${publicScriptSources(result.site)} ${COMMERCE_SCRIPT_HASH} ${STOREFRONT_HEADER_HASH} ${STOREFRONT_MENU_HASH} ${STOREFRONT_MONEY_HASH}; connect-src 'self'; base-uri 'none'; form-action 'self'`);
     res.status(200).type('html').end(result.html);return true;
   }catch(error) {
     req.log.error({code:'COMMERCE_DOCUMENT'},'Public store temporarily unavailable');

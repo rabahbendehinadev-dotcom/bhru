@@ -10,6 +10,8 @@ import { storefrontPreferences, type StorefrontPreferences } from './storefront-
 import { renderStorefrontHeader, STOREFRONT_AUTH_NOTICE, STOREFRONT_HEADER_STYLES } from './storefront-header';
 import { STOREFRONT_HEADER_SCRIPT, STOREFRONT_MENU_SCRIPT } from './storefront-header-script';
 import { PUBLIC_MENU_SCRIPT } from '../public-site/mobile-menu';
+import { convertMinor, formatCurrencyMinor, type StoreCurrency } from './currency-money';
+import { STOREFRONT_MONEY_SCRIPT } from './storefront-money-script';
 
 type View = 'home' | 'product' | 'cart' | 'checkout' | 'confirmation';
 interface Img { id?: string; url: string; width?: number; height?: number }
@@ -43,11 +45,11 @@ function card(p: Prod, slug: string, cur: string, cats: Cat[]): string {
   const max = maxQty(p);
   const category = cats.find(c => c.id === p.category_id);
   const categoryLabel = category ? `<p class="cx-muted">${e(category.name)}</p>` : '';
-  const was = p.compare_at_minor && isBigger(p.compare_at_minor, p.price_minor) ? `<s class="cx-was">${e(formatMinor(p.compare_at_minor, cur))}</s>` : '';
+  const was = p.compare_at_minor && isBigger(p.compare_at_minor, p.price_minor) ? `<s class="cx-was" data-sf-money="${e(p.compare_at_minor)}">${e(formatMinor(p.compare_at_minor, cur))}</s>` : '';
   const action = max > 0
     ? `<button class="cx-btn cx-btn-solid" type="button" data-cx-add="${e(p.id)}" data-max="${max}" aria-label="Add ${e(p.name)} to cart">Add to cart</button>`
     : '<p class="cx-out">Out of stock</p>';
-  return `<li class="cx-card" data-cx-product="${e(href)}"><a class="cx-media" href="${e(href)}">${image(p.images?.[0], p.name)}${p.featured ? '<span class="cx-flag">Featured</span>' : ''}</a><div class="cx-body"><h3 class="cx-name"><a href="${e(href)}">${e(p.name)}</a></h3>${categoryLabel}<p class="cx-price"><strong>${e(formatMinor(p.price_minor, cur))}</strong>${was}</p>${max > 0 ? '<p class="cx-ok">In stock</p>' : ''}${action}</div></li>`;
+  return `<li class="cx-card" data-cx-product="${e(href)}"><a class="cx-media" href="${e(href)}">${image(p.images?.[0], p.name)}${p.featured ? '<span class="cx-flag">Featured</span>' : ''}</a><div class="cx-body"><h3 class="cx-name"><a href="${e(href)}">${e(p.name)}</a></h3>${categoryLabel}<p class="cx-price"><strong data-sf-money="${e(p.price_minor)}">${e(formatMinor(p.price_minor, cur))}</strong>${was}</p>${max > 0 ? '<p class="cx-ok">In stock</p>' : ''}${action}</div></li>`;
 }
 
 function homeSection(slug: string, s: StoreSettings, data: any, cats: Cat[]): string {
@@ -70,14 +72,14 @@ function productSection(slug: string, s: StoreSettings, p: Prod | null): string 
   const main = first
     ? `<img id="cx-main-img" src="${e(safePublicImage(first.url)!)}" alt="${e(p.name)}" width="${num(first.width, 800)}" height="${num(first.height, 800)}" decoding="async">`
     : '<span class="cx-ph">No image</span>';
-  const was = p.compare_at_minor && isBigger(p.compare_at_minor, p.price_minor) ? `<s class="cx-was">${e(formatMinor(p.compare_at_minor, s.currency))}</s>` : '';
+  const was = p.compare_at_minor && isBigger(p.compare_at_minor, p.price_minor) ? `<s class="cx-was" data-sf-money="${e(p.compare_at_minor)}">${e(formatMinor(p.compare_at_minor, s.currency))}</s>` : '';
   const buy = max > 0
     ? `<div class="cx-buy"><div class="cx-qty"><button class="cx-step" type="button" data-cx-step="-1" aria-label="Decrease quantity">-</button><input class="cx-qty-in" type="number" inputmode="numeric" min="1" max="${max}" value="1" data-cx-qty aria-label="Quantity"><button class="cx-step" type="button" data-cx-step="1" aria-label="Increase quantity">+</button></div>
 <button class="cx-btn cx-btn-solid" type="button" data-cx-add="${e(p.id)}" data-cx-withqty data-max="${max}">Add to cart</button><button class="cx-btn" type="button" data-cx-buy="${e(p.id)}" data-max="${max}">Buy now</button></div>`
     : '<p class="cx-out">Out of stock</p><div class="cx-buy"><button class="cx-btn cx-btn-solid" type="button" disabled>Add to cart</button><button class="cx-btn" type="button" disabled>Buy now</button></div>';
   return `<section class="cx cx-product"><div class="wrap"><nav class="cx-crumbs" aria-label="Breadcrumb"><a href="/${slug}">Home</a><span aria-hidden="true">/</span><a href="/${slug}#store-products">${e(s.title)}</a></nav>
 <div class="cx-pgrid"><div class="cx-gallery"><div class="cx-main">${main}</div>${thumbs}</div>
-<div class="cx-info"><h1>${e(p.name)}</h1><p class="cx-price cx-price-lg"><strong>${e(formatMinor(p.price_minor, s.currency))}</strong>${was}</p>
+<div class="cx-info"><h1>${e(p.name)}</h1><p class="cx-price cx-price-lg"><strong data-sf-money="${e(p.price_minor)}">${e(formatMinor(p.price_minor, s.currency))}</strong>${was}</p>
 ${p.short_description ? `<p class="cx-lead">${e(p.short_description)}</p>` : ''}${p.sku ? `<p class="cx-muted">SKU: ${e(p.sku)}</p>` : ''}
 ${p.in_stock ? (p.stock_quantity != null ? `<p class="cx-ok">${e(String(p.stock_quantity))} in stock</p>` : '<p class="cx-ok">In stock</p>') : ''}${buy}
 ${p.description ? `<div class="cx-desc">${e(p.description)}</div>` : ''}</div></div></div></section>`;
@@ -123,7 +125,7 @@ const CSS = `.cx{padding:44px 0;scroll-margin-top:84px}.cx *{min-width:0}.cx h1,
 @media(max-width:420px){.cx-hdr-products{display:none}.cx-hdr-link{padding:0 9px}}
 @media(prefers-reduced-motion:reduce){.cx *{transition:none!important;scroll-behavior:auto!important}}`;
 
-export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, settings: StoreSettings, view: View, data: any, categories: any[], tenantPreferences?: Partial<StorefrontPreferences>): string {
+export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, settings: StoreSettings, view: View, data: any, categories: any[], tenantPreferences?: Partial<StorefrontPreferences>, configuredCurrencies?: StoreCurrency[]): string {
   const slug = slugIn.replace(SLUG, '');
   const cats = (Array.isArray(categories) ? categories : []) as Cat[];
   let html = renderPublicHome(model);
@@ -153,7 +155,12 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
     html = html.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${e(titles[view] ?? settings.title)} | ${e(model.siteName)}</title>`);
   }
 
-  const preferences = storefrontPreferences(settings.currency, tenantPreferences);
+  const preferences = storefrontPreferences(settings.currency, tenantPreferences, configuredCurrencies);
+  const clientDefault = preferences.currencies.find(c => c.code === preferences.defaultCurrency)!;
+  html = html.replace(/(<(?:strong|s)[^>]* data-sf-money="(\d+)"[^>]*>)[^<]*(<\/(?:strong|s)>)/g, (_match, start, raw, end) => {
+    try { return start + e(formatCurrencyMinor(convertMinor(raw, clientDefault), clientDefault)) + end; }
+    catch { return start + 'Amount unavailable' + end; }
+  });
   html = html.replace(/<header class="site-header">[\s\S]*?<\/header>/, () => renderStorefrontHeader(model, slug, preferences))
     .replace(PUBLIC_MENU_SCRIPT, () => STOREFRONT_MENU_SCRIPT);
 
@@ -164,7 +171,7 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
     categories: view === 'home' ? cats.map(c => ({ id: c.id, name: c.name })) : [],
   };
   html = html.replace('</style></head>', () => `${CSS}${view === 'home' ? PUBLIC_CATALOG_STYLES : ''}${STOREFRONT_HEADER_STYLES}</style></head>`);
-  const tail = `${live}${STOREFRONT_AUTH_NOTICE}<script type="application/json" id="cx-config">${inlineJSON(cfg)}</script><script>${COMMERCE_SCRIPT}</script><script type="application/json" id="sf-config">${inlineJSON({ slug, ...preferences })}</script><script>${STOREFRONT_HEADER_SCRIPT}</script>`;
+  const tail = `${live}${STOREFRONT_AUTH_NOTICE}<script type="application/json" id="sf-config">${inlineJSON({ slug, view, ...preferences })}</script><script>${STOREFRONT_MONEY_SCRIPT}</script><script type="application/json" id="cx-config">${inlineJSON(cfg)}</script><script>${COMMERCE_SCRIPT}</script><script>${STOREFRONT_HEADER_SCRIPT}</script>`;
   const end = html.lastIndexOf('</body>');
   return end >= 0 ? html.slice(0, end) + tail + html.slice(end) : html + tail;
 }
