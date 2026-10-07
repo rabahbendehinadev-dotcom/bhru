@@ -29,6 +29,16 @@ Client Default; Panel Display Currency remains a separate user preference.
 **How to apply:** Explain rates generically as currency units per USD; do not invent FX,
 add country-based currency defaults or force DZD as Client Default.
 
+Currency Number Format must be manually typed, not chosen from a dropdown, in both
+the inline Add form and Edit modal. Prefix/suffix remain editable. USD uses the
+label “Base Rate”; currency-page reference labels consistently say “Base / Reference”.
+
+**Why:** The user explicitly rejected dropdown-only presentation and requested
+DHRU-style manual configuration without imposing commercial-rate preferences.
+**How to apply:** Validate numeric separator samples on client and server, keep
+live previews consistent with saved display formatting, and retain currency-owned
+decimal precision and all conversion/history behavior.
+
 USD must become the system/accounting Base / Reference Currency, permanently at rate
 1.000000. This is distinct from Client Default, which may be any enabled subscriber currency.
 Manual commercial rates mean units of the target currency per 1 USD. Panel and customer

@@ -1,13 +1,15 @@
 import type { PoolClient } from '@workspace/db';
 import { z } from '@workspace/api-zod';
 import { HttpError } from '../auth';
-import { currencyCatalog, type StoreCurrency, convertMinor, MAX_MINOR, rateUnits } from './currency-money';
+import { currencyCatalog, type StoreCurrency, convertMinor, MAX_MINOR, rateUnits, parseNumberFormat } from './currency-money';
 
 const text = (n: number) => z.string().trim().max(n).regex(/^[^\u0000-\u001f\u007f]*$/);
 export const currencyInput = z.object({
   code: z.string().regex(/^[A-Z]{3}$/), name: text(100).min(1), prefix: text(24), suffix: text(24),
-  number_format: z.enum(['1,234.56', '1.234,56', '1 234,56', '1234.56']),
-  rate: z.string().regex(/^\d{1,9}(?:\.\d{1,6})?$/).refine(v => /^\d{1,9}(?:\.\d{1,6})?$/.test(v)&&rateUnits(v)>0n && rateUnits(v)<=999999999000000n, 'Enter a positive manual rate up to 999999999 with six decimal places.'),
+  number_format: z.string().trim().max(24).refine(v => parseNumberFormat(v) !== null, 'Use a number sample such as 1,000.99 or 1000,99, with different grouping and decimal separators.'),
+  rate: z.string().trim().regex(/^\d{1,9}(?:\.\d{1,6})?$/, 'Enter a positive manual rate with up to 6 decimal places.')
+    .refine(v => /^\d{1,9}(?:\.\d{1,6})?$/.test(v)&&rateUnits(v)>0n && rateUnits(v)<=999999999000000n, 'Enter a positive manual rate up to 999999999 with six decimal places.')
+    .transform(v => { const [whole, fraction = ''] = v.split('.'); return `${BigInt(whole!).toString()}.${fraction.padEnd(6, '0')}`; }),
   enabled: z.boolean(), client_default: z.boolean(),
 }).strict();
 

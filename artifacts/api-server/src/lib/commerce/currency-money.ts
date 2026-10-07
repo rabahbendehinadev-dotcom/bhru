@@ -14,6 +14,15 @@ export const USD_SCALE = 12;
 export const USD_FACTOR = 1000000000000n;
 export const RATE_FACTOR = 1000000n;
 export const MAX_USD_UNITS = 9999999999990000000000n;
+/** Numeric samples select separators only; precision still belongs to the currency. */
+export function parseNumberFormat(value: string): [string, string] | null {
+ const sample = value.trim();
+ if (sample.length > 24) return null;
+ const grouped = /^\d{1,3}([., ])\d{3}([.,])\d{2}$/.exec(sample);
+ if (grouped) return grouped[1] !== grouped[2] ? [grouped[1]!, grouped[2]!] : null;
+ const plain = /^\d{4,18}([.,])\d{2}$/.exec(sample);
+ return plain ? ['', plain[1]!] : null;
+}
 export function parseUsd(value: string): bigint {
   if (!/^\d{1,10}(?:\.\d{1,12})?$/.test(value)) throw new RangeError('Use a USD amount with at most 12 decimal places.');
   const [whole, fraction = ''] = value.split('.');
@@ -39,10 +48,7 @@ export function convertMinor(baseMinor: string | bigint, currency: StoreCurrency
 }
 export function formatCurrencyMinor(minor: string | bigint, currency: StoreCurrency): string {
   const scale = 10n ** BigInt(currency.decimals), value = BigInt(minor);
-  const separators: Record<string, [string, string]> = {
-    '1,234.56': [',', '.'], '1.234,56': ['.', ','], '1 234,56': [' ', ','], '1234.56': ['', '.'],
-  };
-  const [group, decimal] = separators[currency.number_format] ?? separators['1,234.56']!;
+  const [group, decimal] = parseNumberFormat(currency.number_format) ?? [',', '.'];
   const whole = (value / scale).toString().replace(/\B(?=(\d{3})+(?!\d))/g, group);
   const fraction = currency.decimals ? decimal + (value % scale).toString().padStart(currency.decimals, '0') : '';
   return currency.prefix + whole + fraction + (currency.suffix ? ' ' + currency.suffix : '');

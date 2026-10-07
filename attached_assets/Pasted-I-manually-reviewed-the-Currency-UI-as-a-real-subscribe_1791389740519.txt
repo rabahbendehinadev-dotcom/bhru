@@ -1,0 +1,242 @@
+I manually reviewed the Currency UI as a real subscriber.
+
+I want one UX correction before continuing.
+
+The current Number Format control is implemented as a dropdown/select.
+
+I do NOT want Number Format to be a dropdown.
+
+I want Currency configuration to work more like DHRU:
+the subscriber should be able to TYPE the format manually.
+
+==================================================
+1. NUMBER FORMAT MUST BE A TEXT INPUT
+==================================================
+
+Replace the current Number Format dropdown/select everywhere in Currency management with a normal editable text input.
+
+Current:
+Number format
+[ 1,000.99 ▼ ]
+
+Wanted:
+Number format
+[ 1,000.99 ]
+
+The subscriber must be able to type the format directly.
+
+Examples they may choose:
+
+1,000.99
+1.000,99
+1000.99
+1000,99
+1 000.99
+1 000,99
+
+Do not force the subscriber to select from a dropdown.
+
+However, validate the value safely.
+
+Do not allow arbitrary HTML/code.
+Do not allow the format string to affect application security.
+
+The Preview below the form should immediately show how a sample amount will appear using the typed format.
+
+==================================================
+2. RATE MUST REMAIN A DIRECT TEXT/NUMBER INPUT
+==================================================
+
+Rate must also be directly typed by the subscriber.
+
+For non-USD currencies:
+
+Rate
+[ __________ ]
+
+The subscriber decides the value.
+
+Examples:
+
+DZD → user may type 260
+DZD → another user may type 270
+EUR → user may type 0.86
+
+BHRU must not suggest or automatically insert a commercial rate.
+
+Normalize valid saved rates to the required six-decimal precision internally/display where appropriate.
+
+Example:
+
+user enters:
+270
+
+saved semantic value:
+270.000000
+
+==================================================
+3. USD BASE BEHAVIOR
+==================================================
+
+USD is different.
+
+USD remains:
+
+Base / Reference
+Rate = 1.000000
+
+The USD rate cannot be changed.
+
+Therefore in Edit USD:
+
+Rate should remain disabled/read-only.
+
+Do not show confusing wording such as:
+
+Rate (1 USD = ? USD)
+
+For USD simply label it:
+
+Base Rate
+
+and show:
+
+1.000000
+
+with helper text:
+
+"USD is the Base / Reference currency."
+
+==================================================
+4. NON-USD RATE LABEL
+==================================================
+
+For another currency such as DZD, use a clear label:
+
+Rate
+
+and helper text such as:
+
+"Amount of this currency equal to 1 USD."
+
+Do not include any example number.
+
+Do not mention 260 or 270.
+
+==================================================
+5. PREFIX / SUFFIX / FORMAT
+==================================================
+
+Keep Prefix and Suffix manually editable too.
+
+Example subscriber configuration:
+
+Code: DZD
+Name: Algerian Dinar
+Prefix: [          ]
+Suffix: [ DZD      ]
+Number Format: [ 1,000.99 ]
+Rate: [ 270       ]
+
+Another subscriber is free to configure it differently.
+
+BHRU should provide the system, not impose presentation preferences.
+
+==================================================
+6. ADD CURRENCY INLINE FORM
+==================================================
+
+Apply the same behavior to the Add Currency row at the top of /m/currencies.
+
+Currently Number Format is also a dropdown there.
+
+Change it to an editable text input.
+
+The Add form should therefore allow:
+
+Currency
+Prefix
+Suffix
+Format
+Rate
+Live
+Client Default
+
+with Format and Rate directly typed.
+
+==================================================
+7. KEEP EXISTING ARCHITECTURE
+==================================================
+
+Do NOT change:
+
+- USD permanent Base / Reference architecture
+- six-decimal rate semantics
+- 12-decimal canonical USD money precision
+- Client Default behavior
+- Panel Display Currency
+- storefront conversion
+- checkout
+- historical order snapshots
+- legacy migration logic
+- admin Preview read-only behavior
+
+This task is primarily Currency configuration UX.
+
+==================================================
+8. SMALL LABEL CLEANUP
+==================================================
+
+The page currently uses both:
+
+Base / Reference
+
+and:
+
+Accounting Reference
+
+for the same USD concept.
+
+Standardize the user-facing terminology to:
+
+Base / Reference
+
+Use this consistently in the Currency page and Edit modal.
+
+Do not change database/internal field names merely for this UI label change.
+
+==================================================
+9. VALIDATION
+==================================================
+
+Do focused checks only.
+
+No long E2E/full regression suite.
+
+Verify:
+
+- Format is no longer a dropdown.
+- Format can be typed.
+- Preview responds correctly.
+- Non-USD Rate can be typed.
+- USD Rate remains fixed at 1.000000.
+- Invalid format/rate input gives a clear validation error.
+- Existing saved currency configurations continue to load.
+
+No migration should be necessary unless you discover an actual schema limitation.
+
+==================================================
+10. HANDOFF
+==================================================
+
+When finished, report:
+
+1. What changed in Number Format
+2. What changed in Rate input
+3. USD Base Rate behavior
+4. Validation used for custom formats
+5. Files changed
+6. Whether a migration was required
+7. Confirmation it is ready for Git Push → Dokploy
+
+Then STOP.

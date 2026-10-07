@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { parseNumberFormat } from './currency-money';
 
 /** BigInt-only commercial conversion, shared by all public price nodes and totals. */
 export const STOREFRONT_MONEY_SCRIPT = String.raw`(function(){
@@ -28,8 +29,8 @@ function convert(raw,c){
  if(answer<0n||answer>MAX)throw new Error('Converted amount exceeds safe money limit');return answer;
 }
 function format(value,c){
- var formats={'1,234.56':[',','.'],'1.234,56':['.',','],'1 234,56':[' ',','],'1234.56':['','.']};
- var sep=formats[c.number_format]||formats['1,234.56'],scale=10n**BigInt(c.decimals);
+ var parseFormat=${parseNumberFormat.toString()};
+ var sep=parseFormat(c.number_format)||[',','.'],scale=10n**BigInt(c.decimals);
  var w=(value/scale).toString().replace(/\B(?=(\d{3})+(?!\d))/g,sep[0]);
  var f=c.decimals?sep[1]+(value%scale).toString().padStart(c.decimals,'0'):'';
  return c.prefix+w+f+(c.suffix?' '+c.suffix:'');

@@ -1,6 +1,21 @@
 /** Pure fixed-decimal helpers. USD inputs here are integer units at scale 12, never decimal dollars. */
 export interface PanelCurrency { code:string;name:string;prefix:string;suffix:string;number_format:string;rate:string;decimals:number;enabled:boolean;client_default:boolean;is_base?:boolean;rate_configured?:boolean }
-const SEPS:Record<string,[string,string]>={'1,234.56':[',','.'],'1.234,56':['.',','],'1 234,56':[' ',','],'1234.56':['','.']};
+export const NUMBER_FORMAT_ERROR = 'Use a number sample such as 1,000.99 or 1000,99, with different grouping and decimal separators.';
+/** A numeric sample selects separators, not the currency's decimal precision. */
+export function parseNumberFormat(value: string): [string, string] | null {
+ const sample = value.trim();
+ if (sample.length > 24) return null;
+ const grouped = /^\d{1,3}([., ])\d{3}([.,])\d{2}$/.exec(sample);
+ if (grouped) return grouped[1] !== grouped[2] ? [grouped[1]!, grouped[2]!] : null;
+ const plain = /^\d{4,18}([.,])\d{2}$/.exec(sample);
+ return plain ? ['', plain[1]!] : null;
+}
+export function normalizeCurrencyRate(value: string): string {
+ const input = value.trim(), units = rateScaled(input);
+ if (units <= 0n || units > 999999999000000n) throw new RangeError('Enter a positive rate up to 999999999 with up to 6 decimal places.');
+ const [whole, fraction = ''] = input.split('.');
+ return `${BigInt(whole!).toString()}.${fraction.padEnd(6, '0')}`;
+}
 export function rateScaled(rate:string):bigint {
  if(!/^\d{1,9}(?:\.\d{1,6})?$/.test(rate))throw new RangeError('Invalid currency rate');
  const [i,f='']=rate.split('.');
@@ -14,7 +29,7 @@ export function formatScaled(value:bigint,scale:number,row:Pick<PanelCurrency,'p
  const divisor=10n**BigInt(Math.max(0,scale-d));
  const rounded=scale>=d?(abs+divisor/2n)/divisor:abs*10n**BigInt(d-scale);
  const digits=rounded.toString().padStart(d+1,'0'),whole=d?digits.slice(0,-d):digits,fraction=d?digits.slice(-d):'';
- const [group,decimal]=SEPS[row.number_format]??SEPS['1,234.56']!;
+ const [group,decimal]=parseNumberFormat(row.number_format)??[',','.'];
  const body=whole.replace(/\B(?=(\d{3})+(?!\d))/g,group)+(fraction?decimal+fraction:'');
  return `${neg?'-':''}${row.prefix}${body}${row.suffix?` ${row.suffix}`:''}${withCode&&!row.prefix&&!row.suffix?` ${withCode}`:''}`;
 }
