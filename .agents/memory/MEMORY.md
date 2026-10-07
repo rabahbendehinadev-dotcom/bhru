@@ -15,3 +15,4 @@
 - [Commerce product boundaries](commerce-product-boundaries.md) — Optional paid module; admin-only grants, separate store opening, guest orders and retained data on revocation.
 - [BHRU deployment workflow](bhru-deployment-workflow.md) — Replit is source only; real database/testing are on VPS; user pushes/deploys and startup runs pending migrations.
 - [Platform Admin visual standard](platform-admin-visual-standard.md) — Light-first compact ERP reference; admin-only theme, real metrics, no changes to subscriber/public designs or private auth.
+- [SQL stub fidelity](sql-stub-validation.md) — Focused test substitutes must honor SELECT projections; excess mock metadata can falsely fail strict schemas.

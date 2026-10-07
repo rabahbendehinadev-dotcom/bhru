@@ -39,6 +39,15 @@ When public CMS fields do not exist yet, use clearly generic rendering defaults 
 
 **How to apply:** Keep service placeholders honest, but hide optional statistics, feedback and benefits when no real content exists. Customer Login remains an honest coming-soon notice shown on demand, not a permanent large homepage section; it must not use the owner's panel login.
 
+New Partner Strip configurations default to enabled Moving Strip with no sample
+logos. Existing persisted NULL motion settings retain their earlier Static Row
+meaning; explicit saved movement settings must never be overwritten by a new default.
+
+**Why:** The user requires consistent fresh-subscriber behavior without changing
+existing subscribers' valid presentation choices.
+**How to apply:** Separate future/unconfigured defaults from legacy persisted
+fallbacks, and initialize presentation configuration without creating demo content.
+
 The user approved Public Template V2 visually and requires it to be FROZEN after the final mobile navigation overlay polish. The shared website should remain a premium professional GSM/IMEI/phone-unlocking service website, not a generic startup landing page.
 
 **Why:** The user explicitly approved V2, restricted the final change to mobile navigation behavior, and prohibited proceeding to CMS, pushing or deploying.

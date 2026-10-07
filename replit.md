@@ -55,3 +55,11 @@ _Populate as you build — explicit user instructions worth remembering across s
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
 - `DOKPLOY_DEPLOYMENT.md` — external PostgreSQL, runtime env, explicit migration/admin commands, Docker/Dokploy setup.
 - `BHRU_DEVELOPMENT_REPORT.md` — scope, schema, auth/session implementation and verification results.
+
+## Subscriber feature completion rule
+
+BHRU is a multi-tenant SaaS. Features must never be considered complete merely
+because they work on one existing subscriber. Every subscriber-facing feature
+must be verified against a fresh-subscriber/default-state path and tenant
+isolation, covering existing, brand-new and future subscribers. Avoid fixes
+that depend on manually repairing individual subscriber database rows.

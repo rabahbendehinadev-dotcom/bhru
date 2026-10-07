@@ -1,0 +1,274 @@
+BHRU SaaS — FIX PARTNER / LOGO STRIP FOR ALL NEW SUBSCRIBERS
+
+IMPORTANT:
+BHRU is a multi-tenant SaaS platform.
+
+Do NOT fix this only for my current subscriber.
+Do NOT hardcode unlock Gab.
+Every feature we implement must work correctly and consistently for:
+- existing subscribers
+- brand-new subscribers
+- future subscribers
+
+WORKFLOW:
+- Source code only.
+- Do NOT access or modify my VPS database.
+- Do NOT push.
+- Do NOT deploy.
+- I will Git Push → Dokploy → manually test on VPS.
+- Focused checks only. No long E2E/full regression suite.
+
+CURRENT PROBLEM
+
+I tested the Public Website Partner / Logo Strip on a BRAND-NEW subscriber.
+
+I found two inconsistencies compared with an older subscriber:
+
+1. The new subscriber appears limited to only 5 partner/logo images.
+   My older subscriber can have more than 5.
+
+2. The images appear correctly on the public website, but the strip does NOT move/scroll.
+   On my older subscriber the logo strip moves correctly.
+
+This indicates that the feature behavior/default initialization is not consistent across tenants.
+
+--------------------------------------------------
+1. INVESTIGATE ROOT CAUSE
+--------------------------------------------------
+
+Trace the complete Partner / Image Strip implementation:
+
+- subscriber creation/default initialization
+- public_site_presentation
+- public_site_partner_logos
+- CMS/Public Website settings
+- upload API
+- validation schemas
+- maximum-image limits
+- ordering
+- enabled state
+- strip mode
+- animation direction
+- animation speed
+- pause behavior
+- public website rendering
+- frontend CSS/animation
+- API serialization
+
+Compare the behavior expected for a brand-new subscriber with the existing implementation used by older subscribers.
+
+Find exactly why:
+- a new subscriber is limited to 5 images
+- a new subscriber's strip can render images but remain static.
+
+Do not patch one subscriber's database.
+
+--------------------------------------------------
+2. PARTNER IMAGE LIMIT
+--------------------------------------------------
+
+BHRU must support at least:
+
+10 Partner / Logo Strip images per subscriber.
+
+Set the supported maximum to 10 consistently across:
+- UI
+- frontend validation
+- API validation
+- backend/service validation
+
+If the current backend/database already supports more than 10, do not introduce an unnecessary database restriction.
+
+The UI should clearly show something such as:
+
+Partner logos: 6 / 10
+
+and prevent the 11th upload with a clear message.
+
+Do not silently fail.
+
+Existing subscribers with more than 5 images must remain intact.
+
+--------------------------------------------------
+3. MOVING STRIP
+--------------------------------------------------
+
+The Partner / Image Strip must support:
+
+Mode:
+- Static Row
+- Moving Strip
+
+When Moving Strip is selected and there are enough logos/images, it must continuously scroll smoothly.
+
+The subscriber must control:
+- Static / Moving
+- Direction: Left / Right
+- Speed
+- Pause on hover if already supported
+
+These settings must be persisted PER SUBSCRIBER.
+
+Do not use global settings shared between tenants.
+
+--------------------------------------------------
+4. BRAND-NEW SUBSCRIBER DEFAULT
+--------------------------------------------------
+
+Review the default initialization.
+
+For a completely new subscriber, the Partner / Image Strip configuration must be valid immediately.
+
+Use sensible SaaS defaults.
+
+Recommended default:
+- Moving Strip
+- enabled
+- normal/default speed
+- left direction
+- safe pause behavior
+
+But do NOT add sample logos automatically.
+
+The subscriber uploads their own images.
+
+Most importantly:
+A new tenant must not depend on old migrations or manually-created configuration to make the animation work.
+
+--------------------------------------------------
+5. PUBLIC RENDERING
+--------------------------------------------------
+
+Make the moving strip robust.
+
+If there are enough images to scroll:
+- movement should be continuous
+- no obvious empty gap
+- no jump/reset flash
+- images should loop smoothly
+- responsive desktop/mobile behavior
+- preserve aspect ratios
+- do not stretch logos
+
+If duplication of rendered logo items is needed for seamless animation, duplicate them ONLY in presentation/rendering.
+
+Do not duplicate database records.
+
+If there are too few images to create meaningful movement, the component may safely appear static rather than producing a broken animation.
+
+--------------------------------------------------
+6. TENANT ISOLATION
+--------------------------------------------------
+
+This is critical.
+
+Subscriber A:
+- logos
+- order
+- movement mode
+- speed
+- direction
+
+must never affect Subscriber B.
+
+All reads/writes must be scoped by subscriber_id using the existing authenticated tenant context.
+
+Do not trust a subscriber_id supplied directly by the client.
+
+Admin preview behavior must remain compatible with the existing read-only preview architecture.
+
+--------------------------------------------------
+7. EXISTING SUBSCRIBERS
+--------------------------------------------------
+
+Do not break existing Public Website configurations.
+
+Preserve:
+- existing uploaded logos
+- image URLs/assets
+- ordering
+- enabled states
+- movement settings
+- announcements
+- banners
+- CMS presentation settings
+
+If old subscribers have valid Moving Strip settings, they must continue working.
+
+If new subscribers are missing a required presentation row/default, fix the initialization/fallback architecture rather than manually repairing individual accounts.
+
+Use an additive migration only if genuinely required.
+
+--------------------------------------------------
+8. ACCEPTANCE TEST
+--------------------------------------------------
+
+Simulate TWO completely fresh subscribers.
+
+Subscriber A:
+Upload 10 different partner/logo images.
+
+Expected:
+1 → 10 uploads succeed.
+11th is rejected clearly.
+
+Set:
+Moving Strip
+Direction = Left
+normal speed
+
+Public website:
+all 10 logos participate in a smooth continuous moving strip.
+
+Subscriber B:
+Upload its own different images.
+
+Expected:
+Only Subscriber B's images appear.
+No Subscriber A images/settings leak into Subscriber B.
+
+Then change Subscriber A:
+Direction = Right
+different speed
+
+Expected:
+Only Subscriber A changes.
+
+Also verify Static Row:
+When selected, animation stops and images remain visible normally.
+
+--------------------------------------------------
+9. IMPORTANT SAAS RULE GOING FORWARD
+--------------------------------------------------
+
+Document this project rule:
+
+BHRU is a multi-tenant SaaS.
+
+Features must NEVER be considered complete merely because they work on one existing subscriber.
+
+Any subscriber-facing feature must be verified against a fresh-subscriber/default-state path and tenant isolation.
+
+Avoid fixes that depend on manually repairing individual subscriber database rows.
+
+--------------------------------------------------
+10. REPORT
+--------------------------------------------------
+
+Report back:
+
+1. Exact reason the new subscriber was limited to 5 images.
+2. Exact reason its strip was not moving.
+3. Whether the problem was UI, API, initialization, rendering, or a combination.
+4. Files changed.
+5. Whether a migration is required.
+6. Final maximum logo/image count.
+7. New-subscriber default Moving Strip configuration.
+8. Confirmation settings remain per-tenant.
+9. Focused checks performed.
+10. Whether ready for my Git Push → Dokploy → manual VPS test.
+
+STOP after source implementation.
+Do not push.
+Do not deploy.
+Do not access my VPS database.

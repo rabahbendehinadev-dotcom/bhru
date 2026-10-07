@@ -561,7 +561,7 @@ components:
         slider_interval: { type: integer, enum: [3, 5, 7, 10] }
         logos:
           type: array
-          maxItems: 6
+          maxItems: 10
           items: { $ref: "#/components/schemas/PublicPartnerLogo" }
         announcements:
           type: array

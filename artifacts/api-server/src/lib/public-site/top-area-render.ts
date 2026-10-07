@@ -18,7 +18,7 @@ export function renderTopArea(model:PublicSiteModel) {
     const src=safePublicImage(item.src);if(!src)return '';
     const content=`<img src="${e(src)}" alt="${e(item.label||'Partner logo')}" width="${item.width||40}" height="${item.height||40}" decoding="async" loading="lazy">${item.label?`<span class="p2-logo-label">${e(item.label)}</span>`:''}`;
     return `<li class="p2-logo-card">${link(content,item.href,item.newTab)}</li>`;
-  }).join('');
+  }).filter(Boolean);
   const logoSettings=p.logoSettings??{display:'static',speed:'normal',direction:'left',pause_on_hover:true};
   const announcements=p.announcements.map((item,index)=>{
     // Every enabled announcement is a ticker, including legacy static records.
@@ -28,9 +28,9 @@ export function renderTopArea(model:PublicSiteModel) {
       <div class="p2-ticker-track"><ul class="p2-ticker-group p2-message-group"><li class="p2-message">${text}</li></ul></div></div></section>`;
   }).join('');
   const html=sanitizedTopHTML(p.customHTML);
-  if(!logos&&!announcements&&!html)return '';
-  const strip=logos?`<nav class="p2-partner-strip" aria-label="Partner links"><div${movement({...logoSettings,pause_on_hover:false})}>
-    <div class="p2-ticker-track"><ul class="p2-ticker-group p2-logo-group">${logos}</ul></div></div></nav>`:'';
+  if(!logos.length&&!announcements&&!html)return '';
+  const strip=logos.length?`<nav class="p2-partner-strip" aria-label="Partner links"><div${movement(logos.length>1?logoSettings:{...logoSettings,display:'static'})}>
+    <div class="p2-ticker-track"><ul class="p2-ticker-group p2-logo-group">${logos.join('')}</ul></div></div></nav>`:'';
   return `<div class="p2-top-area">${strip}${announcements}${html?`<div class="p2-custom">${html}</div>`:''}</div>`;
 }
 

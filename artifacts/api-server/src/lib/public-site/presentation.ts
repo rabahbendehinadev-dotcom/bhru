@@ -13,7 +13,7 @@ const generated = UpdateCurrentPublicPresentationBody.shape.values;
 export const presentationSchema = generated.extend({
   logo_strip_settings: generated.shape.logo_strip_settings.unwrap().strict().optional(),
   announcement_ticker_settings: generated.shape.announcement_ticker_settings.unwrap().strict().optional(),
-  logos: generated.shape.logos.element.strict().array().max(6),
+  logos: generated.shape.logos.element.strict().array().max(10,'A maximum of 10 partner logos is supported. Replace or delete a logo before adding another.'),
   announcements: generated.shape.announcements.element.strict().array().max(8),
   banners: generated.shape.banners.element.strict().array().max(8),
 }).strict();
@@ -59,8 +59,8 @@ export function sanitizedTopHTML(html: string, host?: string): string {
   });
 }
 export const emptyPresentation = (): PublicPresentationValues => ({
-  logo_strip_enabled:false,announcements_enabled:false,custom_html_enabled:false,custom_html:'',
-  logo_strip_settings:{display:'static',speed:'normal',direction:'left',pause_on_hover:true},
+  logo_strip_enabled:true,announcements_enabled:false,custom_html_enabled:false,custom_html:'',
+  logo_strip_settings:{display:'moving',speed:'normal',direction:'left',pause_on_hover:true},
   hero_mode:'classic',slider_autoplay:true,slider_interval:5,logos:[],announcements:[],banners:[],
 });
 export function validatePresentation(raw: unknown,host?:string): PublicPresentationValues {
@@ -102,6 +102,9 @@ export async function readPresentation(id:string,client:Database=pool) {
   const row=(await client.query('SELECT * FROM public_site_presentation WHERE subscriber_id=$1',[id])).rows[0];
   if(!row) return {values:emptyPresentation(),revision:0};
   const raw:Record<string,unknown>=Object.fromEntries(settingsFields.map(key=>[key,row[key] ?? undefined]));
+  // Persisted legacy rows with NULL motion settings meant Static Row. Keep that
+  // meaning; only unconfigured sites and future registrations get moving defaults.
+  raw.logo_strip_settings ??= {display:'static',speed:'normal',direction:'left',pause_on_hover:true};
   for(const [key,table,columns] of itemTables) {
     raw[key]=(await client.query(`SELECT id,${columns.join(',')} FROM ${table} WHERE subscriber_id=$1 ORDER BY sort_order`,[id])).rows;
   }

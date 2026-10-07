@@ -215,7 +215,7 @@ export const getCurrentPublicWebsiteResponsePresentationValuesLogosItemLabelMax 
 
 export const getCurrentPublicWebsiteResponsePresentationValuesLogosItemDestinationMax = 512;
 
-export const getCurrentPublicWebsiteResponsePresentationValuesLogosMax = 6;
+export const getCurrentPublicWebsiteResponsePresentationValuesLogosMax = 10;
 
 export const getCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextMax = 500;
 
@@ -382,7 +382,7 @@ export const updateCurrentPublicWebsiteBodyPresentationLogosItemLabelMax = 120;
 
 export const updateCurrentPublicWebsiteBodyPresentationLogosItemDestinationMax = 512;
 
-export const updateCurrentPublicWebsiteBodyPresentationLogosMax = 6;
+export const updateCurrentPublicWebsiteBodyPresentationLogosMax = 10;
 
 export const updateCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextMax = 500;
 
@@ -503,7 +503,7 @@ export const updateCurrentPublicWebsiteResponsePresentationValuesLogosItemLabelM
 
 export const updateCurrentPublicWebsiteResponsePresentationValuesLogosItemDestinationMax = 512;
 
-export const updateCurrentPublicWebsiteResponsePresentationValuesLogosMax = 6;
+export const updateCurrentPublicWebsiteResponsePresentationValuesLogosMax = 10;
 
 export const updateCurrentPublicWebsiteResponsePresentationValuesAnnouncementsItemTextMax = 500;
 
@@ -668,7 +668,7 @@ export const previewCurrentPublicWebsiteBodyPresentationLogosItemLabelMax = 120;
 
 export const previewCurrentPublicWebsiteBodyPresentationLogosItemDestinationMax = 512;
 
-export const previewCurrentPublicWebsiteBodyPresentationLogosMax = 6;
+export const previewCurrentPublicWebsiteBodyPresentationLogosMax = 10;
 
 export const previewCurrentPublicWebsiteBodyPresentationAnnouncementsItemTextMax = 500;
 
@@ -774,7 +774,7 @@ export const getCurrentPublicPresentationResponseValuesLogosItemLabelMax = 120;
 
 export const getCurrentPublicPresentationResponseValuesLogosItemDestinationMax = 512;
 
-export const getCurrentPublicPresentationResponseValuesLogosMax = 6;
+export const getCurrentPublicPresentationResponseValuesLogosMax = 10;
 
 export const getCurrentPublicPresentationResponseValuesAnnouncementsItemTextMax = 500;
 
@@ -863,7 +863,7 @@ export const updateCurrentPublicPresentationBodyValuesLogosItemLabelMax = 120;
 
 export const updateCurrentPublicPresentationBodyValuesLogosItemDestinationMax = 512;
 
-export const updateCurrentPublicPresentationBodyValuesLogosMax = 6;
+export const updateCurrentPublicPresentationBodyValuesLogosMax = 10;
 
 export const updateCurrentPublicPresentationBodyValuesAnnouncementsItemTextMax = 500;
 
@@ -950,7 +950,7 @@ export const updateCurrentPublicPresentationResponseValuesLogosItemLabelMax = 12
 
 export const updateCurrentPublicPresentationResponseValuesLogosItemDestinationMax = 512;
 
-export const updateCurrentPublicPresentationResponseValuesLogosMax = 6;
+export const updateCurrentPublicPresentationResponseValuesLogosMax = 10;
 
 export const updateCurrentPublicPresentationResponseValuesAnnouncementsItemTextMax = 500;
 

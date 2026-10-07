@@ -198,7 +198,7 @@ export interface PublicPresentationValues {
   hero_mode: PublicPresentationValuesHeroMode;
   slider_autoplay: boolean;
   slider_interval: PublicPresentationValuesSliderInterval;
-  /** @maxItems 6 */
+  /** @maxItems 10 */
   logos: PublicPartnerLogo[];
   /** @maxItems 8 */
   announcements: PublicAnnouncement[];

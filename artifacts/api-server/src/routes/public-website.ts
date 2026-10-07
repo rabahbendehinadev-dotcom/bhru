@@ -131,9 +131,9 @@ router.post('/cms/public-website/assets', async (req,res,next) => {
       await eligible(user.subscriber_id,client);
       await client.query('SELECT id FROM subscribers WHERE id=$1 FOR UPDATE',[user.subscriber_id]);
       const quota = (await client.query("SELECT count(*)::int AS count,coalesce(sum(byte_size),0)::bigint AS bytes FROM public_site_assets WHERE subscriber_id=$1 AND media_scope='website'",[user.subscriber_id])).rows[0];
-      // At most 16 configured slots (6 logos + 8 banners + 2 Classic/Branding).
+      // At most 20 configured slots (10 logos + 8 banners + 2 Classic/Branding).
       // Two bounded staging slots let a full website replace before committing.
-      if (quota.count >= 18 || Number(quota.bytes)+image.bytes.length>48*1024*1024) throw new HttpError(429,'Website image storage is full. Remove unused uploads before uploading more images.');
+      if (quota.count >= 22 || Number(quota.bytes)+image.bytes.length>64*1024*1024) throw new HttpError(429,'Website image storage is full. Remove unused uploads before uploading more images.');
       await writeImage(key,image.bytes);
       await client.query(`INSERT INTO public_site_assets(id,subscriber_id,storage_key,content_type,byte_size,width,height)
         VALUES($1,$2,$3,$4,$5,$6,$7)`,[id,user.subscriber_id,key,image.contentType,image.bytes.length,image.width,image.height]);

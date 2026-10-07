@@ -29,11 +29,11 @@ function Thumb({ url, alt }: { url?: string; alt: string }) {
     {url ? <img src={url} alt={alt} className="max-h-full max-w-full object-contain" /> : <span className="gs-help px-1 text-center">No preview</span>}</div>;
 }
 
-function FilePick({ w, label, onId, icon, usage = 'logo', className = '', touchFriendly = false, disabled = false }: { w: W; label: string; onId: (id: string) => void; icon?: 'add' | 'replace'; usage?: 'logo' | 'banner'; className?: string; touchFriendly?: boolean; disabled?: boolean }) {
+function FilePick({ w, label, onId, icon, usage = 'logo', className = '', touchFriendly = false, disabled = false, canUpload }: { w: W; label: string; onId: (id: string) => void; icon?: 'add' | 'replace'; usage?: 'logo' | 'banner'; className?: string; touchFriendly?: boolean; disabled?: boolean; canUpload?: () => boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   return <>
     <input ref={ref} type="file" accept="image/png,image/jpeg" className="sr-only" aria-label={`${label} file`}
-      onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (!f) return; const id = await w.uploadItem(f, usage); if (id) onId(id); }} />
+      onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (!f || (canUpload && !canUpload())) return; const id = await w.uploadItem(f, usage); if (id) onId(id); }} />
     <button type="button" className={`btn btn-sm ${className}`} style={touchFriendly ? { height: 44, minHeight: 44 } : undefined} disabled={disabled || w.itemUploading || w.saving} onClick={() => ref.current?.click()} data-testid={`button-${label.toLowerCase().replace(/\W+/g, '-')}`}>
       {icon === 'replace' ? <Upload size={13} /> : <ImagePlus size={13} />}{w.itemUploading ? 'Uploading…' : label}</button>
   </>;
@@ -90,13 +90,15 @@ export function PresentationEditor({ w, classic }: { w: W; classic?: ReactNode }
           {err(E.limits)}
           <div className="min-w-0 space-y-3" data-testid="group-logos">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div><h3 className="text-[13px] font-semibold">1. Partner / Image Strip</h3><p className="gs-help">Show uploaded partner or tool images. {p.logos.length}/{MAX_LOGOS} used.</p></div>
+              <div><h3 className="text-[13px] font-semibold">1. Partner / Image Strip</h3><p className="gs-help">Partner logos: {p.logos.length} / {MAX_LOGOS}</p></div>
               <SettingToggle id="sw-logo-strip" label="Logo strip" checked={p.logo_strip_enabled} onChange={(v) => set({ logo_strip_enabled: v })} />
             </div>
             <div className="min-w-0">
               <FilePick w={w} label="Upload Image / Add Image" className="btn-brand w-full sm:w-auto" touchFriendly disabled={p.logos.length >= MAX_LOGOS}
-                onId={(id) => { const l: PublicPartnerLogo = { id: crypto.randomUUID(), asset_id: id, label: '', destination: '', new_tab: true, enabled: true }; w.presEdit(v => ({ ...v, logos: [...v.logos, l] })); setEditing(l.id); }} />
-              <p className="gs-help">{p.logos.length >= MAX_LOGOS ? 'Image limit reached. Replace or delete an image to add another.' : 'Upload a PNG or JPEG directly here. No Custom HTML needed.'}</p>
+                canUpload={() => p.logos.length < MAX_LOGOS}
+                onId={(id) => { const l: PublicPartnerLogo = { id: crypto.randomUUID(), asset_id: id, label: '', destination: '', new_tab: true, enabled: true }; w.presEdit(v => v.logos.length >= MAX_LOGOS ? v : ({ ...v, logos: [...v.logos, l] })); setEditing(l.id); }} />
+              <p className="gs-help">{p.logos.length >= MAX_LOGOS ? 'Maximum of 10 partner logos reached. Replace or delete an image to add another.' : 'Upload a PNG or JPEG directly here. No Custom HTML needed.'}</p>
+              {err(E.logos)}
             </div>
             <TickerControls id="image-strip" image settings={strip} onChange={value => set({ logo_strip_settings: value })} />
             {p.logos.length === 0 ? <Empty text="No logos added yet." hint="Upload a PNG or JPEG to start your partner strip." /> :

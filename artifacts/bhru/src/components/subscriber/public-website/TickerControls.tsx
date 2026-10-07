@@ -1,7 +1,7 @@
 import type { PublicStripSettings, PublicTickerSettings } from '@workspace/api-client-react';
 
-export const defaultStrip: PublicStripSettings = { display: 'static', speed: 'normal', direction: 'left', pause_on_hover: true };
-export const defaultTicker: PublicTickerSettings = { ...defaultStrip, background_color: '#152238', text_color: '#FFFFFF', separator: '•' };
+export const defaultStrip: PublicStripSettings = { display: 'moving', speed: 'normal', direction: 'left', pause_on_hover: true };
+export const defaultTicker: PublicTickerSettings = { ...defaultStrip, display:'static', background_color: '#152238', text_color: '#FFFFFF', separator: '•' };
 
 export function TickerControls({ id, settings, onChange, image = false, showPauseOnHover = true, continuous = false }: {
   id: string; settings: PublicStripSettings; onChange: (value: PublicStripSettings) => void; image?: boolean; showPauseOnHover?: boolean; continuous?: boolean;
@@ -30,7 +30,7 @@ export function TickerControls({ id, settings, onChange, image = false, showPaus
           <option value="left">Left</option><option value="right">Right</option>
         </select>
       </label>
-      {!image && !continuous && showPauseOnHover && <label className="flex min-h-9 items-center gap-2 text-[13px]"><input type="checkbox" checked={settings.pause_on_hover}
+      {!continuous && showPauseOnHover && <label className="flex min-h-9 items-center gap-2 text-[13px]"><input type="checkbox" checked={settings.pause_on_hover}
         onChange={e => onChange({ ...settings, pause_on_hover: e.target.checked })} data-testid={`check-${id}-pause-hover`} />Pause on hover</label>}
     </div>}
   </div>;
