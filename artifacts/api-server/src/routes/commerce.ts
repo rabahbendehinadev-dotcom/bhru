@@ -8,7 +8,8 @@ import { currencyReadContext } from '../lib/commerce/currency-context';
 import { parseUsd,usdCents } from '../lib/commerce/currency-money';
 import { transaction, audit } from '../lib/platform';
 import { subscriberContext, requireCommerce, storeSettings, ownedAssets, categories, products, orderDetail, publicStore, COMMERCE_SAVED_REFERENCE } from '../lib/commerce/data';
-import { uuid, productInput, categoryInput, settingsInput, statusInput, minor, PAGE_SIZE, linesInput } from '../lib/commerce/validation';
+import { uuid, productInput, categoryInput, statusInput, minor, PAGE_SIZE, linesInput } from '../lib/commerce/validation';
+import { parseStoreSettings } from '../lib/commerce/store-settings';
 import { quote, createOrder,customerQuote } from '../lib/commerce/checkout';
 import { MAX_IMAGE_BYTES, normalizeImage, writeImage, removeImage, previewImageUrl } from '../lib/public-site/media';
 
@@ -123,7 +124,7 @@ router.post('/commerce/:resource',async(req,res,next)=>{
         return {id:cid};
       }
       case 'settings': {
-        const v=settingsInput.parse(req.body),previous=await storeSettings(id,client);
+        const v=parseStoreSettings(req.body),previous=await storeSettings(id,client);
         if(v.currency!==previous.currency)throw new HttpError(409,'The accounting reference cannot be changed in Store Settings. USD is permanent; legacy conversion requires approval.');
         const fields=Object.keys(v),values=Object.values(v);
         await client.query(`INSERT INTO store_settings(subscriber_id,${fields.join(',')}) VALUES($1,${values.map((_,i)=>`$${i+2}`).join(',')})

@@ -48,6 +48,14 @@ before proceeding to product pricing.
 **How to apply:** Share presentation logic across the panel/server/public displays;
 keep rates out of sample previews and preserve older receipts' original affix rules.
 
+Settings read metadata must not be round-tripped into strict settings writes.
+
+**Why:** A fresh subscriber's store-opening save failed despite complete persisted
+defaults because its form submitted server-owned read metadata.
+**How to apply:** Project only writable fields, retain strict validation and safe
+field/reason errors, and verify initialization before changing currency defaults
+or introducing a repair migration. Preserve valid existing tenant configuration.
+
 The global catalog is current ISO currency metadata, never a tenant's commercial
 configuration or a copy of obsolete DHRU data. New choices exclude withdrawn codes
 and entries without defined ISO monetary precision; existing currencies and historical snapshots

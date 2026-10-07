@@ -1,0 +1,241 @@
+BHRU — FIX NEW SUBSCRIBER E-COMMERCE SETTINGS HTTP 400
+
+IMPORTANT WORKFLOW:
+- Work on SOURCE CODE only.
+- Do NOT access or modify my VPS database.
+- Do NOT push to GitHub.
+- Do NOT deploy.
+- I will Git Push → Dokploy → test directly on VPS myself.
+- Do focused technical/type/build checks only. Do NOT run long E2E/full regression suites.
+
+CURRENT PRODUCTION MANUAL TEST:
+
+I created a BRAND-NEW subscriber account.
+
+Path:
+E-Commerce → Settings
+
+On the new account, when I enable:
+
+"Store is open to customers"
+
+and save the settings, the API returns:
+
+HTTP 400: Check the entered values.
+
+This must NOT happen for new subscribers.
+
+The screenshot shows the new account already has:
+- USD as Base / Reference
+- Store title: Our Products
+- Currency: USD
+- Customer address: Optional
+- Customer email: Optional
+- WhatsApp number empty
+- Show featured products first enabled
+- Ask for state enabled
+- Ask for city enabled
+- Ask for order note enabled
+- Default order confirmation message present
+
+The failure happens when saving/opening the store.
+
+GOAL:
+
+A brand-new BHRU subscriber must receive a complete, internally valid E-Commerce configuration from initialization.
+
+The subscriber must be able to:
+
+1. create the account,
+2. open E-Commerce → Settings,
+3. enable "Store is open to customers",
+4. click Save settings,
+
+without receiving HTTP 400 and without manually repairing hidden/default database fields first.
+
+DO NOT solve this by special-casing this specific subscriber.
+
+This must be a permanent new-subscriber fix.
+
+--------------------------------------------------
+1. FIND THE EXACT 400 CAUSE FIRST
+--------------------------------------------------
+
+Trace the complete save path:
+
+Frontend E-Commerce Settings form
+→ request payload
+→ API schema / Zod validation
+→ route
+→ service/business validation
+→ database constraints.
+
+Identify the EXACT field or condition causing:
+
+HTTP 400: Check the entered values.
+
+Do not guess.
+
+Check whether the UI is displaying defaults that were never actually persisted for the new subscriber.
+
+Also check for:
+- null vs empty string mismatches
+- missing required settings
+- invalid enum defaults
+- currency/reference assumptions
+- customer field requirement modes
+- confirmation-message validation
+- WhatsApp validation
+- public store/open-state validation
+- stale fields from the pre-USD currency architecture
+- fields required by API but absent from the new-account initialization
+- frontend sending values that do not match the current API contract.
+
+--------------------------------------------------
+2. FIX NEW-SUBSCRIBER INITIALIZATION
+--------------------------------------------------
+
+New subscribers must start with a valid E-Commerce settings record/default state.
+
+Do not depend on the subscriber manually opening/saving several pages to initialize it.
+
+If defaults shown by the UI are intended to be real defaults, make the backend/database initialization consistent with them.
+
+USD remains the permanent Base / Reference currency.
+
+Do NOT undo or weaken the currency foundation.
+
+Do NOT automatically create DZD, MAD, SAR or any other display currency.
+
+New subscribers still start with USD only.
+
+--------------------------------------------------
+3. STORE OPENING MUST BE VALID
+--------------------------------------------------
+
+If the subscriber has no products yet, that alone must NOT prevent:
+
+"Store is open to customers"
+
+from being saved.
+
+An empty public store may simply show no products.
+
+Do not require:
+- products
+- orders
+- additional currencies
+- WhatsApp number
+
+just to enable the storefront unless there is an actual documented product requirement.
+
+Optional fields must genuinely be optional at API level.
+
+--------------------------------------------------
+4. IMPROVE VALIDATION ERROR REPORTING
+--------------------------------------------------
+
+The generic:
+
+"HTTP 400: Check the entered values."
+
+is not enough for future debugging.
+
+Keep safe validation, but when a settings save is rejected, return a safe field-level/reason-level validation message that the frontend can display.
+
+Examples:
+
+"Store title is required."
+"Invalid customer email requirement."
+"Order confirmation message is required."
+
+Do not expose stack traces, SQL details, secrets or internal implementation information.
+
+--------------------------------------------------
+5. EXISTING SUBSCRIBERS
+--------------------------------------------------
+
+Do not rewrite valid existing E-Commerce settings.
+
+Do not touch:
+- existing products
+- existing orders
+- historical order snapshots
+- prices
+- currency rates
+- currency conversion provenance
+- public slugs.
+
+If existing subscribers have missing settings created under an older schema, use a safe backward-compatible default/fallback or additive migration only if genuinely necessary.
+
+Do not silently overwrite user-configured values.
+
+--------------------------------------------------
+6. ADMIN PREVIEW
+--------------------------------------------------
+
+Do not break the admin subscriber-preview work already implemented.
+
+Administrator preview remains read-only where currently intended.
+
+Normal subscribers must still save only their own tenant settings.
+
+Tenant isolation must remain enforced server-side.
+
+--------------------------------------------------
+7. ACCEPTANCE TEST
+--------------------------------------------------
+
+Simulate a completely new subscriber.
+
+Expected initial monetary state:
+USD
+Base / Reference
+Rate = 1.000000
+
+Then:
+
+E-Commerce → Settings
+
+Enable:
+Store is open to customers
+
+Keep:
+Store title = Our Products
+Customer address = Optional
+Customer email = Optional
+WhatsApp = blank
+
+Save.
+
+EXPECTED:
+HTTP success.
+Settings persist.
+Refresh page.
+Store remains open.
+Public /{public_slug} loads successfully.
+Zero products is allowed.
+No hidden manual repair is required.
+
+Then create another fresh subscriber and confirm the same behavior.
+
+--------------------------------------------------
+8. REPORT BACK
+--------------------------------------------------
+
+When finished, report:
+
+1. Exact root cause of HTTP 400.
+2. Exact field/validation that rejected the request.
+3. Why it affected a brand-new subscriber.
+4. Source files changed.
+5. Whether a migration is required.
+6. What defaults a brand-new subscriber now receives.
+7. Confirmation that USD/currency architecture was not weakened.
+8. Focused checks performed.
+9. Whether source is ready for my Git Push → Dokploy → manual VPS test.
+
+STOP after source implementation.
+Do not push.
+Do not deploy.
+Do not access my VPS database.

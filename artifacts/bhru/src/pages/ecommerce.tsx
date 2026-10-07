@@ -8,6 +8,7 @@ import {
   useCommerceWrite, useRefreshAccessOnFocus,
 } from '@/hooks/use-commerce';
 import { formatScaled, unitsToInput, usePanelMoney, type PanelCurrency } from '@/hooks/use-panel-money';
+import { commerceSettingsPayload } from '@/lib/commerce-settings';
 
 interface Settings { enabled: boolean; title: string; currency: string; featured_first: boolean; email_mode: Mode; address_mode: Mode; show_state: boolean; show_city: boolean; show_note: boolean; whatsapp: string; confirmation_message: string; public_slug: string }
 type Mode = 'hidden' | 'optional' | 'required';
@@ -398,9 +399,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
   const save = async () => {
     if (!f.title.trim()) return setErr('Enter a store title.');
     setErr('');
-    const { public_slug: _slug, ...body } = f;
-    void _slug;
-    try { await w.save('settings', { ...body, ...(pm.v2 ? { currency: 'USD' } : {}), title: f.title.trim(), whatsapp: f.whatsapp.trim(), confirmation_message: f.confirmation_message.trim() }); setSaved(true); } catch (e) { setErr(errText(e)); }
+    try { await w.save('settings', commerceSettingsPayload(f, pm.v2)); setSaved(true); } catch (e) { setErr(errText(e)); }
   };
   const mode = (label: string, k: 'email_mode' | 'address_mode') => (
     <Field label={label}><select className="input capitalize" value={f[k]} onChange={(e) => set(k, e.target.value as Mode)} data-testid={`select-${k}`}>{(['hidden', 'optional', 'required'] as Mode[]).map((m) => <option key={m} value={m}>{m}</option>)}</select></Field>

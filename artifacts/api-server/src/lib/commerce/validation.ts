@@ -20,7 +20,7 @@ export const productInput=z.object({
   image_ids:uuid.array().max(8).refine(ids=>new Set(ids).size===ids.length,'Duplicate image'),
 }).strict();
 export const settingsInput=z.object({
-  enabled:z.boolean(),title:text(120).min(1),currency:z.enum(['DZD','USD','EUR','GBP','MAD']),
+  enabled:z.boolean(),title:text(120).min(1),currency:z.enum(['DZD','USD','EUR','GBP','MAD','TND']),
   featured_first:z.boolean(),email_mode:z.enum(['hidden','optional','required']),address_mode:z.enum(['hidden','optional','required']),
   show_state:z.boolean(),show_city:z.boolean(),show_note:z.boolean(),
   whatsapp:text(25).refine(v=>!v||/^\+?[0-9]{7,20}$/.test(v),'Use an international phone number'),
@@ -34,6 +34,7 @@ export const orderInput=linesInput.extend({
   address:text(500).default(''),note:text(1000).default(''),
   currency_rate:z.string().regex(/^\d{1,9}(?:\.\d{1,6})?$/).optional(),
 }).strict();
-export const DEFAULT_STORE={enabled:false,title:'Our Products',currency:'USD',featured_first:true,email_mode:'optional',address_mode:'optional',show_state:true,show_city:true,show_note:true,whatsapp:'',confirmation_message:'Thank you. Your order has been received.'};
+// Validate source defaults at initialization; persisted registration defaults are checked against these in focused tests.
+export const DEFAULT_STORE=settingsInput.parse({enabled:false,title:'Our Products',currency:'USD',featured_first:true,email_mode:'optional',address_mode:'optional',show_state:true,show_city:true,show_note:true,whatsapp:'',confirmation_message:'Thank you. Your order has been received.'});
 export type StoreSettings=typeof DEFAULT_STORE & {subscriber_id?:string;money_model_version?:number};
 export const PAGE_SIZE=24;
