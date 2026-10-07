@@ -1,0 +1,134 @@
+/* Platform Admin ERP theme. Everything is scoped under .admin-erp. */
+.admin-erp {
+  color-scheme: light;
+  --background: 215 36% 97%;
+  --foreground: 222 47% 13%;
+  --border: 214 24% 89%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 13%;
+  --card-border: 214 24% 89%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 13%;
+  --popover-border: 214 24% 89%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 222 30% 25%;
+  --sidebar-border: 214 24% 90%;
+  --sidebar-accent: 215 36% 95%;
+  --primary: 217 91% 52%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 214 32% 96%;
+  --secondary-foreground: 222 47% 13%;
+  --muted: 214 32% 95%;
+  --muted-foreground: 218 14% 42%;
+  --accent: 214 40% 95%;
+  --accent-foreground: 222 47% 13%;
+  --destructive: 0 72% 52%;
+  --input: 214 22% 83%;
+  --ring: 217 91% 52%;
+  --ok: 152 60% 36%;
+  --warn: 27 96% 50%;
+  --danger: 0 72% 52%;
+  --violet: 262 58% 54%;
+  --brand: 24 96% 51%;
+  --elevate-1: rgba(15, 23, 42, 0.04);
+  --elevate-2: rgba(15, 23, 42, 0.08);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--app-font-sans);
+}
+.admin-erp[data-admin-theme='dark'] {
+  color-scheme: dark;
+  --background: 222 32% 9%;
+  --foreground: 214 30% 92%;
+  --border: 222 20% 20%;
+  --card: 222 28% 12%;
+  --card-foreground: 214 30% 92%;
+  --card-border: 222 20% 20%;
+  --popover: 222 28% 13%;
+  --popover-foreground: 214 30% 92%;
+  --sidebar: 222 30% 11%;
+  --sidebar-foreground: 215 20% 74%;
+  --sidebar-border: 222 20% 18%;
+  --sidebar-accent: 222 24% 16%;
+  --secondary: 222 24% 16%;
+  --secondary-foreground: 214 30% 92%;
+  --muted: 222 24% 15%;
+  --muted-foreground: 218 14% 66%;
+  --accent: 222 24% 18%;
+  --input: 222 20% 26%;
+  --elevate-1: rgba(255, 255, 255, 0.04);
+  --elevate-2: rgba(255, 255, 255, 0.09);
+}
+
+/* Cards, tables, controls */
+.admin-erp .card { min-width: 0; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+.admin-erp .card:has(> table.tbl) { overflow-x: auto; }
+.admin-erp .card-h { padding: 11px 14px 0; font-size: 13px; font-weight: 650; color: hsl(var(--foreground)); }
+.admin-erp .btn { background: hsl(var(--card)); border-color: hsl(var(--input)); color: hsl(var(--foreground)); transition: background .15s, border-color .15s, box-shadow .15s, color .15s; }
+.admin-erp .btn:hover { background: hsl(var(--accent)); }
+.admin-erp .btn:focus-visible, .admin-erp .input:focus-visible, .admin-erp a:focus-visible { outline: 2px solid hsl(var(--primary) / .55); outline-offset: 1px; }
+.admin-erp .btn-primary { background: hsl(var(--primary)); color: #fff; border-color: transparent; }
+.admin-erp .btn-primary:hover { background: hsl(217 91% 46%); }
+.admin-erp .btn-brand { background: hsl(var(--brand)); color: #fff; }
+.admin-erp .btn-brand:hover { background: hsl(24 96% 45%); }
+.admin-erp .btn-ok { background: hsl(var(--ok) / .1); border-color: hsl(var(--ok) / .35); color: hsl(152 60% 25%); }
+.admin-erp .btn-warn { background: hsl(var(--warn) / .1); border-color: hsl(var(--warn) / .4); color: hsl(24 90% 33%); }
+.admin-erp .btn-danger { background: hsl(var(--danger) / .08); border-color: hsl(var(--danger) / .35); color: hsl(0 70% 38%); }
+.admin-erp .btn-ok:hover, .admin-erp .btn-warn:hover, .admin-erp .btn-danger:hover { filter: brightness(.96); }
+.admin-erp .input { background: hsl(var(--card)); border-color: hsl(var(--input)); transition: border-color .15s, box-shadow .15s; }
+.admin-erp .input:focus { border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .15); }
+.admin-erp .tbl th { background: hsl(var(--muted) / .6); color: hsl(var(--muted-foreground)); text-transform: none; font-weight: 600; }
+.admin-erp .tbl td { border-bottom-color: hsl(var(--border)); }
+.admin-erp .tbl tbody tr { transition: background .12s; }
+.admin-erp .tbl tbody tr:hover { background: hsl(var(--accent) / .55); }
+.admin-erp .link { color: hsl(var(--primary)); font-weight: 500; }
+.admin-erp .badge { font-weight: 600; border-radius: 5px; }
+/* Legacy badge tones were authored for dark UIs: darken text for light surfaces */
+.admin-erp .badge[class*='bg-primary'] { background: hsl(var(--primary) / .12); color: hsl(217 85% 38%); }
+.admin-erp .badge[class*='bg-ok'] { background: hsl(var(--ok) / .13); color: hsl(152 62% 24%); }
+.admin-erp .badge[class*='bg-warn'] { background: hsl(var(--warn) / .14); color: hsl(24 90% 32%); }
+.admin-erp .badge[class*='bg-danger'] { background: hsl(var(--danger) / .11); color: hsl(0 70% 38%); }
+.admin-erp .badge[class*='bg-violet'] { background: hsl(var(--violet) / .12); color: hsl(262 55% 40%); }
+.admin-erp .badge[class*='bg-white'] { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+.admin-erp[data-admin-theme='dark'] .badge[class*='bg-primary'] { color: hsl(217 95% 76%); }
+.admin-erp[data-admin-theme='dark'] .badge[class*='bg-ok'] { color: hsl(152 60% 62%); }
+.admin-erp[data-admin-theme='dark'] .badge[class*='bg-warn'] { color: hsl(30 95% 66%); }
+.admin-erp[data-admin-theme='dark'] .badge[class*='bg-danger'] { color: hsl(0 90% 76%); }
+.admin-erp[data-admin-theme='dark'] .badge[class*='bg-violet'] { color: hsl(262 90% 80%); }
+.admin-erp .text-warn { color: hsl(24 90% 38%); }
+.admin-erp .text-ok { color: hsl(152 62% 28%); }
+
+/* Shell */
+.admin-erp .ae-wordmark { font-size: 21px; font-weight: 800; letter-spacing: -.045em; color: hsl(var(--foreground)); }
+.admin-erp .ae-wordmark > span { color: hsl(var(--brand)); }
+.admin-erp .ae-side { width: 220px; background: hsl(var(--sidebar)); border-right: 1px solid hsl(var(--sidebar-border)); }
+.admin-erp .ae-group-label { padding: 12px 10px 5px; font-size: 10.5px; font-weight: 650; letter-spacing: .07em; color: hsl(var(--muted-foreground)); }
+.admin-erp .ae-nav { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 2px; border-radius: 8px; font-size: 13px; font-weight: 500; color: hsl(var(--sidebar-foreground)); transition: background .15s, color .15s, transform .15s; }
+.admin-erp .ae-nav:hover { background: hsl(var(--sidebar-accent)); color: hsl(var(--foreground)); }
+.admin-erp .ae-nav[data-active='true'] { background: hsl(var(--brand)); color: #fff; box-shadow: 0 2px 6px hsl(var(--brand) / .35); }
+.admin-erp .ae-nav small { display: block; font-size: 10px; font-weight: 400; opacity: .7; line-height: 1.1; }
+.admin-erp .ae-head { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); }
+.admin-erp .ae-iconbtn { display: inline-grid; place-items: center; height: 34px; width: 34px; border: 1px solid hsl(var(--input)); border-radius: 8px; background: hsl(var(--card)); color: hsl(var(--foreground)); position: relative; cursor: pointer; transition: background .15s, border-color .15s; }
+.admin-erp .ae-iconbtn:hover { background: hsl(var(--accent)); }
+.admin-erp .ae-pop { position: absolute; z-index: 50; background: hsl(var(--popover)); border: 1px solid hsl(var(--border)); border-radius: 10px; box-shadow: 0 12px 32px rgba(15, 23, 42, .14); animation: ae-pop .14s ease-out; }
+.admin-erp .ae-notice-pop { position: fixed; left: 12px; right: 12px; top: 52px; width: auto; max-width: calc(100vw - 24px); }
+@media(min-width:640px) { .admin-erp .ae-notice-pop { position: absolute; left: auto; right: 0; top: 40px; width: 320px; max-width: 88vw; } }
+@keyframes ae-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.admin-erp .ae-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; text-align: left; transition: background .12s; cursor: pointer; }
+.admin-erp .ae-row:hover, .admin-erp .ae-row:focus-visible { background: hsl(var(--accent)); }
+.admin-erp .ae-kpi { display: flex; align-items: center; gap: 12px; padding: 12px; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.admin-erp .ae-kpi:hover { border-color: hsl(var(--primary) / .35); box-shadow: 0 4px 12px rgba(15, 23, 42, .07); transform: translateY(-1px); }
+.admin-erp .ae-kpi-ic { display: grid; place-items: center; height: 40px; width: 40px; flex: none; border-radius: 10px; }
+.admin-erp .ae-tint-blue { background: hsl(217 91% 52% / .12); color: hsl(217 85% 45%); }
+.admin-erp .ae-tint-green { background: hsl(152 60% 36% / .13); color: hsl(152 62% 30%); }
+.admin-erp .ae-tint-orange { background: hsl(27 96% 50% / .14); color: hsl(24 90% 40%); }
+.admin-erp .ae-tint-red { background: hsl(0 72% 52% / .12); color: hsl(0 70% 44%); }
+.admin-erp .ae-tint-violet { background: hsl(262 58% 54% / .12); color: hsl(262 55% 46%); }
+.admin-erp .ae-tint-gray { background: hsl(215 20% 50% / .13); color: hsl(var(--muted-foreground)); }
+.admin-erp .ae-action { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid hsl(var(--border)); border-radius: 10px; background: hsl(var(--card)); transition: border-color .15s, box-shadow .15s, transform .15s; }
+.admin-erp .ae-action:hover { border-color: hsl(var(--brand) / .5); box-shadow: 0 4px 12px rgba(15, 23, 42, .07); transform: translateY(-1px); }
+.admin-erp .ae-bar { height: 7px; border-radius: 999px; background: hsl(var(--muted)); overflow: hidden; }
+.admin-erp .ae-bar > i { display: block; height: 100%; border-radius: inherit; transition: width .5s ease; }
+.admin-erp .ae-skel { background: linear-gradient(90deg, hsl(var(--muted)), hsl(var(--accent)), hsl(var(--muted))); background-size: 200% 100%; animation: ae-sk 1.2s linear infinite; border-radius: 6px; }
+@keyframes ae-sk { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .admin-erp * { animation: none !important; transition: none !important; } }

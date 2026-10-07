@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearch } from 'wouter';
 import { useGetSubscriberCommerceModule, useSetSubscriberCommerceModule, getGetSubscriberCommerceModuleQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Search, MoreHorizontal, Users, UserCheck, Clock, PauseCircle, XCircle, X, Hourglass } from 'lucide-react';
@@ -90,6 +91,14 @@ function Page() {
   const [per, setPer] = useState(10);
   const [page, setPage] = useState(1);
   const [sel, setSel] = useState<string | null>(null);
+  const search = useSearch();
+  const requested = new URLSearchParams(search).get('subscriber');
+  const requestedExists = subscribers.some(s => s.id === requested);
+  const modulesView = new URLSearchParams(search).get('view') === 'modules';
+  useEffect(() => {
+    if (!requested || !requestedExists) return;
+    setSel(requested); setQ(''); setPlan(''); setStatus(''); setCountry(''); setPage(1);
+  }, [requested,requestedExists]);
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     return subscribers.filter((x) =>
@@ -104,7 +113,7 @@ function Page() {
   const reset = <T,>(f: (v: T) => void) => (v: T) => { f(v); setPage(1); };
   return (
     <div className="space-y-3">
-      <div><h1 className="text-[18px] font-semibold">Subscribers</h1><p className="text-[12.5px] text-muted-foreground">Every business registered on BHRU. Manage their licences, statuses and subscriptions.</p></div>
+      <div><h1 className="text-[18px] font-semibold">{modulesView ? 'Modules / Add-ons' : 'Subscribers'}</h1><p className="text-[12.5px] text-muted-foreground">{modulesView ? 'Select a subscriber to manage their existing E-Commerce module controls in the details panel.' : 'Every business registered on BHRU. Manage their licences, statuses and subscriptions.'}</p></div>
       <StatCards />
       <div className="grid items-start gap-3 xl:grid-cols-[1fr_380px]" style={selected ? undefined : { gridTemplateColumns: '1fr' }}>
         <Card>

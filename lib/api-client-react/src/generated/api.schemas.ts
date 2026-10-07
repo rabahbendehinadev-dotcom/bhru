@@ -555,6 +555,29 @@ export interface AdminAccount {
   email: string;
 }
 
+export interface AdminSubscriberSummary {
+  id: string;
+  publicSlug: string;
+  modules: string[];
+}
+
+export interface AdminModuleUsage {
+  key: string;
+  /** @minimum 0 */
+  enabled: number;
+}
+
+export interface AdminSummary {
+  serverTime: string;
+  /**
+     * Saved public-site configurations, not CMS entitlement grants
+     * @minimum 0
+     */
+  publicWebsites: number;
+  subscribers: AdminSubscriberSummary[];
+  modules: AdminModuleUsage[];
+}
+
 export interface PlatformState {
   session: SessionState;
   subscribers: Subscriber[];

@@ -8,6 +8,27 @@
 import * as zod from 'zod';
 
 
+export const getAdminSummaryResponsePublicWebsitesMin = 0;
+
+export const getAdminSummaryResponseModulesItemEnabledMin = 0;
+
+
+
+export const GetAdminSummaryResponse = zod.object({
+  "serverTime": zod.coerce.date(),
+  "publicWebsites": zod.number().int().min(getAdminSummaryResponsePublicWebsitesMin).describe('Saved public-site configurations, not CMS entitlement grants'),
+  "subscribers": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "publicSlug": zod.string(),
+  "modules": zod.array(zod.string())
+})),
+  "modules": zod.array(zod.object({
+  "key": zod.string(),
+  "enabled": zod.number().int().min(getAdminSummaryResponseModulesItemEnabledMin)
+}))
+})
+
+
 export const UploadCommerceAssetResponse = zod.object({
   "id": zod.string().uuid(),
   "url": zod.string(),

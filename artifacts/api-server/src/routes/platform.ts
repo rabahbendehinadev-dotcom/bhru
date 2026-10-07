@@ -1,10 +1,30 @@
 import { Router } from "express";
 import { randomUUID, randomBytes } from "node:crypto";
-import { EditSubscriberBody, ManageSubscriptionBody, CreatePlanBody, EditPlanBody, GetSubscriberResponse } from "@workspace/api-zod";
+import { EditSubscriberBody, ManageSubscriptionBody, CreatePlanBody, EditPlanBody, GetSubscriberResponse, GetAdminSummaryResponse } from "@workspace/api-zod";
+import { pool } from "@workspace/db";
 import { requireAdmin, authorizeTenant, HttpError } from "../lib/auth";
 import { transaction, audit, getSubscriber, platformState } from "../lib/platform";
 
 const router = Router();
+router.get("/admin/summary", async (req,res) => {
+  requireAdmin(req);
+  const [subscribers,modules,sites]=await Promise.all([
+    pool.query(`SELECT s.id,coalesce(s.public_slug,'') AS "publicSlug",
+      coalesce(array_agg(m.module_key ORDER BY m.module_key) FILTER (WHERE m.enabled),ARRAY[]::text[]) AS modules
+      FROM subscribers s LEFT JOIN subscriber_modules m ON m.subscriber_id=s.id
+      GROUP BY s.id,s.public_slug ORDER BY s.id`),
+    pool.query(`SELECT 'ecommerce' AS key,count(*) FILTER(WHERE enabled)::integer AS enabled
+      FROM subscriber_modules WHERE module_key='ecommerce'
+      UNION ALL SELECT module_key AS key,count(*) FILTER(WHERE enabled)::integer AS enabled
+      FROM subscriber_modules WHERE module_key<>'ecommerce' GROUP BY module_key`),
+    pool.query('SELECT clock_timestamp() AS "serverTime",count(*)::integer AS "publicWebsites" FROM subscriber_public_sites'),
+  ]);
+  res.set('Cache-Control','private, no-store');
+  res.json(GetAdminSummaryResponse.parse({
+    serverTime:sites.rows[0].serverTime.toISOString(),
+    subscribers:subscribers.rows,modules:modules.rows,publicWebsites:sites.rows[0].publicWebsites,
+  }));
+});
 function idParam(raw: unknown): string {
   if (typeof raw !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) throw new HttpError(400, "Invalid identifier.");
   return raw;

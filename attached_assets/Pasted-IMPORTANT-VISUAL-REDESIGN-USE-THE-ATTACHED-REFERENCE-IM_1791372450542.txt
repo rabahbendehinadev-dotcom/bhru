@@ -1,0 +1,120 @@
+IMPORTANT VISUAL REDESIGN — USE THE ATTACHED REFERENCE IMAGE
+
+I am attaching a reference image showing the exact visual direction I want for the BHRU Platform Admin.
+
+The current Platform Admin is dark. I DO NOT want to keep the current dark appearance.
+
+Redesign the Platform Admin to a LIGHT / WHITE professional ERP-style interface inspired closely by the attached reference image.
+
+The attached image is the PRIMARY VISUAL REFERENCE for this redesign.
+
+VISUAL TARGET:
+- White/light main background
+- White cards and panels
+- Very light gray/blue page background where needed
+- Thin subtle borders
+- Soft shadows only where useful
+- Dark navy text for strong readability
+- BHRU orange as the main brand accent
+- Blue for links and secondary actions
+- Green for Active/success
+- Orange for Pending/warnings
+- Red for Suspended/errors
+- Purple only for specific modules/features where appropriate
+- Clean professional ERP/SaaS appearance
+- Compact information density
+- Clear hierarchy
+- Rounded cards, but not excessively rounded
+- Similar spacing, card proportions, sidebar proportions and dashboard organization to the attached image
+
+SIDEBAR:
+Rebuild the Platform Admin sidebar visually like the attached reference:
+- white background
+- BHRU logo at the top
+- subtle section labels
+- dark text/icons
+- selected menu item uses a strong BHRU orange background with white text/icon
+- compact vertical spacing
+- clear groups:
+  OVERVIEW
+  CUSTOMERS
+  BILLING & ACCESS
+  PLATFORM
+
+TOP HEADER:
+Follow the attached reference:
+- white header
+- subtle bottom border
+- sidebar button
+- large useful subscriber search
+- light/dark icon can be present visually, but LIGHT MODE must be the default
+- notifications
+- Server Time
+- Platform Administrator profile
+- Sign out
+- Preview as Subscriber button on the right
+
+DASHBOARD:
+Use the attached screenshot as the layout target.
+
+I want:
+- compact KPI cards at the top
+- two rows of operational statistics
+- Recent Subscribers table
+- Needs Attention panel
+- Subscriber Status chart
+- Top Plans chart
+- Module Usage
+- Recent Activity
+- Quick Actions
+
+Do not create fake data.
+Every widget must use real existing BHRU data.
+
+The final result should feel like a REAL ERP / SaaS administration system, not a simple website dashboard.
+
+IMPORTANT:
+Do not merely change dark colors to white.
+
+Rework spacing, cards, borders, typography, table styling, sidebar, header and information density so the whole Platform Admin visually follows the attached reference.
+
+Use the reference as inspiration for the DESIGN SYSTEM and PAGE COMPOSITION, while implementing it cleanly with the existing BHRU frontend components.
+
+The Platform Admin should visually feel related to the subscriber panel, but more powerful and administrative.
+
+Do NOT modify the subscriber panel itself.
+
+Do NOT modify:
+- subscriber public website
+- CMS
+- E-Commerce storefront
+- currencies
+- customer data
+- authentication architecture
+- PLATFORM_ADMIN_PATH
+- public slugs
+- migrations unless genuinely required for functionality
+- production
+
+LIGHT MODE IS THE PRIORITY.
+
+If a dark-mode system already exists, it may remain optional, but the Platform Admin must open in the new LIGHT ERP design by default.
+
+RESPONSIVE:
+The same visual language must remain clean on tablet and mobile.
+Do not create horizontal page overflow.
+
+IMPORTANT TESTING RULE:
+I will test the design manually.
+Do not spend time on browser/E2E/full regression testing.
+
+After implementation run only:
+- relevant type checks
+- frontend build
+- API build only if backend was changed
+- minimal startup validation
+
+Do NOT push or deploy.
+Development / Replit Preview only.
+
+When finished, STOP and let me review the new Platform Admin visually.

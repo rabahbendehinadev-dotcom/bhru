@@ -11,6 +11,17 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /admin/summary:
+    get:
+      operationId: getAdminSummary
+      responses:
+        "200":
+          description: Read-only operational summary for independent Platform Administrators
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminSummary" }
+        "403":
+          description: Platform administrator required
   /commerce/assets:
     post:
       operationId: uploadCommerceAsset
@@ -815,6 +826,31 @@ components:
         id: { type: string }
         name: { type: string }
         email: { type: string }
+    AdminSummary:
+      type: object
+      required: [serverTime, subscribers, modules, publicWebsites]
+      properties:
+        serverTime: { type: string, format: date-time }
+        publicWebsites: { type: integer, minimum: 0, description: "Saved public-site configurations, not CMS entitlement grants" }
+        subscribers:
+          type: array
+          items: { $ref: "#/components/schemas/AdminSubscriberSummary" }
+        modules:
+          type: array
+          items: { $ref: "#/components/schemas/AdminModuleUsage" }
+    AdminSubscriberSummary:
+      type: object
+      required: [id, publicSlug, modules]
+      properties:
+        id: { type: string, format: uuid }
+        publicSlug: { type: string }
+        modules: { type: array, items: { type: string } }
+    AdminModuleUsage:
+      type: object
+      required: [key, enabled]
+      properties:
+        key: { type: string }
+        enabled: { type: integer, minimum: 0 }
     PlatformState:
       type: object
       required: [session, subscribers, plans, logs, admins]

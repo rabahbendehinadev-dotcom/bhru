@@ -1,0 +1,746 @@
+We need a substantial UX/UI reorganization of the existing BHRU Platform Administration.
+
+IMPORTANT:
+This task is ONLY about the private Platform Admin experience.
+Do not redesign or modify the subscriber panel, public websites, storefront, CMS, authentication architecture, public slugs, media storage, currencies, E-Commerce storefront, or existing subscriber data.
+
+The current Platform Admin works, but it feels like an early technical dashboard rather than a professional SaaS control center.
+
+The goal is to turn it into a clean, compact, scalable BHRU SaaS Administration Panel where I can manage hundreds or thousands of subscribers without getting lost.
+
+Do NOT create a second admin system.
+Refactor and improve the existing private Platform Admin.
+
+==================================================
+1. SECURITY / ROUTING — MUST NOT CHANGE
+==================================================
+
+Preserve the existing independent Platform Admin authentication and private entry architecture.
+
+Do NOT:
+- expose the private admin route publicly
+- hardcode the private admin path
+- merge Platform Admin authentication with subscriber authentication
+- expose Platform Admin links in subscriber/public navigation
+- weaken any existing authorization
+- change public_slug behavior
+- change subscriber login behavior
+
+Continue using the existing PLATFORM_ADMIN_PATH/private-entry mechanism.
+
+All Platform Admin APIs must remain protected by Platform Admin authorization.
+
+==================================================
+2. OVERALL ADMIN INFORMATION ARCHITECTURE
+==================================================
+
+Reorganize the left sidebar into clear groups.
+
+Suggested structure:
+
+OVERVIEW
+- Dashboard
+
+CUSTOMERS
+- Subscribers
+- Activations
+
+BILLING & ACCESS
+- Plans
+- Licences
+- Modules / Add-ons
+
+PLATFORM
+- Admin Users
+- Activity Logs
+- Platform Settings
+
+Keep the sidebar compact and professional.
+
+Requirements:
+- clear active state
+- consistent icons
+- collapsible on desktop
+- proper drawer on mobile
+- no horizontal overflow
+- preserve navigation state
+- tooltips when collapsed
+- section headings visually subtle
+- avoid oversized spacing
+
+The top bar should remain simple:
+- sidebar toggle
+- useful search
+- server time
+- notifications placeholder only if already supported
+- Platform Administrator identity
+- Sign out
+
+Keep "Preview as subscriber" available but visually secondary.
+
+==================================================
+3. DASHBOARD — COMPLETE REORGANIZATION
+==================================================
+
+The current dashboard wastes too much vertical and horizontal space.
+
+Build a compact operational dashboard.
+
+TOP SUMMARY CARDS:
+
+Row 1:
+- Total Subscribers
+- Active
+- Trial
+- Pending
+- Suspended
+- Expired
+
+Each card should:
+- be compact
+- have a clear number
+- use consistent status colors
+- be clickable and open Subscribers with the corresponding filter
+
+Add a second operational summary area for:
+
+- Active subscriptions
+- Expiring within 7 days
+- Expiring within 30 days
+- Pending approvals
+- E-Commerce enabled subscribers
+- Total enabled paid add-ons/modules
+
+Do not fabricate revenue.
+
+If actual billing/payment collection does not exist, DO NOT display fake MRR/revenue as financial truth.
+
+If an existing card is only an estimate based on plan price, explicitly label it:
+"Estimated subscription value"
+and keep it visually secondary.
+
+==================================================
+4. DASHBOARD — SUBSCRIBER ACTIVITY
+==================================================
+
+Replace the oversized "Recent registrations" area with a compact useful table.
+
+Columns:
+
+Business
+Owner
+Plan
+Status
+Modules
+Registered
+Expiry
+Actions
+
+Status should use clear badges:
+Active
+Trial
+Pending
+Suspended
+Expired
+Revoked if applicable
+
+Modules can use small badges/icons such as:
+CMS
+E-Commerce
+etc.
+
+Do not show modules that do not exist.
+
+Quick actions:
+- View
+- Manage
+- Preview
+
+Do not put dangerous actions directly in the dashboard.
+
+Add:
+"View all subscribers"
+
+==================================================
+5. ATTENTION REQUIRED
+==================================================
+
+Add a compact "Needs Attention" panel.
+
+It should be derived only from real data.
+
+Examples:
+- Pending subscriber approvals
+- Expiring subscriptions
+- Suspended subscribers
+- Expired subscribers
+- licence/access problems if such real states exist
+
+Each item should link directly to the relevant subscriber/filter.
+
+If there are no issues:
+show a clean empty state.
+
+Do not invent alerts.
+
+==================================================
+6. SUBSCRIBERS — MAKE THIS THE MAIN CONTROL CENTER
+==================================================
+
+The Subscribers page must become the most useful page in Platform Admin.
+
+Create a professional searchable/filterable table.
+
+Search across appropriate existing fields such as:
+- business name
+- owner name
+- email
+- public slug
+
+Only use fields that actually exist.
+
+Filters:
+- Status
+- Plan
+- E-Commerce enabled/disabled
+- Registration date if practical
+
+Table columns:
+
+Subscriber
+Owner
+Plan
+Status
+Public Website
+Modules
+Registered
+Expiry
+Actions
+
+Do not overload the table.
+
+Use pagination for scalability.
+
+Add quick filter chips:
+All
+Active
+Trial
+Pending
+Suspended
+Expired
+
+Clicking a subscriber should open a proper Subscriber Detail page.
+
+==================================================
+7. SUBSCRIBER DETAIL PAGE
+==================================================
+
+This is extremely important.
+
+Instead of forcing the Platform Admin to jump between Plans, Licences, Activations and Modules to understand one customer, create one central subscriber management page.
+
+Header:
+
+Business Name
+Owner
+Status badge
+Plan
+Public slug / public website
+Registration date
+
+Actions:
+- Preview as Subscriber
+- Open Public Website
+- appropriate existing lifecycle actions
+
+Organize the page into tabs:
+
+Overview
+Subscription
+Modules
+Activity
+
+If useful and supported by existing data:
+Account
+
+--------------------------------------------------
+OVERVIEW TAB
+--------------------------------------------------
+
+Show concise cards/sections:
+
+Account:
+- Business
+- Owner
+- Email
+- Country
+- Registration date
+
+Website:
+- public slug
+- public URL
+- Open Website
+
+Subscription:
+- current plan
+- status
+- start date
+- expiry date
+
+Modules:
+show actual entitlements only.
+
+Example:
+E-Commerce    Enabled / Disabled
+
+Do not create fake entitlements.
+
+--------------------------------------------------
+SUBSCRIPTION TAB
+--------------------------------------------------
+
+Centralize existing subscription/licence information.
+
+Allow the Platform Admin to understand:
+- current plan
+- current licence/subscription state
+- activation state
+- start date
+- expiration
+- renewal information if it already exists
+
+Reuse existing business logic.
+
+Do not duplicate licence state in a second independent system.
+
+Lifecycle actions must use the existing backend rules:
+Activate
+Suspend
+Reactivate
+etc.
+
+Only expose actions actually supported by the existing domain model.
+
+Dangerous/status-changing actions require confirmation.
+
+--------------------------------------------------
+MODULES TAB
+--------------------------------------------------
+
+This becomes the central Add-on/Module entitlement manager.
+
+The E-Commerce entitlement that already exists should appear here.
+
+Example UI:
+
+E-Commerce
+Description:
+"Public storefront, products, guest cart and checkout."
+
+Status:
+Enabled / Disabled
+
+Control:
+toggle or Enable/Disable action
+
+Clearly show that disabling a module:
+- blocks subscriber access
+- does NOT delete their stored module data
+
+Do not modify that existing behavior.
+
+Build the UI so future modules can be added cleanly.
+
+Examples of FUTURE modules could include:
+- Advanced Store
+- Custom Domain
+- API Access
+- Extra Staff
+etc.
+
+BUT DO NOT implement or seed these future modules now.
+
+Only create an extensible presentation architecture.
+
+--------------------------------------------------
+ACTIVITY TAB
+--------------------------------------------------
+
+Show relevant existing audit/activity events for this subscriber.
+
+Examples only when recorded:
+- registration
+- activation
+- plan change
+- status change
+- module entitlement changed
+- admin action
+
+Use the existing activity/audit system.
+
+Do not fabricate historical events.
+
+==================================================
+8. MODULES / ADD-ONS ADMIN PAGE
+==================================================
+
+Add a Platform Admin page named:
+
+Modules / Add-ons
+
+Purpose:
+give the administrator a high-level view of optional paid capabilities.
+
+For Phase 1, E-Commerce is the real module.
+
+Display:
+
+E-Commerce
+Type: Add-on
+Subscribers enabled: real count
+Status: Available
+
+Do NOT implement payments here yet.
+
+Do NOT create fake prices or billing.
+
+Architecture/UI should simply be ready for us later to add:
+- module pricing
+- plan inclusion
+- recurring add-on billing
+
+But those are future work.
+
+==================================================
+9. PLANS
+==================================================
+
+Improve the Plans page visually but preserve existing plan logic.
+
+The administrator should quickly see:
+
+Plan Name
+Price
+Billing period
+Subscribers
+Status
+Actions
+
+When opening a plan:
+show its current configuration clearly.
+
+Do not automatically bind E-Commerce to plans unless that relationship already exists.
+
+For now E-Commerce remains an explicit subscriber entitlement.
+
+==================================================
+10. LICENCES / ACTIVATIONS
+==================================================
+
+Do not remove existing Licences or Activations.
+
+Improve their pages for platform-wide operational use.
+
+However:
+for a specific subscriber, the administrator should be able to manage the relevant information from Subscriber Detail without constantly navigating between pages.
+
+Avoid duplicate business logic.
+
+The subscriber detail page should call/reuse the same underlying APIs/domain functions.
+
+==================================================
+11. SEARCH
+==================================================
+
+The top search currently says:
+"Search (not enabled yet)"
+
+Replace this with something useful.
+
+Implement a lightweight Platform Admin search focused initially on subscribers.
+
+Search:
+- business
+- owner
+- email
+- public slug
+
+Selecting a result opens Subscriber Detail.
+
+Do not implement an unnecessarily complex global search engine.
+
+Add keyboard-friendly behavior if straightforward.
+
+==================================================
+12. STATUS DESIGN SYSTEM
+==================================================
+
+Create one consistent visual system for statuses across Platform Admin.
+
+Examples:
+
+Active = green
+Trial = blue
+Pending = amber/orange
+Suspended = red
+Expired = muted red/gray
+Revoked = dark/muted
+
+Use the same badge styles everywhere.
+
+Do not rely only on color; always display the status text.
+
+==================================================
+13. RESPONSIVE ADMIN
+==================================================
+
+The Platform Admin must be genuinely usable on:
+
+Desktop
+Tablet
+Mobile
+
+On mobile:
+- sidebar becomes drawer
+- tables may use horizontal containment or responsive cards
+- no page-level horizontal overflow
+- important actions remain reachable
+- subscriber detail tabs remain usable
+- forms use full available width
+- touch targets must be comfortable
+
+Do not simply shrink the desktop UI.
+
+==================================================
+14. VISUAL DIRECTION
+==================================================
+
+Keep the existing BHRU identity and dark Platform Admin concept.
+
+Improve it toward a premium SaaS administration interface.
+
+Desired:
+- dark navy/charcoal
+- subtle borders
+- compact cards
+- consistent spacing
+- restrained shadows
+- clear typography
+- strong information hierarchy
+- BHRU orange/brand accent used selectively
+- status colors only where meaningful
+
+Avoid:
+- giant cards
+- excessive empty space
+- excessive gradients
+- decorative animations
+- glassmorphism everywhere
+- huge headings
+- oversized padding
+- dashboard gimmicks
+
+This is an operational admin panel, not a marketing landing page.
+
+==================================================
+15. DATA SAFETY
+==================================================
+
+CRITICAL:
+
+Do not delete, reset or seed real subscriber data.
+
+Do not recreate existing subscribers.
+
+Do not change:
+- existing public slugs
+- passwords
+- subscriber authentication
+- licence semantics
+- E-Commerce data
+- currency data
+- CMS data
+- public-site configuration
+- media
+- orders
+- customers
+
+Prefer reusing existing tables/APIs.
+
+If a schema change is genuinely necessary:
+- make it additive only
+- create the next numbered migration
+- do not modify old migrations
+- explain exactly why it is needed
+
+Do NOT create a migration only for visual/UI changes.
+
+==================================================
+16. PERFORMANCE
+==================================================
+
+Do not load every subscriber and every activity record into the browser.
+
+Use:
+- server-side pagination where appropriate
+- filtered queries
+- sensible limits
+- lightweight dashboard aggregates
+
+The design must remain practical with thousands of subscribers.
+
+Avoid N+1 queries.
+
+==================================================
+17. ERROR / EMPTY / LOADING STATES
+==================================================
+
+Every important screen must have professional:
+
+Loading state
+Empty state
+Error state
+
+Examples:
+
+No subscribers found
+No pending approvals
+No activity recorded
+No optional modules enabled
+
+Never leave giant blank panels.
+
+==================================================
+18. DANGEROUS ACTIONS
+==================================================
+
+Any action that can affect customer access must be clear.
+
+Examples:
+Suspend
+Revoke
+Disable module
+
+Use confirmation UI.
+
+The confirmation should state what happens.
+
+Never silently delete subscriber data.
+
+Do not add hard-delete subscriber functionality unless it already exists and is explicitly required.
+
+==================================================
+19. PREVIEW AS SUBSCRIBER
+==================================================
+
+Preserve the existing "Preview as subscriber" capability.
+
+Make it accessible from:
+- Platform Admin top bar if currently useful
+- Subscriber Detail
+- subscriber row actions if appropriate
+
+Do not weaken session isolation.
+
+Do not turn this into subscriber authentication impersonation unless the current implementation already safely supports that behavior.
+
+Reuse the existing implementation.
+
+==================================================
+20. IMPLEMENTATION STRATEGY
+==================================================
+
+First inspect the existing Platform Admin:
+- routes
+- components
+- API endpoints
+- subscriber model
+- plans
+- licences
+- activations
+- entitlements
+- activity logs
+
+Reuse what already exists.
+
+Do not create parallel duplicate APIs/models when an existing one can be extended.
+
+Keep changes scoped to Platform Admin.
+
+Do not touch the frozen public website unnecessarily.
+
+==================================================
+21. MANUAL ACCEPTANCE TARGET
+==================================================
+
+When finished I want to manually test this journey:
+
+Platform Admin
+→ Dashboard
+→ click Active subscribers
+→ filtered Subscribers page
+→ search "unlock Gab"
+→ open subscriber
+→ see Overview
+→ see current Plan/Status
+→ open Modules
+→ see E-Commerce entitlement
+→ disable E-Commerce
+→ confirm
+→ enable it again
+→ Preview as Subscriber
+→ return to Platform Admin
+→ Activity tab shows real relevant changes if the audit system records them
+
+Then test mobile Platform Admin.
+
+==================================================
+22. TESTING / TIME LIMIT
+==================================================
+
+IMPORTANT:
+Do NOT spend a long time running broad automated tests.
+
+I will perform the full UI acceptance manually.
+
+After implementation run ONLY:
+- relevant TypeScript/type checks
+- relevant frontend build
+- relevant API build if backend changed
+- minimal syntax/startup validation
+
+Do NOT run:
+- full browser suite
+- E2E suite
+- full regression suite
+- lengthy visual testing loops
+
+Do not repeatedly fix cosmetic details through automated browser testing.
+
+Stop when the implementation builds and is ready for my manual review.
+
+==================================================
+23. DEPLOYMENT
+==================================================
+
+Development / Replit Preview ONLY.
+
+DO NOT:
+- git push
+- deploy
+- modify production
+- run production migrations
+- change Dokploy
+- change production environment variables
+
+At completion provide a concise report containing:
+
+1. What was reorganized
+2. Files changed
+3. Whether any migration was added and why
+4. Existing APIs reused
+5. Any new Platform Admin APIs
+6. What I should manually test
+7. Anything intentionally deferred
+
+Then STOP and wait for my approval.
