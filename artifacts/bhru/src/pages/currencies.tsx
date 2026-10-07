@@ -4,6 +4,7 @@ import { Btn, Badge, Modal, ConfirmDialog, Field } from '@/components/bhru/ui';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import { useWorkspacePage } from '@/components/subscriber/workspace/WorkspacePageContext';
 import { useCommerceList, useCommerceWrite, errText } from '@/hooks/use-commerce';
+import { useStore } from '@/lib/store';
 
 interface CurrencyRow { code: string; name: string; prefix: string; suffix: string; number_format: string; rate: string; enabled: boolean; client_default: boolean; decimals: number; is_base?: boolean; rate_configured?: boolean }
 interface CurrencyConfig { base_currency: string; money_model_version?: 1 | 2; requires_conversion?: boolean; currencies: CurrencyRow[]; catalog: { code: string; name: string; decimals: number }[] }
@@ -20,6 +21,7 @@ function preview(fmt: string, decimals: number) {
 type Form = { code: string; name: string; prefix: string; suffix: string; number_format: string; rate: string; enabled: boolean; client_default: boolean; decimals: number; isNew: boolean };
 
 export default function CurrenciesPage() {
+  const { session } = useStore();
   const { active } = useWorkspacePage();
   const q = useCommerceList<CurrencyConfig>('currencies', undefined, active);
   const w = useCommerceWrite();
@@ -35,7 +37,9 @@ export default function CurrenciesPage() {
   const [addErr, setAddErr] = useState('');
 
   const rows = cfg?.currencies ?? [];
-  const locked = cfg?.requires_conversion === true;
+  const legacy = cfg?.requires_conversion === true;
+  const adminPreview = session.role === 'admin';
+  const locked = legacy || adminPreview;
   const unconf = (r: CurrencyRow) => r.rate_configured === false;
   const base = cfg?.base_currency ?? '';
   const available = useMemo(() => {
@@ -50,7 +54,7 @@ export default function CurrenciesPage() {
   const payload = (f: Form) => ({ code: f.code, name: f.name.trim(), prefix: f.prefix, suffix: f.suffix, number_format: f.number_format, rate: f.code === base ? '1.000000' : f.rate.trim(), enabled: f.enabled, client_default: f.client_default });
 
   const submit = async () => {
-    if (!form) return;
+    if (!form || locked) return;
     setErr(''); setFieldErr('');
     if (!form.code) { setErr('Choose a currency from the catalog.'); return; }
     const isBase = form.code === base;
@@ -73,6 +77,7 @@ export default function CurrenciesPage() {
   };
   const setA = <K extends keyof Form>(k: K, v: Form[K]) => setAdd((f) => ({ ...f, [k]: v }));
   const submitAdd = async () => {
+    if (locked) return;
     setAddErr('');
     if (!add.code) { setAddErr('Choose a currency from the catalog.'); return; }
     const rate = add.rate.trim();
@@ -96,10 +101,11 @@ export default function CurrenciesPage() {
     <div className="min-w-0 max-w-full space-y-3" data-testid="page-currencies">
       <div className="min-w-0">
         <h1 className="text-[22px] font-bold leading-tight tracking-tight" data-testid="text-page-title">Currencies</h1>
-        <p className="mt-0.5 text-[12.5px] text-[hsl(var(--text-secondary))]">{locked ? 'Legacy reference rates are preserved pending approved conversion.' : 'Rate = currency units for 1 USD (for example, DZD 260.000000).'} Manual commercial rates, not bank exchange rates.</p>
+        <p className="mt-0.5 text-[12.5px] text-[hsl(var(--text-secondary))]">{legacy ? 'Legacy reference rates are preserved pending approved conversion.' : 'Set your own manual exchange rates relative to USD.'}</p>
       </div>
       {base && <div className="flex flex-wrap items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))]" data-testid="text-reference"><Badge tone="violet">{cfg?.money_model_version === 2 ? 'Base / Reference' : 'Accounting Reference'}</Badge><b className="text-[hsl(var(--foreground))]">{base}</b> fixed at rate 1.000000. Client Default below is chosen independently.</div>}
-      {locked && <div role="status" className="rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-[12.5px]" data-testid="text-conversion-required"><b>Currency conversion required.</b> Legacy prices are still stored in the old currency model. Currency and product reference edits are disabled until your account is migrated to USD base pricing.</div>}
+      {adminPreview && <p role="status" className="text-[12.5px] text-[hsl(var(--text-secondary))]">Administrator preview is read-only.</p>}
+      {legacy && <div role="status" className="rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-[12.5px]" data-testid="text-conversion-required"><b>Currency conversion required.</b> Legacy prices are still stored in the old currency model. Currency and product reference edits are disabled until your account is migrated to USD base pricing.</div>}
       {rowErr && <div role="alert" className="flex items-start gap-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12.5px] text-danger" data-testid="text-row-error"><AlertCircle size={14} className="mt-0.5 shrink-0" />{rowErr}</div>}
 
       <div className="sl-surface min-w-0 max-w-full overflow-hidden" data-testid="currencies-list">
@@ -166,7 +172,7 @@ export default function CurrenciesPage() {
         )}
       </div>
 
-      <Modal open={!!form} onClose={() => setForm(null)} title={`Edit ${form?.code ?? ''}`} width={520}
+      <Modal open={!!form && !locked} onClose={() => setForm(null)} title={`Edit ${form?.code ?? ''}`} width={520}
         footer={<><Btn onClick={() => setForm(null)} data-testid="button-currency-cancel">Cancel</Btn><Btn v="brand" disabled={w.pending} onClick={() => void submit()} data-testid="button-currency-save">{w.pending ? 'Saving...' : 'Save'}</Btn></>}>
         {form && (
           <>
@@ -213,7 +219,7 @@ export default function CurrenciesPage() {
         )}
       </Modal>
 
-      <ConfirmDialog open={!!del} danger title="Delete currency" confirmLabel="Delete" onClose={() => setDel(null)}
+      <ConfirmDialog open={!!del && !locked} danger title="Delete currency" confirmLabel="Delete" onClose={() => setDel(null)}
         body={<>Delete {del?.code} ({del?.name})? Storefront prices will no longer be offered in this currency.</>}
         onConfirm={async () => { if (!del) return false; try { setRowErr(''); await w.archive('currencies', del.code); return true; } catch (e) { setRowErr(`${del.code}: ${errText(e)}`); return false; } }} />
     </div>

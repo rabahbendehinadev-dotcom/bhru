@@ -1,0 +1,251 @@
+I manually tested a NEW subscriber on the deployed VPS and found two issues that must be fixed globally for all new subscribers.
+
+IMPORTANT:
+Do not patch only this subscriber.
+Fix the general application behavior so every future subscriber works correctly.
+
+My real testing workflow is:
+Replit source → Git Push → Dokploy/VPS → VPS PostgreSQL → manual test on bhru.net.
+
+Do not rely on Replit Development database data for this issue.
+
+==================================================
+ISSUE 1 — CURRENCIES RETURNS HTTP 401 DURING ADMIN PREVIEW
+==================================================
+
+I am logged into Platform Administration and using the existing:
+
+"Previewing as subscriber"
+
+feature.
+
+The subscriber panel loads correctly.
+
+However when I open:
+
+/m/currencies
+
+the page shows:
+
+Currencies could not be loaded
+HTTP 401: Sign in to continue.
+
+This is incorrect.
+
+The Platform Admin subscriber-preview / impersonation context already allows me to enter and view the subscriber panel.
+
+The Currencies API must recognize the SAME authorized preview context used by the rest of the subscriber workspace.
+
+Investigate the authentication/authorization path used by the currency endpoints.
+
+Compare it with subscriber workspace endpoints that already work correctly while:
+
+Previewing as subscriber.
+
+Fix the underlying auth inconsistency.
+
+Do NOT weaken security.
+
+Requirements:
+
+- Normal subscriber session → currencies work.
+- Authorized Platform Admin "Preview as subscriber" session → currencies work for the currently previewed subscriber.
+- Platform Admin must not gain arbitrary cross-tenant access outside the existing preview mechanism.
+- No subscriber can access another subscriber's currencies.
+- Logout/session expiration must continue to work.
+- Existing private Platform Admin route must remain unchanged.
+
+Do not create a second impersonation system.
+
+Reuse the existing trusted subscriber-preview context.
+
+==================================================
+ISSUE 2 — REMOVE THE DZD 260 EXAMPLE
+==================================================
+
+On /m/currencies the page currently says something like:
+
+"Rate = currency units for 1 USD (for example, DZD 260.000000). Manual commercial rates, not bank exchange rates."
+
+REMOVE the specific DZD 260 example.
+
+I do NOT want BHRU to suggest any commercial exchange rate.
+
+BHRU provides the currency system.
+
+THE SUBSCRIBER chooses their own manual commercial rate.
+
+For example:
+
+Subscriber A may choose:
+DZD = 260
+
+Subscriber B may choose:
+DZD = 270
+
+Subscriber C may choose another value.
+
+That is entirely their decision.
+
+BHRU must NOT recommend, prefill, assume or automatically assign 260, 270, or any other DZD/USD commercial rate.
+
+==================================================
+DESIRED TEXT
+==================================================
+
+Replace the current explanatory sentence with something neutral and short, for example:
+
+"Set your own manual exchange rates relative to USD."
+
+or:
+
+"Manual exchange rates are managed by you."
+
+Do not mention DZD 260 anywhere as a recommended/example rate.
+
+==================================================
+NEW SUBSCRIBER DEFAULT BEHAVIOR
+==================================================
+
+For every NEW subscriber:
+
+USD must be created automatically as:
+
+Code: USD
+Rate: 1.000000
+BASE / REFERENCE
+Enabled
+
+USD is the permanent accounting/reference currency.
+
+The subscriber can then add currencies themselves:
+
+DZD
+EUR
+GBP
+etc.
+
+For every non-USD currency:
+
+- Do NOT automatically assign a meaningful commercial rate.
+- Do NOT guess a rate.
+- Do NOT use an external FX rate.
+- Do NOT use a bank rate.
+- Do NOT suggest 260 for DZD.
+
+The subscriber manually enters the rate they want.
+
+Rate semantics remain:
+
+currency units per 1 USD
+
+But explain this generically in the UI.
+
+Example inside a field/help text can use abstract notation if needed:
+
+"Amount of this currency equal to 1 USD"
+
+rather than giving a real DZD number.
+
+==================================================
+CLIENT DEFAULT
+==================================================
+
+Do not force DZD as Client Default.
+
+A new subscriber initially has USD available.
+
+When they add and enable another currency, they can choose it as Client Default themselves.
+
+Example:
+
+USD = Base / Reference
+
+Subscriber adds DZD
+Subscriber chooses their own rate
+Subscriber enables DZD
+Subscriber optionally selects DZD as Client Default
+
+This must be subscriber-controlled.
+
+==================================================
+IMPORTANT ARCHITECTURAL RULE
+==================================================
+
+Keep these concepts separate:
+
+1. Base / Reference Currency
+   USD, permanent, rate 1.000000.
+
+2. Client Default
+   Chosen by subscriber from enabled currencies.
+
+3. Panel Display Currency
+   Chosen by subscriber/user for private panel display.
+
+Do not merge these concepts.
+
+==================================================
+DO NOT CHANGE
+==================================================
+
+Do not change the high-precision USD money architecture.
+
+Do not change historical order snapshot protection.
+
+Do not change legacy-account conversion rules.
+
+Do not migrate my old "unlock Gab" account.
+
+Do not implement provider APIs yet.
+
+Do not implement automatic FX.
+
+Do not redesign the whole Currency page.
+
+Do not touch Production directly.
+
+==================================================
+VALIDATION
+==================================================
+
+Keep testing focused.
+
+Verify:
+
+A) Brand-new subscriber:
+- USD exists
+- USD = Base / Reference
+- USD rate = 1.000000
+- no guessed DZD rate exists
+
+B) Normal subscriber login:
+- /m/currencies loads successfully
+
+C) Platform Admin → Preview as subscriber:
+- /m/currencies loads successfully
+- no HTTP 401
+
+D) Tenant isolation remains intact.
+
+E) Currency help text contains no DZD 260 recommendation/example.
+
+Do only focused auth/type/build checks.
+No long E2E/full regression suite.
+
+==================================================
+WHEN FINISHED
+==================================================
+
+Report only:
+
+1. Why Preview as subscriber caused HTTP 401
+2. What auth code was corrected
+3. Confirmation tenant isolation remains protected
+4. Confirmation the DZD 260 example was removed
+5. Exact default currency state for a brand-new subscriber
+6. Files changed
+7. Whether a new migration was required
+8. Confirmation it is ready for Git Push → Dokploy deployment
+
+Then STOP.

@@ -20,6 +20,15 @@ Keep authoritative base prices and base order totals intact; retain immutable cu
 snapshots for confirmation and historical display. Client Default must remain enabled; the
 finalized USD foundation also keeps the USD reference entry permanent and available.
 
+Currency help must be neutral: do not recommend/example/prefill a real DZD commercial
+rate. Every new subscriber starts with USD only, enabled, Base / Reference at 1.000000
+and initial Client Default. The subscriber explicitly enters non-USD rates and chooses
+Client Default; Panel Display Currency remains a separate user preference.
+
+**Why:** The user rejected the specific DZD-rate example as a platform suggestion.
+**How to apply:** Explain rates generically as currency units per USD; do not invent FX,
+add country-based currency defaults or force DZD as Client Default.
+
 USD must become the system/accounting Base / Reference Currency, permanently at rate
 1.000000. This is distinct from Client Default, which may be any enabled subscriber currency.
 Manual commercial rates mean units of the target currency per 1 USD. Panel and customer

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useCommerceWrite } from '@/hooks/use-commerce';
 import { usePanelMoney } from '@/hooks/use-panel-money';
+import { useStore } from '@/lib/store';
 
 export function PanelCurrencySelector({ className = '' }: { className?: string }) {
+  const { session } = useStore();
   const m = usePanelMoney();
   const w = useCommerceWrite();
   const [err, setErr] = useState(false);
-  if (!m.cfg || m.legacy || m.enabled.length === 0) return null;
+  if (session.role !== 'subscriber' || !m.cfg || m.legacy || m.enabled.length === 0) return null;
   const change = async (code: string) => {
     setErr(false);
     try { await w.save('display-currency', { code }); } catch { setErr(true); }

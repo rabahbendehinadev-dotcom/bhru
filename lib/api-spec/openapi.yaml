@@ -62,6 +62,10 @@ paths:
     get:
       operationId: getCommerceResource
       parameters:
+        - name: X-BHRU-Preview-Subscriber
+          in: header
+          description: Read-only currencies target from the existing admin workspace preview selection. Requires a valid administrator session and admin auth realm; rejected for subscribers.
+          schema: { type: string, format: uuid }
         - { name: resource, in: path, required: true, schema: { type: string, enum: [overview, products, categories, orders, customers, settings, currencies] } }
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
         - { name: search, in: query, schema: { type: string, maxLength: 100 } }

@@ -18,7 +18,8 @@ directly accesses, deploys or migrates the VPS.
   be calculated as selling units minus cost units at the same scale. No provider,
   synchronization, markup or margin policy is implemented.
 - Manual rate = **target currency units per USD**, at six decimal places.
-  `260.000000 DZD` means 1 USD = 260 DZD. No external FX service.
+  The subscriber explicitly chooses the amount of each currency equal to 1 USD.
+  BHRU does not recommend a numeric commercial rate or use an external FX service.
 - Conversion uses exact scaled integers and half-up presentation rounding.
   Customer totals sum rounded unit amounts × quantity, matching the displayed lines.
 - Canonical base totals separately retain the exact unrounded USD economics.
@@ -100,8 +101,8 @@ Existing USD presentation fields are preserved. Every existing non-USD row,
 including DZD, retains its name, prefix/suffix, number format, precision and stored
 legacy rate, but becomes non-base, disabled, non-default and `rate_configured=false`.
 That retained numeric rate is **not** treated as USD-relative or used for conversion.
-The editor presents it as requiring a manual rate. Configure, for example,
-`DZD = 260.000000`, then enable it and select Client Default = DZD.
+The editor presents it as requiring a manual rate. The subscriber chooses that
+rate, enables the currency, and may independently choose it as Client Default.
 
 Schema review: product selling/compare-at/provider-cost values live in products;
 order canonical totals, currency snapshots and line money live in orders/items.
@@ -130,19 +131,20 @@ conversion procedure is required before any populated legacy cutover.
 - **Currencies:** `/m/currencies` on the deployed application. For a qualifying
   empty legacy subscriber, the conversion warning must disappear, accounting
   reference must be USD, and retained DZD must require a manual rate.
-  Set DZD to `260.000000`, enable it and make it
-  Client Default. Add EUR with `0.860000`. USD must stay fixed at `1.000000`.
+  Choose your own manual rates for DZD/EUR, enable the currencies, and optionally
+  choose one as Client Default. USD must stay fixed at `1.000000`.
 - **Products:** `/m/ecommerce` → Products. Create `Selling Price (USD) = 50.00`.
   Also reopen/edit `0.125`, `0.4875`, `1.0032`, `19.230769` to check precision.
-- **Panel header:** select USD, DZD, EUR; verify approximately 50.00, 13,000.00,
-  43.00 respectively with the configured formats. Reopen product edit: still 50 USD.
+- **Panel header:** select USD and your enabled currencies; verify
+  the corresponding converted amount at your configured rates and formats.
+  Reopen product edit: still 50 USD.
   Sign out/in to check persistence; remove/disable a non-default display selection
   to check fallback.
 - **Public store:** `/{public_slug}` (use E-Commerce's View Store link). With store
   enabled, first-visit currency is DZD; switch USD/EUR and reload.
 - **Cart/checkout:** `/{public_slug}/cart`, `/{public_slug}/checkout`. Place a manual
-  guest order at DZD 260; change rate to 270. Current prices become 13,500 DZD while
-  **Orders** and `/{public_slug}/confirmation` retain the saved 13,000 DZD receipt.
+  guest order at your chosen rate; then change that rate. Current prices update,
+  while **Orders** and `/{public_slug}/confirmation` retain the original receipt.
 - Product, category, order and store availability still follow existing entitlement,
   licence and eligibility rules.
 

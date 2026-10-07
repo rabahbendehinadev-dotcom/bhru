@@ -21,6 +21,15 @@ Subscriber presentation-only verification must not create test accounts or inser
 
 **How to apply:** Use isolated browser-side GET response fixtures for protected presentation, and clearly distinguish those checks from real sign-in verification. Confirm anonymous protection separately without submitting account mutations.
 
+Currency inspection during administrator subscriber-preview must reuse the existing
+admin session and workspace selection, never mint a subscriber session or grant new
+subscriber write permissions. Keep preview read-only, including panel display preferences.
+
+**Why:** The user requires currencies to load in authorized preview while preserving
+tenant isolation, expired-session rejection and the independent private administrator entry.
+**How to apply:** Authenticate the selected realm server-side; treat a preview target as
+selection, not proof of privilege. Subscriber requests derive ownership from their session.
+
 The public subscriber authentication experience is BHRU's primary commercial entrance, not just an isolated sign-in form. Marketing must describe actual product capabilities and licence/add-on conditions honestly; never invent statistics, testimonials, customer endorsements or unsupported account actions.
 
 **Why:** The user explicitly requested an intentional premium BHRU SaaS entrance and rejected generic landing-page claims and fake OAuth/recovery controls.

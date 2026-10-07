@@ -4,6 +4,7 @@ import { z } from '@workspace/api-zod';
 import { pool } from '@workspace/db';
 import { requireAdmin, HttpError, rateLimit } from '../lib/auth';
 import { currencyConfig, saveCurrency, deleteCurrency, currencies,saveDisplayCurrency,requireUsdModel } from '../lib/commerce/currencies';
+import { currencyReadContext } from '../lib/commerce/currency-context';
 import { parseUsd,usdCents } from '../lib/commerce/currency-money';
 import { transaction, audit } from '../lib/platform';
 import { subscriberContext, requireCommerce, storeSettings, ownedAssets, categories, products, orderDetail, publicStore, COMMERCE_SAVED_REFERENCE } from '../lib/commerce/data';
@@ -37,9 +38,17 @@ router.put('/platform/subscribers/:id/modules/ecommerce',async(req,res)=>{
   res.json(input);
 });
 router.get('/commerce/:resource',async(req,res)=>{
+  if(req.params.resource==='currencies'){
+    const context=currencyReadContext(req);
+    res.json(await transaction(async client=>{
+      if(!(await client.query('SELECT id FROM subscribers WHERE id=$1 FOR SHARE',[context.subscriber_id])).rowCount)
+        throw new HttpError(404,'Subscriber not found.');
+      return {data:await currencyConfig(context.subscriber_id,client,context.user_id)};
+    }));
+    return;
+  }
   const user=subscriberContext(req),q=pagination.parse(req.query),id=user.subscriber_id;
   res.json(await transaction(async client=>{
-    if(req.params.resource==='currencies')return {data:await currencyConfig(id,client,user.id)};
     await requireCommerce(id,client);
     const publicSlug=(await client.query('SELECT public_slug FROM subscribers WHERE id=$1',[id])).rows[0]?.public_slug;
     switch(req.params.resource) {

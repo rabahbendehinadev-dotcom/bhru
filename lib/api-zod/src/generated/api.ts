@@ -67,6 +67,10 @@ export const GetCommerceResourceQueryParams = zod.object({
   "id": zod.coerce.string().uuid().optional()
 })
 
+export const GetCommerceResourceHeader = zod.object({
+  "X-BHRU-Preview-Subscriber": zod.string().uuid().optional().describe('Read-only currencies target from the existing admin workspace preview selection. Requires a valid administrator session and admin auth realm; rejected for subscribers.')
+})
+
 export const GetCommerceResourceResponse = zod.object({
   "data": zod.unknown(),
   "page": zod.number().int().optional(),
