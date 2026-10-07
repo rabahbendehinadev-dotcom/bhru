@@ -1,7 +1,8 @@
 import type { PoolClient } from '@workspace/db';
 import { z } from '@workspace/api-zod';
 import { HttpError } from '../auth';
-import { currencyCatalog, type StoreCurrency, convertMinor, MAX_MINOR, rateUnits, parseNumberFormat } from './currency-money';
+import { type StoreCurrency, convertMinor, MAX_MINOR, rateUnits, parseNumberFormat } from './currency-money';
+import { currencyCatalog } from './currency-catalog';
 
 const text = (n: number) => z.string().trim().max(n).regex(/^[^\u0000-\u001f\u007f]*$/);
 export const currencyInput = z.object({
@@ -11,6 +12,7 @@ export const currencyInput = z.object({
     .refine(v => /^\d{1,9}(?:\.\d{1,6})?$/.test(v)&&rateUnits(v)>0n && rateUnits(v)<=999999999000000n, 'Enter a positive manual rate up to 999999999 with six decimal places.')
     .transform(v => { const [whole, fraction = ''] = v.split('.'); return `${BigInt(whole!).toString()}.${fraction.padEnd(6, '0')}`; }),
   enabled: z.boolean(), client_default: z.boolean(),
+  create_only: z.boolean().optional().default(false),
 }).strict();
 
 export async function currencies(id: string, client: PoolClient): Promise<StoreCurrency[]> {
@@ -48,8 +50,9 @@ export async function saveCurrency(id: string, raw: unknown, client: PoolClient)
   await requireUsdModel(id,client);
   const input = currencyInput.parse(raw);
   const standard = currencyCatalog.find(c => c.code === input.code);
-  if (!standard) throw new HttpError(400, 'Choose a currency from the standard currency list.');
   const rows = await currencies(id, client), old = rows.find(c => c.code === input.code);
+  if (input.create_only && old) throw new HttpError(409, 'This currency is already configured. Use Edit instead.');
+  if (!standard && !old) throw new HttpError(400, 'Choose an active currency from the supported currency catalog.');
   const isBase = input.code === await baseCurrency(id,client);
   if (input.client_default && !input.enabled) throw new HttpError(400, 'The Client Default currency must be enabled.');
   if (isBase && !/^0*1(?:\.0+)?$/.test(input.rate)) {
@@ -62,7 +65,7 @@ export async function saveCurrency(id: string, raw: unknown, client: PoolClient)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
     ON CONFLICT(subscriber_id,code) DO UPDATE SET name=EXCLUDED.name,prefix=EXCLUDED.prefix,suffix=EXCLUDED.suffix,
     number_format=EXCLUDED.number_format,rate=EXCLUDED.rate,enabled=EXCLUDED.enabled,client_default=EXCLUDED.client_default,rate_configured=true,updated_at=now()`,
-    [id,input.code,input.name,input.prefix,input.suffix,input.number_format,input.rate,isBase?2:standard.decimals,input.enabled,input.client_default,isBase]);
+    [id,input.code,input.name,input.prefix,input.suffix,input.number_format,input.rate,isBase?2:old?.decimals??standard!.decimals,input.enabled,input.client_default,isBase]);
   return { code: input.code };
 }
 export async function deleteCurrency(id: string, code: string, client: PoolClient) {

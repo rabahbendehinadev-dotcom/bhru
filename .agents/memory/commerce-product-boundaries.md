@@ -39,6 +39,16 @@ DHRU-style manual configuration without imposing commercial-rate preferences.
 live previews consistent with saved display formatting, and retain currency-owned
 decimal precision and all conversion/history behavior.
 
+The global catalog is current ISO currency metadata, never a tenant's commercial
+configuration or a copy of obsolete DHRU data. New choices exclude withdrawn codes
+and entries without defined ISO monetary precision; existing currencies and historical snapshots
+must remain usable. Adding catalog options must not populate every tenant.
+
+**Why:** The user requires comprehensive modern choices system-wide while retaining
+legacy economic data and allowing each subscriber to configure only what they need.
+**How to apply:** Keep one canonical metadata source, validate new additions against
+it server-side, and keep panel/public choices limited to configured, enabled currencies.
+
 USD must become the system/accounting Base / Reference Currency, permanently at rate
 1.000000. This is distinct from Client Default, which may be any enabled subscriber currency.
 Manual commercial rates mean units of the target currency per 1 USD. Panel and customer

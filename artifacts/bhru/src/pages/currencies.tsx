@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react';
-import { Plus, Pencil, Trash2, Search, AlertCircle, Coins } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Pencil, Trash2, AlertCircle, Coins } from 'lucide-react';
 import { Btn, Badge, Modal, ConfirmDialog, Field } from '@/components/bhru/ui';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import { useWorkspacePage } from '@/components/subscriber/workspace/WorkspacePageContext';
 import { useCommerceList, useCommerceWrite, errText } from '@/hooks/use-commerce';
 import { useStore } from '@/lib/store';
 import { formatScaled, parseNumberFormat, normalizeCurrencyRate, NUMBER_FORMAT_ERROR } from '@/lib/currency-money';
+import { CurrencyCatalogPicker } from '@/components/subscriber/CurrencyCatalogPicker';
+import type { CatalogCurrency } from '@/lib/currency-catalog-search';
 
 interface CurrencyRow { code: string; name: string; prefix: string; suffix: string; number_format: string; rate: string; enabled: boolean; client_default: boolean; decimals: number; is_base?: boolean; rate_configured?: boolean }
-interface CurrencyConfig { base_currency: string; money_model_version?: 1 | 2; requires_conversion?: boolean; currencies: CurrencyRow[]; catalog: { code: string; name: string; decimals: number }[] }
+interface CurrencyConfig { base_currency: string; money_model_version?: 1 | 2; requires_conversion?: boolean; currencies: CurrencyRow[]; catalog: CatalogCurrency[] }
 
 function preview(fmt: string, decimals: number) {
   return parseNumberFormat(fmt) ? formatScaled(12345678n, 4, { prefix: '', suffix: '', number_format: fmt, decimals }) : 'Invalid number format';
@@ -28,7 +30,6 @@ export default function CurrenciesPage() {
   const [fieldErr, setFieldErr] = useState('');
   const [del, setDel] = useState<CurrencyRow | null>(null);
   const [rowErr, setRowErr] = useState('');
-  const [search, setSearch] = useState('');
   const blank: Form = { code: '', name: '', prefix: '', suffix: '', number_format: '1,000.99', rate: '', enabled: true, client_default: false, decimals: 2, isNew: true };
   const [add, setAdd] = useState<Form>(blank);
   const [addErr, setAddErr] = useState('');
@@ -39,16 +40,11 @@ export default function CurrenciesPage() {
   const locked = legacy || adminPreview;
   const unconf = (r: CurrencyRow) => r.rate_configured === false;
   const base = cfg?.base_currency ?? '';
-  const available = useMemo(() => {
-    const have = new Set(rows.map((r) => r.code));
-    const s = search.trim().toLowerCase();
-    return (cfg?.catalog ?? []).filter((c) => !have.has(c.code) && (!s || c.code.toLowerCase().includes(s) || c.name.toLowerCase().includes(s))).slice(0, 80);
-  }, [cfg, rows, search]);
 
   const openEdit = (r: CurrencyRow) => { if (locked) return; setErr(''); setFieldErr(''); setForm({ ...r, rate: unconf(r) ? '' : r.rate, isNew: false }); };
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
-  const payload = (f: Form) => ({ code: f.code, name: f.name.trim(), prefix: f.prefix, suffix: f.suffix, number_format: f.number_format.trim(), rate: f.code === base ? '1.000000' : normalizeCurrencyRate(f.rate), enabled: f.enabled, client_default: f.client_default });
+  const payload = (f: Form) => ({ code: f.code, name: f.name.trim(), prefix: f.prefix, suffix: f.suffix, number_format: f.number_format.trim(), rate: f.code === base ? '1.000000' : normalizeCurrencyRate(f.rate), enabled: f.enabled, client_default: f.client_default, create_only: f.isNew });
 
   const submit = async () => {
     if (!form || locked) return;
@@ -69,32 +65,25 @@ export default function CurrenciesPage() {
     try { await w.save('currencies', payload({ ...r, ...patch, isNew: false })); } catch (e) { setRowErr(`${r.code}: ${errText(e)}`); }
   };
 
-  const pick = (code: string) => {
-    const c = (cfg?.catalog ?? []).find((x) => x.code === code);
-    setAdd((f) => ({ ...f, code, name: c?.name ?? '', decimals: c?.decimals ?? 2 }));
+  const pick = (currency: CatalogCurrency) => {
+    setAdd((f) => ({ ...f, code: currency.code, name: currency.name, decimals: currency.decimals, rate: '' }));
   };
   const setA = <K extends keyof Form>(k: K, v: Form[K]) => setAdd((f) => ({ ...f, [k]: v }));
   const submitAdd = async () => {
     if (locked) return;
     setAddErr('');
     if (!add.code) { setAddErr('Choose a currency from the catalog.'); return; }
+    if (rows.some(row => row.code === add.code)) { setAddErr('This currency is already configured. Use Edit instead.'); return; }
     if (!parseNumberFormat(add.number_format)) { setAddErr(NUMBER_FORMAT_ERROR); return; }
     let rate: string;
     try { rate = add.code === base ? '1.000000' : normalizeCurrencyRate(add.rate); }
     catch { setAddErr(rateError); return; }
-    try { await w.save('currencies', payload({ ...add, rate })); setAdd(blank); setSearch(''); } catch (e) { setAddErr(errText(e)); }
+    try { await w.save('currencies', payload({ ...add, rate })); setAdd(blank); } catch (e) { setAddErr(errText(e)); }
   };
   const inp = 'input !h-8 !text-[12.5px]';
   const addFields = (
-    <>
-      <div className="min-w-0">
-        <input className={`${inp} mb-1`} placeholder="Search code or name" aria-label="Search catalog" value={search} onChange={(e) => setSearch(e.target.value)} data-testid="input-currency-search" />
-        <select className={inp} aria-label="Currency" value={add.code} onChange={(e) => pick(e.target.value)} data-testid="select-add-currency">
-          <option value="">Select currency</option>
-          {available.map((c) => <option key={c.code} value={c.code}>{c.code} - {c.name}</option>)}
-        </select>
-      </div>
-    </>
+    <CurrencyCatalogPicker catalog={cfg?.catalog ?? []} configuredCodes={rows.map(row => row.code)}
+      value={add.code} disabled={locked} onSelect={pick} />
   );
   const head = ['Code', 'Prefix', 'Suffix', 'Format', 'Rate', 'Live', 'Client Default', 'Action'];
   return (
@@ -181,22 +170,9 @@ export default function CurrenciesPage() {
           <>
             {err && <div role="alert" className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12.5px] text-danger" data-testid="text-form-error">{err}</div>}
             {form.isNew ? (
-              <div>
-                <label className="lbl" htmlFor="cur-search">Currency</label>
-                <div className="relative">
-                  <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 opacity-60" />
-                  <input id="cur-search" className="input w-full !pl-8" placeholder="Search code or name" value={search} onChange={(e) => setSearch(e.target.value)} data-testid="input-currency-search" />
-                </div>
-                <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md border border-[hsl(var(--border))]" role="listbox">
-                  {available.length === 0 ? <p className="p-3 text-[12px] text-[hsl(var(--text-secondary))]">No matching currencies.</p> : available.map((c) => (
-                    <button key={c.code} type="button" role="option" aria-selected={form.code === c.code}
-                      className={`flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-[12.5px] hover:bg-white/5 ${form.code === c.code ? 'bg-[hsl(var(--brand)/.15)]' : ''}`}
-                      onClick={() => setForm((f) => f && ({ ...f, code: c.code, name: c.name, decimals: c.decimals }))} data-testid={`option-currency-${c.code}`}>
-                      <span className="truncate"><b>{c.code}</b> {c.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <Field label="Currency"><CurrencyCatalogPicker catalog={cfg?.catalog ?? []}
+                configuredCodes={rows.map(row => row.code)} value={form.code} disabled={locked}
+                onSelect={currency => setForm(f => f && ({ ...f, code: currency.code, name: currency.name, decimals: currency.decimals, rate: '' }))} /></Field>
             ) : (
               <Field label="Code"><input className="input w-full" value={form.code} readOnly disabled data-testid="input-currency-code" /></Field>
             )}

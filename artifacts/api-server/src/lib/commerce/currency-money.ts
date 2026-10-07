@@ -2,13 +2,6 @@ export interface StoreCurrency {
   code: string; name: string; prefix: string; suffix: string; number_format: string;
   rate: string; decimals: number; enabled: boolean; client_default: boolean; is_base?: boolean; rate_configured?: boolean;
 }
-export const currencyCatalog = (() => {
-  const names = new Intl.DisplayNames(['en'], { type: 'currency' });
-  return Intl.supportedValuesOf('currency').map(code => ({
-    code, name: names.of(code) || code,
-    decimals: new Intl.NumberFormat('en', { style: 'currency', currency: code }).resolvedOptions().maximumFractionDigits!,
-  }));
-})();
 export const MAX_MINOR = 9223372036854775807n;
 export const USD_SCALE = 12;
 export const USD_FACTOR = 1000000000000n;
