@@ -1,0 +1,270 @@
+Before implementing anything, inspect the CURRENT BHRU currency architecture and give me a concise technical plan.
+
+DO NOT modify code yet.
+DO NOT create a migration yet.
+DO NOT run long tests.
+DO NOT push.
+DO NOT deploy.
+
+We have now made an important architectural decision:
+
+USD must become the BASE / REFERENCE CURRENCY of BHRU.
+
+This is important because future service-provider APIs will normally return service costs in USD.
+
+I want the currency system to remain simple for subscribers, similar in usability to DHRU, but architecturally safe for API services, E-Commerce, orders and future pricing.
+
+==================================================
+TARGET CURRENCY MODEL
+==================================================
+
+1. SYSTEM / ACCOUNTING BASE
+
+USD = Base / Reference Currency.
+
+Its rate must always be:
+
+1 USD = 1.000000
+
+USD is the canonical reference used for future provider/API costs and internal pricing calculations.
+
+Do not confuse this with Client Default.
+
+==================================================
+2. SUBSCRIBER CURRENCIES
+==================================================
+
+Each subscriber can add currencies such as:
+
+USD
+DZD
+EUR
+GBP
+etc.
+
+Each enabled non-base currency has a MANUAL commercial exchange rate relative to USD.
+
+Example:
+
+USD = 1.000000
+DZD = 260.000000
+
+Meaning:
+
+1 USD = 260 DZD
+
+The subscriber must be able to edit this rate easily.
+
+No external FX API.
+No bank exchange rates.
+No automatic rate updates for now.
+
+==================================================
+3. CLIENT DEFAULT
+==================================================
+
+Base Currency and Client Default are TWO DIFFERENT concepts.
+
+USD may be the Base Currency while DZD can be the Client Default.
+
+Example:
+
+Base / Reference:
+USD
+
+Client Default:
+DZD
+
+A subscriber must be able to choose which ENABLED currency customers see by default.
+
+Exactly one enabled currency should be Client Default.
+
+==================================================
+4. PANEL DISPLAY CURRENCY
+==================================================
+
+I also want the SUBSCRIBER PANEL to have a currency selector.
+
+Example:
+
+USD | DZD | EUR
+
+If the subscriber selects USD:
+prices displayed in the panel should appear in USD.
+
+If they select DZD:
+the same values should display converted to DZD using that subscriber's manual rate.
+
+IMPORTANT:
+
+Changing Panel Display Currency must NOT rewrite canonical stored prices.
+
+It is a DISPLAY preference.
+
+We need one source of truth for monetary values.
+
+==================================================
+5. PUBLIC CUSTOMER CURRENCY
+==================================================
+
+The subscriber's public storefront should also expose enabled currencies.
+
+Initial visitor currency:
+Client Default.
+
+Customer can then select another enabled currency.
+
+Example:
+
+Client Default = DZD
+
+Customer initially sees:
+13,000 DZD
+
+Customer switches to USD:
+50 USD
+
+assuming:
+1 USD = 260 DZD
+
+Changing customer currency must not alter the underlying product/service price.
+
+==================================================
+6. FUTURE API SERVICE IMPORT — CRITICAL
+==================================================
+
+Design the architecture now so future provider APIs work correctly.
+
+Example future provider response:
+
+Provider cost:
+1.00 USD
+
+This must remain conceptually:
+
+provider_cost_usd = 1.00 USD
+
+Then BHRU will later calculate subscriber pricing/margin in a controlled way.
+
+Only AFTER the canonical selling price is established should presentation conversion happen.
+
+We must avoid the historical type of bug where:
+
+a $1 provider service becomes an incorrect DZD price,
+or changing currency changes cost/margin,
+or large services become cheaper than provider cost.
+
+Currency conversion must NEVER silently mutate:
+
+provider cost
+canonical price
+margin
+order history
+
+==================================================
+7. ORDERS
+==================================================
+
+Existing order snapshot behavior must remain safe.
+
+An order must retain enough immutable information to reproduce what the customer actually paid/displayed at order time:
+
+currency
+exchange rate
+format
+unit prices
+totals
+
+If the subscriber changes DZD tomorrow from:
+
+260 → 270
+
+an old order must NOT change.
+
+==================================================
+8. EXISTING PRODUCTION/DEVELOPMENT DATA
+==================================================
+
+Current implementation was originally designed with DZD as Accounting Reference.
+
+Before changing anything, inspect:
+
+- migrations 009 and 010
+- currency tables
+- currency-money calculation code
+- E-Commerce product price storage
+- checkout calculations
+- order currency snapshots
+- public storefront currency handling
+- current subscriber currency records
+- assumptions that DZD rate is fixed to 1
+- any code that treats accounting reference as immutable
+- any API contracts depending on the current model
+
+Determine whether changing the reference from DZD to USD can be done safely without changing the economic meaning of existing stored prices.
+
+This is the most important part.
+
+DO NOT simply change:
+
+DZD → USD
+
+if existing numeric product prices are currently denominated in DZD.
+
+That could turn a stored 5000 DZD product into $5000.
+
+We need an explicit safe migration strategy.
+
+==================================================
+9. UX TARGET
+==================================================
+
+The subscriber Currency page should ultimately remain simple, DHRU-like:
+
+CODE
+PREFIX
+SUFFIX
+FORMAT
+RATE
+LIVE
+CLIENT DEFAULT
+ACTION
+
+Subscriber can:
+
+Add currency
+Edit currency
+Edit manual rate
+Enable/disable
+Choose Client Default
+
+Base USD should be clearly marked:
+
+BASE / REFERENCE
+
+USD rate = 1.000000 and cannot accidentally be changed.
+
+Do not over-engineer the UI.
+
+==================================================
+YOUR TASK NOW — ANALYSIS ONLY
+==================================================
+
+Inspect the current implementation and report:
+
+1. What currency is actually canonical/base today?
+2. In what currency are existing E-Commerce product prices stored?
+3. What assumptions currently depend on DZD = 1?
+4. How are current order snapshots stored?
+5. How does current storefront conversion work?
+6. What exactly must change to make USD the safe Base Currency?
+7. How should existing DZD-denominated data be migrated without changing its real economic value?
+8. Do we need a new additive migration? If yes, describe it but DO NOT create it yet.
+9. How should Panel Display Currency be added without affecting stored prices?
+10. Confirm how this architecture will later accept provider API costs in USD safely.
+
+Keep the report focused.
+
+Do NOT implement anything yet.
+
+Stop after the analysis and wait for my approval.

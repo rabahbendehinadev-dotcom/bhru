@@ -20,13 +20,17 @@ Keep authoritative base prices and base order totals intact; retain immutable cu
 snapshots for confirmation and historical display. Only the Client Default entry is protected
 against disabling/deletion; base prices remain anchored independently of currency visibility.
 
-New subscribers start with USD as both the initial accounting reference and enabled Client
-Default, at identity rate 1, with `$` prefix and `USD` suffix. Do not force DZD. Each tenant may
-choose another enabled Client Default without changing the accounting reference or repricing
-products. Preserve existing tenants' saved currencies, commercial rates and defaults.
+USD must become the system/accounting Base / Reference Currency, permanently at rate
+1.000000. This is distinct from Client Default, which may be any enabled subscriber currency.
+Manual commercial rates mean units of the target currency per 1 USD. Panel and customer
+currency selection are display preferences only; they must not rewrite canonical prices,
+provider costs, margins or historical orders. Future provider costs remain conceptually USD.
+Existing DZD-denominated amounts must never simply be relabelled USD: legacy conversion
+requires an explicitly approved, value-preserving migration strategy. No automatic cutover
+of existing businesses is authorized by this architectural decision alone.
 
-**Why:** The user explicitly requires a freely selectable tenant-owned storefront default and
-USD initialization for new subscribers only, never a silent conversion of existing businesses.
+**Why:** The user now requires USD as the reference for future service-provider API costs,
+while explicitly protecting the economic meaning of existing prices and order snapshots.
 
 **Why:** The user explicitly defined these product boundaries for the first commerce phase.
 
