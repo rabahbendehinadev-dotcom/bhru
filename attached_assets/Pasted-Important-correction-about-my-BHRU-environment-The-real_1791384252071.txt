@@ -1,0 +1,193 @@
+Important correction about my BHRU environment:
+
+The real BHRU database is NOT hosted in Replit.
+
+I have already moved the application database to my VPS.
+
+My real workflow is:
+
+Replit = development/source code
+↓
+GitHub = repository
+↓
+Dokploy/VPS = deployed application
+↓
+PostgreSQL on VPS = real database used for my testing
+
+Therefore, the Development database you inspected is NOT the database I use to validate BHRU.
+
+The "unlock Gab" subscriber shown in my screenshot exists in the VPS database, which explains why you could not find it in the Replit Development database.
+
+From now on, DO NOT use Replit Development database contents to conclude what subscriber/product/order/currency data exists in my real BHRU installation.
+
+==================================================
+IMPORTANT WORKFLOW CHANGE
+==================================================
+
+When I ask you to implement a BHRU change:
+
+1. Modify the source code/migrations in Replit.
+2. Perform only short technical checks/build checks.
+3. Tell me when the change is ready.
+4. I will Git Push it.
+5. I will deploy it through Dokploy.
+6. The VPS startup migration runner will apply pending migrations to the real PostgreSQL database.
+7. I will manually test the result on the deployed application.
+
+Do not tell me to manually test a database-dependent feature in Replit Preview when the required real data only exists on the VPS.
+
+==================================================
+CURRENT CURRENCY ISSUE
+==================================================
+
+The screenshot I sent is from my deployed BHRU environment using the VPS database.
+
+It shows my real subscriber:
+
+unlock Gab
+
+Current state:
+
+Accounting Reference = DZD
+
+Currencies:
+DZD
+USD
+
+The account is still marked:
+
+"Currency conversion required"
+
+Now we know why your previous Development inspection did not match my screenshot.
+
+Do NOT ask me for the Replit Preview URL.
+
+The relevant data is on the VPS database.
+
+==================================================
+WHAT I WANT YOU TO DO NOW
+==================================================
+
+Review the implementation LOGIC, not the Replit Development subscriber data.
+
+You already identified an important issue:
+
+Migration 013 only automatically initializes an empty legacy subscriber when it has exactly ONE currency row.
+
+My real "unlock Gab" subscriber already has TWO rows:
+
+DZD
+USD
+
+Therefore that condition excludes it even if it has zero products and zero orders.
+
+We need to correct this logic safely.
+
+For a legacy subscriber where:
+
+- product count = 0
+- order count = 0
+- there is no monetary business data that requires preservation
+- existing currencies may include DZD + USD
+
+the presence of multiple currency configuration rows alone should NOT force a legacy conversion workflow.
+
+If the account has no monetary business data, it should be safely initialized to:
+
+Accounting Reference = USD
+
+USD:
+rate = 1.000000
+BASE / REFERENCE
+
+Existing DZD:
+keep the currency configuration
+but do NOT guess its exchange rate.
+
+DZD should become a normal non-base currency requiring an explicit manual rate from the subscriber.
+
+Example after migration:
+
+USD
+BASE / REFERENCE
+1.000000
+
+DZD
+manual rate required
+
+Then I can manually set:
+
+DZD = 260.000000
+
+and choose:
+
+Client Default = DZD
+
+==================================================
+SAFETY
+==================================================
+
+DO NOT automatically convert populated subscribers.
+
+If a subscriber has products, orders or other canonical monetary data requiring preservation:
+
+keep the legacy conversion protection.
+
+Do not guess exchange rates.
+
+Do not reinterpret historical DZD prices as USD.
+
+The relaxed initialization rule is ONLY for accounts proven to have no monetary business data requiring conversion.
+
+Also inspect whether other monetary tables besides products/orders must be considered before declaring an account safe/empty.
+
+Use the actual schema/code to determine this.
+
+==================================================
+MIGRATION RULE
+==================================================
+
+Do NOT edit migration 013 if it is already checksum-tracked/applied.
+
+Create a NEW additive corrective migration after 013 if database state needs correction.
+
+It must be safe to run through our existing VPS startup flow:
+
+node migrate.mjs && exec node index.mjs
+
+The migration must be idempotent/safe with the existing migration runner.
+
+==================================================
+TESTING
+==================================================
+
+Do not spend time testing against fake/sample Replit subscriber data.
+
+Only perform:
+
+- type checks
+- build checks
+- migration/schema sanity
+- focused money logic checks
+
+Do not run long E2E/full regression tests.
+
+I will test the real behavior after Git Push + Dokploy deployment against the VPS database.
+
+==================================================
+WHEN FINISHED
+==================================================
+
+Report:
+
+1. What caused the two-currency empty account to remain Legacy
+2. What code/migration you changed
+3. Exact new migration name if created
+4. Exact safety condition used before automatically moving an empty legacy account to USD
+5. What should happen to existing DZD and USD rows
+6. Confirmation that populated legacy subscribers remain protected
+7. Confirmation that it is ready for me to Git Push and deploy
+
+Do NOT inspect or modify Production directly from Replit.
+
+Stop when the code is ready for Git Push.

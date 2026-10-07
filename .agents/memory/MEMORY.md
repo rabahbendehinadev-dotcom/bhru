@@ -1,4 +1,4 @@
-- [BHRU product boundaries](bhru-product-boundaries.md) — Separate subscribers from their customers; real backend in Development only; stop for review; licence blocks never delete data.
+- [BHRU product boundaries](bhru-product-boundaries.md) — Separate subscribers from customers; source changes stay in requested scope; follow the VPS testing workflow; licence blocks never delete data.
 - [BHRU authentication boundaries](bhru-authentication-boundaries.md) — Separate subscriber/admin entry, no user-facing admin links; retain existing designs and require server authorization.
 - [Docker sandbox verification](docker-sandbox-verification.md) — Builds and initial processes can work while exec-based health checks fail due to sandbox restrictions.
 - [Subscriber visual standard](subscriber-visual-standard.md) — Final light-first reference supersedes dark-only requests; future subscriber pages share both themes, without affecting Platform Admin.
@@ -13,4 +13,5 @@
 - [Public website product boundaries](public-website-product-boundaries.md) — Path-based automatic URLs, stable slugs, one shared template; future custom hostnames map to the same business.
 - [Public media portability](public-media-portability.md) — User chose a configurable persistent Dokploy-mounted directory, with a safe Development equivalent and no hardcoded VPS host path.
 - [Commerce product boundaries](commerce-product-boundaries.md) — Optional paid module; admin-only grants, separate store opening, guest orders and retained data on revocation.
+- [BHRU deployment workflow](bhru-deployment-workflow.md) — Replit is source only; real database/testing are on VPS; user pushes/deploys and startup runs pending migrations.
 - [Platform Admin visual standard](platform-admin-visual-standard.md) — Light-first compact ERP reference; admin-only theme, real metrics, no changes to subscriber/public designs or private auth.

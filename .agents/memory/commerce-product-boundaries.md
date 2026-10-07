@@ -28,7 +28,8 @@ provider costs, margins or historical orders. Future provider costs remain conce
 Existing DZD-denominated amounts must never simply be relabelled USD: legacy conversion
 requires an explicitly approved, value-preserving migration strategy. No automatic cutover
 of populated non-USD businesses is authorized. The user approved safe initialization only
-for verified empty Development businesses; ambiguous legacy currency configuration stays blocked.
+for businesses proven empty of monetary data. Multiple currency configuration rows alone
+must not force conversion; non-USD rates remain unconfigured until explicitly set.
 
 Use 12-decimal canonical USD precision and six-decimal manual rates in future provider work.
 **Why:** Cent-only storage cannot preserve provider costs or reciprocally converted legacy

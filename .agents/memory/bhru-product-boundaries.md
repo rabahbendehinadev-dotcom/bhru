@@ -1,6 +1,6 @@
 ---
 name: BHRU product boundaries
-description: User-directed scope, tenant distinction, Development-only real backend phase, and subscription access rules.
+description: User-directed scope, tenant distinction, source review boundaries, and subscription access rules.
 ---
 
 BHRU serves unlock and digital-services server owners. A BHRU Subscriber is the platform owner's customer; a Subscriber Customer belongs only to that subscriber's server. Never mix these two levels.
@@ -15,7 +15,7 @@ The user directs development screen by screen. Build only the requested iteratio
 
 **How to apply:** Do not proactively implement deferred sidebar modules, real supplier APIs, payments, production domains, deployment, imports, or infrastructure.
 
-Keep the real account/licence foundation in Development Preview for review. Do not push to GitHub, deploy to VPS, change Production databases or build deferred business modules without explicit approval. Subscriber presentation follows the final light-first visual standard; Platform Admin and authentication appearance remain unchanged.
+Keep account/licence source changes limited to the requested review scope. Follow the [BHRU deployment workflow](bhru-deployment-workflow.md) for real database-dependent acceptance; Development Preview is not the real installation. Do not push to GitHub, deploy to VPS, change Production databases or build deferred business modules without explicit approval. Subscriber presentation follows the final light-first visual standard; Platform Admin and authentication appearance remain unchanged.
 
 **Why:** The user explicitly requested leaving DEMO MODE and reviewing the real foundation personally before publishing to bhru.net.
 

@@ -1,6 +1,9 @@
 # BHRU USD money foundation
 
-Development implementation only. Nothing here deploys or migrates the VPS.
+Source implementation in Replit. The real application/database run on Dokploy/VPS;
+Replit Development subscriber data is not evidence of the real installation's state.
+The user pushes/deploys and manually tests against the VPS database. Nothing here
+directly accesses, deploys or migrates the VPS.
 
 ## Money contract
 
@@ -59,21 +62,57 @@ reference currency is never substituted.
    products, permanent-reference and historical-money guards.
 3. `013_empty_subscriber_usd_initialization.sql`: separately initializes eligible
    empty legacy stores and adds the per-user display preference.
+4. `014_empty_legacy_multi_currency_usd_initialization.sql`: corrects 013's
+   single-currency restriction for demonstrably empty non-USD legacy stores.
+   Currency rows alone no longer prevent safe initialization; existing USD is
+   upserted rather than duplicated.
 
-No migrations 001–011 were edited. The existing checksum ledger, transaction and
+No previously tracked migrations were edited. The existing checksum ledger, transaction and
 advisory-lock migration runner and Docker startup command remain unchanged:
 `node migrate.mjs && exec node index.mjs`.
+The runner applies only pending files, checks the checksum of already applied files,
+and commits each migration together with its ledger entry. A failure rolls back that
+migration and prevents application startup. On rerun, applied 014 is skipped;
+its body is also repeat-safe because initialized stores are no longer model 1.
 
 ## Legacy DZD and other non-USD references
 
-An empty store is initialized only when it has **zero products (including archived)**,
-**zero orders**, and exactly one original reference currency at rate 1.
-The original currency row is retained but disabled and `rate_configured=false`.
-USD becomes the initial enabled default. The old `DZD = 1` is **not** silently
-treated as a USD-relative rate. Configure its explicit manual rate before enabling it.
+Migration 014 only initializes **model 1, non-USD** stores with:
 
-Non-USD stores containing any product/order, or ambiguous existing currency
-configuration, remain model 1. Their current reference/prices/history are preserved.
+- **Zero products**, including inactive/archived products and zero-priced products.
+- **Zero orders**, including cancelled/unpaid orders and zero-total orders.
+- **Zero order items** (explicit defensive check; their foreign keys also require
+  parent orders/products).
+- **No conversion-provenance record**, so an approved preservation workflow is not
+  overridden.
+- **No nonzero General Settings fund/balance limits** (`minimum_add_fund`,
+  `maximum_add_fund`, `maximum_balance`). Null/zero limits contain no amount to
+  convert; positive limits are conservatively left for explicit review even when
+  the corresponding feature is disabled.
+
+The migration locks subscriber writes and the checked tables until transaction
+commit, preventing a concurrent monetary/configuration write from invalidating
+the emptiness check. Normal reads remain available.
+
+There is no restriction on currency-row count. USD is inserted or updated to
+rate `1.000000`, enabled, configured, Base / Reference and initial Client Default.
+Existing USD presentation fields are preserved. Every existing non-USD row,
+including DZD, retains its name, prefix/suffix, number format, precision and stored
+legacy rate, but becomes non-base, disabled, non-default and `rate_configured=false`.
+That retained numeric rate is **not** treated as USD-relative or used for conversion.
+The editor presents it as requiring a manual rate. Configure, for example,
+`DZD = 260.000000`, then enable it and select Client Default = DZD.
+
+Schema review: product selling/compare-at/provider-cost values live in products;
+order canonical totals, currency snapshots and line money live in orders/items.
+There are no implemented subscriber wallet, payment, fund transaction or separate
+provider-cost ledger tables. Fund/balance limits are monetary settings, not balances,
+but are conservatively checked above. Platform plan prices/subscription references
+belong to SaaS billing, not subscriber-store denomination; they are never changed.
+Categories, images, availability and CMS content do not contain canonical money.
+
+Non-USD stores failing any safety condition remain model 1, entirely unchanged.
+Their current reference/prices/history are preserved.
 Ordinary currency/reference and product-price writes are blocked pending approval;
 legacy storefront quoting/checkout remain compatible with the legacy denomination.
 
@@ -84,9 +123,14 @@ product amounts and cent projections. Completed provenance is immutable.
 This phase does **not** provide a legacy conversion operator/UI; an explicit reviewed
 conversion procedure is required before any populated legacy cutover.
 
-## Manual acceptance in Replit Preview
+## Manual acceptance after the user's Git Push + Dokploy deployment
 
-- **Currencies:** `/m/currencies`. Set DZD to `260.000000`, enable it and make it
+- Check startup logs for `Applied: 014_empty_legacy_multi_currency_usd_initialization.sql`
+  (or `Already applied` on subsequent startup).
+- **Currencies:** `/m/currencies` on the deployed application. For a qualifying
+  empty legacy subscriber, the conversion warning must disappear, accounting
+  reference must be USD, and retained DZD must require a manual rate.
+  Set DZD to `260.000000`, enable it and make it
   Client Default. Add EUR with `0.860000`. USD must stay fixed at `1.000000`.
 - **Products:** `/m/ecommerce` → Products. Create `Selling Price (USD) = 50.00`.
   Also reopen/edit `0.125`, `0.4875`, `1.0032`, `19.230769` to check precision.
@@ -102,6 +146,6 @@ conversion procedure is required before any populated legacy cutover.
 - Product, category, order and store availability still follow existing entitlement,
   licence and eligibility rules.
 
-Short validation only: API/frontend/library type checks, API/frontend builds,
-pure money calculation checks and Development migration sanity. No browser/E2E
-or full regression run. No Production access, push or deployment.
+Short validation only: relevant type/build checks, pure money calculation checks
+and migration/schema sanity without inspecting real subscriber data. No browser/E2E
+or full regression run. No direct Production access, push or deployment by the agent.
