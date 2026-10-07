@@ -1,0 +1,461 @@
+I am attaching a visual reference for the new BHRU public authentication/marketing experience.
+
+I want you to redesign the BHRU /login and /register experience at a VERY HIGH professional level.
+
+IMPORTANT:
+This is not a quick UI task.
+Use your maximum design and frontend capability.
+Take the reference image as a visual direction, but DO NOT simply copy it.
+I want BHRU to develop its own recognizable visual identity.
+
+The final result must look like a real premium SaaS product designed intentionally by an experienced product/design team — NOT like an AI-generated landing page, generic Tailwind template, dashboard starter kit, or collection of random cards.
+
+==================================================
+1. FIRST: STUDY THE EXISTING PROJECT
+==================================================
+
+Before changing anything:
+
+- Inspect the current BHRU frontend architecture.
+- Inspect the existing /login and /register implementation.
+- Inspect the current authentication flow.
+- Inspect the existing BHRU logo/assets.
+- Inspect the subscriber panel design language.
+- Reuse the existing authentication APIs and business logic.
+- Do NOT rebuild authentication.
+- Do NOT change database/authentication/licence behavior unless absolutely required for presentation.
+- Do NOT touch the private Platform Admin authentication route.
+- Do NOT break subscriber login or registration.
+- Do NOT change the existing protected application shell.
+
+This task is primarily a premium public-facing UX/UI redesign.
+
+==================================================
+2. DESIGN OBJECTIVE
+==================================================
+
+Transform the current dark, isolated login screen into a complete BHRU SaaS entry experience.
+
+Today, /login looks like a simple authentication form.
+
+I want it to feel like entering a serious SaaS platform.
+
+The visitor should immediately understand:
+
+- What BHRU is.
+- What they can build/manage with it.
+- Why they should create an account.
+- What major modules are available.
+- How BHRU can help an unlock/server business operate online.
+- Where to Sign In.
+- Where to Create an Account.
+
+The experience should combine:
+
+PUBLIC SAAS WEBSITE + PRODUCT PRESENTATION + LOGIN/REGISTER
+
+without making authentication difficult.
+
+==================================================
+3. BHRU VISUAL IDENTITY
+==================================================
+
+Primary direction:
+
+- Light / white interface.
+- Premium SaaS appearance.
+- BHRU orange as the main accent.
+- Deep navy/charcoal for important typography.
+- Very subtle neutral backgrounds.
+- Excellent spacing.
+- Strong typography hierarchy.
+- Carefully controlled shadows.
+- Refined borders.
+- Moderate corner radius.
+- Clean iconography.
+- Professional micro-interactions.
+
+Do NOT overuse orange.
+
+Orange should identify BHRU, not cover the whole page.
+
+Avoid:
+- excessive gradients
+- glowing effects everywhere
+- glassmorphism everywhere
+- oversized rounded cards
+- random floating shapes
+- excessive pills
+- generic AI illustrations
+- unnecessary animations
+- fake statistics
+- fake testimonials
+- fake companies
+- fake reviews
+- invented claims
+
+Every visual element must have a purpose.
+
+==================================================
+4. MAKE BHRU LOOK UNIQUE
+==================================================
+
+I specifically DO NOT want a page that looks obviously AI-generated.
+
+Avoid the common AI SaaS pattern:
+
+Hero
+→ 3 generic cards
+→ fake statistics
+→ testimonials
+→ pricing
+→ CTA
+
+Do not blindly follow that formula.
+
+Build a visual system specifically around BHRU.
+
+BHRU manages real operational modules, so the product itself should be the visual centerpiece.
+
+Use authentic product UI previews/mockups derived from the actual BHRU interface where practical.
+
+For example, visually communicate:
+
+Dashboard
+Orders
+Products / Services
+Customers
+E-Commerce
+CMS / Public Website
+Currencies
+Reports
+Business management
+
+The interface should make someone think:
+
+“This is an actual operating system for my unlock/server business.”
+
+Not:
+
+“This is another SaaS landing template.”
+
+==================================================
+5. DESKTOP EXPERIENCE
+==================================================
+
+On large screens, create a sophisticated split composition inspired by the supplied reference.
+
+LEFT / MAIN AREA:
+
+BHRU logo and identity.
+
+Simple premium navigation such as:
+
+Features
+Solutions
+Pricing
+Help
+
+Do not add dead navigation unnecessarily.
+
+Then a strong BHRU-specific headline.
+
+Avoid generic marketing language.
+
+The messaging should communicate that BHRU brings the business, services, orders, customers and online storefront together.
+
+Include two clear actions:
+
+Create an account
+Sign in
+
+The main visual should showcase the actual product.
+
+Create a polished product composition using:
+- BHRU dashboard
+- desktop panel
+- storefront/mobile presentation where appropriate
+
+It should feel integrated into the layout, not like screenshots randomly pasted onto the page.
+
+==================================================
+6. PRODUCT CAPABILITIES
+==================================================
+
+Below or naturally integrated into the page, present the major BHRU capabilities.
+
+Prioritize real modules already present in BHRU.
+
+Possible groups:
+
+E-Commerce
+Sell products/services through the subscriber’s public website.
+
+CMS / Public Website
+Control branding, banners, announcements and public presentation.
+
+Products & Services
+Manage the business catalogue.
+
+Orders
+Manage incoming business/customer orders.
+
+Customers
+Centralize customer activity.
+
+Currencies
+Configure commercial currencies and storefront display.
+
+Reports
+Understand business activity.
+
+These must NOT look like seven identical generic feature cards.
+
+Create a more distinctive presentation:
+- editorial layout
+- alternating product previews
+- compact module grid
+- interactive visual navigation
+or another strong design approach.
+
+Use design judgment.
+
+==================================================
+7. AUTHENTICATION PANEL
+==================================================
+
+The authentication experience must remain extremely clear.
+
+Create a premium authentication area containing:
+
+BHRU branding
+Welcome back
+Short explanation
+
+Two obvious states/tabs:
+
+Sign In
+Create Account
+
+Sign In:
+- Email or username
+- Password
+- Password visibility
+- Remember me if currently supported
+- Forgot password only if actually supported
+- Sign In CTA
+
+Register:
+Reuse the REAL existing registration fields and validation.
+
+Do not remove required fields merely to match the reference.
+
+Do not fake Google/Apple login.
+
+If OAuth does not actually exist, DO NOT display fake Google or Apple buttons.
+
+Every visible action must work.
+
+==================================================
+8. MOBILE EXPERIENCE IS CRITICAL
+==================================================
+
+Do NOT simply shrink the desktop design.
+
+Create a deliberate mobile experience.
+
+At 375px / 390px / 430px:
+
+Authentication should be immediately accessible.
+
+Do not force a returning customer to scroll through a huge marketing page just to sign in.
+
+Recommended behavior:
+
+Compact BHRU header
+→ concise product introduction
+→ Sign In / Create Account control
+→ authentication form
+→ optional product benefits below
+
+or another better mobile solution if you identify one.
+
+No horizontal overflow.
+
+No tiny text.
+
+No desktop screenshots rendered unreadably small.
+
+No giant empty areas.
+
+No oversized hero height.
+
+Buttons must be touch-friendly.
+
+==================================================
+9. RESPONSIVE / UX QUALITY
+==================================================
+
+Design deliberately for:
+
+1440px+
+1280px
+1024px
+768px
+430px
+390px
+375px
+
+Pay attention to:
+
+- vertical rhythm
+- content density
+- visual hierarchy
+- form accessibility
+- keyboard navigation
+- focus states
+- contrast
+- reduced motion
+- loading states
+- error states
+- long translations
+- RTL readiness
+
+The result must feel fast and stable.
+
+Avoid layout shifts.
+
+==================================================
+10. LOGIN AND REGISTER ROUTING
+==================================================
+
+Keep the experience coherent.
+
+If /login and /register remain separate routes, they should use the same premium public shell and transition naturally between each other.
+
+Do not duplicate an entire independent page implementation unnecessarily.
+
+Prefer reusable components.
+
+Direct visits to /login and /register must continue working.
+
+Authentication redirects after successful login/registration must remain unchanged unless the existing implementation requires correction.
+
+==================================================
+11. PERFORMANCE
+==================================================
+
+We previously had issues with public images loading progressively/visibly.
+
+Do not introduce the same problem here.
+
+Optimize visual assets.
+
+Use:
+- appropriate dimensions
+- lazy loading below the fold
+- priority only for true above-the-fold assets
+- reserved dimensions/aspect ratios
+- stable layouts
+
+Do not ship huge decorative images.
+
+Do not add a large UI library solely for this redesign.
+
+==================================================
+12. DO NOT TOUCH THESE SYSTEMS
+==================================================
+
+Do not modify unrelated production logic.
+
+Especially do not casually change:
+
+- Platform Admin private route
+- subscriber authorization
+- licence logic
+- entitlement logic
+- public slugs
+- E-Commerce business logic
+- currencies business logic
+- CMS data
+- media storage architecture
+- migration history
+
+No destructive migrations.
+
+If this UI redesign requires no schema change, create NO migration.
+
+==================================================
+13. DESIGN QUALITY BAR
+==================================================
+
+Treat this as the primary commercial entrance to BHRU.
+
+I want details polished down to:
+
+- exact spacing
+- typography scale
+- input heights
+- border contrast
+- hover states
+- focus states
+- icon alignment
+- CTA hierarchy
+- responsive transitions
+- logo sizing
+- form density
+- section transitions
+- empty states
+- validation messages
+
+Do not stop when it is merely “functional.”
+
+Refine it until it feels intentional.
+
+The attached image communicates the QUALITY LEVEL and general light SaaS direction I want.
+
+It is NOT a pixel-perfect specification.
+
+Improve on it and make it unmistakably BHRU.
+
+==================================================
+14. IMPLEMENTATION APPROACH
+==================================================
+
+Do the work in Development/Replit Preview only.
+
+You may inspect and implement directly.
+
+Do not spend time running a huge full-project test suite.
+
+After implementation, perform only the minimum useful technical checks:
+- relevant type checks
+- build/compile check
+- login route loads
+- register route loads
+- existing login still authenticates
+- existing registration still submits
+- basic desktop/mobile rendering
+
+I will perform the visual/manual acceptance testing myself.
+
+Do NOT push to GitHub.
+Do NOT deploy.
+Do NOT touch Production.
+
+==================================================
+15. FINAL RESPONSE
+==================================================
+
+When finished, give me:
+
+1. What you redesigned.
+2. Files changed.
+3. Confirmation that authentication logic was preserved.
+4. Any real functionality that was intentionally not displayed because it does not exist yet.
+5. Exact Preview routes for /login and /register.
+6. Any important issue I should manually verify.
+
+Then STOP and wait for my review.
+
+Put maximum effort into the actual design and implementation, not into long automated testing.

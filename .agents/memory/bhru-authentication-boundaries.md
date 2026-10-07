@@ -20,3 +20,9 @@ Subscriber presentation-only verification must not create test accounts or inser
 **Why:** The user excludes account and database changes during subscriber UI and navigation work.
 
 **How to apply:** Use isolated browser-side GET response fixtures for protected presentation, and clearly distinguish those checks from real sign-in verification. Confirm anonymous protection separately without submitting account mutations.
+
+The public subscriber authentication experience is BHRU's primary commercial entrance, not just an isolated sign-in form. Marketing must describe actual product capabilities and licence/add-on conditions honestly; never invent statistics, testimonials, customer endorsements or unsupported account actions.
+
+**Why:** The user explicitly requested an intentional premium BHRU SaaS entrance and rejected generic landing-page claims and fake OAuth/recovery controls.
+
+**How to apply:** Keep subscriber public presentation separate from the private administrator entry and protected panel. Distinguish illustrative product previews from live account data, and do not present scaffold-only modules as working capabilities.

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
 import { Logo, Card, Btn, Field } from '@/components/bhru/ui';
+import { PublicShell } from '@/components/public-auth/PublicShell';
+import { PaField } from '@/components/public-auth/Fields';
 import { login, errorMessage } from '@/lib/store';
 
 export function AuthFrame({ children, step, minimal = false }: { children: React.ReactNode; step?: string; minimal?: boolean }) {
@@ -18,7 +20,41 @@ export function AuthFrame({ children, step, minimal = false }: { children: React
   );
 }
 
+function SubscriberLogin() {
+  const [, nav] = useLocation();
+  const [busy, setBusy] = useState(false);
+  const [q, setQ] = useState('');
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState('');
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true); setErr('');
+    try { await login(q, pw); nav('/'); }
+    catch (error) { setErr(errorMessage(error)); }
+    finally { setBusy(false); }
+  };
+  return (
+    <PublicShell mode="login">
+      <h1 className="pa-h">Welcome back</h1>
+      <p className="pa-sub">Sign in to your BHRU panel.</p>
+      <form onSubmit={submit} className="pa-f" aria-busy={busy}>
+        {err && <div className="pa-alert" role="alert" data-testid="text-login-error">{err}</div>}
+        <PaField label="Email or username" name="username" icon={<User size={16} />} type="text" value={q} onChange={(e) => { setQ(e.target.value); setErr(''); }} placeholder="Email or username" required autoComplete="username" autoCapitalize="none" spellCheck={false} disabled={busy} data-testid="input-login-id" />
+        <PaField label="Password" name="password" icon={<Lock size={16} />} password value={pw} onChange={(e) => setPw(e.target.value)} required autoComplete="current-password" disabled={busy} data-testid="input-login-password" />
+        <button type="submit" className="pa-btn p w" disabled={busy} data-testid="button-login">{busy ? 'Signing in...' : 'Sign in'}</button>
+      </form>
+      <p className="pa-swap">New to BHRU? <Link href="/register" data-testid="link-register">Create an account</Link></p>
+    </PublicShell>
+  );
+}
+
 export default function Login({ adminPath }: { adminPath?: string }) {
+  if (!adminPath) return <SubscriberLogin />;
+  return <AdminLogin adminPath={adminPath} />;
+}
+
+function AdminLogin({ adminPath }: { adminPath: string }) {
   const [, nav] = useLocation();
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState('');
@@ -48,7 +84,6 @@ export default function Login({ adminPath }: { adminPath?: string }) {
           </Field>
           <Btn v="primary" type="submit" className="w-full" disabled={busy} data-testid="button-login">{busy ? 'Signing in...' : 'Sign in'}</Btn>
         </form>
-        {!adminPath && <p className="mt-3 text-center text-[12px] text-muted-foreground"><Link href="/register" className="font-medium text-brand" data-testid="link-register">Create an account</Link></p>}
       </Card>
     </AuthFrame>
   );

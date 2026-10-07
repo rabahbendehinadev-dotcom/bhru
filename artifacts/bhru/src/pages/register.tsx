@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
-import { Card, Btn, Field } from '@/components/bhru/ui';
-import { AuthFrame } from './login';
+import { PublicShell } from '@/components/public-auth/PublicShell';
+import { PaField, PaSelect } from '@/components/public-auth/Fields';
 import { COUNTRIES, registerSubscriber, errorMessage } from '@/lib/store';
-import { cn } from '@/lib/utils';
 
 export default function Register() {
   const [, nav] = useLocation();
@@ -12,6 +11,20 @@ export default function Register() {
   const [f, setF] = useState({ owner: '', username: '', email: '', password: '', confirm: '', business: '', country: 'Algeria', phone: '' });
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const form = useRef<HTMLFormElement>(null);
+  const previousStep = useRef(step);
+  useEffect(() => {
+    if (previousStep.current !== step) {
+      heading.current?.focus();
+      previousStep.current = step;
+    }
+  }, [step]);
+  useEffect(() => {
+    if (Object.keys(errs).length) {
+      form.current?.querySelector<HTMLInputElement>('[aria-invalid="true"]')?.focus();
+    }
+  }, [errs]);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   const v1 = () => {
     const e: Record<string, string> = {};
@@ -39,37 +52,34 @@ export default function Register() {
   };
   const strength = Math.min(4, Math.floor(f.password.length / 3));
   return (
-    <AuthFrame step={`Step ${step} of 2`}>
-      <div className="mb-3 flex items-center gap-2 text-[11px]">
-        {['Account', 'Business'].map((l, i) => (
-          <div key={l} className="flex flex-1 items-center gap-2"><span className={cn('grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold', step >= i + 1 ? 'bg-brand text-white' : 'bg-muted text-muted-foreground')}>{i + 1}</span><span className={step >= i + 1 ? '' : 'text-muted-foreground'}>{l}</span><span className={cn('h-0.5 flex-1', i === 0 && (step > 1 ? 'bg-brand' : 'bg-border'))} /></div>
-        ))}
+    <PublicShell mode="register">
+      <div className="pa-steps" aria-label={`Step ${step} of 2`}>
+        <span className={step >= 1 ? 'on' : ''}>1. Account</span><span className={step >= 2 ? 'on' : ''}>2. Business</span>
       </div>
-      <Card className="p-5">
-        <h1 className="text-[17px] font-semibold">{step === 1 ? 'Create your account' : 'Business information'}</h1>
-        <p className="mb-4 text-[12.5px] text-muted-foreground">{step === 1 ? 'Owner account for your BHRU server. Use a strong, unique password.' : 'Used for your server and panel. Your account starts as Pending until approved.'}</p>
-        {step === 1 ? (
-          <div className="space-y-3">
-            <Field label="Full name" error={errs.owner}><input className="input" value={f.owner} onChange={set('owner')} data-testid="input-fullname" /></Field>
-            <Field label="Username" error={errs.username}><input className="input" value={f.username} onChange={set('username')} data-testid="input-username" /></Field>
-            <Field label="Email address" error={errs.email}><input className="input" type="email" value={f.email} onChange={set('email')} data-testid="input-email" /></Field>
-            <Field label="Password" error={errs.password}>
-              <input className="input" type="password" value={f.password} onChange={set('password')} data-testid="input-password" />
-              <div className="mt-1.5 flex gap-1">{[0, 1, 2, 3].map((n) => <span key={n} className={cn('h-1 flex-1 rounded', n < strength ? 'bg-ok' : 'bg-muted')} />)}</div>
-            </Field>
-            <Field label="Confirm password" error={errs.confirm}><input className="input" type="password" value={f.confirm} onChange={set('confirm')} data-testid="input-confirm" /></Field>
-            <Btn v="brand" className="w-full" onClick={() => v1() && setStep(2)} data-testid="button-next">Next step <ArrowRight size={14} /></Btn>
+      <h1 className="pa-h" ref={heading} tabIndex={-1}>{step === 1 ? 'Create your account' : 'Business information'}</h1>
+      <p className="pa-sub">{step === 1 ? 'Owner account for your BHRU server. Use a strong, unique password.' : 'Used for your server and panel. Your account starts as Pending until approved.'}</p>
+      {step === 1 ? (
+        <form ref={form} className="pa-f" noValidate onSubmit={(e) => { e.preventDefault(); if (v1()) setStep(2); }}>
+          <PaField label="Full name" name="name" required error={errs.owner} value={f.owner} onChange={set('owner')} autoComplete="name" data-testid="input-fullname" />
+          <PaField label="Username" name="username" required error={errs.username} value={f.username} onChange={set('username')} autoComplete="username" autoCapitalize="none" spellCheck={false} data-testid="input-username" />
+          <PaField label="Email address" name="email" required type="email" error={errs.email} value={f.email} onChange={set('email')} autoComplete="email" autoCapitalize="none" spellCheck={false} data-testid="input-email" />
+          <PaField label="Password" name="password" required password error={errs.password} value={f.password} onChange={set('password')} autoComplete="new-password" data-testid="input-password"
+            hint={<><div className="pa-meter" aria-hidden="true">{[0, 1, 2, 3].map((n) => <i key={n} className={n < strength ? 'on' : ''} />)}</div><p className="pa-password-hint">Use 12–128 characters.</p></>} />
+          <PaField label="Confirm password" name="confirm-password" required password error={errs.confirm} value={f.confirm} onChange={set('confirm')} autoComplete="new-password" data-testid="input-confirm" />
+          <button type="submit" className="pa-btn p w" data-testid="button-next">Next step <ArrowRight size={16} /></button>
+        </form>
+      ) : (
+        <form ref={form} className="pa-f" noValidate aria-busy={busy} onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+          <PaField label="Business / server name" name="organization" required disabled={busy} error={errs.business} value={f.business} onChange={set('business')} autoComplete="organization" data-testid="input-business" />
+          <PaSelect label="Country" name="country" required disabled={busy} value={f.country} onChange={set('country')} autoComplete="country-name" data-testid="select-country">{COUNTRIES.map((c) => <option key={c}>{c}</option>)}</PaSelect>
+          <PaField label="Phone number" name="tel" required disabled={busy} type="tel" error={errs.phone} value={f.phone} onChange={set('phone')} placeholder="+213 555 000 000" autoComplete="tel" data-testid="input-phone" />
+          <div className="pa-row">
+            <button type="button" className="pa-btn" disabled={busy} onClick={() => setStep(1)}><ArrowLeft size={16} /> Back</button>
+            <button type="submit" className="pa-btn p" disabled={busy} data-testid="button-create-account">{busy ? 'Creating...' : 'Create account'}</button>
           </div>
-        ) : (
-          <div className="space-y-3">
-            <Field label="Business / server name" error={errs.business}><input className="input" value={f.business} onChange={set('business')} data-testid="input-business" /></Field>
-            <Field label="Country"><select className="input" value={f.country} onChange={set('country')} data-testid="select-country">{COUNTRIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
-            <Field label="Phone number" error={errs.phone}><input className="input" value={f.phone} onChange={set('phone')} placeholder="+213 555 000 000" data-testid="input-phone" /></Field>
-            <div className="grid grid-cols-2 gap-2"><Btn disabled={busy} onClick={() => setStep(1)}><ArrowLeft size={14} /> Back</Btn><Btn v="brand" disabled={busy} onClick={submit} data-testid="button-create-account">{busy ? 'Creating...' : 'Create account'}</Btn></div>
-          </div>
-        )}
-        <p className="mt-4 text-center text-[12px] text-muted-foreground">Already have an account? <Link href="/login" className="font-medium text-brand">Sign in</Link></p>
-      </Card>
-    </AuthFrame>
+        </form>
+      )}
+      <p className="pa-swap">Already have an account? <Link href="/login">Sign in</Link></p>
+    </PublicShell>
   );
 }
