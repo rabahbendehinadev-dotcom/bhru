@@ -14,3 +14,17 @@ mtime_ms = 1791494773550
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/3237e9cd-c64f-4e67-93a4-21145ddbbf2c/b4cb08d9-dd5d-4ff3-ac2d-1da3ff559d3b"
 storage_version_token = "1791494779701291"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "jEUwr3EpFgHn3_XarReOR"
+uri = "file://docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md"
+type = "text"
+title = "BHRU Financial & Audit Foundation Specification"
+description = "Design-only specification covering financial vocabulary, wallet/credit separation, ledger and audit models, concurrency safeguards and proposed implementation slices."
+logical_id = "ea6e8aae-e191-48eb-8891-21a7922ec108"
+content_hash = "sha256:722be607f6870aacc4a7f72fb4bb327a21ffa3b4fa9089005f78ce67ba945906"
+size = 62753
+mtime_ms = 1791496374254
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/ea6e8aae-e191-48eb-8891-21a7922ec108/3e65f195-99dd-4f98-89a2-d73959d5d4e5"
+storage_version_token = "1791496392420612"
+content_type = "text/markdown"

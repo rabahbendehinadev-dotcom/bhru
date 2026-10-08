@@ -1,0 +1,726 @@
+BHRU — PHASE 1 DESIGN SPEC ONLY
+FINANCIAL SEMANTICS + CLIENT ACTIVITY/AUDIT BASELINE
+
+Goal:
+Design the authoritative financial/accounting semantics and client activity/audit architecture for BHRU before implementation.
+
+This task is ANALYSIS + DESIGN ONLY.
+
+DO NOT:
+- modify application code
+- create migrations
+- alter database schema
+- alter data
+- commit
+- push
+- deploy
+- access VPS
+- access Dokploy
+- access production
+
+Use the current BHRU source, existing migrations 019–024, wallet/service-order implementation, client detail UI, customer panel and the existing gap audit:
+
+docs/BHRU_CLIENT_ACCOUNT_GAP_AUDIT.md
+
+==================================================
+CURRENT BHRU RULES THAT MUST BE PRESERVED
+==================================================
+
+- public_customer_accounts is the canonical client identity
+- do not create a duplicate customer/client identity table
+- client Account Currency is immutable
+- wallet/account currency must match Account Currency
+- reseller controls which currencies appear during registration
+- wallet ledger already exists
+- service orders already debit wallet atomically
+- refunds restore the exact original account-currency amount
+- order price/currency snapshots are immutable
+- tenant isolation is mandatory
+- retail/e-commerce orders remain separate
+- guest checkout remains separate
+- customer sessions already exist
+- client Financial / Activity / Notes tabs already exist
+- customer Wallet / Transactions pages already exist
+- no provider API integration yet
+
+==================================================
+MAIN OBJECTIVE
+==================================================
+
+Define exactly what every financial value means before adding payments, credit facilities, invoices or funding requests.
+
+We need an authoritative model for:
+
+1. Available Balance
+2. Locked Balance
+3. Due
+4. Credit Limit
+5. Used Credit
+6. Available Credit
+7. Total Credits
+8. Total Debits
+9. Total Spent
+10. Pending Funding
+11. Refunds
+12. Adjustments
+
+Also define the authoritative client activity/audit model.
+
+==================================================
+PART A — FINANCIAL SEMANTICS
+==================================================
+
+For each financial concept below, define:
+
+- business meaning
+- whether it is stored or derived
+- authoritative source
+- whether it can be negative
+- whether it affects spendability
+- when it changes
+- what event changes it
+- whether customer sees it
+- whether reseller sees it
+- whether it appears on Dashboard
+- whether it appears on Statement
+- whether it belongs to prepaid wallet or credit facility
+
+Analyze:
+
+AVAILABLE BALANCE
+Money the customer can spend immediately.
+
+LOCKED BALANCE
+Money reserved for in-progress operations, if BHRU actually needs this concept.
+
+DUE
+Do NOT keep this as a fake zero metric.
+
+Define whether Due should mean:
+- unpaid debt
+- outstanding invoices
+- consumed credit line
+or something else.
+
+If BHRU has no real Due facility yet, recommend whether Dashboard should hide it until implemented.
+
+CREDIT LIMIT
+Maximum reseller-approved credit facility.
+
+USED CREDIT
+Current amount owed under credit facility.
+
+AVAILABLE CREDIT
+Credit Limit - Used Credit.
+
+TOTAL CREDITS
+All positive wallet/financial ledger movements that qualify as credits.
+
+TOTAL DEBITS
+All negative wallet/financial ledger movements.
+
+TOTAL SPENT
+Only successful service-order spending, not every debit.
+
+PENDING FUNDING
+Customer funding requests awaiting approval/payment confirmation.
+
+REFUNDS
+Exact restoration of prior charge amount/currency.
+
+ADJUSTMENTS
+Manual reseller/admin balance changes.
+
+==================================================
+PART B — PREPAID WALLET VS CREDIT FACILITY
+==================================================
+
+Design a clean separation between:
+
+A. PREPAID WALLET
+Customer's own deposited/credited money.
+
+B. CREDIT FACILITY
+Optional reseller-issued debt/credit line.
+
+Do NOT mix them into one ambiguous number.
+
+Recommend whether BHRU should use separate authoritative balances/tables for:
+
+- prepaid wallet balance
+- reserved/locked wallet amount
+- credit limit
+- credit used
+
+Define order spending precedence if credit is enabled later.
+
+Example possibilities:
+
+1. wallet only
+2. wallet first then credit
+3. credit only for approved groups/clients
+
+Do NOT implement.
+Recommend the safest future model.
+
+==================================================
+PART C — LEDGER / STATEMENT MODEL
+==================================================
+
+Audit the existing wallet ledger.
+
+Design the authoritative statement model.
+
+Each financial entry should be immutable and include enough attribution to answer:
+
+- what happened?
+- how much?
+- what currency?
+- who caused it?
+- what business object caused it?
+- what was the balance before/after?
+- when?
+- which tenant/client?
+- why?
+
+Recommend fields/concepts such as:
+
+id
+subscriber_id
+customer_id
+account_currency
+entry_type
+direction
+amount_minor
+balance_before_minor
+balance_after_minor
+locked_before/after if applicable
+credit_used_before/after if applicable
+reference_type
+reference_id
+source
+actor_type
+actor_id
+description
+internal_note
+customer_note
+idempotency_key
+created_at
+
+Do NOT assume all must exist.
+Choose the correct minimal authoritative design.
+
+==================================================
+PART D — FINANCIAL ENTRY TYPES
+==================================================
+
+Define a controlled list/taxonomy for ledger entries.
+
+Evaluate entries such as:
+
+wallet_funding
+manual_credit
+manual_debit
+service_order_charge
+service_order_refund
+funding_request_approved
+funding_request_rejected
+payment_received
+payment_fee
+credit_draw
+credit_repayment
+credit_adjustment
+transfer_in
+transfer_out
+invoice_payment
+correction
+
+Recommend which belong in Phase 1 foundation vs later phases.
+
+Avoid vague free-form financial types.
+
+==================================================
+PART E — BALANCE DERIVATION
+==================================================
+
+Decide whether balances should be:
+
+A. derived completely from immutable ledger
+B. stored snapshot/cached balances with ledger as source of truth
+C. hybrid
+
+Analyze current BHRU wallet implementation and recommend the safest approach for concurrency and performance.
+
+Preserve:
+- atomic spending
+- row locking
+- no double-spend
+- idempotency
+
+Explain how reconciliation should verify:
+
+wallet stored balance
+vs
+ledger-derived balance
+
+==================================================
+PART F — ORDER FINANCIAL LIFECYCLE
+==================================================
+
+Define exact financial behavior for service orders.
+
+Current lifecycle includes:
+
+pending
+processing
+completed
+rejected
+
+Define:
+
+- when money is actually debited
+- whether money is locked first or directly debited
+- what happens on processing
+- what happens on completed
+- what happens on rejected
+- whether cancellation needs a different path
+- exact refund semantics
+
+Do not change existing behavior without strong reason.
+
+If current direct-debit + exact refund model is already safer than reservation/lock semantics, say so.
+
+==================================================
+PART G — FUNDING / PAYMENT BOUNDARY
+==================================================
+
+Design future boundaries now, without implementing.
+
+Clearly separate:
+
+1. Funding Request
+Customer asks to add money.
+
+2. Payment Transaction
+Actual external/internal money movement.
+
+3. Wallet Ledger
+Internal financial effect on customer's account.
+
+Example:
+
+Customer submits funding request
+→ reseller verifies payment
+→ payment transaction recorded
+→ wallet ledger credit posted
+→ funding request marked approved
+
+Define idempotency boundaries.
+
+Prevent a payment from crediting wallet twice.
+
+==================================================
+PART H — INVOICE BOUNDARY
+==================================================
+
+Define relationship between:
+
+Service Order
+Invoice
+Payment Transaction
+Wallet Ledger
+
+Invoice must NOT be used as wallet ledger.
+
+Recommend whether service orders should always generate invoices or only optionally.
+
+Consider server-business workflows where many small orders happen from wallet balance.
+
+Likely:
+- wallet statement for all financial movements
+- invoice optionally for funding / grouped billing / formal business needs
+
+Analyze and recommend.
+
+==================================================
+PART I — MANUAL RESELLER ADJUSTMENTS
+==================================================
+
+Current reseller can Add/Deduct/Adjust wallet.
+
+Design rules:
+
+- operation type
+- mandatory reason
+- internal note
+- customer-visible note
+- actor/staff attribution
+- transaction reference
+- idempotency
+- immutable history
+- whether correction creates compensating entry instead of editing history
+
+Recommend:
+NEVER edit/delete posted financial history.
+
+Corrections should create new compensating entries.
+
+==================================================
+PART J — CLIENT ACTIVITY / AUDIT EVENT MODEL
+==================================================
+
+Design a unified but sensible activity/audit model.
+
+Do not mix:
+
+- security events
+- financial ledger
+- order history
+- general activity
+
+Financial truth stays in financial ledger.
+
+Audit/activity records should reference financial objects rather than replacing them.
+
+Define event categories:
+
+AUTH
+- login success
+- login failure
+- logout
+- password changed
+- password recovery
+- session revoked
+- all sessions revoked
+- 2FA enabled/disabled
+- blocked login
+
+PROFILE
+- profile changed
+- phone changed
+- address changed
+- notification preference changed
+
+ACCOUNT
+- account created
+- account activated
+- account blocked
+- account unblocked
+- verification status changed
+- client group changed
+- service-access policy changed
+
+FINANCIAL
+- wallet adjusted
+- funding request created/approved/rejected
+- payment recorded
+- refund processed
+- credit facility changed
+
+ORDER
+- service order created
+- processing
+- completed
+- rejected
+- cancelled
+
+API
+- API enabled/disabled
+- API key generated/rotated/revoked
+- IP whitelist changed
+
+==================================================
+PART K — ACTOR ATTRIBUTION
+==================================================
+
+Every important audit event should identify actor.
+
+Recommend actor model supporting:
+
+customer
+subscriber owner
+subscriber staff/admin
+system
+future provider/API
+
+Need fields such as:
+
+actor_type
+actor_id
+actor_display_snapshot
+
+Do not rely only on free-text actor name.
+
+==================================================
+PART L — SECURITY / PRIVACY OF AUDIT DATA
+==================================================
+
+Recommend what to store and what NOT to store.
+
+Potentially useful:
+- IP
+- user agent
+- event timestamp
+- session id/reference
+- request correlation id
+
+Do NOT store:
+- raw passwords
+- password reset tokens
+- API secrets
+- sensitive payment secrets
+
+Define data retention considerations.
+
+==================================================
+PART M — CLIENT DETAIL UI SEMANTICS
+==================================================
+
+Recommend what the reseller should see in:
+
+Financial tab:
+- Available
+- Locked
+- Credit Limit
+- Used Credit
+- Available Credit
+- Total Credits
+- Total Debits
+- Total Spent
+- statement
+
+But only show credit metrics if credit facility is actually enabled/implemented.
+
+Activity tab:
+chronological business/account events.
+
+Do NOT duplicate financial statement rows unnecessarily.
+
+Security later:
+login/session events.
+
+==================================================
+PART N — CUSTOMER PANEL SEMANTICS
+==================================================
+
+Recommend customer-facing Wallet/Transactions behavior.
+
+Wallet page:
+- current spendable balance
+- account currency
+- funding action
+- clear balance semantics
+
+Transactions:
+- immutable statement entries
+- human-readable descriptions
+- order/payment references
+
+Do not expose internal staff notes.
+
+Do not show fake Due/Credit values if facility does not exist.
+
+==================================================
+PART O — DASHBOARD CORRECTION
+==================================================
+
+Important:
+
+The current customer Dashboard may show:
+
+Due / Credit
+
+even though the audit says real credit/Due accounting is not implemented.
+
+Recommend immediate UI behavior BEFORE real credit facility exists.
+
+Options:
+
+A. hide Due/Credit entirely
+B. show 0 with "Not enabled"
+C. another safe approach
+
+Choose the most honest UX.
+
+Do NOT implement in this task.
+
+==================================================
+PART P — PROPOSED DOMAIN/TABLE MODEL
+==================================================
+
+Propose future normalized PostgreSQL domain model.
+
+Reuse existing tables wherever safe.
+
+Do NOT propose unnecessary replacements.
+
+For each proposed addition specify:
+
+- table/domain purpose
+- key fields
+- important constraints
+- indexes
+- tenant isolation
+- immutable vs mutable
+- relation to existing BHRU tables
+
+Potential domains to evaluate:
+
+wallet_accounts
+wallet_ledger_entries
+client_credit_facilities
+funding_requests
+payment_transactions
+client_activity_events
+
+Names are illustrative.
+Use actual existing BHRU names where possible.
+
+==================================================
+PART Q — MIGRATION STRATEGY
+==================================================
+
+Design future additive migration strategy.
+
+Current latest migration:
+024_service_group_availability.sql
+
+If later implementation requires migrations, they must start at:
+
+025...
+
+Do NOT create migration 025 now.
+
+Plan how to preserve:
+
+- all current balances
+- ledger history
+- account currencies
+- service orders
+- exact refund snapshots
+- existing customers
+
+No destructive rewrite.
+
+==================================================
+PART R — INVARIANTS
+==================================================
+
+Define explicit invariants BHRU must enforce.
+
+Examples:
+
+- wallet currency == customer Account Currency
+- posted ledger entries are immutable
+- balance-changing operation and ledger record commit atomically
+- no wallet mutation without ledger entry
+- refund cannot exceed/refund original charge twice
+- manual adjustment requires reason and actor
+- cross-tenant financial references forbidden
+- payment transaction credits wallet at most once
+- client account currency never changes implicitly
+
+Create a strong invariant list.
+
+==================================================
+PART S — FAILURE / CONCURRENCY CASES
+==================================================
+
+Analyze:
+
+- two simultaneous service orders
+- two staff adjustments at same time
+- duplicate payment callback
+- repeated API request
+- order rejection while another wallet operation occurs
+- staff double-click on Add Funds
+- retry after network timeout
+- payment approved but wallet mutation fails
+- wallet credited but funding-request status update fails
+
+Recommend transaction/idempotency strategy.
+
+==================================================
+FINAL DELIVERABLE
+==================================================
+
+Create:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+Report structure:
+
+A. Executive summary
+B. Current BHRU financial model
+C. Problems/ambiguities discovered
+D. Authoritative financial vocabulary
+E. Wallet model
+F. Future credit facility model
+G. Ledger/statement architecture
+H. Order financial lifecycle
+I. Funding/payment architecture
+J. Invoice boundary
+K. Manual adjustment rules
+L. Activity/audit architecture
+M. Actor attribution model
+N. Customer/reseller UI semantics
+O. Dashboard Due/Credit recommendation
+P. Proposed domain/table additions
+Q. Migration strategy
+R. Financial/security invariants
+S. Concurrency/idempotency design
+T. Recommended implementation slices
+
+==================================================
+RECOMMENDED IMPLEMENTATION SLICES
+==================================================
+
+At the end, propose small implementation slices.
+
+Do NOT implement them.
+
+Prefer dependency-aware slices such as:
+
+Slice 1:
+Financial vocabulary + truthful UI cleanup + ledger attribution
+
+Slice 2:
+General client activity audit events
+
+Slice 3:
+Login/security activity integration
+
+Slice 4:
+Funding requests/payment transactions
+
+Slice 5:
+Invoices/receipts
+
+Slice 6:
+Optional credit facility
+
+But choose based on actual findings.
+
+==================================================
+IMPORTANT
+==================================================
+
+This is DESIGN ONLY.
+
+Do not change application files.
+Do not create migrations.
+Do not alter development database.
+Do not run broad browser tests.
+Do not commit.
+Do not push.
+Do not deploy.
+
+At the end return only:
+
+1. design audit completed
+2. current financial ambiguities found
+3. recommended authoritative balance model
+4. recommendation for current Due/Credit dashboard display
+5. proposed implementation slices
+6. report path
+7. confirmation no application/schema/data changes were made
