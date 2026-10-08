@@ -58,7 +58,7 @@ export const PANEL_STYLES_V2 = `
 .pd-bal{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;border-left:3px solid var(--accent)}
 .pd-bv{font-size:28px;font-weight:700;line-height:1.2;margin:2px 0 10px}.pd-dv{font-size:22px;font-weight:600;color:var(--muted);margin-top:2px}.pd-br{padding-left:16px;border-left:1px solid var(--line);min-width:120px}
 .pd-acts{display:flex;gap:8px;flex-wrap:wrap}.pd-btn{text-decoration:none}
-.pd-grp h2{font-weight:600;color:var(--muted);margin:0 0 8px}
+.pd>.pd-grp{padding-block:6px}.pd-grp h2{font-weight:600;color:var(--muted);margin:0 0 6px}
 .pd-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.pd-cols.pd-c5{grid-template-columns:repeat(5,minmax(0,1fr))}
 .pd-c{display:flex;gap:9px;align-items:center;padding:2px 12px;border-left:1px solid var(--line);min-width:0}.pd-c:first-child{border-left:0;padding-left:0}
 .pd-c b{display:block;font-size:22px;font-weight:600;overflow-wrap:anywhere}.pd-c span.l{font-size:12px;color:var(--muted)}
