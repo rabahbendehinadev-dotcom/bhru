@@ -8,6 +8,399 @@
 import * as zod from 'zod';
 
 
+export const listManualServicesQueryPageDefault = 1;
+export const listManualServicesQueryPageMax = 100000;
+
+export const listManualServicesQuerySearchMax = 100;
+
+
+
+export const ListManualServicesQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(listManualServicesQueryPageMax).default(listManualServicesQueryPageDefault),
+  "search": zod.coerce.string().max(listManualServicesQuerySearchMax).optional(),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']).optional(),
+  "groupId": zod.coerce.string().uuid().optional(),
+  "status": zod.enum(['active', 'inactive']).optional()
+})
+
+export const ListManualServicesResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const createManualServiceBodyNameMax = 160;
+
+export const createManualServiceBodyDescriptionMax = 4000;
+
+export const createManualServiceBodyPriceUsdRegExp = new RegExp('^\\\\d{1,10}(\\\\.\\\\d{1,12})?$');
+export const createManualServiceBodyEstimatedTimeMax = 100;
+
+export const createManualServiceBodyDisplayOrderMin = 0;
+export const createManualServiceBodyDisplayOrderMax = 100000;
+
+export const createManualServiceBodyRequirementsItemKeyRegExp = new RegExp('^[a-z][a-z0-9_]{0,31}$');
+export const createManualServiceBodyRequirementsItemLabelMax = 100;
+
+export const createManualServiceBodyRequirementsItemOptionsItemMax = 100;
+
+export const createManualServiceBodyRequirementsItemOptionsMax = 50;
+
+export const createManualServiceBodyRequirementsMax = 12;
+
+
+
+export const CreateManualServiceBody = zod.object({
+  "name": zod.string().min(1).max(createManualServiceBodyNameMax),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']),
+  "groupId": zod.string().uuid().nullish(),
+  "description": zod.string().max(createManualServiceBodyDescriptionMax).optional(),
+  "priceUsd": zod.string().regex(createManualServiceBodyPriceUsdRegExp),
+  "estimatedTime": zod.string().max(createManualServiceBodyEstimatedTimeMax).optional(),
+  "active": zod.boolean(),
+  "displayOrder": zod.number().int().min(createManualServiceBodyDisplayOrderMin).max(createManualServiceBodyDisplayOrderMax),
+  "requirements": zod.array(zod.object({
+  "key": zod.string().regex(createManualServiceBodyRequirementsItemKeyRegExp),
+  "label": zod.string().max(createManualServiceBodyRequirementsItemLabelMax),
+  "type": zod.enum(['text', 'textarea', 'number', 'select', 'imei', 'reference']),
+  "required": zod.boolean(),
+  "options": zod.array(zod.string().max(createManualServiceBodyRequirementsItemOptionsItemMax)).max(createManualServiceBodyRequirementsItemOptionsMax).optional()
+})).max(createManualServiceBodyRequirementsMax)
+})
+
+export const CreateManualServiceResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const GetManualServiceParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetManualServiceResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const UpdateManualServiceParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateManualServiceBodyNameMax = 160;
+
+export const updateManualServiceBodyDescriptionMax = 4000;
+
+export const updateManualServiceBodyPriceUsdRegExp = new RegExp('^\\\\d{1,10}(\\\\.\\\\d{1,12})?$');
+export const updateManualServiceBodyEstimatedTimeMax = 100;
+
+export const updateManualServiceBodyDisplayOrderMin = 0;
+export const updateManualServiceBodyDisplayOrderMax = 100000;
+
+export const updateManualServiceBodyRequirementsItemKeyRegExp = new RegExp('^[a-z][a-z0-9_]{0,31}$');
+export const updateManualServiceBodyRequirementsItemLabelMax = 100;
+
+export const updateManualServiceBodyRequirementsItemOptionsItemMax = 100;
+
+export const updateManualServiceBodyRequirementsItemOptionsMax = 50;
+
+export const updateManualServiceBodyRequirementsMax = 12;
+
+
+
+export const UpdateManualServiceBody = zod.object({
+  "name": zod.string().min(1).max(updateManualServiceBodyNameMax),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']),
+  "groupId": zod.string().uuid().nullish(),
+  "description": zod.string().max(updateManualServiceBodyDescriptionMax).optional(),
+  "priceUsd": zod.string().regex(updateManualServiceBodyPriceUsdRegExp),
+  "estimatedTime": zod.string().max(updateManualServiceBodyEstimatedTimeMax).optional(),
+  "active": zod.boolean(),
+  "displayOrder": zod.number().int().min(updateManualServiceBodyDisplayOrderMin).max(updateManualServiceBodyDisplayOrderMax),
+  "requirements": zod.array(zod.object({
+  "key": zod.string().regex(updateManualServiceBodyRequirementsItemKeyRegExp),
+  "label": zod.string().max(updateManualServiceBodyRequirementsItemLabelMax),
+  "type": zod.enum(['text', 'textarea', 'number', 'select', 'imei', 'reference']),
+  "required": zod.boolean(),
+  "options": zod.array(zod.string().max(updateManualServiceBodyRequirementsItemOptionsItemMax)).max(updateManualServiceBodyRequirementsItemOptionsMax).optional()
+})).max(updateManualServiceBodyRequirementsMax)
+})
+
+export const UpdateManualServiceResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const ListServiceGroupsResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const createServiceGroupBodyNameMax = 100;
+
+
+
+export const CreateServiceGroupBody = zod.object({
+  "name": zod.string().min(1).max(createServiceGroupBodyNameMax)
+})
+
+export const CreateServiceGroupResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const ListClientGroupsResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const createClientGroupBodyNameMax = 100;
+
+
+
+export const CreateClientGroupBody = zod.object({
+  "name": zod.string().min(1).max(createClientGroupBodyNameMax)
+})
+
+export const CreateClientGroupResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const AssignClientGroupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const AssignClientGroupBody = zod.object({
+  "groupId": zod.string().uuid().nullable()
+})
+
+export const AssignClientGroupResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const GetClientWalletParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetClientWalletResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const MutateClientWalletParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const mutateClientWalletBodyAmountRegExp = new RegExp('^\\\\d{1,15}(\\\\.\\\\d{1,6})?$');
+export const mutateClientWalletBodyCurrencyMin = 3;
+export const mutateClientWalletBodyCurrencyMax = 3;
+
+export const mutateClientWalletBodyReasonMax = 500;
+
+export const mutateClientWalletBodyMethodMax = 100;
+
+export const mutateClientWalletBodyTransactionReferenceMax = 200;
+
+export const mutateClientWalletBodyInternalNoteMax = 2000;
+
+export const mutateClientWalletBodyCustomerNoteMax = 500;
+
+
+
+export const MutateClientWalletBody = zod.object({
+  "operation": zod.enum(['add', 'deduct', 'adjustment']),
+  "direction": zod.enum(['credit', 'debit']),
+  "amount": zod.string().regex(mutateClientWalletBodyAmountRegExp),
+  "currency": zod.string().min(mutateClientWalletBodyCurrencyMin).max(mutateClientWalletBodyCurrencyMax),
+  "reason": zod.string().min(1).max(mutateClientWalletBodyReasonMax),
+  "method": zod.string().min(1).max(mutateClientWalletBodyMethodMax),
+  "transactionReference": zod.string().max(mutateClientWalletBodyTransactionReferenceMax).optional(),
+  "internalNote": zod.string().max(mutateClientWalletBodyInternalNoteMax).optional(),
+  "customerNote": zod.string().max(mutateClientWalletBodyCustomerNoteMax).optional(),
+  "idempotencyKey": zod.string().uuid()
+})
+
+export const MutateClientWalletResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const GetClientStatementParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const getClientStatementQueryPageDefault = 1;
+export const getClientStatementQueryPageMax = 100000;
+
+export const getClientStatementQuerySearchMax = 100;
+
+
+
+export const GetClientStatementQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(getClientStatementQueryPageMax).default(getClientStatementQueryPageDefault),
+  "search": zod.coerce.string().max(getClientStatementQuerySearchMax).optional(),
+  "direction": zod.enum(['credit', 'debit']).optional(),
+  "type": zod.enum(['admin_credit', 'admin_debit', 'adjustment', 'order_debit', 'order_refund']).optional()
+})
+
+export const GetClientStatementResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const listServiceOrdersQueryPageDefault = 1;
+export const listServiceOrdersQueryPageMax = 100000;
+
+export const listServiceOrdersQuerySearchMax = 100;
+
+
+
+export const ListServiceOrdersQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(listServiceOrdersQueryPageMax).default(listServiceOrdersQueryPageDefault),
+  "search": zod.coerce.string().max(listServiceOrdersQuerySearchMax).optional(),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']).optional(),
+  "customerId": zod.coerce.string().uuid().optional(),
+  "status": zod.enum(['pending', 'processing', 'completed', 'rejected', 'cancelled']).optional()
+})
+
+export const ListServiceOrdersResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const GetServiceOrderParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetServiceOrderResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const TransitionServiceOrderParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const transitionServiceOrderBodyResultMax = 4000;
+
+export const transitionServiceOrderBodyReasonMax = 1000;
+
+export const transitionServiceOrderBodyInternalNoteMax = 2000;
+
+
+
+export const TransitionServiceOrderBody = zod.object({
+  "status": zod.enum(['processing', 'completed', 'rejected']),
+  "result": zod.string().max(transitionServiceOrderBodyResultMax).optional(),
+  "reason": zod.string().max(transitionServiceOrderBodyReasonMax).optional(),
+  "internalNote": zod.string().max(transitionServiceOrderBodyInternalNoteMax).optional()
+})
+
+export const TransitionServiceOrderResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const GetCustomerPanelParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const GetCustomerPanelResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const ListCustomerServicesParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const listCustomerServicesQueryPageDefault = 1;
+export const listCustomerServicesQueryPageMax = 100000;
+
+export const listCustomerServicesQuerySearchMax = 100;
+
+export const listCustomerServicesQueryCurrencyMin = 3;
+export const listCustomerServicesQueryCurrencyMax = 3;
+
+
+
+export const ListCustomerServicesQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(listCustomerServicesQueryPageMax).default(listCustomerServicesQueryPageDefault),
+  "search": zod.coerce.string().max(listCustomerServicesQuerySearchMax).optional(),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']).optional(),
+  "groupId": zod.coerce.string().uuid().optional(),
+  "currency": zod.coerce.string().min(listCustomerServicesQueryCurrencyMin).max(listCustomerServicesQueryCurrencyMax).optional()
+})
+
+export const ListCustomerServicesResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const GetCustomerServiceParams = zod.object({
+  "slug": zod.coerce.string(),
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetCustomerServiceResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const QuoteCustomerServiceParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const quoteCustomerServiceBodyCurrencyMin = 3;
+export const quoteCustomerServiceBodyCurrencyMax = 3;
+
+
+
+export const QuoteCustomerServiceBody = zod.object({
+  "serviceId": zod.string().uuid(),
+  "currency": zod.string().min(quoteCustomerServiceBodyCurrencyMin).max(quoteCustomerServiceBodyCurrencyMax).optional()
+})
+
+export const QuoteCustomerServiceResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const ListCustomerServiceOrdersParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const listCustomerServiceOrdersQueryPageDefault = 1;
+export const listCustomerServiceOrdersQueryPageMax = 100000;
+
+export const listCustomerServiceOrdersQuerySearchMax = 100;
+
+
+
+export const ListCustomerServiceOrdersQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(listCustomerServiceOrdersQueryPageMax).default(listCustomerServiceOrdersQueryPageDefault),
+  "search": zod.coerce.string().max(listCustomerServiceOrdersQuerySearchMax).optional(),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']).optional(),
+  "status": zod.enum(['pending', 'processing', 'completed', 'rejected', 'cancelled']).optional()
+})
+
+export const ListCustomerServiceOrdersResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const PlaceCustomerServiceOrderParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const placeCustomerServiceOrderBodyCurrencyMin = 3;
+export const placeCustomerServiceOrderBodyCurrencyMax = 3;
+
+export const placeCustomerServiceOrderBodyExpectedPriceUsdUnitsRegExp = new RegExp('^[0-9]{1,24}$');
+export const placeCustomerServiceOrderBodyInputsMaxOne = 4000;
+
+
+
+export const PlaceCustomerServiceOrderBody = zod.object({
+  "serviceId": zod.string().uuid(),
+  "currency": zod.string().min(placeCustomerServiceOrderBodyCurrencyMin).max(placeCustomerServiceOrderBodyCurrencyMax).optional(),
+  "expectedPriceUsdUnits": zod.string().regex(placeCustomerServiceOrderBodyExpectedPriceUsdUnitsRegExp).describe('Stale-quote guard only. Actual charge always comes from locked server service row.'),
+  "idempotencyKey": zod.string().uuid(),
+  "inputs": zod.record(zod.string(), zod.string().max(placeCustomerServiceOrderBodyInputsMaxOne))
+})
+
+export const PlaceCustomerServiceOrderResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const GetCustomerServiceOrderParams = zod.object({
+  "slug": zod.coerce.string(),
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetCustomerServiceOrderResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const GetCustomerStatementParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const getCustomerStatementQueryPageDefault = 1;
+export const getCustomerStatementQueryPageMax = 100000;
+
+export const getCustomerStatementQuerySearchMax = 100;
+
+
+
+export const GetCustomerStatementQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(getCustomerStatementQueryPageMax).default(getCustomerStatementQueryPageDefault),
+  "search": zod.coerce.string().max(getCustomerStatementQuerySearchMax).optional(),
+  "direction": zod.enum(['credit', 'debit']).optional(),
+  "type": zod.enum(['admin_credit', 'admin_debit', 'adjustment', 'order_debit', 'order_refund']).optional()
+})
+
+export const GetCustomerStatementResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
 
 export const listResellerClientsQuerySearchMax = 100;
 
@@ -45,6 +438,8 @@ export const ListResellerClientsResponse = zod.object({
   "enabled": zod.boolean(),
   "orderCount": zod.number().int(),
   "availableBalance": zod.string(),
+  "lockedAmount": zod.string().optional(),
+  "groupId": zod.string().uuid().nullish(),
   "due": zod.string()
 }))),
   "page": zod.number().int(),
@@ -82,6 +477,8 @@ export const GetResellerClientResponse = zod.object({
   "enabled": zod.boolean(),
   "orderCount": zod.number().int(),
   "availableBalance": zod.string(),
+  "lockedAmount": zod.string().optional(),
+  "groupId": zod.string().uuid().nullish(),
   "due": zod.string()
 })),
   "options": zod.object({

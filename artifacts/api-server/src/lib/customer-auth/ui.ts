@@ -6,6 +6,7 @@ import { PUBLIC_MENU_SCRIPT, PUBLIC_MENU_SCRIPT_HASH } from '../public-site/mobi
 import type { PublicSiteModel } from '../public-site/model';
 
 import type { CustomerProfile as Profile } from './types';
+import { PANEL_STYLES, PANEL_SCRIPT, PANEL_SCRIPT_HASH, renderPanelMain, panelTitle, type PanelPage } from './panel-ui';
 import { ONBOARDING_STYLES, ONBOARDING_HASH, ONBOARDING_SCRIPT, renderRegistrationWizard } from './onboarding-ui';
 const localPath = (v: unknown): string | null =>
   typeof v === 'string' && /^\/(?!\/)[^\s"'<>\\]*$/.test(v) ? v : null;
@@ -143,7 +144,8 @@ function accountDetails(c: Profile): string {
   return `<dl class="ca-dl">${rows.filter(([, v]) => v).map(([k, v]) => `<div><dt>${e(k)}</dt><dd>${e(String(v))}</dd></div>`).join('')}</dl>`;
 }
 
-export function renderCustomerDocument(m: PublicSiteModel, mode: 'login' | 'register' | 'account', customer?: Profile): string {
+export function renderCustomerDocument(m: PublicSiteModel, mode: 'login' | 'register' | 'account' | 'services' | 'orders' | 'wallet' | 'profile', customer?: Profile): string {
+  const panel: PanelPage | null = mode === 'account' ? 'dashboard' : mode === 'services' || mode === 'orders' || mode === 'wallet' || mode === 'profile' ? mode : null;
   const ca = m.customerAccess;
   const home = localPath(ca?.homeHref) ?? '/';
   const api = localPath(ca?.apiBase) ?? '';
@@ -160,17 +162,21 @@ ${field('email', 'Email, username or client code', 'text', 'username', ' maxleng
 <p class="ca-alt">New here? <a href="${e(register)}">Create an account</a></p>`;
   } else if (mode === 'register') {
     body = renderRegistrationWizard(api, login, m.siteName);
+  } else if (panel) {
+    body = '';
   } else {
     const c: Profile = customer ?? { firstName: '', lastName: '', email: '' };
     body = `<h1>My account</h1><p class="ca-sub">Your details with ${e(m.siteName)}.</p>
 ${accountDetails(c)}
 <button type="button" class="ca-out" data-customer-logout data-endpoint="${e(api + '/logout')}" data-home="${e(home)}">Logout</button>`;
   }
-  const title = mode === 'login' ? 'Login' : mode === 'register' ? 'Register' : 'My account';
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}${mode === 'register' ? ONBOARDING_STYLES : ''}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style></head><body>
+  const title = mode === 'login' ? 'Login' : mode === 'register' ? 'Register' : panel ? panelTitle(panel) : 'My account';
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}${mode === 'register' ? ONBOARDING_STYLES : ''}${panel ? PANEL_STYLES : ''}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style></head><body>
 ${header}<button type="button" class="mobile-menu-backdrop" aria-label="Close mobile menu" hidden></button>
- <main class="ca-page"><div class="ca-card${mode === 'register' ? ' ca-wide' : ''}">${body}<noscript><p class="ca-status">JavaScript is required for customer sign-in and registration.</p></noscript></div></main>
-<script>${PUBLIC_MENU_SCRIPT}</script><script>${CUSTOMER_AUTH_SCRIPT}</script>${mode === 'register' ? `<script>${ONBOARDING_SCRIPT}</script>` : ''}</body></html>`;
+ ${panel ? renderPanelMain(m, panel, customer) : `<main class="ca-page"><div class="ca-card${mode === 'register' ? ' ca-wide' : ''}">${body}<noscript><p class="ca-status">JavaScript is required for customer sign-in and registration.</p></noscript></div></main>`}
+<script>${PUBLIC_MENU_SCRIPT}</script><script>${CUSTOMER_AUTH_SCRIPT}</script>${panel ? `<script>${PANEL_SCRIPT}</script>` : ''}${mode === 'register' ? `<script>${ONBOARDING_SCRIPT}</script>` : ''}</body></html>`;
 }
 
-export const CUSTOMER_DOCUMENT_SCRIPT_HASHES = [PUBLIC_MENU_SCRIPT_HASH, CUSTOMER_AUTH_HASH, ONBOARDING_HASH];
+export const CUSTOMER_DOCUMENT_SCRIPT_HASHES = [PUBLIC_MENU_SCRIPT_HASH, CUSTOMER_AUTH_HASH, ONBOARDING_HASH, PANEL_SCRIPT_HASH];
+
+export { PANEL_SCRIPT_HASH, PANEL_STYLES, PANEL_SCRIPT };

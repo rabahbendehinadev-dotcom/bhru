@@ -5,6 +5,177 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+/**
+ * Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.
+ */
+export interface FoundationResponse {[key: string]: unknown}
+
+export interface FoundationGroupInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+}
+
+export interface ClientGroupAssignment {
+  /** @nullable */
+  groupId: string | null;
+}
+
+export type ServiceRequirementType = typeof ServiceRequirementType[keyof typeof ServiceRequirementType];
+
+
+export const ServiceRequirementType = {
+  text: 'text',
+  textarea: 'textarea',
+  number: 'number',
+  select: 'select',
+  imei: 'imei',
+  reference: 'reference',
+} as const;
+
+export interface ServiceRequirement {
+  /** @pattern ^[a-z][a-z0-9_]{0,31}$ */
+  key: string;
+  /** @maxLength 100 */
+  label: string;
+  type: ServiceRequirementType;
+  required: boolean;
+  /**
+     * @maxItems 50
+     * @items.maxLength 100
+     */
+  options?: string[];
+}
+
+export type ManualServiceInputServiceType = typeof ManualServiceInputServiceType[keyof typeof ManualServiceInputServiceType];
+
+
+export const ManualServiceInputServiceType = {
+  imei: 'imei',
+  server: 'server',
+  file: 'file',
+  remote: 'remote',
+} as const;
+
+export interface ManualServiceInput {
+  /**
+     * @minLength 1
+     * @maxLength 160
+     */
+  name: string;
+  serviceType: ManualServiceInputServiceType;
+  /** @nullable */
+  groupId?: string | null;
+  /** @maxLength 4000 */
+  description?: string;
+  /** @pattern ^\\d{1,10}(\\.\\d{1,12})?$ */
+  priceUsd: string;
+  /** @maxLength 100 */
+  estimatedTime?: string;
+  active: boolean;
+  /**
+     * @minimum 0
+     * @maximum 100000
+     */
+  displayOrder: number;
+  /** @maxItems 12 */
+  requirements: ServiceRequirement[];
+}
+
+export type WalletMutationInputOperation = typeof WalletMutationInputOperation[keyof typeof WalletMutationInputOperation];
+
+
+export const WalletMutationInputOperation = {
+  add: 'add',
+  deduct: 'deduct',
+  adjustment: 'adjustment',
+} as const;
+
+export type WalletMutationInputDirection = typeof WalletMutationInputDirection[keyof typeof WalletMutationInputDirection];
+
+
+export const WalletMutationInputDirection = {
+  credit: 'credit',
+  debit: 'debit',
+} as const;
+
+export interface WalletMutationInput {
+  operation: WalletMutationInputOperation;
+  direction: WalletMutationInputDirection;
+  /** @pattern ^\\d{1,15}(\\.\\d{1,6})?$ */
+  amount: string;
+  /**
+     * @minLength 3
+     * @maxLength 3
+     */
+  currency: string;
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  reason: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  method: string;
+  /** @maxLength 200 */
+  transactionReference?: string;
+  /** @maxLength 2000 */
+  internalNote?: string;
+  /** @maxLength 500 */
+  customerNote?: string;
+  idempotencyKey: string;
+}
+
+export interface ServiceQuoteInput {
+  serviceId: string;
+  /**
+     * @minLength 3
+     * @maxLength 3
+     */
+  currency?: string;
+}
+
+export type ServicePurchaseInputInputs = {[key: string]: string};
+
+export interface ServicePurchaseInput {
+  serviceId: string;
+  /**
+     * @minLength 3
+     * @maxLength 3
+     */
+  currency?: string;
+  /**
+     * Stale-quote guard only. Actual charge always comes from locked server service row.
+     * @pattern ^[0-9]{1,24}$
+     */
+  expectedPriceUsdUnits: string;
+  idempotencyKey: string;
+  inputs: ServicePurchaseInputInputs;
+}
+
+export type ServiceOrderTransitionStatus = typeof ServiceOrderTransitionStatus[keyof typeof ServiceOrderTransitionStatus];
+
+
+export const ServiceOrderTransitionStatus = {
+  processing: 'processing',
+  completed: 'completed',
+  rejected: 'rejected',
+} as const;
+
+export interface ServiceOrderTransition {
+  status: ServiceOrderTransitionStatus;
+  /** @maxLength 4000 */
+  result?: string;
+  /** @maxLength 1000 */
+  reason?: string;
+  /** @maxLength 2000 */
+  internalNote?: string;
+}
+
 export interface ResellerClientStatusInput {
   enabled: boolean;
 }
@@ -67,13 +238,16 @@ export interface PublicCustomerProfile {
   termsAcceptedAt?: string | null;
 }
 
-export type ResellerClient = PublicCustomerProfile & {
+export type ResellerClient = PublicCustomerProfile & ({
   id: string;
   enabled: boolean;
   orderCount: number;
   availableBalance: string;
+  lockedAmount?: string;
+  /** @nullable */
+  groupId?: string | null;
   due: string;
-};
+});
 
 export interface ResellerClientList {
   data: ResellerClient[];
@@ -934,6 +1108,179 @@ export interface CommerceEnvelope {
  * Strict resource inputs. Products price/compare_at are canonical USD decimal strings, max 12 decimals; price_usd_units is the authoritative 10^12-scaled integer in model 2. price_minor is a derived cents projection only. Currency rates are manual target units per USD, max six decimals. display-currency accepts {code} and persists a user display preference only. Model 1 amounts retain their legacy denomination. Quotes/snapshots expose money_model_version, canonical_scale and immutable converted customer amounts.
  */
 export interface CommerceInput { [key: string]: unknown }
+
+export type FoundationPageParameter = number;
+
+export type FoundationSearchParameter = string;
+
+export type FoundationServiceTypeParameter = typeof FoundationServiceTypeParameter[keyof typeof FoundationServiceTypeParameter];
+
+
+export const FoundationServiceTypeParameter = {
+  imei: 'imei',
+  server: 'server',
+  file: 'file',
+  remote: 'remote',
+} as const;
+
+export type ListManualServicesParams = {
+/**
+ * @minimum 1
+ * @maximum 100000
+ */
+page?: FoundationPageParameter;
+/**
+ * @maxLength 100
+ */
+search?: FoundationSearchParameter;
+serviceType?: FoundationServiceTypeParameter;
+groupId?: string;
+status?: ListManualServicesStatus;
+};
+
+export type ListManualServicesStatus = typeof ListManualServicesStatus[keyof typeof ListManualServicesStatus];
+
+
+export const ListManualServicesStatus = {
+  active: 'active',
+  inactive: 'inactive',
+} as const;
+
+export type GetClientStatementParams = {
+/**
+ * @minimum 1
+ * @maximum 100000
+ */
+page?: FoundationPageParameter;
+/**
+ * @maxLength 100
+ */
+search?: FoundationSearchParameter;
+direction?: GetClientStatementDirection;
+type?: GetClientStatementType;
+};
+
+export type GetClientStatementDirection = typeof GetClientStatementDirection[keyof typeof GetClientStatementDirection];
+
+
+export const GetClientStatementDirection = {
+  credit: 'credit',
+  debit: 'debit',
+} as const;
+
+export type GetClientStatementType = typeof GetClientStatementType[keyof typeof GetClientStatementType];
+
+
+export const GetClientStatementType = {
+  admin_credit: 'admin_credit',
+  admin_debit: 'admin_debit',
+  adjustment: 'adjustment',
+  order_debit: 'order_debit',
+  order_refund: 'order_refund',
+} as const;
+
+export type ListServiceOrdersParams = {
+/**
+ * @minimum 1
+ * @maximum 100000
+ */
+page?: FoundationPageParameter;
+/**
+ * @maxLength 100
+ */
+search?: FoundationSearchParameter;
+serviceType?: FoundationServiceTypeParameter;
+customerId?: string;
+status?: ListServiceOrdersStatus;
+};
+
+export type ListServiceOrdersStatus = typeof ListServiceOrdersStatus[keyof typeof ListServiceOrdersStatus];
+
+
+export const ListServiceOrdersStatus = {
+  pending: 'pending',
+  processing: 'processing',
+  completed: 'completed',
+  rejected: 'rejected',
+  cancelled: 'cancelled',
+} as const;
+
+export type ListCustomerServicesParams = {
+/**
+ * @minimum 1
+ * @maximum 100000
+ */
+page?: FoundationPageParameter;
+/**
+ * @maxLength 100
+ */
+search?: FoundationSearchParameter;
+serviceType?: FoundationServiceTypeParameter;
+groupId?: string;
+/**
+ * @minLength 3
+ * @maxLength 3
+ */
+currency?: string;
+};
+
+export type ListCustomerServiceOrdersParams = {
+/**
+ * @minimum 1
+ * @maximum 100000
+ */
+page?: FoundationPageParameter;
+/**
+ * @maxLength 100
+ */
+search?: FoundationSearchParameter;
+serviceType?: FoundationServiceTypeParameter;
+status?: ListCustomerServiceOrdersStatus;
+};
+
+export type ListCustomerServiceOrdersStatus = typeof ListCustomerServiceOrdersStatus[keyof typeof ListCustomerServiceOrdersStatus];
+
+
+export const ListCustomerServiceOrdersStatus = {
+  pending: 'pending',
+  processing: 'processing',
+  completed: 'completed',
+  rejected: 'rejected',
+  cancelled: 'cancelled',
+} as const;
+
+export type GetCustomerStatementParams = {
+/**
+ * @minimum 1
+ * @maximum 100000
+ */
+page?: FoundationPageParameter;
+/**
+ * @maxLength 100
+ */
+search?: FoundationSearchParameter;
+direction?: GetCustomerStatementDirection;
+type?: GetCustomerStatementType;
+};
+
+export type GetCustomerStatementDirection = typeof GetCustomerStatementDirection[keyof typeof GetCustomerStatementDirection];
+
+
+export const GetCustomerStatementDirection = {
+  credit: 'credit',
+  debit: 'debit',
+} as const;
+
+export type GetCustomerStatementType = typeof GetCustomerStatementType[keyof typeof GetCustomerStatementType];
+
+
+export const GetCustomerStatementType = {
+  admin_credit: 'admin_credit',
+  admin_debit: 'admin_debit',
+  adjustment: 'adjustment',
+  order_debit: 'order_debit',
+  order_refund: 'order_refund',
+} as const;
 
 export type ListResellerClientsParams = {
 /**

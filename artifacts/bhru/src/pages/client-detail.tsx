@@ -5,6 +5,7 @@ import { Btn, Card, ConfirmDialog, Field } from '@/components/bhru/ui';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import { useClientDetail, useClientMutations } from '@/hooks/use-clients';
 import { errText } from '@/hooks/use-commerce';
+import { FinancialPanel, ClientOrdersPanel, ClientGroupAssign } from '@/pages/client-finance';
 import { clientName } from '@/pages/clients';
 import type { ResellerClientDetail, ResellerClientProfileInput } from '@workspace/api-client-react';
 
@@ -15,6 +16,8 @@ const when = (s?: string | null) => { if (!s) return '-'; const d = new Date(s);
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return <div className="flex justify-between gap-3 border-b py-1.5 text-[12.5px] last:border-0"><dt className="text-muted-foreground">{k}</dt><dd className="min-w-0 break-words text-right font-medium">{v || '-'}</dd></div>;
 }
+
+const fmt = (d: ResellerClientDetail, f: string, raw: string) => { const x = d.financial as unknown as Record<string, string>; return x[f] ?? x[raw] ?? d.financial.formattedZero; };
 
 function toInput(c: ResellerClientDetail['client']): ResellerClientProfileInput {
   return {
@@ -119,13 +122,10 @@ export default function ClientDetailPage({ id }: { id: string }) {
             <Row k="Location" v={[c.city, c.state, c.countryCode].filter(Boolean).join(', ')} /><Row k="Registered" v={when(c.createdAt)} /><Row k="Last login" v={when(c.lastLoginAt)} /></dl></Card>
           <Card className="p-3.5"><h2 className="mb-1 text-[13px] font-semibold">Summary</h2><dl>
             <Row k="Status" v={c.enabled ? 'Active' : 'Blocked'} /><Row k="Total orders" v={d.orderSummary.totalOrders} /><Row k="Retail orders" v={d.orderSummary.retailOrders} />
-            <Row k="Available balance" v={d.financial.formattedZero} /><Row k="Due" v={d.financial.formattedZero} /></dl></Card></div>}
-        {tab === 'Financial' && <Card className="p-3.5"><dl><Row k="Available balance" v={d.financial.formattedZero} /><Row k="Locked amount" v={d.financial.formattedZero} /><Row k="Due" v={d.financial.formattedZero} /></dl>
-          {!d.financial.ledgerAvailable && <p className="mt-2 text-[11.5px] text-muted-foreground" data-testid="text-ledger-note">No client ledger is connected yet, so balances show {d.financial.formattedZero}.</p>}</Card>}
-        {tab === 'Profile' && <ProfileForm id={id} d={d} />}
-        {tab === 'Orders' && <Card>{d.orders.length === 0 ? <EmptyState compact title="No orders yet" description="This client has not placed an order." /> :
-          <div className="scroll-thin overflow-x-auto"><table className="tbl"><thead><tr><th>Reference</th><th>Status</th><th>Total</th><th>Date</th></tr></thead>
-            <tbody>{d.orders.map((o) => <tr key={o.id} data-testid={`row-order-${o.id}`}><td className="font-mono text-[11.5px]">{o.reference}</td><td className="capitalize">{o.status}</td><td>{o.formattedTotal}</td><td>{when(o.createdAt)}</td></tr>)}</tbody></table></div>}</Card>}
+            <Row k="Available balance" v={fmt(d, 'formattedAvailable', 'availableBalance')} /><Row k="Locked" v={fmt(d, 'formattedLocked', 'lockedAmount')} /><Row k="Due" v={fmt(d, 'formattedDue', 'due')} /></dl></Card></div>}
+        {tab === 'Financial' && <FinancialPanel id={id} d={d} />}
+        {tab === 'Profile' && <><ProfileForm id={id} d={d} /><ClientGroupAssign id={id} d={d} /></>}
+        {tab === 'Orders' && <ClientOrdersPanel id={id} d={d} />}
         {tab === 'Activity' && <Card>{d.activity.length === 0 ? <EmptyState compact title="No activity yet" /> : <ul className="divide-y">{d.activity.map((a) => <li key={a.id} className="flex justify-between gap-3 p-3 text-[12.5px]"><span>{a.action}</span><span className="shrink-0 text-muted-foreground">{when(a.createdAt)}</span></li>)}</ul>}</Card>}
         {tab === 'Notes' && <Notes id={id} d={d} />}
       </div>

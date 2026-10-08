@@ -7,6 +7,7 @@ import publicWebsiteRouter from "./public-website";
 import commerceRouter from "./commerce";
 import domainsRouter from "./domains";
 import clientsRouter from "./clients";
+import clientFinanceRouter from "./client-finance";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(publicWebsiteRouter);
 router.use(commerceRouter);
 router.use(domainsRouter);
 router.use(clientsRouter);
+router.use(clientFinanceRouter);
 
 export default router;

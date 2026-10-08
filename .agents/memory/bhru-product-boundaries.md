@@ -9,6 +9,12 @@ BHRU serves unlock and digital-services server owners. A BHRU Subscriber is the 
 
 **How to apply:** Keep platform subscriber management separate from the subscriber's customer/order/service surfaces.
 
+The user's primary BHRU business workflow is: reseller offers an unlock service, customer funds a prepaid wallet and orders it, reseller processes it manually, and rejection restores the original debit. Retail/E-Commerce checkout and orders remain completely separate.
+
+**Why:** The user explicitly called this the core BHRU use case and forbade mixing it with Retail checkout.
+
+**How to apply:** Prioritize service catalog, customer wallet and service orders as one tenant-bound business flow. Treat future provider automation as an adapter to that flow, not a replacement for its order or money model.
+
 The user directs development screen by screen. Build only the requested iteration, show the Preview and testing instructions, then stop and wait for review. Do not advance to another phase without approval.
 
 **Why:** The user stated: «لا تنتقل لأي مرحلة أخرى بدون موافقتي».

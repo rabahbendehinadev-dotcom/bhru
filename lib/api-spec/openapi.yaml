@@ -11,6 +11,169 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /manual-services:
+    get:
+      operationId: listManualServices
+      parameters:
+        - {$ref: '#/components/parameters/FoundationPage'}
+        - {$ref: '#/components/parameters/FoundationSearch'}
+        - {$ref: '#/components/parameters/FoundationServiceType'}
+        - {in: query, name: groupId, schema: {type: string, format: uuid}}
+        - {in: query, name: status, schema: {type: string, enum: [active, inactive]}}
+      responses:
+        '200': {description: Tenant catalog, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    post:
+      operationId: createManualService
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ManualServiceInput'}}}}
+      responses:
+        '201': {description: Saved service, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /manual-services/{id}:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    get:
+      operationId: getManualService
+      responses:
+        '200': {description: Tenant service, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    patch:
+      operationId: updateManualService
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ManualServiceInput'}}}}
+      responses:
+        '200': {description: Saved service, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /service-groups:
+    get:
+      operationId: listServiceGroups
+      responses:
+        '200': {description: Tenant groups, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    post:
+      operationId: createServiceGroup
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationGroupInput'}}}}
+      responses:
+        '201': {description: Created group, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /client-groups:
+    get:
+      operationId: listClientGroups
+      responses:
+        '200': {description: Tenant client groups, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    post:
+      operationId: createClientGroup
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationGroupInput'}}}}
+      responses:
+        '201': {description: Created group, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /clients/{id}/group:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    put:
+      operationId: assignClientGroup
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ClientGroupAssignment'}}}}
+      responses:
+        '200': {description: Assigned group, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /clients/{id}/wallet:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    get:
+      operationId: getClientWallet
+      responses:
+        '200': {description: Real USD-basis financial summary, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    post:
+      operationId: mutateClientWallet
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/WalletMutationInput'}}}}
+      responses:
+        '200': {description: Idempotent immutable movement, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /clients/{id}/statement:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    get:
+      operationId: getClientStatement
+      parameters:
+        - {$ref: '#/components/parameters/FoundationPage'}
+        - {$ref: '#/components/parameters/FoundationSearch'}
+        - {in: query, name: direction, schema: {type: string, enum: [credit, debit]}}
+        - {in: query, name: type, schema: {type: string, enum: [admin_credit, admin_debit, adjustment, order_debit, order_refund]}}
+      responses:
+        '200': {description: Paginated internal statement, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /service-orders:
+    get:
+      operationId: listServiceOrders
+      parameters:
+        - {$ref: '#/components/parameters/FoundationPage'}
+        - {$ref: '#/components/parameters/FoundationSearch'}
+        - {$ref: '#/components/parameters/FoundationServiceType'}
+        - {in: query, name: customerId, schema: {type: string, format: uuid}}
+        - {in: query, name: status, schema: {type: string, enum: [pending, processing, completed, rejected, cancelled]}}
+      responses:
+        '200': {description: Tenant service orders, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /service-orders/{id}:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    get:
+      operationId: getServiceOrder
+      responses:
+        '200': {description: Order and immutable snapshots, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    put:
+      operationId: transitionServiceOrder
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ServiceOrderTransition'}}}}
+      responses:
+        '200': {description: Validated transition with atomic rejection refund, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /public/customer/{slug}/panel:
+    parameters: [{in: path, name: slug, required: true, schema: {type: string}}]
+    get:
+      operationId: getCustomerPanel
+      responses:
+        '200': {description: Own financial summary and real service-order metrics, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /public/customer/{slug}/panel/services:
+    parameters: [{in: path, name: slug, required: true, schema: {type: string}}]
+    get:
+      operationId: listCustomerServices
+      parameters:
+        - {$ref: '#/components/parameters/FoundationPage'}
+        - {$ref: '#/components/parameters/FoundationSearch'}
+        - {$ref: '#/components/parameters/FoundationServiceType'}
+        - {in: query, name: groupId, schema: {type: string, format: uuid}}
+        - {in: query, name: currency, schema: {type: string, minLength: 3, maxLength: 3}}
+      responses:
+        '200': {description: Active tenant services with exact formatted prices, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /public/customer/{slug}/panel/services/{id}:
+    parameters: [{in: path, name: slug, required: true, schema: {type: string}}, {in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    get:
+      operationId: getCustomerService
+      responses:
+        '200': {description: Active service and requirement fields, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /public/customer/{slug}/panel/quote:
+    parameters: [{in: path, name: slug, required: true, schema: {type: string}}]
+    post:
+      operationId: quoteCustomerService
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ServiceQuoteInput'}}}}
+      responses:
+        '200': {description: Server price and sufficient-funds assessment, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /public/customer/{slug}/panel/orders:
+    parameters: [{in: path, name: slug, required: true, schema: {type: string}}]
+    get:
+      operationId: listCustomerServiceOrders
+      parameters:
+        - {$ref: '#/components/parameters/FoundationPage'}
+        - {$ref: '#/components/parameters/FoundationSearch'}
+        - {$ref: '#/components/parameters/FoundationServiceType'}
+        - {in: query, name: status, schema: {type: string, enum: [pending, processing, completed, rejected, cancelled]}}
+      responses:
+        '200': {description: Own service orders, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    post:
+      operationId: placeCustomerServiceOrder
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ServicePurchaseInput'}}}}
+      responses:
+        '201': {description: Atomic idempotent order and debit, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+        '409': {description: Insufficient balance or conflicting idempotency key}
+  /public/customer/{slug}/panel/orders/{id}:
+    parameters: [{in: path, name: slug, required: true, schema: {type: string}}, {in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    get:
+      operationId: getCustomerServiceOrder
+      responses:
+        '200': {description: Own order excluding reseller notes, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /public/customer/{slug}/panel/statement:
+    parameters: [{in: path, name: slug, required: true, schema: {type: string}}]
+    get:
+      operationId: getCustomerStatement
+      parameters:
+        - {$ref: '#/components/parameters/FoundationPage'}
+        - {$ref: '#/components/parameters/FoundationSearch'}
+        - {in: query, name: direction, schema: {type: string, enum: [credit, debit]}}
+        - {in: query, name: type, schema: {type: string, enum: [admin_credit, admin_debit, adjustment, order_debit, order_refund]}}
+      responses:
+        '200': {description: Own paginated statement excluding internal notes and actor IDs, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
   /clients:
     get:
       operationId: listResellerClients
@@ -753,7 +916,92 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 components:
+  parameters:
+    FoundationPage: {in: query, name: page, schema: {type: integer, minimum: 1, maximum: 100000, default: 1}}
+    FoundationSearch: {in: query, name: search, schema: {type: string, maxLength: 100}}
+    FoundationServiceType: {in: query, name: serviceType, schema: {type: string, enum: [imei, server, file, remote]}}
   schemas:
+    FoundationResponse:
+      type: object
+      description: Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.
+      additionalProperties: {}
+    FoundationGroupInput:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+    ClientGroupAssignment:
+      type: object
+      required: [groupId]
+      additionalProperties: false
+      properties:
+        groupId: {type: [string, 'null'], format: uuid}
+    ServiceRequirement:
+      type: object
+      required: [key, label, type, required]
+      additionalProperties: false
+      properties:
+        key: {type: string, pattern: '^[a-z][a-z0-9_]{0,31}$'}
+        label: {type: string, maxLength: 100}
+        type: {type: string, enum: [text, textarea, number, select, imei, reference]}
+        required: {type: boolean}
+        options: {type: array, maxItems: 50, items: {type: string, maxLength: 100}}
+    ManualServiceInput:
+      type: object
+      required: [name, serviceType, priceUsd, active, displayOrder, requirements]
+      additionalProperties: false
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        serviceType: {type: string, enum: [imei, server, file, remote]}
+        groupId: {type: [string, 'null'], format: uuid}
+        description: {type: string, maxLength: 4000}
+        priceUsd: {type: string, pattern: '^\\d{1,10}(\\.\\d{1,12})?$'}
+        estimatedTime: {type: string, maxLength: 100}
+        active: {type: boolean}
+        displayOrder: {type: integer, minimum: 0, maximum: 100000}
+        requirements: {type: array, maxItems: 12, items: {$ref: '#/components/schemas/ServiceRequirement'}}
+    WalletMutationInput:
+      type: object
+      required: [operation, direction, amount, currency, reason, method, idempotencyKey]
+      additionalProperties: false
+      properties:
+        operation: {type: string, enum: [add, deduct, adjustment]}
+        direction: {type: string, enum: [credit, debit]}
+        amount: {type: string, pattern: '^\\d{1,15}(\\.\\d{1,6})?$'}
+        currency: {type: string, minLength: 3, maxLength: 3}
+        reason: {type: string, minLength: 1, maxLength: 500}
+        method: {type: string, minLength: 1, maxLength: 100}
+        transactionReference: {type: string, maxLength: 200}
+        internalNote: {type: string, maxLength: 2000}
+        customerNote: {type: string, maxLength: 500}
+        idempotencyKey: {type: string, format: uuid}
+    ServiceQuoteInput:
+      type: object
+      required: [serviceId]
+      additionalProperties: false
+      properties:
+        serviceId: {type: string, format: uuid}
+        currency: {type: string, minLength: 3, maxLength: 3}
+    ServicePurchaseInput:
+      type: object
+      additionalProperties: false
+      required: [serviceId, expectedPriceUsdUnits, idempotencyKey, inputs]
+      properties:
+        serviceId: {type: string, format: uuid}
+        currency: {type: string, minLength: 3, maxLength: 3}
+        expectedPriceUsdUnits: {type: string, pattern: '^[0-9]{1,24}$', description: Stale-quote guard only. Actual charge always comes from locked server service row.}
+        idempotencyKey: {type: string, format: uuid}
+        inputs: {type: object, additionalProperties: {type: string, maxLength: 4000}}
+    ServiceOrderTransition:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status: {type: string, enum: [processing, completed, rejected]}
+        result: {type: string, maxLength: 4000}
+        reason: {type: string, maxLength: 1000}
+        internalNote: {type: string, maxLength: 2000}
     ResellerClientStatusInput:
       type: object
       required: [enabled]
@@ -788,6 +1036,8 @@ components:
             enabled: { type: boolean }
             orderCount: { type: integer }
             availableBalance: { type: string }
+            lockedAmount: {type: string}
+            groupId: {type: [string, 'null'], format: uuid}
             due: { type: string }
     ResellerClientList:
       type: object

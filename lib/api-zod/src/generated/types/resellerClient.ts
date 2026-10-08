@@ -7,10 +7,13 @@
  */
 import type { PublicCustomerProfile } from './publicCustomerProfile';
 
-export type ResellerClient = PublicCustomerProfile & {
+export type ResellerClient = PublicCustomerProfile & ({
   id: string;
   enabled: boolean;
   orderCount: number;
   availableBalance: string;
+  lockedAmount?: string;
+  /** @nullable */
+  groupId?: string | null;
   due: string;
-};
+});

@@ -11,6 +11,7 @@ import { request as httpRequest } from 'node:http';
 import { pathToFileURL } from 'node:url';
 import { Script } from 'node:vm';
 import { build } from '../artifacts/api-server/node_modules/esbuild/lib/main.js';
+import { testWalletServices } from './test-wallet-services.mjs';
 
 const root=resolve(import.meta.dirname,'..'), temp=await mkdtemp(join(tmpdir(),'bhru-onboarding-'));
 const data=join(temp,'data'), log=join(temp,'postgres.log');
@@ -61,7 +62,7 @@ try {
   connection=await pool.connect();
   const files=(await readdir(join(root,'lib/db/src/migrations'))).filter(f=>/^\d+_.+\.sql$/.test(f)).sort();
   await connection.query('CREATE TABLE schema_migrations(name text PRIMARY KEY,checksum text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())');
-  for(const file of files.filter(f=>!f.startsWith('020_'))) {
+  for(const file of files.filter(f=>Number.parseInt(f,10)<20)) {
     const sql=await readFile(join(root,'lib/db/src/migrations',file),'utf8');
     await connection.query('BEGIN');
     if(file.startsWith('004_')) await connection.query("SELECT set_config('bhru.private_admin_segment',$1,true)",['private-test-entry']);
@@ -97,7 +98,8 @@ try {
   await check('020 migration applies additively; old migration checksums are skipped',async()=>{
     const out=command('node',[join(root,'artifacts/api-server/dist/migrate.mjs')]);
     assert.match(out,/Applied: 020_public_customer_onboarding.sql/);
-    assert.equal((out.match(/Already applied:/g)||[]).length,files.length-1);
+    assert.match(out,/Applied: 021_customer_wallet_manual_services.sql/);
+    assert.equal((out.match(/Already applied:/g)||[]).length,files.filter(f=>Number.parseInt(f,10)<20).length);
     const after=(await pool.query('SELECT * FROM public_customer_accounts WHERE id=$1',[legacyId])).rows[0];
     assert.match(after.client_code,/^[A-Z0-9]{8}$/);assert.equal(after.username,after.client_code);
     assert.equal(after.password_hash,legacyBefore.password_hash);assert.equal(+after.created_at,+legacyBefore.created_at);
@@ -272,7 +274,7 @@ try {
     const d=await req(`/api/clients/${newClient.id}`,{cookie:ownerCookieA});
     assert.equal(d.status,200);assert.equal(d.json.notes[0].body,'Internal fixture note');
     assert.equal(d.json.financial.availableBalance,'0');assert.equal(d.json.financial.lockedAmount,'0');assert.equal(d.json.financial.due,'0');
-    assert.equal(d.json.financial.ledgerAvailable,false);assert.match(d.json.financial.formattedZero,/0\.00/);
+    assert.equal(d.json.financial.ledgerAvailable,true);assert.match(d.json.financial.formattedZero,/0\.00/);
     const publicAccount=await req('/site-a/customer/account',{cookie:customerCookie});
     assert.equal(publicAccount.status,200);assert.ok(publicAccount.text.includes('Updated Street'));
     assert.ok(!publicAccount.text.includes('Internal fixture note')&&!publicAccount.text.includes(newClient.id));
@@ -353,6 +355,7 @@ try {
     assert.ok((await pool.query('SELECT count(*)::int n FROM sessions')).rows[0].n>=2);
     assert.equal((await req('/private-test-entry',{cookie:ownerCookieA})).status,403);
   });
+  await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   console.log(`\n${checks} focused onboarding/client-management SQL and HTTP groups passed. No production database, DNS, browser or deployment used.`);
 } finally {
   if(server) await new Promise(r=>server.close(r));

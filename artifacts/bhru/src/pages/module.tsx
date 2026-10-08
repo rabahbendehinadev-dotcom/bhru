@@ -12,6 +12,9 @@ import PublicWebsitePage from '@/pages/public-website';
 import ClientsPage from '@/pages/clients';
 import ClientDetailPage from '@/pages/client-detail';
 import CustomDomainsPage from '@/pages/custom-domains';
+import ManualServicesPage from '@/pages/manual-services';
+import ServiceOrdersPage from '@/pages/service-orders';
+import { ClientGroupsPage } from '@/pages/client-finance';
 
 function Crumbs({ items }: { items: string[] }) {
   return (
@@ -51,6 +54,13 @@ export default function Module() {
   }
 
   if (r.slug === 'clients') return <><Crumbs items={r.crumbs} /><ClientsPage /></>;
+
+  const svc: Record<string, 'imei' | 'file' | 'server' | 'remote'> = { 'imei-service': 'imei', 'file-service': 'file', 'server-service': 'server', 'remote-service': 'remote' };
+  if (svc[r.slug]) return <><Crumbs items={r.crumbs} /><ManualServicesPage key={r.slug} type={svc[r.slug]} title={r.title} /></>;
+  const ord: Record<string, string | undefined> = { 'all-orders': undefined, 'imei-orders': 'imei', 'server-orders': 'server', 'remote-orders': 'remote' };
+  if (r.slug in ord) return <><Crumbs items={r.crumbs} /><ServiceOrdersPage key={r.slug} type={ord[r.slug]} title={r.title} /></>;
+  if (r.slug === 'order-history') return <><Crumbs items={r.crumbs} /><ServiceOrdersPage key={r.slug} title={r.title} history /></>;
+  if (r.slug === 'client-group') return <><Crumbs items={r.crumbs} /><ClientGroupsPage /></>;
 
   if (r.slug === 'ecommerce') return <EcommercePage />;
 

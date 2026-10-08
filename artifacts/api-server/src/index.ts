@@ -27,6 +27,10 @@ try {
   await pool.query("SELECT id FROM public_customer_registration_challenges LIMIT 0");
   await pool.query("SELECT id FROM reseller_client_notes LIMIT 0");
   await pool.query("SELECT id FROM public_customer_activity LIMIT 0");
+  await pool.query("SELECT subscriber_id,customer_id,available_balance FROM customer_wallets LIMIT 0");
+  await pool.query("SELECT id FROM customer_wallet_ledger LIMIT 0");
+  await pool.query("SELECT id FROM manual_services LIMIT 0");
+  await pool.query("SELECT id,wallet_debit_reference FROM service_orders LIMIT 0");
   await pool.query("SELECT hostname,check_generation,dns_checked_at FROM subscriber_custom_domains LIMIT 0");
   await pool.query("SELECT subscriber_id,logo_strip_settings,announcement_ticker_settings FROM public_site_presentation LIMIT 0");
   await pool.query("SELECT icon_text FROM public_site_announcements LIMIT 0");

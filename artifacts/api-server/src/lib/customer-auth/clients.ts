@@ -5,38 +5,41 @@ import { currencies } from '../commerce/currencies';
 import { formatCurrencyMinor, formatCurrencyPresentation, parseNumberFormat, type StoreCurrency } from '../commerce/currency-money';
 import { customerProfile, type CustomerIdentity } from './types';
 import { CUSTOMER_PROFILE_SELECT, normalizePhone, profileEditInput, registrationOptions, validatePreferences } from './profile';
+import { financialSummary, money, walletCurrency } from '../client-finance/wallet';
+import { orderSummary } from '../client-finance/orders';
 
 type ClientRow = CustomerIdentity & { enabled: boolean; orderCount: number };
 export const CLIENT_PAGE_SIZE = 30;
 export async function ownedClient(subscriber: string, id: string, db: PoolClient, lock = false): Promise<ClientRow> {
   const row = (await db.query(`SELECT ${CUSTOMER_PROFILE_SELECT},c.enabled,
-    (SELECT count(*)::int FROM store_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id) AS "orderCount"
-    FROM public_customer_accounts c WHERE c.subscriber_id=$1 AND c.id=$2 ${lock?'FOR UPDATE OF c':''}`,[subscriber,id])).rows[0];
+    c.client_group_id AS "groupId",w.available_balance AS "walletAvailable",w.locked_balance AS "walletLocked",
+    ((SELECT count(*)::int FROM store_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id)
+    +(SELECT count(*)::int FROM service_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id)) AS "orderCount"
+    FROM public_customer_accounts c JOIN customer_wallets w ON w.subscriber_id=c.subscriber_id AND w.customer_id=c.id
+    WHERE c.subscriber_id=$1 AND c.id=$2 ${lock?'FOR UPDATE OF c':''}`,[subscriber,id])).rows[0];
   if (!row) throw new HttpError(404, 'Client not found.');
   return row;
 }
 function effectiveCurrency(row: CustomerIdentity, configured: StoreCurrency[]) {
-  const enabled = configured.filter(c => c.enabled && c.rate_configured !== false);
-  return enabled.find(c => c.code === row.preferredCurrency) ?? enabled.find(c => c.client_default);
-}
-/** No customer ledger exists. Keep finance separate from identity/order summaries. */
-export function clientFinancialSummary(currency?: StoreCurrency) {
-  return {
-    availableBalance:'0',lockedAmount:'0',due:'0',ledgerAvailable:false,
-    formattedZero:currency ? formatCurrencyMinor('0',currency) : '0',
-  };
+  return walletCurrency(configured,row.preferredCurrency);
 }
 function clientView(row: ClientRow, configured: StoreCurrency[]) {
-  const currency = effectiveCurrency(row,configured), financial = clientFinancialSummary(currency);
+  const currency = effectiveCurrency(row,configured);
+  if(!currency)throw new HttpError(503,'No enabled client currency is configured.');
+  const wallet=row as ClientRow & {walletAvailable:string;walletLocked:string;groupId:string|null};
   return {...customerProfile(row),id:row.id,enabled:row.enabled,orderCount:row.orderCount,
-    effectiveCurrency:currency?.code??null,availableBalance:financial.formattedZero,due:financial.formattedZero};
+    groupId:wallet.groupId,effectiveCurrency:currency.code,availableBalance:money(wallet.walletAvailable,currency),
+    lockedAmount:money(wallet.walletLocked,currency),due:money('0',currency)};
 }
 export async function listClients(subscriber: string, query: {page:number;search?:string;status?:string}, db: PoolClient) {
   const search = query.search ? `%${query.search.replace(/[\\%_]/g,'\\$&')}%` : null;
   const phoneSearch = query.search ? `%${query.search.replace(/[\s().-]/g,'').replace(/[\\%_]/g,'\\$&')}%` : null;
   const rows = (await db.query(`SELECT ${CUSTOMER_PROFILE_SELECT},c.enabled,
-    (SELECT count(*)::int FROM store_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id) AS "orderCount"
-    FROM public_customer_accounts c WHERE c.subscriber_id=$1
+    c.client_group_id AS "groupId",w.available_balance AS "walletAvailable",w.locked_balance AS "walletLocked",
+    ((SELECT count(*)::int FROM store_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id)
+    +(SELECT count(*)::int FROM service_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id)) AS "orderCount"
+    FROM public_customer_accounts c JOIN customer_wallets w ON w.subscriber_id=c.subscriber_id AND w.customer_id=c.id
+    WHERE c.subscriber_id=$1
       AND ($2::text IS NULL OR c.username ILIKE $2 OR c.client_code ILIKE $2 OR c.first_name ILIKE $2
         OR c.last_name ILIKE $2 OR concat_ws(' ',c.first_name,c.last_name) ILIKE $2 OR c.email ILIKE $2
         OR c.whatsapp_phone ILIKE $2 OR c.whatsapp_phone ILIKE $6)
@@ -67,8 +70,9 @@ export async function clientDetail(subscriber: string, id: string, db: PoolClien
     WHERE subscriber_id=$1 AND customer_id=$2 ORDER BY created_at DESC,id LIMIT 50`,[subscriber,id])).rows;
   return {
     client:clientView(row,configured),options:await registrationOptions(subscriber,db),
-    financial:clientFinancialSummary(effectiveCurrency(row,configured)),
-    orderSummary:{totalOrders:row.orderCount,retailOrders:row.orderCount},
+    financial:await financialSummary(subscriber,id,db),
+    orderSummary:{totalOrders:row.orderCount,retailOrders:row.orderCount-(await orderSummary(subscriber,db,id)).totalOrders,
+      serviceOrders:await orderSummary(subscriber,db,id)},
     orders:orders.map(historicalClientOrder),activity,notes,
   };
 }
