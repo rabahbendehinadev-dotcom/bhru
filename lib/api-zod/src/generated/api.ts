@@ -135,6 +135,17 @@ export const CreateServiceGroupBody = zod.object({
 export const CreateServiceGroupResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
 
 
+export const UpdateServiceGroupAvailabilityParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const UpdateServiceGroupAvailabilityBody = zod.object({
+  "enabled": zod.boolean()
+})
+
+export const UpdateServiceGroupAvailabilityResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
 export const ListClientGroupsResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
 
 

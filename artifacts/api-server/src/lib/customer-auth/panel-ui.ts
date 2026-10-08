@@ -3,9 +3,9 @@ import { escapeHTML as e } from '../public-site/safety';
 import type { PublicSiteModel } from '../public-site/model';
 import type { CustomerProfile as Profile } from './types';
 
-export type PanelPage = 'dashboard' | 'services' | 'orders' | 'wallet' | 'profile';
-export const PANEL_PAGES: PanelPage[] = ['dashboard', 'services', 'orders', 'wallet', 'profile'];
-const TITLES: Record<PanelPage, string> = { dashboard: 'Dashboard', services: 'Services', orders: 'My orders', wallet: 'Wallet', profile: 'Profile' };
+export type PanelPage = 'dashboard' | 'services' | 'orders' | 'wallet' | 'transactions' | 'announcements' | 'profile' | 'security';
+export const PANEL_PAGES: PanelPage[] = ['dashboard', 'services', 'orders', 'wallet', 'transactions', 'announcements', 'profile', 'security'];
+const TITLES: Record<PanelPage, string> = { dashboard: 'Dashboard', services: 'Services', orders: 'My orders', wallet: 'Wallet', transactions: 'Transactions', announcements: 'Announcements', profile: 'Profile', security: 'Security' };
 export const panelTitle = (p: PanelPage): string => TITLES[p];
 
 const localPath = (v: unknown): string | null => (typeof v === 'string' && /^\/(?!\/)[^\s"'<>\\]*$/.test(v) ? v : null);
@@ -13,13 +13,17 @@ const localPath = (v: unknown): string | null => (typeof v === 'string' && /^\/(
 /** Base path of the panel, derived from accountHref (/{slug}/customer/account -> /{slug}/customer). */
 export function panelBase(m: PublicSiteModel): string {
   const a = localPath(m.customerAccess?.accountHref) ?? '';
-  return a.replace(/\/account\/?$/, '') || '';
+  return a.replace(/\/(account|dashboard)\/?$/, '') || '';
 }
 
 export const PANEL_STYLES = `
+body{--bg:#f6f8fc;--card:#fff;--ink:#142033;--muted:#586579;--line:#e1e7ef;background:var(--bg);color:var(--ink)}
+.pn-nav{flex-wrap:wrap;overflow:visible}.pn-nav a{padding:8px 12px;min-height:40px;font-size:13px}.pn-nav a:focus-visible,.pn-btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.pn-hero{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 18px}.pn-btn{text-decoration:none}.pn-card.accent{border-left:4px solid var(--accent)}.pn-h{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.pn-ann{display:block;padding:10px 12px;border-radius:10px;margin:0 0 8px;border:1px solid var(--line);overflow-wrap:anywhere}
 .pn{width:min(1120px,100%);margin:0 auto;padding:28px 18px 72px;min-width:0}
 .pn h1{font-size:clamp(24px,5vw,32px);margin:0 0 4px}.pn h2{font-size:18px;margin:0 0 12px}.pn .pn-sub{color:var(--muted);margin:0 0 18px}
-.pn-nav{display:flex;gap:6px;overflow-x:auto;margin:0 0 22px;padding:0 0 4px;border-bottom:1px solid var(--line)}
+.pn-nav{display:flex;flex-wrap:wrap;gap:6px;overflow:visible;margin:0 0 22px;padding:0 0 4px;border-bottom:1px solid var(--line)}
 .pn-nav a{white-space:nowrap;padding:12px 16px;min-height:44px;display:inline-flex;align-items:center;font-weight:700;font-size:14px;color:var(--muted);border-bottom:3px solid transparent}
 .pn-nav a[aria-current=page]{color:var(--ink);border-color:var(--accent)}
 .pn-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin:0 0 22px}
@@ -93,14 +97,26 @@ export const PANEL_SCRIPT = String.raw`(() => {
   const pages = {
     async dashboard() {
       const d = await call('/panel');
-      const f = d.financial || {}, s = d.orderSummary || {}, rows = d.recentOrders || [];
-      const kids = [h('div', { class: 'pn-grid' }, [stat('Available balance', f.formattedAvailable), stat('Locked', f.formattedLocked), stat('Total spent', f.formattedTotalSpent), stat('Due', f.formattedDue)]),
+      const f = d.financial || {}, s = d.orderSummary || {}, rows = d.recentOrders || [], cur = f.accountCurrency || f.currency || '';
+      const due = f.formattedDue;
+      const kids = [h('div', { class: 'pn-hero' }, [h('a', { class: 'pn-btn', href: BASE + '/services', text: 'Place New Order' }), h('a', { class: 'pn-btn alt', href: BASE + '/wallet#add-funds', text: 'Add Funds' }), h('a', { class: 'pn-btn alt', href: BASE + '/orders', text: 'View Orders' })]),
+        h('p', { class: 'pn-h', text: 'Wallet' + (cur ? ' (Account Currency: ' + cur + ')' : '') }),
+        h('div', { class: 'pn-grid' }, [stat('Available Balance', f.formattedAvailable), stat('Locked Balance', f.formattedLocked), stat('Due / Credit', due), stat('Total Spent', f.formattedTotalSpent), stat('Total Credits / Added Funds', f.formattedTotalCredits)]),
+        h('p', { class: 'pn-h', text: 'Service orders' }),
         h('div', { class: 'pn-grid' }, [stat('Total orders', s.totalOrders), stat('Pending', s.pending), stat('Processing', s.processing), stat('Completed', s.completed), stat('Rejected', s.rejected)])];
       if (ZERO(f.availableBalance)) kids.push(msg('Your wallet balance is empty. Contact your reseller to add funds; online payment is not available on this website.', 'warn'));
       kids.push(h('div', { class: 'pn-card' }, [h('h2', { text: 'Recent orders' }), rows.length === 0 ? h('p', { text: 'No orders yet. Browse the services to place your first order.' }) :
-        table(['Reference', 'Service', 'Amount', 'Status', 'Date'], rows.map(o => h('tr', {}, [h('td', {}, [h('a', { href: BASE + '/orders?id=' + encodeURIComponent(o.id), text: o.reference })]), h('td', { text: o.serviceName }), h('td', { text: o.amountFormatted }), h('td', {}, [tag(o.status)]), h('td', { text: fmtDate(o.createdAt) })]))),
-        h('p', {}, [h('a', { class: 'pn-btn', href: BASE + '/services', text: 'Browse services', style: 'margin-top:14px' })])]));
+        table(['Reference', 'Service', 'Amount', 'Currency', 'Status', 'Date'], rows.map(o => h('tr', {}, [h('td', {}, [h('a', { href: BASE + '/orders?id=' + encodeURIComponent(o.id), text: o.reference })]), h('td', { text: o.serviceName }), h('td', { text: o.amountFormatted }), h('td', { text: o.currency || cur || '-' }), h('td', {}, [tag(o.status)]), h('td', { text: fmtDate(o.createdAt) })]))),
+        h('p', {}, [h('a', { class: 'pn-btn', href: BASE + '/services', text: 'Browse Services', style: 'margin-top:14px' })])]));
+      const an = (d.announcements || []).slice(0, 3);
+      kids.push(h('div', { class: 'pn-card', style: 'margin-top:14px' }, [h('h2', { text: 'Latest announcements' }), an.length ? h('div', {}, an.map(annNode)) : h('p', { text: 'No announcements right now.' })]));
       mount(...kids);
+    },
+
+    async announcements() {
+      const d = await call('/panel/announcements');
+      const list = d.data || [];
+      mount(list.length ? h('div', { class: 'pn-card' }, list.map(annNode)) : h('div', { class: 'pn-card' }, [h('p', { text: 'There are no active announcements at the moment.' })]));
     },
 
     async services() {
@@ -131,21 +147,28 @@ export const PANEL_SCRIPT = String.raw`(() => {
         pager(page, d.hasMore, n => nav('/orders', Object.assign({}, p, { page: n }))));
     },
 
-    async wallet() {
-      const p = params();
-      const page = Math.max(1, parseInt(p.page || '1', 10) || 1);
-      const d = await call('/panel/statement' + qs({ page, search: p.search, type: p.type, direction: p.direction }));
-      const f = d.financial || {}, rows = d.data || [];
-      const kids = [h('div', { class: 'pn-grid' }, [stat('Available', f.formattedAvailable), stat('Locked', f.formattedLocked), stat('Total credits', f.formattedTotalCredits), stat('Total debits', f.formattedTotalDebits), stat('Total spent', f.formattedTotalSpent), stat('Due', f.formattedDue)])];
-      if (ZERO(f.availableBalance)) kids.push(msg('Your balance is zero. Contact your reseller to add funds; this website has no online payment.', 'warn'));
-      kids.push(filterBar([input('search', 'Search statement', p.search), input('type', 'Entry type', p.type), select('direction', 'Direction', [['', 'Credit and debit'], ['credit', 'Credit'], ['debit', 'Debit']], p.direction)], v => nav('/wallet', v), 'Filter'));
-      kids.push(rows.length === 0 ? msg('No statement entries found.') : h('div', { class: 'pn-card' }, [table(['Date', 'Type', 'Amount', 'Balance after', 'Details'], rows.map(r => h('tr', {}, [h('td', { text: fmtDate(r.createdAt) }), h('td', { text: r.type }),
-        h('td', { class: r.direction === 'credit' ? 'pos' : 'neg', text: (r.direction === 'credit' ? '+' : '-') + r.formattedAmount }), h('td', { text: r.formattedBalanceAfter }),
-        h('td', { text: [r.description, r.method, r.transactionReference].filter(Boolean).join(' / ') || '-' })])))]));
-      kids.push(pager(page, d.hasMore, n => nav('/wallet', Object.assign({}, p, { page: n }))));
-      mount(...kids);
-    },
+    async wallet() { return statementPage('/wallet', true); },
+    async transactions() { return statementPage('/transactions', false); },
   };
+
+  const SAFE = v => typeof v === 'string' && (/^\/(?!\/)[^\s"'<>\\]*$/.test(v) || /^https:\/\/[^\s"'<>\\]+$/.test(v) || /^mailto:[^\s<>"'?#]+@[^\s<>"'?#]+$/i.test(v) || /^tel:\+?[0-9()\-. ]{3,30}$/i.test(v));
+  const annNode = a => { const st = 'background:' + (/^#[0-9a-fA-F]{3,8}$/.test(a.background || '') ? a.background : 'transparent') + ';color:' + (/^#[0-9a-fA-F]{3,8}$/.test(a.color || '') ? a.color : 'inherit'); const t = (a.icon ? a.icon + ' ' : '') + a.text; return h('div', { class: 'pn-ann', style: st }, [SAFE(a.href) ? h('a', { href: a.href, text: t }) : h('span', { text: t })]); };
+
+  async function statementPage(path, wallet) {
+    const p = params();
+    const page = Math.max(1, parseInt(p.page || '1', 10) || 1);
+    const d = await call('/panel/statement' + qs({ page, search: p.search, type: p.type, direction: p.direction }));
+    const f = d.financial || {}, rows = d.data || [], cur = f.accountCurrency || f.currency || '-';
+    document.querySelectorAll('[data-acct-currency]').forEach(n => { n.textContent = cur; });
+    const kids = [h('div', { class: 'pn-grid' }, [stat('Account Currency', cur), stat('Available', f.formattedAvailable), stat('Locked', f.formattedLocked), stat('Total credits', f.formattedTotalCredits), stat('Total debits', f.formattedTotalDebits), stat('Total spent', f.formattedTotalSpent), stat('Due', f.formattedDue)])];
+    if (wallet && ZERO(f.availableBalance)) kids.push(msg('Your balance is zero. Contact your reseller to add funds; this website has no online payment.', 'warn'));
+    kids.push(filterBar([input('search', 'Search statement', p.search), input('type', 'Entry type', p.type), select('direction', 'Direction', [['', 'Credit and debit'], ['credit', 'Credit'], ['debit', 'Debit']], p.direction)], v => nav(path, v), 'Filter'));
+    kids.push(rows.length === 0 ? msg('No statement entries found.') : h('div', { class: 'pn-card' }, [table(['Date', 'Type', 'Amount', 'Balance after', 'Details'], rows.map(r => h('tr', {}, [h('td', { text: fmtDate(r.createdAt) }), h('td', { text: r.type }),
+      h('td', { class: r.direction === 'credit' ? 'pos' : 'neg', text: (r.direction === 'credit' ? '+' : '-') + r.formattedAmount }), h('td', { text: r.formattedBalanceAfter }),
+      h('td', { text: [r.description, r.method, r.transactionReference].filter(Boolean).join(' / ') || '-' })])))]));
+    kids.push(pager(page, d.hasMore, n => nav(path, Object.assign({}, p, { page: n }))));
+    mount(...kids);
+  }
 
   async function orderDetail(id, placed) {
     const o = await call('/panel/orders/' + encodeURIComponent(id));
@@ -257,15 +280,17 @@ export function renderPanelMain(m: PublicSiteModel, page: PanelPage, customer?: 
   const base = panelBase(m);
   const api = localPath(ca?.apiBase) ?? '';
   const login = localPath(ca?.loginHref) ?? '/';
-  const href = (p: PanelPage) => `${base}/${p === 'dashboard' ? 'account' : p}`;
+  const href = (p: PanelPage) => `${base}/${p}`;
   const nav = PANEL_PAGES.map((p) => `<a href="${e(href(p))}"${p === page ? ' aria-current="page"' : ''}>${e(TITLES[p])}</a>`).join('');
   const greeting = page === 'dashboard' ? `<h1>Welcome${customer?.firstName ? ', ' + e(customer.firstName) : ''}</h1><p class="pn-sub">Your wallet, orders and services with ${e(m.siteName)}.</p>` : `<h1>${e(TITLES[page])}</h1><p class="pn-sub">${e(m.siteName)}</p>`;
-  const content = page === 'profile'
+  const addFunds = page === 'wallet' ? `<section class="pn-card accent" id="add-funds" tabindex="-1" style="margin:0 0 18px"><h2>Add Funds</h2><p>Account Currency: <strong data-acct-currency>${e(customer?.effectiveCurrency ?? customer?.preferredCurrency ?? '')}</strong>. Your account currency is fixed and cannot be changed.</p><p>Funds are added by your reseller. Contact ${e(m.siteName)} through their listed channels, tell them your client code${customer?.clientCode ? ' (' + e(customer.clientCode) + ')' : ''} and the amount, and the credit will appear in your wallet once confirmed. There is no online payment on this website.</p></section>` : '';
+  const security = page === 'security' ? `<div class="pn-card"><h2>Account security</h2><dl class="ca-dl"><div><dt>Email</dt><dd>${e(customer?.email ?? '')}</dd></div>${customer?.clientCode ? `<div><dt>Client code</dt><dd>${e(customer.clientCode)}</dd></div>` : ''}<div><dt>Account Currency</dt><dd>${e(customer?.effectiveCurrency ?? customer?.preferredCurrency ?? '-')} (immutable)</dd></div></dl><p>Your email, client code and account currency are fixed identity details and cannot be changed from this panel.</p><p>Sign out when using a shared or public device. Never share your password or order details. Your session is kept by a secure cookie and ends when you log out. To change your password or details, contact your reseller.</p><button type="button" class="pn-btn alt" data-customer-logout data-endpoint="${e(api + '/logout')}" data-home="${e(localPath(ca?.homeHref) ?? '/')}">Logout</button></div>` : '';
+  const content = page === 'security' ? security : page === 'profile'
     ? `<div class="pn-card">${profileDetails(customer ?? { firstName: '', lastName: '', email: '' })}<p class="pn-sub">Profile details are managed by your reseller. Contact them to change anything.</p></div>`
     : `<div id="pn-out" aria-live="polite"><div class="pn-skel"></div></div><noscript><p class="pn-msg">JavaScript is required to load this page.</p></noscript>`;
   const profileSummary=page==='dashboard'&&customer
     ? `<div class="pn-card pn-account-summary"><strong>Your account</strong><span>Email: ${e(customer.email)}</span>
       ${customer.addressLine1?`<span>Address: ${e(customer.addressLine1)}</span>`:''}
       <a href="${e(href('profile'))}">View profile</a></div>`:'';
-  return `<main class="pn" data-panel data-api="${e(api)}" data-base="${e(base)}" data-page="${page}" data-login="${e(login)}"><nav class="pn-nav" aria-label="Customer panel">${nav}</nav>${greeting}${content}${profileSummary}</main>`;
+  return `<main class="pn" data-panel data-api="${e(api)}" data-base="${e(base)}" data-page="${page}" data-login="${e(login)}"><nav class="pn-nav" aria-label="Customer panel">${nav}</nav>${greeting}${addFunds}${content}${profileSummary}</main>`;
 }

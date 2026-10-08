@@ -16,7 +16,7 @@ const blank = (type: ServiceType) => ({ name: '', serviceType: type, groupId: ''
 
 function ServiceForm({ initial, type, onClose }: { initial: ManualService | null; type: ServiceType; onClose: () => void }) {
   const { rows: groups } = useServiceGroups();
-  const { create, update, createGroup } = useServiceMutations();
+  const { create, update, createGroup, updateGroup } = useServiceMutations();
   const [f, setF] = useState(() => initial ? {
     name: initial.name, serviceType: initial.serviceType, groupId: initial.groupId ?? '', description: initial.description ?? '', priceUsd: initial.priceUsd, estimatedTime: initial.estimatedTime ?? '',
     active: initial.active, displayOrder: String(initial.displayOrder ?? 0),
@@ -72,6 +72,12 @@ function ServiceForm({ initial, type, onClose }: { initial: ManualService | null
           <Field label="Display order"><input className="input" inputMode="numeric" value={f.displayOrder} onChange={(e) => set('displayOrder', e.target.value)} data-testid="input-service-order" /></Field>
         </div>
         <div className="flex gap-2"><input className="input" maxLength={100} value={grp} onChange={(e) => setGrp(e.target.value)} placeholder="New group name" aria-label="New group name" data-testid="input-group-name" /><Btn sm disabled={createGroup.isPending || !grp.trim()} onClick={() => void addGroup()} data-testid="button-group-create">Create group</Btn></div>
+        {f.groupId && <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={groups?.find(g => g.id === f.groupId)?.enabled !== false} disabled={updateGroup.isPending}
+            onChange={async e => { try { await updateGroup.mutateAsync({id:f.groupId,data:{enabled:e.target.checked}}); } catch(error) { setErr(errText(error)); } }}
+            data-testid="switch-service-group-enabled" />
+          Group available to customers (applies to every service in this group)
+        </label>}
         <Field label="Description"><textarea className="input min-h-[70px]" maxLength={4000} value={f.description} onChange={(e) => set('description', e.target.value)} data-testid="input-service-description" /></Field>
         <label className="flex items-center gap-2 text-[12.5px]"><input type="checkbox" checked={f.active} onChange={(e) => set('active', e.target.checked)} data-testid="checkbox-service-active" /> Enabled (customers can order it)</label>
         <div>

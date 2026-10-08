@@ -8,6 +8,7 @@ import { listServices, serviceRow, serviceView } from '../lib/client-finance/cat
 import { displayCurrency } from '../lib/client-finance/wallet';
 import { listOrders, orderRow, orderView, orderSummary, quoteService, purchaseService, InsufficientBalance } from '../lib/client-finance/orders';
 import { effectiveCustomerProfile } from '../lib/customer-auth/profile';
+import { customerAnnouncements } from '../lib/customer-auth/announcements';
 const router=Router({mergeParams:true}),uuid=z.string().uuid();
 router.use(json({limit:'64kb'}));
 router.use((req,_res,next)=>{
@@ -20,12 +21,17 @@ const identity=(req:Parameters<typeof customerContext>[0])=>{
   const {tenant,customer}=customerContext(req);return {sub:tenant.id,id:customer!.id};
 };
 router.get('/',async(req,res)=>{
-  const {sub,id}=identity(req),{customer}=customerContext(req);
+  const {sub,id}=identity(req),{customer,tenant}=customerContext(req);
   res.json(await transaction(async db=>({
     financial:await financialSummary(sub,id,db),orderSummary:await orderSummary(sub,db,id),
     recentOrders:(await listOrders(sub,{page:1},db,id)).data.slice(0,5),
     profile:await effectiveCustomerProfile(customer!,db),
+    announcements:await customerAnnouncements(sub,db,tenant.customRoot?'/':`/${tenant.slug}`),
   })));
+});
+router.get('/announcements',async(req,res)=>{
+  const {sub}=identity(req),{tenant}=customerContext(req);
+  res.json({data:await transaction(db=>customerAnnouncements(sub,db,tenant.customRoot?'/':`/${tenant.slug}`))});
 });
 router.get('/services',async(req,res)=>{const {sub,id}=identity(req);res.json(await transaction(db=>listServices(sub,req.query,db,id)));});
 router.get('/services/:id',async(req,res)=>{

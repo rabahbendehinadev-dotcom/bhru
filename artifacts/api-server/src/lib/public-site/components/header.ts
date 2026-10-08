@@ -1,6 +1,7 @@
 import { escapeHTML, safePublicHref, safePublicImage } from '../safety';
 import type { PublicSiteModel } from '../model';
 import { renderCustomerActions } from '../../customer-auth/ui';
+import { renderClientHeader } from '../../customer-auth/client-header';
 
 export function renderLogo(m: PublicSiteModel): string {
   const img = safePublicImage(m.logo);
@@ -11,6 +12,7 @@ export function renderLogo(m: PublicSiteModel): string {
 }
 
 export function renderHeader(m: PublicSiteModel): string {
+  if (m.customerAccess?.authenticated) return renderClientHeader(m);
   const links = m.navigation.map(l => `<a href="${escapeHTML(safePublicHref(l.href))}">${escapeHTML(l.label)}</a>`).join('');
   return `<header class="site-header"><div class="wrap bar">
 ${renderLogo(m)}

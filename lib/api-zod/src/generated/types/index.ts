@@ -106,6 +106,7 @@ export * from './resellerClientNoteInput';
 export * from './resellerClientProfileInput';
 export * from './resellerClientStatusInput';
 export * from './resolveAuthEntryParams';
+export * from './serviceGroupAvailability';
 export * from './serviceOrderTransition';
 export * from './serviceOrderTransitionStatus';
 export * from './servicePurchaseInput';

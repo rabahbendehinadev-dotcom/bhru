@@ -31,8 +31,13 @@ export const catalogQuery=z.object({
 export async function serviceRow(sub:string,id:string,db:PoolClient,active=false,lock=false) {
   const row=(await db.query(`SELECT s.*,g.name group_name FROM manual_services s
     LEFT JOIN manual_service_groups g ON g.subscriber_id=s.subscriber_id AND g.id=s.group_id
-    WHERE s.subscriber_id=$1 AND s.id=$2 ${active?'AND s.active':''} ${lock?'FOR SHARE OF s':''}`,[sub,id])).rows[0];
+    WHERE s.subscriber_id=$1 AND s.id=$2 ${active?'AND s.active AND (g.id IS NULL OR g.enabled)':''} ${lock?'FOR SHARE OF s':''}`,[sub,id])).rows[0];
   if(!row)throw new HttpError(404,'Service not found or unavailable.');
+  // Lock the group separately: locking the nullable side of a LEFT JOIN is
+  // invalid in PostgreSQL. This serializes a purchase with group withdrawal.
+  if(active && lock && row.group_id && !(await db.query(
+    'SELECT id FROM manual_service_groups WHERE subscriber_id=$1 AND id=$2 AND enabled FOR SHARE',
+    [sub,row.group_id])).rowCount) throw new HttpError(404,'Service group is unavailable.');
   return row;
 }
 export function serviceView(row:Record<string,any>,currency?:Awaited<ReturnType<typeof displayCurrency>>) {
@@ -62,11 +67,12 @@ export async function listServices(sub:string,raw:unknown,db:PoolClient,customer
     WHERE s.subscriber_id=$1 AND($2::text IS NULL OR s.name ILIKE $2 OR s.description ILIKE $2)
     AND($3::text IS NULL OR s.service_type=$3) AND($4::uuid IS NULL OR s.group_id=$4)
     AND($5::boolean IS NULL OR s.active=$5)
+    ${customer?'AND (g.id IS NULL OR g.enabled)':''}
     ORDER BY s.display_order,s.name,s.id LIMIT 31 OFFSET $6`,
     [sub,search,q.serviceType??null,q.groupId??null,customer?true:q.status?q.status==='active':null,(q.page-1)*30])).rows;
   const options=await registrationOptions(sub,db),currency=customer?await displayCurrency(sub,customer,db,q.currency):undefined;
   return {data:rows.slice(0,30).map(r=>serviceView(r,currency)),page:q.page,hasMore:rows.length>30,
-    groups:(await db.query('SELECT id,name FROM manual_service_groups WHERE subscriber_id=$1 ORDER BY name',[sub])).rows,
+    groups:(await db.query(`SELECT id,name,enabled FROM manual_service_groups WHERE subscriber_id=$1 ${customer?'AND enabled':''} ORDER BY name`,[sub])).rows,
     currencies:customer?[{code:currency!.code,name:currency!.name}]:options.currencies,defaultCurrency:currency?.code??options.defaultCurrency};
 }
 export function validateServiceInputs(requirements:z.infer<typeof field>[],raw:Record<string,string>) {

@@ -1,0 +1,287 @@
+BHRU — UPGRADE PUBLIC CUSTOMER AREA INTO A TRUE CLIENT PANEL
+
+We want to upgrade the authenticated public customer experience.
+
+REFERENCE BEHAVIOR:
+Legacy server panels such as DHRU send the customer directly into a complete Client Area after login.
+
+BHRU currently has a basic /customer/account page with tabs.
+
+We want BHRU to feel like a professional unlock/server customer panel after authentication, while keeping the current modern BHRU visual language.
+
+DO NOT clone DHRU visually.
+Use it only as a business-flow reference.
+
+==================================================
+1. LOGIN DESTINATION
+==================================================
+
+After successful public customer login, redirect directly to:
+
+/customer/dashboard
+
+This must work on:
+
+- verified custom domains
+- BHRU public slug routes
+
+Do not send authenticated customers back to a marketing-style account page.
+
+==================================================
+2. AUTHENTICATED CLIENT PANEL
+==================================================
+
+Create a real authenticated customer panel navigation:
+
+Dashboard
+Services / Place Order
+My Orders
+Wallet
+Transactions
+Announcements
+Profile
+Security
+
+Use existing customer auth/session infrastructure.
+
+Do not create a second customer identity system.
+
+==================================================
+3. DASHBOARD
+==================================================
+
+Create a stronger dashboard containing real data.
+
+Top financial cards:
+
+- Available Balance
+- Locked Balance
+- Due / Credit
+- Total Spent
+- Total Credits / Added Funds
+
+All values MUST use the customer's immutable Account Currency from migration 022.
+
+Never use Panel Display Currency here.
+
+==================================================
+4. ORDER SUMMARY
+==================================================
+
+Show service-order counters:
+
+- Total Orders
+- Pending
+- Processing
+- Completed
+- Rejected
+
+Use the existing manual service order system.
+
+Retail/e-commerce orders must remain separate unless explicitly presented as a separate retail section.
+
+==================================================
+5. QUICK ACTIONS
+==================================================
+
+Add strong customer actions:
+
+- Place New Order
+- Browse Services
+- Add Funds
+- View Orders
+
+Primary action should be Place New Order / Browse Services.
+
+==================================================
+6. RECENT ORDERS
+==================================================
+
+Dashboard should show recent service orders with:
+
+- order/reference ID
+- service name
+- amount
+- account currency
+- status
+- created date
+
+Use existing tenant/customer scoped order data.
+
+==================================================
+7. ANNOUNCEMENTS
+==================================================
+
+Add a customer-facing Announcements area.
+
+For now, inspect whether the existing CMS/announcement system can be reused.
+
+Do not create duplicate announcement infrastructure if one already exists.
+
+Announcements belong to the reseller/subscriber and must be tenant scoped.
+
+Dashboard should show latest announcements.
+
+A dedicated Announcements page may show history.
+
+==================================================
+8. WALLET
+==================================================
+
+Wallet page should show:
+
+- Account Currency
+- Available
+- Locked
+- Due
+- Total Credits
+- Total Debits
+- statement/ledger history
+
+Account Currency is read-only and immutable.
+
+If Add Funds payment methods are not yet implemented for customers, show the existing valid workflow without inventing fake payment processing.
+
+==================================================
+9. SERVICES / PLACE ORDER
+==================================================
+
+Services should feel like the main order workspace.
+
+Customer sees only:
+
+- enabled services
+- enabled groups
+- correct reseller services
+- prices converted into customer's immutable Account Currency
+
+The existing secure server-side quote and debit workflow must remain authoritative.
+
+==================================================
+10. AUTHENTICATED HEADER
+==================================================
+
+When customer is logged in, replace the public marketing navigation with customer-panel navigation.
+
+Suggested desktop navigation:
+
+Dashboard
+Place Order
+Orders
+Wallet
+Announcements
+Account
+
+Keep reseller:
+- logo
+- branding
+- colors
+- custom domain
+
+Provide Logout in the account menu.
+
+==================================================
+11. PUBLIC WEBSITE REMAINS AVAILABLE
+==================================================
+
+Do not remove the reseller public website.
+
+Unauthenticated visitors can still use:
+
+Home
+Services
+About
+Contact
+Login
+Register
+
+Authenticated customer experience should become panel-first.
+
+==================================================
+12. CUSTOM DOMAIN BEHAVIOR
+==================================================
+
+Critical:
+
+If customer logs in on:
+
+businesshubs.net
+
+all customer panel routes stay on:
+
+businesshubs.net/customer/...
+
+Do not redirect them to bhru.net.
+
+Same tenant-resolution and Host security rules must remain intact.
+
+==================================================
+13. RESPONSIVE DESIGN
+==================================================
+
+Desktop:
+professional server/client dashboard.
+
+Mobile:
+compact customer navigation/drawer.
+
+Do not make it visually heavy like legacy DHRU.
+
+Keep BHRU:
+- clean
+- modern
+- fast
+- white/light customer theme
+- reseller branding accents
+
+==================================================
+14. PRESERVE EXISTING FINANCIAL RULES
+==================================================
+
+Do not weaken:
+
+- immutable Account Currency
+- strict wallet currency
+- tenant isolation
+- atomic debit
+- exact-currency refunds
+- idempotency
+- existing customer sessions
+- custom-domain isolation
+
+==================================================
+15. COMPATIBILITY
+==================================================
+
+Existing customer URLs such as /customer/account should not break.
+
+Either:
+- redirect /customer/account → /customer/dashboard
+
+or preserve it as a compatibility alias.
+
+Existing customer sessions must remain valid.
+
+==================================================
+16. NO PUSH / NO DEPLOY
+==================================================
+
+Implement only in Replit Preview.
+
+Do not push.
+Do not deploy.
+Do not access VPS/Dokploy.
+
+Return:
+
+1. current customer-panel architecture found
+2. routes added/changed
+3. dashboard data sources
+4. authenticated navigation behavior
+5. announcement architecture reused or required
+6. wallet behavior
+7. services/order behavior
+8. custom-domain behavior
+9. compatibility behavior
+10. focused checks performed
+11. files changed

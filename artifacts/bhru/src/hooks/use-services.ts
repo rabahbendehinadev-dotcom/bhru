@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/lib/store';
 import {
   useListManualServices, useCreateManualService, useUpdateManualService, useListServiceGroups, useCreateServiceGroup,
+  useUpdateServiceGroupAvailability,
   useListServiceOrders, useGetServiceOrder, useTransitionServiceOrder,
   useGetClientWallet, useGetClientStatement, useMutateClientWallet,
   useListClientGroups, useCreateClientGroup, useAssignClientGroup,
@@ -20,7 +21,7 @@ export interface ManualService {
   id: string; name: string; serviceType: ServiceType; groupId: string | null; groupName?: string | null; description: string; priceUsd: string;
   formattedPrice?: string; estimatedTime?: string | null; active: boolean; displayOrder: number; requirements: Requirement[];
 }
-export interface Group { id: string; name: string }
+export interface Group { id: string; name: string; enabled?: boolean }
 export interface OrderDto {
   id: string; reference: string; serviceId: string; customerId: string; serviceName: string; serviceType: ServiceType; status: 'pending' | 'processing' | 'completed' | 'rejected';
   priceUsdUnits: string; currency: string; amountFormatted: string; customerInput: Record<string, string> | null; result?: string | null; rejectionReason?: string | null;
@@ -66,7 +67,7 @@ export function useServiceMutations() {
   const qc = useQueryClient();
   const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: getListManualServicesQueryKey() }), qc.invalidateQueries({ queryKey: getListServiceGroupsQueryKey() })]);
   const o = { request: subReq(), mutation: { onSuccess: refresh } };
-  return { create: useCreateManualService(o), update: useUpdateManualService(o), createGroup: useCreateServiceGroup(o) };
+  return { create: useCreateManualService(o), update: useUpdateManualService(o), createGroup: useCreateServiceGroup(o), updateGroup: useUpdateServiceGroupAvailability(o) };
 }
 export function useClientGroupMutations() {
   const qc = useQueryClient();

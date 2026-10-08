@@ -2,6 +2,7 @@ import { escapeHTML, safePublicHref } from '../public-site/safety';
 import { renderLogo } from '../public-site/components/header';
 import type { PublicSiteModel } from '../public-site/model';
 import { renderCustomerActions } from '../customer-auth/ui';
+import { renderClientHeader } from '../customer-auth/client-header';
 import type { storefrontPreferences } from './storefront-preferences';
 
 type Preferences = ReturnType<typeof storefrontPreferences>;
@@ -19,6 +20,7 @@ function auth(m: PublicSiteModel) {
   return renderCustomerActions(m, false, true);
 }
 export function renderStorefrontHeader(m: PublicSiteModel, slug: string, p: Preferences): string {
+  if(m.customerAccess?.authenticated) return renderClientHeader(m);
   const links = `<a href="/${slug}#store-products">Products</a>` + m.navigation.map(l => `<a href="/${slug}${e(safePublicHref(l.href))}">${e(l.label)}</a>`).join('');
   const cart = `<a class="cx-hdr-link" href="/${slug}/cart" data-cx-cart-link aria-label="Cart">Cart <span data-cx-count>0</span></a>`;
   return `<header class="site-header sf-header"><div class="wrap bar">

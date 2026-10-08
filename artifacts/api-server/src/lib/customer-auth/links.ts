@@ -8,7 +8,7 @@ export function customerLinks(slug: string, customRoot = false, firstName?: stri
     homeHref: customRoot ? '/' : base,
     loginHref: `${base}/customer/login`,
     registerHref: `${base}/customer/register`,
-    accountHref: `${base}/customer/account`,
+    accountHref: `${base}/customer/dashboard`,
     apiBase: `/api/public/customer/${slug}`,
     authenticated: firstName !== undefined,
     ...(firstName !== undefined ? { firstName } : {}),

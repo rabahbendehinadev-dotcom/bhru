@@ -10,6 +10,10 @@
  */
 export interface FoundationResponse {[key: string]: unknown}
 
+export interface ServiceGroupAvailability {
+  enabled: boolean;
+}
+
 export interface FoundationGroupInput {
   /**
      * @minLength 1

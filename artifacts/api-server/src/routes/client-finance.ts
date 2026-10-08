@@ -12,10 +12,20 @@ router.get('/manual-services',async(req,res)=>res.json(await transaction(db=>lis
 router.post('/manual-services',async(req,res)=>res.status(201).json(await transaction(db=>saveService(subscriberContext(req).subscriber_id,undefined,req.body,db))));
 router.get('/manual-services/:id',async(req,res)=>res.json(serviceView(await transaction(db=>serviceRow(subscriberContext(req).subscriber_id,uuid.parse(req.params.id),db)))));
 router.patch('/manual-services/:id',async(req,res)=>res.json(await transaction(db=>saveService(subscriberContext(req).subscriber_id,uuid.parse(req.params.id),req.body,db))));
+router.patch('/service-groups/:id',async(req,res)=>{
+  const owner=subscriberContext(req),id=uuid.parse(req.params.id);
+  const input=z.object({enabled:z.boolean()}).strict().parse(req.body);
+  res.json(await transaction(async db=>{
+    const row=(await db.query('UPDATE manual_service_groups SET enabled=$3 WHERE subscriber_id=$1 AND id=$2 RETURNING id,name,enabled',
+      [owner.subscriber_id,id,input.enabled])).rows[0];
+    if(!row)throw new HttpError(404,'Service group not found.');
+    return row;
+  }));
+});
 for(const [path,table] of [['service-groups','manual_service_groups'],['client-groups','reseller_client_groups']] as const) {
   router.get(`/${path}`,async(req,res)=>{
     const owner=subscriberContext(req);
-    res.json(await transaction(async db=>({data:(await db.query(`SELECT id,name FROM ${table} WHERE subscriber_id=$1 ORDER BY name`,[owner.subscriber_id])).rows})));
+    res.json(await transaction(async db=>({data:(await db.query(`SELECT id,name${table==='manual_service_groups'?',enabled':''} FROM ${table} WHERE subscriber_id=$1 ORDER BY name`,[owner.subscriber_id])).rows})));
   });
   router.post(`/${path}`,async(req,res)=>{
     const owner=subscriberContext(req),input=z.object({name:z.string().trim().min(1).max(100)}).strict().parse(req.body);

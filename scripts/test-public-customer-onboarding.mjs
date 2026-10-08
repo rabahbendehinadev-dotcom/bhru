@@ -13,6 +13,7 @@ import { Script } from 'node:vm';
 import { build } from '../artifacts/api-server/node_modules/esbuild/lib/main.js';
 import { testWalletServices } from './test-wallet-services.mjs';
 import { testStrictAccountCurrency } from './test-strict-account-currency.mjs';
+import { testCustomerPanel } from './test-customer-panel.mjs';
 
 const root=resolve(import.meta.dirname,'..'), temp=await mkdtemp(join(tmpdir(),'bhru-onboarding-'));
 const data=join(temp,'data'), log=join(temp,'postgres.log');
@@ -414,6 +415,7 @@ try {
   });
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testStrictAccountCurrency({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,register,password});
+  await testCustomerPanel({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
   console.log(`\n${checks} focused onboarding/client-management SQL and HTTP groups passed. No production database, DNS, browser or deployment used.`);
 } finally {
   if(server) await new Promise(r=>server.close(r));

@@ -6,6 +6,8 @@ import { PUBLIC_MENU_SCRIPT, PUBLIC_MENU_SCRIPT_HASH } from '../public-site/mobi
 import type { PublicSiteModel } from '../public-site/model';
 
 import type { CustomerProfile as Profile } from './types';
+import type { CustomerPageMode } from './context';
+import { renderClientHeader, CLIENT_HEADER_STYLES } from './client-header';
 import { PANEL_STYLES, PANEL_SCRIPT, PANEL_SCRIPT_HASH, renderPanelMain, panelTitle, type PanelPage } from './panel-ui';
 import { ONBOARDING_STYLES, ONBOARDING_HASH, ONBOARDING_SCRIPT, renderRegistrationWizard } from './onboarding-ui';
 const localPath = (v: unknown): string | null =>
@@ -19,7 +21,7 @@ export function renderCustomerActions(m: PublicSiteModel, mobile = false, commer
     home = localPath(c.homeHref), api = localPath(c.apiBase);
   if (c.authenticated) {
     if (!account || !home || !api) return '';
-    const label = 'My account';
+    const label = 'Dashboard';
     const out = `<button type="button" data-customer-logout data-endpoint="${e(api + '/logout')}" data-home="${e(home)}"`;
     if (commerce) return `<div class="sf-auth"><a class="sf-login" href="${e(account)}">${label}</a>${out} class="sf-register">Logout</button></div>`;
     if (mobile) return `<div class="ca-mobile"><a class="btn" href="${e(account)}">${label}</a>${out} class="btn ca-out">Logout</button></div>`;
@@ -31,7 +33,7 @@ export function renderCustomerActions(m: PublicSiteModel, mobile = false, commer
   return `<div class="ca-actions"><a class="ca-link" href="${e(login)}">Login</a><a class="ca-btn" href="${e(register)}">Register</a></div>`;
 }
 
-export const CUSTOMER_AUTH_STYLES = `
+export const CUSTOMER_AUTH_STYLES = CLIENT_HEADER_STYLES + `
 .ca-actions{display:none;align-items:center;gap:8px}
 .ca-link,.ca-btn,.sf-auth a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:10px;font:inherit;font-weight:700;font-size:15px;border:1.5px solid var(--accent);cursor:pointer}
 .ca-link{background:transparent;color:var(--ink)}.ca-btn{background:var(--accent);color:var(--accent-ink)}.ca-link:hover{background:var(--line)}
@@ -144,14 +146,14 @@ function accountDetails(c: Profile): string {
   return `<dl class="ca-dl">${rows.filter(([, v]) => v).map(([k, v]) => `<div><dt>${e(k)}</dt><dd>${e(String(v))}</dd></div>`).join('')}</dl>`;
 }
 
-export function renderCustomerDocument(m: PublicSiteModel, mode: 'login' | 'register' | 'account' | 'services' | 'orders' | 'wallet' | 'profile', customer?: Profile): string {
-  const panel: PanelPage | null = mode === 'account' ? 'dashboard' : mode === 'services' || mode === 'orders' || mode === 'wallet' || mode === 'profile' ? mode : null;
+export function renderCustomerDocument(m: PublicSiteModel, mode: CustomerPageMode, customer?: Profile): string {
+  const panel: PanelPage | null = mode === 'account' ? 'dashboard' : mode !== 'login' && mode !== 'register' ? mode : null;
   const ca = m.customerAccess;
   const home = localPath(ca?.homeHref) ?? '/';
   const api = localPath(ca?.apiBase) ?? '';
   const login = localPath(ca?.loginHref) ?? home, register = localPath(ca?.registerHref) ?? home, account = localPath(ca?.accountHref) ?? home;
   const copy: PublicSiteModel = { ...m };
-  const header = renderHeader(copy).replace(/href="#([a-z][a-z0-9-]*)"/g, (_x, id) => `href="${e(home)}#${id}"`);
+  const header = (panel ? renderClientHeader(copy) : renderHeader(copy)).replace(/href="#([a-z][a-z0-9-]*)"/g, (_x, id) => `href="${e(home)}#${id}"`);
   let body = '';
   if (mode === 'login') {
     body = `<h1>Customer login</h1><p class="ca-sub">Sign in to ${e(m.siteName)}.</p>

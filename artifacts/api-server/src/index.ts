@@ -22,6 +22,7 @@ if (!Number.isInteger(port) || port <= 0 || port > 65535) {
 try {
   await pool.query("SELECT name FROM schema_migrations LIMIT 1");
   await pool.query("SELECT registration_available FROM subscriber_currencies LIMIT 0");
+  await pool.query("SELECT enabled FROM manual_service_groups LIMIT 0");
   await pool.query("SELECT amount_account_units,account_currency_snapshot FROM customer_wallet_ledger LIMIT 0");
   await pool.query("SELECT price_account_units,account_currency_snapshot FROM service_orders LIMIT 0");
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");

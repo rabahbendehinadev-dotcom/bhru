@@ -48,6 +48,13 @@ paths:
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationGroupInput'}}}}
       responses:
         '201': {description: Created group, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /service-groups/{id}:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    patch:
+      operationId: updateServiceGroupAvailability
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ServiceGroupAvailability'}}}}
+      responses:
+        '200': {description: Updated tenant service group availability, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
   /client-groups:
     get:
       operationId: listClientGroups
@@ -925,6 +932,12 @@ components:
       type: object
       description: Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.
       additionalProperties: {}
+    ServiceGroupAvailability:
+      type: object
+      required: [enabled]
+      additionalProperties: false
+      properties:
+        enabled: {type: boolean}
     FoundationGroupInput:
       type: object
       required: [name]
