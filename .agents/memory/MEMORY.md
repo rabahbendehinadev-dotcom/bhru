@@ -1,2 +1,3 @@
 - [BHRU product boundaries](bhru-product-boundaries.md) — separate subscriber customers and service orders from Retail; stop after each user-approved phase.
 - [Wallet and FX safeguards](wallet-accounting-boundaries.md) — keep wallet units canonical USD; legacy non-USD rates are not USD FX; avoid ambiguous PL/pgSQL CASE guards.
+- [Development and production boundaries](bhru-deployment-workflow.md) — verify a separate development target before Preview migrations; never use VPS production for Preview.

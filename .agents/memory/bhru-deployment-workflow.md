@@ -18,6 +18,12 @@ from Replit. Never infer real subscriber/product/order/currency data from Replit
 Development contents, or direct database-dependent acceptance testing to Replit
 Preview when the necessary data exists only on the VPS.
 
+When the user explicitly requests Replit Preview manual testing, a separate verified Replit development database may be prepared with BHRU's existing migration runner. Production must never be used for Preview. If the configured connection's environment is ambiguous, stop before connecting or migrating it.
+
+**Why:** The user authorized development-only Preview preparation, while explicitly prohibiting any VPS, Dokploy or production database access.
+
+**How to apply:** Verify and report only safe database metadata; preserve development records, use the normal tracked migrations and startup guard, and do not seed financial transactions. Development results remain separate from real VPS business data.
+
 An empty legacy account may have multiple currency configuration rows.
 Currency-row count must not be used as evidence of populated monetary business data.
 

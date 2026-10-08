@@ -1,0 +1,168 @@
+BHRU — PREPARE REPLIT PREVIEW DATABASE FOR MANUAL TESTING
+
+The wallet/manual-services implementation is complete.
+
+Current blocker:
+Replit Preview API refuses to start because its DEVELOPMENT database has not had the BHRU migrations applied.
+
+Your task is ONLY to prepare a safe development/Preview database so I can manually test the feature.
+
+DO NOT PUSH.
+DO NOT DEPLOY.
+DO NOT ACCESS DOKPLOY.
+DO NOT ACCESS VPS.
+DO NOT CONNECT TO OR MODIFY PRODUCTION DATABASE.
+
+==================================================
+1. VERIFY DATABASE SAFETY FIRST
+==================================================
+
+Before running any migration, inspect the database connection currently used by Replit Preview.
+
+Confirm that it is a DEVELOPMENT / REPLIT database and NOT the production BHRU database.
+
+Production must never be used for Preview testing.
+
+Do not print:
+- passwords
+- full DATABASE_URL
+- secrets
+
+You may report only safe metadata such as:
+- database host category
+- database name
+- whether it is local/Replit/development
+- whether it is clearly different from production
+
+If there is ANY ambiguity about whether the configured database could be production:
+
+STOP.
+
+Do not migrate it.
+
+Report the ambiguity instead.
+
+==================================================
+2. DEVELOPMENT DATABASE
+==================================================
+
+If the currently configured Preview database is clearly a disposable development database:
+
+use it.
+
+If there is no usable development database:
+
+create/configure a separate Replit development PostgreSQL database using the existing project-supported mechanism.
+
+Do not invent a new production architecture.
+
+Do not connect Preview to the VPS PostgreSQL database.
+
+==================================================
+3. APPLY BHRU MIGRATIONS
+==================================================
+
+Use BHRU's normal migration runner.
+
+Apply the existing migrations in their intended order.
+
+The development database must reach at least:
+
+019_public_customer_auth.sql
+020_public_customer_onboarding.sql
+021_customer_wallet_manual_services.sql
+
+Do not manually paste/execute individual SQL statements unless the repository's migration system specifically requires that.
+
+Use the application's normal migration tracking/checksum mechanism.
+
+Do not modify old migration files.
+
+==================================================
+4. VERIFY MIGRATION STATE
+==================================================
+
+After migration, verify that 021 is recorded as applied.
+
+Also verify the expected new structures exist, including the actual names used by the implementation for:
+
+- customer wallets
+- wallet ledger
+- manual services
+- service groups
+- service requirements
+- service orders
+- client groups
+
+Do not insert fake financial transactions.
+
+Existing development customers may receive zero-balance wallets only through the migration's intended backfill.
+
+==================================================
+5. PREVIEW STARTUP
+==================================================
+
+Start the normal Replit Preview application/API.
+
+Do not bypass the migration/startup guard.
+
+The goal is for the guard to pass naturally because the development DB is correctly migrated.
+
+Verify:
+
+- API starts
+- frontend starts
+- Preview no longer returns HTTP 502
+- no migration/startup fatal error appears
+
+Do not run a broad E2E suite.
+
+==================================================
+6. MINIMAL DEVELOPMENT DATA
+==================================================
+
+Do NOT populate large demo data.
+
+Preserve any existing development subscriber/customer data.
+
+If absolutely necessary for manual testing, create only the minimum development-only records using existing application flows or existing seed utilities.
+
+Do not fabricate wallet credits.
+
+I will manually add funds from the reseller interface during testing.
+
+==================================================
+7. DO NOT FIX UNRELATED CODE
+==================================================
+
+Do not touch the existing unrelated:
+
+ecommerce.tsx:416
+
+TypeScript issue.
+
+Do not refactor unrelated modules.
+
+==================================================
+8. STOP WHEN PREVIEW IS READY
+==================================================
+
+Once Preview starts successfully, STOP.
+
+Do not perform the business-flow testing for me.
+
+I will manually test the UI.
+
+Return only:
+
+1. Confirmation the database used is development/non-production.
+2. Which migrations were applied.
+3. Confirmation 021_customer_wallet_manual_services.sql is applied.
+4. Confirmation Preview API starts successfully.
+5. Preview HTTP status.
+6. Any migration/startup warnings.
+7. Whether any development seed data was required.
+8. Confirmation production/VPS/Dokploy were untouched.
+
+DO NOT PUSH.
+DO NOT DEPLOY.
