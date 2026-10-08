@@ -1,0 +1,119 @@
+BHRU — CLEAN COMMIT AND PUSH CUSTOMER CLIENT PANEL
+
+The authenticated BHRU customer client-panel implementation is complete in Replit Preview.
+
+Do NOT make new feature changes.
+
+IMPORTANT:
+The repository previously had local Replit divergence/history issues.
+Use a safe Git workflow and create a clean feature commit on top of the current origin/main.
+
+Current expected origin/main before this feature:
+ee6ad6fc4f8a86e2ca04ae4a338846cbe8332042
+
+==================================================
+FEATURE TO PUSH
+==================================================
+
+Commit ONLY the completed authenticated customer Client Panel implementation.
+
+This includes the actual files required for:
+
+- /customer/dashboard
+- Services / Place Order
+- My Orders
+- Wallet
+- Transactions
+- Announcements
+- Profile
+- Security
+- authenticated customer navigation/header
+- custom-domain customer-panel routing
+- /customer/account compatibility alias
+- tenant-scoped CMS announcements
+- service-group availability
+- generated API contracts required by the feature
+- focused tests
+- BHRU_CLIENT_PANEL.md documentation
+- migration:
+
+024_service_group_availability.sql
+
+==================================================
+MIGRATION SAFETY
+==================================================
+
+Include:
+
+024_service_group_availability.sql
+
+Do NOT modify migrations 019–023.
+
+Existing service groups must remain enabled by default.
+
+Do not alter historical orders, wallet balances or customer account currencies.
+
+==================================================
+EXCLUDE
+==================================================
+
+Do NOT include:
+
+- project memory files
+- memory boundary notes
+- .agents/*
+- attached_assets/*
+- temporary/debug files
+- pasted prompts/instructions
+- unrelated generated artifacts
+- unrelated source changes
+
+Do not touch:
+
+ecommerce.tsx:416
+
+==================================================
+GIT SAFETY
+==================================================
+
+1. git fetch origin
+2. verify current origin/main
+3. preserve the completed Client Panel feature
+4. create a clean commit on top of current origin/main
+5. push normally to origin/main
+
+Do NOT:
+- force push
+- rewrite history
+- merge old Replit memory commits
+- deploy
+- access VPS
+- access Dokploy
+- access production database
+
+==================================================
+NO MORE TESTING
+==================================================
+
+The feature already passed the reported focused/build/browser checks.
+
+Do not spend time running broad or unnecessary test suites.
+
+Only perform the minimum Git/source sanity checks needed for a safe commit.
+
+The unidentified non-blocking Preview resource 404 is NOT a blocker for this push unless it is proven to affect application functionality.
+
+==================================================
+RETURN
+==================================================
+
+Return:
+
+1. feature commit hash
+2. confirmation push to origin/main succeeded
+3. confirmation push was normal fast-forward/non-forced
+4. exact files included
+5. confirmation 024_service_group_availability.sql is included
+6. confirmation no memory/.agents/attached_assets/temp files were included
+7. confirmation ecommerce.tsx:416 remains untouched
+8. final origin/main HEAD
