@@ -4,6 +4,7 @@ import { subscriberContext } from '../lib/commerce/data';
 import { transaction } from '../lib/platform';
 import { HttpError } from '../lib/auth';
 import { lockClient, financialSummary, mutateWallet, statement, audit } from '../lib/client-finance/wallet';
+import { reconcileWallet } from '../lib/client-finance/reconciliation';
 import { serviceRow, serviceView, listServices, saveService } from '../lib/client-finance/catalog';
 import { listOrders, orderRow, orderView, transitionOrder } from '../lib/client-finance/orders';
 import { randomUUID } from 'node:crypto';
@@ -45,6 +46,10 @@ router.put('/clients/:id/group',async(req,res)=>{
 router.get('/clients/:id/wallet',async(req,res)=>{
   const owner=subscriberContext(req),id=uuid.parse(req.params.id);
   res.json(await transaction(async db=>{await lockClient(owner.subscriber_id,id,db);return financialSummary(owner.subscriber_id,id,db);}));
+});
+router.get('/clients/:id/reconciliation',async(req,res)=>{
+  const owner=subscriberContext(req),id=uuid.parse(req.params.id);
+  res.json(await transaction(db=>reconcileWallet(owner.subscriber_id,id,db)));
 });
 router.post('/clients/:id/wallet',async(req,res)=>{
   const owner=subscriberContext(req),id=uuid.parse(req.params.id);

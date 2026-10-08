@@ -72,6 +72,22 @@ paths:
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ClientGroupAssignment'}}}}
       responses:
         '200': {description: Assigned group, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /clients/{id}/reconciliation:
+    get:
+      operationId: getClientReconciliation
+      tags: [Clients]
+      summary: Read-only financial integrity diagnostic for an authorized reseller
+      parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+      responses:
+        '200':
+          description: Exact account-currency reconciliation; never repairs financial data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientReconciliation'
+        '401': {description: Authentication required}
+        '403': {description: Subscriber access denied}
+        '404': {description: Client wallet not found in this subscriber}
   /clients/{id}/wallet:
     parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
     get:
@@ -1053,6 +1069,27 @@ components:
             lockedAmount: {type: string}
             groupId: {type: [string, 'null'], format: uuid}
             financial: { $ref: "#/components/schemas/ClientFinancialSummary" }
+    ClientReconciliation:
+      type: object
+      required: [status, accountCurrency, storedBalance, ledgerDerivedBalance, difference, formattedStoredBalance, formattedLedgerDerivedBalance, formattedDifference, openingBalance, baselineBasis, baselineRecordedAt, entryCount, legacyEntryCount, currencyIssues, sequenceIssues, orderIssues, readOnly]
+      properties:
+        status: {type: string, enum: [MATCH, MISMATCH, UNVERIFIED]}
+        accountCurrency: {type: string}
+        storedBalance: {type: string, description: Exact account units at 10^12 scale}
+        ledgerDerivedBalance: {type: string, nullable: true}
+        difference: {type: string, nullable: true, description: Stored minus ledger-derived in exact account units}
+        formattedStoredBalance: {type: string}
+        formattedLedgerDerivedBalance: {type: string, nullable: true}
+        formattedDifference: {type: string, nullable: true}
+        openingBalance: {type: string, nullable: true}
+        baselineBasis: {type: string, nullable: true}
+        baselineRecordedAt: {type: string, format: date-time, nullable: true}
+        entryCount: {type: integer}
+        legacyEntryCount: {type: integer}
+        currencyIssues: {type: integer}
+        sequenceIssues: {type: integer}
+        orderIssues: {type: integer}
+        readOnly: {type: boolean}
     ClientFinancialSummary:
       type: object
       description: Exact integer account-currency units (10^12); ledger totals include adjustments and refunds. Unsupported credit-facility figures are omitted.

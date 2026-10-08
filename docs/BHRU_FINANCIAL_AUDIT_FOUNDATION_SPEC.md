@@ -2,7 +2,136 @@
 ## Financial semantics and client activity/audit baseline
 
 Date: 2026-10-08  
-Status: **design approved; Slice 1 implemented in Replit Preview only. Remaining slices are not implemented; future migrations require separate approval.**
+Status: **design approved; Slices 1–2 implemented in Replit Preview only. Remaining slices are not implemented; future migrations require separate approval.**
+
+### Implemented Slice 2 — ledger attribution and reconciliation
+
+Implemented on 2026-10-08. No funding requests/gateways, invoices, credit facility,
+client pricing/access policies, 2FA, customer API or general activity-log system
+are implemented by this slice.
+
+#### Mutation-path audit and financial authority
+
+All five application posting paths converge on `appendMovement`: reseller Add
+Funds (`admin_credit`), Deduct (`admin_debit`), Adjustment (`adjustment`), customer
+service-order placement (`order_debit`) and reseller rejection (`order_refund`).
+The immutable ledger INSERT invokes the existing database balance trigger. Client,
+wallet and order locking, transaction boundaries, idempotency and exact original
+refund snapshots remain intact. No completion debit exists. Account initialization
+creates a guarded zero wallet and an origin baseline, not a financial entry.
+No other application wallet writer was found; direct balance updates and ledger
+UPDATE/DELETE remain blocked by existing guards.
+
+#### Prospective actor/source/reference model
+
+Migration `025_wallet_attribution_reconciliation.sql` reuses
+`created_by_type/created_by_id` as the structured actor identity rather than adding
+a competing actor pair. New customer charges use `customer`; signed-in tenant
+owner operations and rejection refunds use `subscriber_owner`; `system` has a
+null actor ID and a System snapshot for genuinely system-initiated internal
+postings. There is no new system financial endpoint or worker.
+
+`subscriber_staff` is reserved in the controlled taxonomy, but new staff postings
+are rejected until an authoritative tenant staff membership model exists.
+The current repository has exactly one `account_users` owner per subscriber;
+this slice does not invent staff identities or alter authentication. Historical
+`reseller` actor values remain unchanged, with no invented role/display backfill.
+
+New immutable metadata:
+
+- `actor_display_snapshot`: database-resolved owner/customer name at posting time.
+- `operation_source`: `manual_wallet`, `service_order`, `service_order_refund`
+  (with `system` reserved as a source category).
+- `correlation_id`: server-selected manual ledger entry ID, or the existing order
+  ID shared by its charge/refund; a business-operation correlation, not an HTTP
+  request/session identifier.
+- `posting_sequence`: allocated under the wallet row lock; unique per wallet;
+  starts at 1 after cutover. Historical rows remain null.
+- `reason` and `customer_note`: separate from `internal_note`; mandatory private
+  reason for manual operations, with safe default customer descriptions.
+- `correction_of_id`: optional same-tenant/customer link to an existing posting
+  for a future compensating adjustment; no history-edit or new correction UI.
+
+Order references reuse `reference_type/reference_id/original_debit_id` and all
+existing exact-refund/unique-debit/refund constraints. No duplicate order-link
+column is added. Manual statement references expose the immutable entry ID as
+the manual operation's identifier; the existing physical `manual` reference
+representation is preserved.
+
+Before balance is derived exactly: credit `after - amount`, debit `after + amount`.
+After remains the existing stored snapshot. Both raw strings and historical
+account-currency formatting are exposed only in the richer reseller projection.
+No new monetary authority, float calculation or FX conversion is introduced.
+
+The migration also safely accepts older application INSERT shapes: on NEW
+postings only, the verified single tenant-owner identity becomes `subscriber_owner`,
+source/correlation are derived from existing type/order/entry identifiers, and
+the old mandatory private reason is separated from the customer description.
+This compatibility path does not update any historical row. Missing/foreign
+actors, empty manual reasons and inconsistent sources are rejected.
+
+#### Reconciliation and opening history
+
+`GET /api/clients/{id}/reconciliation` is authorized through the existing reseller
+context, tenant-scoped and read-only. No customer reconciliation route exists.
+One SQL/MVCC snapshot reads wallet, origin baseline, postings and service orders:
+
+```text
+ledger-derived Available = authoritative origin + ledger credits - ledger debits
+difference = stored Available - ledger-derived Available
+```
+
+Amounts are exact 10^12-scale account units. Diagnostics also check snapshot
+currency, prospective sequence/before-after continuity, service-order debit
+linkage and exact rejected-order refunds. Status is `MATCH`, `MISMATCH`, or
+`UNVERIFIED` when a valid origin baseline is unavailable. Missing origin returns
+null derived balance/difference, never a fabricated zero-based MATCH.
+No check writes, repairs, resets or compensates balances/history.
+
+`customer_wallet_baselines` records an immutable `guarded_zero_origin` with zero
+opening units and the fixed account currency. Existing repository wallets have
+this origin because migration 021 initialized every wallet at zero and enforced
+ledger-only balance movement; migration 022 preserved that authority. Therefore
+all historical postings are included, not just post-cutover rows. The baseline
+is NEVER inferred as stored balance minus ledger totals: that would hide a
+discrepancy. It is not an opening credit or a snapshot resetting financial truth.
+Future imported/nonzero-opening accounts need separately verified provenance and
+an explicitly approved baseline policy; this slice does not import them.
+
+Historical ledger rows are not rewritten or assigned invented actors, sequence,
+notes or relations. Their amounts contribute to reconciliation, but timestamp
+ordering alone does not certify their old per-entry chain. The reseller view
+states this limitation. Per-client diagnostics are implemented; no tenant-wide
+scan or new platform-admin diagnostic surface is added.
+
+#### UI, Preview and validation
+
+Reseller Financial contains a read-only Financial Integrity card with stored,
+ledger-derived and difference amounts, status, refresh/error handling and
+historical-coverage notice. The existing ledger table adds exact before balance,
+actor snapshot/role, source/sequence, original charge reference and private reason
+separate from internal note. Mutations invalidate/refetch the integrity query
+using the existing tenant-scoped client cache path.
+
+Customer Account Statement retains safe descriptions and public order references.
+No new actor IDs, private reason/note, sequence, correlation or reconciliation
+metadata is exposed. Historical private-description fallback remains redacted in
+display AND search. Refund descriptions are safe; the ordinary order's existing
+customer-visible rejection response remains separate.
+
+All **25 focused disposable PostgreSQL/HTTP groups passed**, including existing
+debit/refund/double-spend/idempotency/isolation/Retail checks, a real 024-to-025
+cutover with historical-row preservation, new zero origins, manual atomic
+rollback, concurrent sequence allocation, actor/reason/linkage/privacy checks,
+older-writer compatibility and MATCH/MISMATCH/UNVERIFIED read-only diagnostics.
+API/frontend TypeScript, generated-library types and API build passed. No broad
+browser/E2E suite was run.
+
+Before applying 025 to Preview through the normal tracked migration runner, the
+configured connection's database/OID/startup-time/migration-checksum fingerprint
+was matched against Replit development. Migrations 001–024 were skipped and only
+025 applied. No VPS/Dokploy/production connection, commit, push or deployment
+was performed. Startup now requires the attribution columns and baseline table.
 
 ### Implemented Slice 1 — truthful vocabulary and consistent reporting
 
@@ -120,9 +249,9 @@ about existing guards describe source, not a production-data certification.
 ## B. Pre-Slice 1 BHRU financial model — audit baseline
 
 Sections B/C retain the original audit findings for traceability. The implemented
-Slice 1 status above identifies the reporting, vocabulary and privacy issues now
-resolved; later ledger-attribution/activity/credit recommendations remain future
-work.
+Slices 1–2 status above identifies the reporting, attribution, reconciliation and
+privacy issues now resolved; general activity/credit recommendations remain
+future work.
 
 ### Canonical identity and boundaries
 
@@ -994,7 +1123,9 @@ must not be smuggled into an audit-foundation implementation.
 ### Approval boundary and task completion
 
 Only `docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md` was authored for this task.
-Slice 1 changes application reporting/UI, contracts, focused tests and this
-specification only. No schema, migrations or existing data were changed. No commit, push,
+Slices 1–2 change the approved financial reporting/UI, ledger attribution,
+reconciliation, contracts, focused tests and this specification. Additive
+migration 025 creates origin metadata without changing existing balances,
+currencies, ledger entries or service-order snapshots. No commit, push,
 deployment, production access, VPS/Dokploy access, browser test or workflow restart
 was performed.

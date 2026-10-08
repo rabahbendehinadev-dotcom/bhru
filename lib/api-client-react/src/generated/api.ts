@@ -26,6 +26,7 @@ import type {
   AuthEntry,
   ClientFinancialSummary,
   ClientGroupAssignment,
+  ClientReconciliation,
   CommerceAccess,
   CommerceAsset,
   CommerceEnvelope,
@@ -897,6 +898,83 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getAssignClientGroupMutationOptions(options));
     }
+
+export const getGetClientReconciliationUrl = (id: string,) => {
+
+
+
+
+  return `/api/clients/${id}/reconciliation`
+}
+
+/**
+ * @summary Read-only financial integrity diagnostic for an authorized reseller
+ */
+export const getClientReconciliation = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ClientReconciliation> => {
+
+  return customFetch<ClientReconciliation>(getGetClientReconciliationUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClientReconciliationQueryKey = (id: string,) => {
+    return [
+    `/api/clients/${id}/reconciliation`
+    ] as const;
+    }
+
+
+export const getGetClientReconciliationQueryOptions = <TData = Awaited<ReturnType<typeof getClientReconciliation>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClientReconciliation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClientReconciliationQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClientReconciliation>>> = ({ signal }) => getClientReconciliation(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClientReconciliation>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetClientReconciliationQueryResult = NonNullable<Awaited<ReturnType<typeof getClientReconciliation>>>
+export type GetClientReconciliationQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read-only financial integrity diagnostic for an authorized reseller
+ */
+
+export function useGetClientReconciliation<TData = Awaited<ReturnType<typeof getClientReconciliation>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClientReconciliation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetClientReconciliationQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetClientWalletUrl = (id: string,) => {
 

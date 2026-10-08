@@ -17,6 +17,8 @@ export * from './clientFinancialSummary';
 export * from './clientFinancialSummaryReportingVersion';
 export * from './clientGroupAssignment';
 export * from './clientOrderSnapshot';
+export * from './clientReconciliation';
+export * from './clientReconciliationStatus';
 export * from './commerceAccess';
 export * from './commerceAsset';
 export * from './commerceEnvelope';

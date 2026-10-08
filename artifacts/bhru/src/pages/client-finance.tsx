@@ -4,7 +4,7 @@ import { Btn, Card, ConfirmDialog, Field } from '@/components/bhru/ui';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import { errText } from '@/hooks/use-commerce';
 import {
-  newUuid, when, useClientGroupMutations, useClientGroups, useClientStatement, useClientWallet, useServiceOrders, useWalletMutation,
+  newUuid, when, useClientGroupMutations, useClientGroups, useClientStatement, useClientWallet, useServiceOrders, useWalletMutation, useClientReconciliation,
 } from '@/hooks/use-services';
 import { OrderBadge } from '@/pages/service-orders';
 import type { ResellerClientDetail } from '@workspace/api-client-react';
@@ -20,6 +20,22 @@ const isDefinitive = (e: unknown) => { const st = (e as { status?: number } | nu
 
 function Stat({ k, v, id }: { k: string; v?: string; id: string }) {
   return <Card className="p-2.5"><div className="text-[11px] text-muted-foreground">{k}</div><div className="break-words text-[17px] font-bold" data-testid={`stat-${id}`}>{v ?? '-'}</div></Card>;
+}
+
+function FinancialIntegrity({ id }: { id: string }) {
+  const q = useClientReconciliation(id);
+  const d = q.data;
+  return <Card className="space-y-2 p-3" data-testid="financial-integrity">
+    <div className="flex items-center justify-between gap-2"><h2 className="text-[13px] font-semibold">Financial Integrity</h2><Btn sm disabled={q.isFetching} onClick={() => void q.refetch()}>Check again</Btn></div>
+    {q.isLoading ? <p className="text-[12px]" aria-busy="true">Checking...</p>
+      : q.isError || !d ? <p className="text-[12px] text-danger" role="alert">{errText(q.error)}</p>
+        : <><p className={`text-[12px] font-semibold ${d.status === 'MATCH' ? 'text-ok' : 'text-danger'}`} role="status">{d.status === 'MATCH' ? 'MATCH' : d.status === 'MISMATCH' ? 'Mismatch detected' : 'Opening baseline unavailable — unverified'}</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-[12px]"><span>Stored: <b>{d.formattedStoredBalance}</b></span><span>Ledger: <b>{d.formattedLedgerDerivedBalance ?? 'Unavailable'}</b></span><span>Difference: <b>{d.formattedDifference ?? 'Unavailable'}</b></span><span>Account currency: <b>{d.accountCurrency}</b></span></div>
+          {(d.currencyIssues + d.sequenceIssues + d.orderIssues > 0) && <p className="text-[12px] text-danger">Currency checks: {d.currencyIssues}; posting sequence checks: {d.sequenceIssues}; order linkage checks: {d.orderIssues}.</p>}
+          {d.legacyEntryCount > 0 && <p className="text-[11px] text-muted-foreground">{d.legacyEntryCount} historical entries have no posting sequence. Their amounts are included; historical ordering cannot be certified.</p>}
+        </>}
+    <p className="text-[11px] text-muted-foreground">Read-only diagnostic. This check does not alter balances or financial history.</p>
+  </Card>;
 }
 
 function Ledger({ id }: { id: string }) {
@@ -40,10 +56,10 @@ function Ledger({ id }: { id: string }) {
       {q.isLoading ? <div className="space-y-2 p-3" aria-busy="true">{[0, 1, 2].map((i) => <div key={i} className="h-8 animate-pulse rounded bg-white/5" />)}</div>
         : q.isError || !q.rows ? <div className="flex flex-col items-center gap-2 p-6 text-center" role="alert"><AlertTriangle size={18} className="text-danger" /><p className="text-[12.5px]">{errText(q.error)}</p><Btn sm onClick={() => void q.refetch()}>Try again</Btn></div>
           : q.rows.length === 0 ? <EmptyState compact title="No ledger entries" description="Wallet movements appear here." />
-            : <div className="scroll-thin overflow-x-auto"><table className="tbl"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Balance after</th><th>Method / Ref</th><th>Description</th><th>Internal note</th><th>By</th></tr></thead>
+            : <div className="scroll-thin overflow-x-auto"><table className="tbl"><thead><tr><th>Date / Posting</th><th>Type</th><th>Amount</th><th>Balance before</th><th>Balance after</th><th>Reference / Source</th><th>Customer description</th><th>Reason / Internal note</th><th>Actor</th></tr></thead>
               <tbody>{q.rows.map((r) => <tr key={r.id} data-testid={`row-ledger-${r.id}`}><td className="whitespace-nowrap">{when(r.createdAt)}</td><td>{r.type}</td>
-                <td className={`whitespace-nowrap font-medium ${r.direction === 'credit' ? 'text-ok' : 'text-danger'}`}>{r.direction === 'credit' ? '+' : '-'}{r.formattedAmount}</td><td className="whitespace-nowrap">{r.formattedBalanceAfter}</td>
-                <td>{[r.method, r.transactionReference].filter(Boolean).join(' / ') || '-'}</td><td className="min-w-[160px]">{r.description || '-'}</td><td className="min-w-[120px]">{r.internalNote || '-'}</td><td>{r.createdByType || '-'}</td></tr>)}</tbody></table></div>}
+                <td className={`whitespace-nowrap font-medium ${r.direction === 'credit' ? 'text-ok' : 'text-danger'}`}>{r.direction === 'credit' ? '+' : '-'}{r.formattedAmount}</td><td className="whitespace-nowrap">{r.formattedBalanceBefore ?? '-'}</td><td className="whitespace-nowrap">{r.formattedBalanceAfter}</td>
+                <td className="max-w-[230px] break-words">{[r.method, r.transactionReference].filter(Boolean).join(' / ') || '-'}<div className="text-[11px] text-muted-foreground">{r.referenceType}: {r.referenceId ?? 'Unavailable'}</div>{r.originalDebitId && <div className="text-[11px]">Original charge: {r.originalDebitId}</div>}<div className="text-[11px]">{r.operationSource ?? 'Legacy source unavailable'} · {r.postingSequence ? `Posting ${r.postingSequence}` : 'Legacy sequence unavailable'}</div></td><td className="min-w-[160px]">{r.description || '-'}</td><td className="min-w-[120px]"><div>{r.reason || '-'}</div><div className="text-muted-foreground">{r.internalNote || ''}</div></td><td>{r.actorDisplay ?? r.createdByType ?? 'Unavailable'}<div className="text-[11px] text-muted-foreground">{r.createdByType === 'subscriber_owner' ? 'Subscriber owner' : r.createdByType === 'reseller' ? 'Legacy reseller role' : r.createdByType}</div></td></tr>)}</tbody></table></div>}
       <div className="flex items-center justify-between border-t p-2.5 text-[12px]"><Btn sm disabled={page <= 1} onClick={() => setPage(page - 1)} data-testid="button-ledger-prev"><ArrowLeft size={12} /> Previous</Btn><span className="text-muted-foreground">Page {page}</span><Btn sm disabled={!q.hasMore} onClick={() => setPage(page + 1)} data-testid="button-ledger-next">Next <ArrowRight size={12} /></Btn></div>
     </Card>
   );
@@ -99,6 +115,7 @@ export function FinancialPanel({ id, d }: { id: string; d: ResellerClientDetail 
       {w.isLoading ? <div className="h-20 animate-pulse rounded bg-white/5" aria-busy="true" />
         : w.isError || !fin ? <Card className="flex flex-col items-center gap-2 p-6 text-center" role="alert"><AlertTriangle size={18} className="text-danger" /><p className="text-[12.5px]">{errText(w.error)}</p><Btn sm onClick={() => void w.refetch()} data-testid="button-wallet-retry">Try again</Btn></Card>
           : <><div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6"><Stat id="available" k="Available balance" v={fin.formattedAvailable} /><Stat id="currency" k="Account currency" v={fin.accountCurrency} /><Stat id="spent" k="Total spent" v={fin.formattedTotalSpent} /><Stat id="credits" k="Ledger credits" v={fin.formattedLedgerCredits} /><Stat id="debits" k="Ledger debits" v={fin.formattedLedgerDebits} /><Stat id="net-charges" k="Net service charges" v={fin.formattedNetServiceCharges} />{BigInt(fin.lockedAmount) !== 0n && <Stat id="locked" k="Locked balance" v={fin.formattedLocked} />}</div><p className="mt-2 text-[11.5px] text-muted-foreground">Total spent counts completed service orders only. Net service charges are order debits minus refunds, including pending and processing orders. Ledger totals include refunds and manual adjustments.</p></>}
+      <FinancialIntegrity id={id} />
       <Card className="space-y-3 p-3.5">
         <div className="flex items-center justify-between"><h2 className="text-[13px] font-semibold">Wallet adjustment</h2><Btn sm disabled={w.isFetching} onClick={() => void w.refetch()} data-testid="button-wallet-refresh">Refresh</Btn></div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -109,7 +126,7 @@ export function FinancialPanel({ id, d }: { id: string; d: ResellerClientDetail 
           <Field label="Method"><input className="input" maxLength={100} value={method} onChange={(e) => setMethod(e.target.value)} placeholder="Bank transfer, Cash..." disabled={locked} data-testid="input-wallet-method" /></Field>
           <Field label="Transaction reference (optional)"><input className="input" maxLength={200} value={ref} onChange={(e) => setRef(e.target.value)} disabled={locked} data-testid="input-wallet-reference" /></Field>
         </div>
-        <Field label="Reason"><input className="input" maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} disabled={locked} data-testid="input-wallet-reason" /></Field>
+        <Field label="Reason (staff only)"><input className="input" maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} disabled={locked} data-testid="input-wallet-reason" /></Field>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Internal note (staff only)"><textarea className="input min-h-[56px]" maxLength={2000} value={internal} onChange={(e) => setInternal(e.target.value)} disabled={locked} data-testid="input-wallet-internal" /></Field>
           <Field label="Customer note (shown to the client)"><textarea className="input min-h-[56px]" maxLength={500} value={customer} onChange={(e) => setCustomer(e.target.value)} disabled={locked} data-testid="input-wallet-customer" /></Field>

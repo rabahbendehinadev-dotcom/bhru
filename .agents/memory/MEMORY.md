@@ -4,3 +4,4 @@
 - [Preview database isolation](preview-database-isolation.md) — database proxy hostnames need identity verification, not hostname-only loopback checks.
 - [Client panel boundaries](client-panel-boundaries.md) — panel-first signed-in experience; reuse current CMS announcements without inventing an archive or payment workflow.
 - [Git authentication recovery](git-authentication.md) — workspace pushes use source-control authorization; healthy connection status does not prove Git credentials work.
+- [Financial integrity boundaries](financial-integrity-boundaries.md) — diagnostics do not repair history; future imported wallet openings need verified provenance.

@@ -24,6 +24,8 @@ try {
   await pool.query("SELECT registration_available FROM subscriber_currencies LIMIT 0");
   await pool.query("SELECT enabled FROM manual_service_groups LIMIT 0");
   await pool.query("SELECT amount_account_units,account_currency_snapshot FROM customer_wallet_ledger LIMIT 0");
+  await pool.query("SELECT operation_source,posting_sequence,reason FROM customer_wallet_ledger LIMIT 0");
+  await pool.query("SELECT opening_account_units FROM customer_wallet_baselines LIMIT 0");
   await pool.query("SELECT price_account_units,account_currency_snapshot FROM service_orders LIMIT 0");
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
   await pool.query("SELECT subscriber_id,client_code,username,last_login_at FROM public_customer_accounts LIMIT 0");

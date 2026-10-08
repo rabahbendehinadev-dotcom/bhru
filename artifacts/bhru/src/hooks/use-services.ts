@@ -4,7 +4,7 @@ import {
   useListManualServices, useCreateManualService, useUpdateManualService, useListServiceGroups, useCreateServiceGroup,
   useUpdateServiceGroupAvailability,
   useListServiceOrders, useGetServiceOrder, useTransitionServiceOrder,
-  useGetClientWallet, useGetClientStatement, useMutateClientWallet,
+  useGetClientWallet, useGetClientStatement, useMutateClientWallet, useGetClientReconciliation, getGetClientReconciliationQueryKey,
   useListClientGroups, useCreateClientGroup, useAssignClientGroup,
   getListManualServicesQueryKey, getListServiceGroupsQueryKey, getListServiceOrdersQueryKey, getGetServiceOrderQueryKey,
   getGetClientWalletQueryKey, getGetClientStatementQueryKey, getListClientGroupsQueryKey,
@@ -35,6 +35,9 @@ export interface Financial {
 export interface LedgerEntry {
   id: string; type: string; direction: 'credit' | 'debit'; amountUsdUnits: string | null; amountAccountUnits: string; formattedAmount: string; formattedBalanceAfter: string; currency: string; description?: string | null;
   referenceType?: string | null; referenceId?: string | null; createdAt: string; method?: string | null; transactionReference?: string | null; internalNote?: string | null; createdByType?: string | null;
+  reason?: string | null; customerNote?: string | null; actorDisplay?: string | null;
+  operationSource?: string | null; correlationId?: string | null; postingSequence?: string | null;
+  originalDebitId?: string | null; balanceBefore?: string; balanceAfter?: string; formattedBalanceBefore?: string;
 }
 
 function useGate() {
@@ -112,6 +115,12 @@ export function useWalletMutation() {
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ predicate: (q) => typeof q.queryKey[0] === 'string' && (q.queryKey[0] as string).startsWith('/api/clients') });
   return useMutateClientWallet({ request: subReq(), mutation: { onSuccess: refresh } });
+}
+export function useClientReconciliation(id: string) {
+  const g = useGate();
+  return useGetClientReconciliation(id, { request: subReq(), query: {
+    queryKey: [...getGetClientReconciliationQueryKey(id), ...g.scope], enabled: g.on, ...opts,
+  } });
 }
 
 export const when = (s?: string | null) => { if (!s) return '-'; const d = new Date(s); return Number.isNaN(+d) ? '-' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); };

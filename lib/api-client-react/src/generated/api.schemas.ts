@@ -302,6 +302,37 @@ export type ResellerClient = PublicCustomerProfile & ({
   financial: ClientFinancialSummary;
 });
 
+export type ClientReconciliationStatus = typeof ClientReconciliationStatus[keyof typeof ClientReconciliationStatus];
+
+
+export const ClientReconciliationStatus = {
+  MATCH: 'MATCH',
+  MISMATCH: 'MISMATCH',
+  UNVERIFIED: 'UNVERIFIED',
+} as const;
+
+export interface ClientReconciliation {
+  status: ClientReconciliationStatus;
+  accountCurrency: string;
+  /** Exact account units at 10^12 scale */
+  storedBalance: string;
+  ledgerDerivedBalance: string | null;
+  /** Stored minus ledger-derived in exact account units */
+  difference: string | null;
+  formattedStoredBalance: string;
+  formattedLedgerDerivedBalance: string | null;
+  formattedDifference: string | null;
+  openingBalance: string | null;
+  baselineBasis: string | null;
+  baselineRecordedAt: string | null;
+  entryCount: number;
+  legacyEntryCount: number;
+  currencyIssues: number;
+  sequenceIssues: number;
+  orderIssues: number;
+  readOnly: boolean;
+}
+
 export interface ResellerClientList {
   data: ResellerClient[];
   page: number;

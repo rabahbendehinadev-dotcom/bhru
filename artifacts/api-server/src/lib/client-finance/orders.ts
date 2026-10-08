@@ -118,7 +118,7 @@ export async function transitionOrder(sub:string,id:string,raw:unknown,actor:str
     await walletRow(sub,order.customer_id,db,true);
     await appendMovement(sub,order.customer_id,{
       type:'order_refund',direction:'credit',amount:BigInt(debit.amount_account_units),currency:debit.account_currency_snapshot,
-      description:`Refund: ${order.reference} — ${input.reason}`,actorType:'reseller',actor,referenceId:id,
+      description:`Refund for order ${order.reference}`,reason:input.reason,actorType:'reseller',actor,referenceId:id,
       originalDebit:debit.id,key:randomUUID(),hash:hashRequest({refund:id,debit:debit.id}),
       sourceUsdUnits:debit.amount_usd_units==null?null:String(debit.amount_usd_units),legacyCurrencySnapshot:debit.currency_snapshot,
     },db);

@@ -102,7 +102,8 @@ export async function audit(sub:string,id:string,action:string,actor:string|null
 type Movement = {
   id?:string;type:'admin_credit'|'admin_debit'|'adjustment'|'order_debit'|'order_refund';direction:'credit'|'debit';
   amount:bigint;currency:StoreCurrency;description:string;method?:string;transactionReference?:string;internalNote?:string;
-  actorType:'reseller'|'customer';actor:string;referenceId?:string;originalDebit?:string;key:string;hash:string;
+  actorType:'reseller'|'customer'|'system';actor:string|null;referenceId?:string;originalDebit?:string;key:string;hash:string;
+  reason?:string;customerNote?:string;
   sourceUsdUnits?:string|null;legacyCurrencySnapshot?:StoreCurrency;
 };
 /** Caller holds account then wallet locks. The immutable INSERT drives the guarded balance trigger. */
@@ -117,14 +118,17 @@ export async function appendMovement(sub:string,id:string,m:Movement,db:PoolClie
       WHERE subscriber_id=$1 AND customer_id=$2 AND status IN ('pending','processing')`,[sub,id])).rows[0].n;
     if(after+BigInt(refundable)>MAX_USD_UNITS)throw new HttpError(400,'This credit exceeds the safe balance limit including refundable orders.');
   }
+  const entryId=m.id??randomUUID();
   const entry=(await db.query(`INSERT INTO customer_wallet_ledger
     (id,subscriber_id,customer_id,type,direction,amount_usd_units,balance_after,currency_snapshot,description,method,
       transaction_reference,internal_note,created_by_type,created_by_id,reference_type,reference_id,original_debit_id,idempotency_key,request_hash,
-      amount_account_units,account_currency_snapshot)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb) RETURNING *`,
-    [m.id??randomUUID(),sub,id,m.type,m.direction,m.sourceUsdUnits!==undefined?m.sourceUsdUnits:m.currency.code==='USD'?m.amount.toString():null,after.toString(),JSON.stringify(m.legacyCurrencySnapshot??m.currency),m.description,
-      m.method??'',m.transactionReference??'',m.internalNote??'',m.actorType,m.actor,m.referenceId?'service_order':'manual',
-      m.referenceId??null,m.originalDebit??null,m.key,m.hash,m.amount.toString(),JSON.stringify(m.currency)])).rows[0];
+      amount_account_units,account_currency_snapshot,operation_source,correlation_id,reason,customer_note)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb,$22,$23,$24,$25) RETURNING *`,
+    [entryId,sub,id,m.type,m.direction,m.sourceUsdUnits!==undefined?m.sourceUsdUnits:m.currency.code==='USD'?m.amount.toString():null,after.toString(),JSON.stringify(m.legacyCurrencySnapshot??m.currency),m.description,
+      m.method??'',m.transactionReference??'',m.internalNote??'',m.actorType==='reseller'?'subscriber_owner':m.actorType,m.actor,m.referenceId?'service_order':'manual',
+      m.referenceId??null,m.originalDebit??null,m.key,m.hash,m.amount.toString(),JSON.stringify(m.currency),
+      m.type==='order_debit'?'service_order':m.type==='order_refund'?'service_order_refund':'manual_wallet',
+      m.referenceId??entryId,m.reason??'',m.customerNote??'']) ).rows[0];
   return entry;
 }
 export function ledgerView(row:Record<string,any>,internal=false) {
@@ -132,7 +136,7 @@ export function ledgerView(row:Record<string,any>,internal=false) {
   // Older manual entries used the internal reason as a fallback description.
   // Redact that fallback in the customer projection; never rewrite ledger history.
   const manualLabels:Record<string,string>={admin_credit:'Reseller credit',admin_debit:'Reseller deduction',adjustment:'Wallet adjustment'};
-  const description=!internal&&manualLabels[row.type]&&row.description===String(row.internal_note??'').split('\n')[0]
+  const description=!internal&&row.reason==null&&manualLabels[row.type]&&row.description===String(row.internal_note??'').split('\n')[0]
     ?manualLabels[row.type]:row.description;
   return {
     id:row.id,type:row.type,direction:row.direction,amountUsdUnits:row.amount_usd_units==null?null:String(row.amount_usd_units),
@@ -140,7 +144,19 @@ export function ledgerView(row:Record<string,any>,internal=false) {
     formattedAmount:money(row.amount_account_units,c),formattedBalanceAfter:money(row.balance_after,c),currency:c.code,
     description,referenceType:row.reference_type,referenceId:row.reference_id,
     createdAt:row.created_at,method:row.method,transactionReference:row.transaction_reference,
-    ...(internal?{internalNote:row.internal_note,createdByType:row.created_by_type,createdById:row.created_by_id}:{}),
+    ...(internal?{
+      internalNote:row.internal_note,reason:row.reason??'',customerNote:row.customer_note,
+      createdByType:row.created_by_type,createdById:row.created_by_id,
+      actorDisplay:row.actor_display_snapshot??null,operationSource:row.operation_source??null,
+      postingSequence:row.posting_sequence==null?null:String(row.posting_sequence),
+      correlationId:row.correlation_id??null,originalDebitId:row.original_debit_id??null,
+      correctionOfId:row.correction_of_id??null,
+      referenceType:row.reference_type==='manual'?'manual_adjustment':row.reference_type,
+      referenceId:row.reference_type==='manual'?row.id:row.reference_id,
+      balanceBefore:(BigInt(row.balance_after)+(row.direction==='debit'?BigInt(row.amount_account_units):-BigInt(row.amount_account_units))).toString(),
+      balanceAfter:String(row.balance_after),
+      formattedBalanceBefore:money(BigInt(row.balance_after)+(row.direction==='debit'?BigInt(row.amount_account_units):-BigInt(row.amount_account_units)),c),
+    }:{}),
   };
 }
 export const statementQuery=z.object({
@@ -151,7 +167,7 @@ export const statementQuery=z.object({
 // Customer search must use the same redacted description as the visible row,
 // not provide an oracle for legacy internal reasons copied into description.
 const publicLedgerDescription=`CASE
-  WHEN type IN ('admin_credit','admin_debit','adjustment')
+  WHEN reason IS NULL AND type IN ('admin_credit','admin_debit','adjustment')
     AND description=split_part(coalesce(internal_note,''),chr(10),1)
   THEN CASE type WHEN 'admin_credit' THEN 'Reseller credit'
     WHEN 'admin_debit' THEN 'Reseller deduction' ELSE 'Wallet adjustment' END
@@ -161,7 +177,7 @@ export async function statement(sub:string,id:string,raw:unknown,db:PoolClient,i
   const rows=(await db.query(`SELECT * FROM customer_wallet_ledger WHERE subscriber_id=$1 AND customer_id=$2
     AND ($3::text IS NULL OR (${internal?'description':publicLedgerDescription}) ILIKE $3 OR transaction_reference ILIKE $3 OR reference_id::text ILIKE $3)
     AND ($4::text IS NULL OR direction=$4) AND($5::text IS NULL OR type=$5)
-    ORDER BY created_at DESC,id LIMIT 31 OFFSET $6`,[sub,id,search,q.direction??null,q.type??null,(q.page-1)*30])).rows;
+    ORDER BY posting_sequence DESC NULLS LAST,created_at DESC,id LIMIT 31 OFFSET $6`,[sub,id,search,q.direction??null,q.type??null,(q.page-1)*30])).rows;
   return {data:rows.slice(0,30).map(r=>ledgerView(r,internal)),page:q.page,hasMore:rows.length>30,financial:await financialSummary(sub,id,db)};
 }
 export const mutationInput=z.object({
@@ -177,7 +193,7 @@ export async function mutateWallet(sub:string,id:string,raw:unknown,actor:string
   await lockClient(sub,id,db);await walletRow(sub,id,db,true);
   const hash=hashRequest(input), existing=(await db.query('SELECT * FROM customer_wallet_ledger WHERE subscriber_id=$1 AND customer_id=$2 AND idempotency_key=$3',[sub,id,input.idempotencyKey])).rows[0];
   if(existing) {
-    if(existing.request_hash!==hash||existing.created_by_type!=='reseller'||existing.created_by_id!==actor)throw new HttpError(409,'Idempotency key was used for a different action.');
+    if(existing.request_hash!==hash||!['reseller','subscriber_owner'].includes(existing.created_by_type)||existing.created_by_id!==actor)throw new HttpError(409,'Idempotency key was used for a different action.');
     return {entry:ledgerView(existing,true),financial:await financialSummary(sub,id,db)};
   }
   const currency=await displayCurrency(sub,id,db,input.currency),[whole,fraction='']=input.amount.split('.');
@@ -188,8 +204,8 @@ export async function mutateWallet(sub:string,id:string,raw:unknown,actor:string
   const entry=await appendMovement(sub,id,{
     type:input.operation==='add'?'admin_credit':input.operation==='deduct'?'admin_debit':'adjustment',
     direction:input.direction,amount,currency:{...currency,entered_amount:input.amount,entered_minor:minor.toString()} as typeof currency,
-    description:input.customerNote||input.reason,method:input.method,
-    transactionReference:input.transactionReference,internalNote:[input.reason,input.internalNote].filter(Boolean).join('\n'),
+    description:input.customerNote||({add:'Funds added',deduct:'Funds deducted',adjustment:'Wallet adjustment'}[input.operation]),method:input.method,
+    transactionReference:input.transactionReference,internalNote:input.internalNote,reason:input.reason,customerNote:input.customerNote,
     actorType:'reseller',actor,key:input.idempotencyKey,hash,
   },db);
   await audit(sub,id,input.operation==='add'?'funds_added':input.operation==='deduct'?'funds_deducted':'wallet_adjustment',actor,db);

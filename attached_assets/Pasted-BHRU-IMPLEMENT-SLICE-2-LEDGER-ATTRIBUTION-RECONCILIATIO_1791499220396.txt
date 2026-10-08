@@ -1,0 +1,454 @@
+BHRU — IMPLEMENT SLICE 2
+LEDGER ATTRIBUTION + RECONCILIATION
+
+Use:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+Slice 1 is complete.
+
+Implement ONLY Slice 2:
+ledger attribution + financial reconciliation foundation.
+
+Do NOT implement:
+- funding requests
+- payment gateways
+- invoices
+- credit facility
+- client groups/pricing
+- service access policies
+- 2FA
+- customer API
+
+==================================================
+1. OBJECTIVE
+==================================================
+
+Every posted wallet ledger entry must clearly answer:
+
+- what happened?
+- how much?
+- which customer?
+- which reseller/tenant?
+- who caused it?
+- what business object caused it?
+- what balance existed before?
+- what balance existed after?
+- when did it happen?
+- why?
+
+Financial history must remain immutable.
+
+==================================================
+2. AUDIT CURRENT LEDGER
+==================================================
+
+Inspect the existing wallet/ledger schema and all code paths that write ledger entries.
+
+Identify every current mutation path:
+
+- reseller Add Funds
+- reseller Deduct
+- reseller Adjustment
+- service order charge
+- service order refund
+- any account initialization entry
+- any other wallet mutation currently present
+
+Do not rely only on API names.
+
+==================================================
+3. ACTOR ATTRIBUTION
+==================================================
+
+Add structured actor attribution where missing.
+
+Support at least:
+
+customer
+subscriber_owner
+subscriber_staff/admin
+system
+
+Future provider/API actor types may be reserved but do not implement provider behavior now.
+
+Recommended concepts:
+
+actor_type
+actor_id
+
+If useful:
+actor_display_snapshot
+
+Do not rely only on free-text names.
+
+System-generated financial entries must clearly identify:
+
+actor_type = system
+
+==================================================
+4. REFERENCE ATTRIBUTION
+==================================================
+
+Each financial entry should have structured relation to its cause.
+
+Examples:
+
+service_order
+manual_adjustment
+refund
+future_funding_request
+future_payment_transaction
+
+Use concepts like:
+
+reference_type
+reference_id
+
+Reuse existing fields if they already provide authoritative linkage.
+
+Do not duplicate order references unnecessarily.
+
+==================================================
+5. MANUAL WALLET OPERATIONS
+==================================================
+
+For Add Funds / Deduct / Adjustment:
+
+Require:
+
+- explicit operation type
+- amount
+- mandatory reason
+- actor attribution
+- created timestamp
+
+Support separate notes if architecture allows:
+
+internal_note
+customer_note
+
+Customer-visible statement must never fall back to internal staff notes.
+
+If existing UI already has:
+- transaction reference
+- reason
+- internal note
+- customer note
+
+preserve them and map them correctly.
+
+==================================================
+6. BALANCE BEFORE / AFTER
+==================================================
+
+Audit whether existing ledger entries store or can authoritatively expose:
+
+balance_before
+balance_after
+
+If these snapshots already exist, preserve them.
+
+If not, recommend/add them only if needed to make statement and reconciliation reliable.
+
+All amounts must remain in immutable client Account Currency.
+
+No FX conversion.
+
+==================================================
+7. IMMUTABILITY
+==================================================
+
+Posted ledger entries must never be:
+
+- edited
+- deleted
+- rewritten
+
+A correction must create a compensating financial entry.
+
+Do not provide API/UI for editing historical financial rows.
+
+==================================================
+8. RECONCILIATION
+==================================================
+
+Add a safe reconciliation capability.
+
+Purpose:
+
+Compare:
+
+stored wallet Available Balance
+
+against:
+
+ledger-derived authoritative balance
+
+for the same client/account currency.
+
+Reconciliation must be read-only by default.
+
+Return something like:
+
+Stored Balance
+Ledger Derived Balance
+Difference
+Status: MATCH / MISMATCH
+
+Do NOT automatically repair mismatches.
+
+==================================================
+9. RECONCILIATION SCOPE
+==================================================
+
+Support:
+
+- one client reconciliation
+- subscriber-wide diagnostic summary if cheap/safe
+
+Example reseller/admin view:
+
+Financial Integrity
+MATCH
+
+or:
+
+Mismatch detected
+Stored: 100.00 USD
+Ledger: 95.00 USD
+Difference: 5.00 USD
+
+Do not expose technical/database internals to customer.
+
+Customer should not see reconciliation tooling.
+
+==================================================
+10. RECONCILIATION RULES
+==================================================
+
+Define the starting point carefully.
+
+Do not derive from incomplete ledger history incorrectly.
+
+If legacy/existing wallet balances may predate full ledger history:
+
+design an explicit opening-balance/baseline concept rather than pretending old ledger is complete.
+
+Do not modify current balances just to make reconciliation pass.
+
+If existing accounts need a financial baseline, implement it safely and document behavior.
+
+==================================================
+11. ATOMICITY
+==================================================
+
+Every balance-changing operation must continue to perform:
+
+wallet mutation
++
+ledger entry
+
+inside the SAME PostgreSQL transaction.
+
+If either fails:
+rollback both.
+
+Preserve:
+- row locking
+- no double spend
+- idempotency
+- exact refunds
+
+==================================================
+12. SERVICE ORDER CHARGE
+==================================================
+
+Ensure service-order charge ledger entry has structured reference to:
+
+service order id
+
+and correct actor/source.
+
+The charged amount must remain the immutable account-currency order snapshot.
+
+==================================================
+13. SERVICE ORDER REFUND
+==================================================
+
+Refund entry must reference:
+
+- original order
+- original charge where possible
+
+Must preserve current exact-refund behavior.
+
+No double refund.
+
+Do not use current service price or FX rate.
+
+==================================================
+14. MANUAL ADJUSTMENT SAFETY
+==================================================
+
+For reseller financial mutations:
+
+- mandatory reason
+- current signed-in staff/owner attribution
+- transaction/reference field where supplied
+- idempotency protection
+- immutable posted result
+
+Do not permit anonymous balance mutation.
+
+==================================================
+15. CUSTOMER STATEMENT
+==================================================
+
+The customer Account Statement should use safe human-readable descriptions.
+
+Examples:
+
+Funds added
+Service order #1234
+Refund for order #1234
+Manual balance adjustment
+
+Do not expose:
+- internal staff note
+- internal actor IDs
+- reconciliation metadata
+- system debugging information
+
+==================================================
+16. RESELLER FINANCIAL VIEW
+==================================================
+
+Reseller Financial tab may show richer attribution:
+
+- entry type
+- amount
+- resulting balance
+- reference
+- actor
+- reason/customer note
+- timestamp
+
+Internal note may be available only to authorized reseller staff.
+
+==================================================
+17. ACTIVITY VS LEDGER
+==================================================
+
+Do not use financial ledger as general application activity log.
+
+Ledger = financial truth.
+
+Future Activity/Audit system will reference financial events but remains separate.
+
+This Slice should prepare clean identifiers/reference data for Slice 3.
+
+==================================================
+18. SCHEMA
+==================================================
+
+Use existing schema wherever possible.
+
+If schema additions are required:
+
+latest existing migration is 024.
+
+Create additive migration:
+
+025_...
+
+Do not modify migrations 019–024.
+
+No destructive migration.
+
+Preserve all:
+- wallet balances
+- account currencies
+- ledger history
+- service orders
+- refund snapshots
+
+==================================================
+19. BACKFILL
+==================================================
+
+If new attribution fields are required for historical ledger rows:
+
+do NOT fabricate actors or references.
+
+Use explicit safe values such as:
+
+actor_type = system/legacy
+reference unavailable
+
+only where semantically honest.
+
+Never invent an order relation.
+
+==================================================
+20. TESTS
+==================================================
+
+Focused tests only.
+
+Must cover:
+
+- Add Funds writes balance + ledger atomically
+- Deduct writes balance + ledger atomically
+- Adjustment has actor and reason
+- service-order charge references correct order
+- refund references original financial event/order
+- double refund remains blocked
+- customer cannot see internal notes
+- reseller can see permitted attribution
+- reconciliation MATCH case
+- reconciliation MISMATCH diagnostic case
+- reconciliation never modifies balance
+- cross-tenant reconciliation/access rejected
+- retry/idempotency remains safe
+
+Do not run broad browser/E2E suites.
+
+==================================================
+21. DOCUMENTATION
+==================================================
+
+Update:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+Mark Slice 2 implementation status and document:
+
+- ledger attribution fields
+- reconciliation formula
+- baseline/opening-balance handling
+- actor model
+- reference model
+
+==================================================
+PREVIEW ONLY
+==================================================
+
+Do not git commit.
+Do not git push.
+Do not deploy.
+Do not access VPS/Dokploy/production.
+
+Return:
+
+1. current ledger mutation paths found
+2. actor attribution implemented
+3. reference attribution implemented
+4. balance-before/after behavior
+5. reconciliation design/behavior
+6. historical/baseline handling
+7. schema/migration status
+8. customer statement changes
+9. reseller Financial changes
+10. focused checks
+11. files changed

@@ -113,7 +113,7 @@ export async function testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,
     assert.equal(balance.json.availableBalance,'50000000000000');
     const stmt=await req(client+'/statement?type=admin_credit',{cookie:ownerCookieA});
     assert.equal(stmt.json.data.length,1);
-    assert.equal(stmt.json.data[0].method,'Bank transfer');assert.equal(stmt.json.data[0].createdByType,'reseller');
+    assert.equal(stmt.json.data[0].method,'Bank transfer');assert.equal(stmt.json.data[0].createdByType,'subscriber_owner');
     const publicStmt=await req(url+'/statement',{cookie:customer});
     assert.ok(!('internalNote' in publicStmt.json.data[0])&&!('createdById' in publicStmt.json.data[0]));
   });

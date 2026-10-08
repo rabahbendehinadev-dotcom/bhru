@@ -11,6 +11,7 @@ import {pathToFileURL} from 'node:url';
 import {Script} from 'node:vm';
 import {build} from '../artifacts/api-server/node_modules/esbuild/lib/main.js';
 import {testWalletServices} from './test-wallet-services.mjs';
+import {testLedgerAttribution} from './test-ledger-attribution.mjs';
 
 const root=resolve(import.meta.dirname,'..'),temp=await mkdtemp(join(tmpdir(),'bhru-finance-'));
 let started=false,pool,server,checks=0,requestId=0;
@@ -45,6 +46,7 @@ try{
   const db=await pool.connect();
   try{
     for(const name of (await readdir(join(root,'lib/db/src/migrations'))).filter(n=>/^\d+_.+\.sql$/.test(n)).sort()){
+      if(name.startsWith('025_'))continue; // Test an actual 024 -> 025 cutover below.
       await db.query('BEGIN');
       if(name.startsWith('004_'))await db.query("SELECT set_config('bhru.private_admin_segment',$1,true)",['private-test-entry']);
       await db.query(await readFile(join(root,'lib/db/src/migrations',name),'utf8'));
@@ -74,6 +76,29 @@ try{
       [randomUUID(),subscriber,email,hash,randomUUID().replaceAll('-','').slice(0,8).toUpperCase(),username])).rows[0];
     if(email==='new@example.invalid')newClient=row;
   }
+  // Two historical postings with a net-zero balance. No actor/sequence backfill.
+  const legacyClient=(await pool.query('SELECT id FROM public_customer_accounts WHERE subscriber_id=$1',[sidB])).rows[0].id;
+  const snapshot=JSON.stringify({code:'USD',name:'US Dollar',prefix:'$',suffix:'',number_format:'1,000.99',decimals:2,rate:'1.000000'});
+  for(const [type,direction,after] of [['admin_credit','credit','20000000000'],['admin_debit','debit','0']]){
+    await pool.query(`INSERT INTO customer_wallet_ledger
+      (id,subscriber_id,customer_id,type,direction,amount_usd_units,amount_account_units,balance_after,currency_snapshot,account_currency_snapshot,
+       description,internal_note,created_by_type,created_by_id,reference_type,idempotency_key,request_hash)
+      VALUES($1,$2,$3,$4,$5,20000000000,20000000000,$6,$7::jsonb,$7::jsonb,'Historical private reason','Historical private reason','reseller',$8,'manual',$9,'historical')`,
+      [randomUUID(),sidB,legacyClient,type,direction,after,snapshot,ownerB,randomUUID()]);
+  }
+  const historical=(await pool.query('SELECT * FROM customer_wallet_ledger ORDER BY id')).rows;
+  const beforeWallets=(await pool.query('SELECT * FROM customer_wallets ORDER BY customer_id')).rows;
+  await pool.query('BEGIN');
+  await pool.query(await readFile(join(root,'lib/db/src/migrations/025_wallet_attribution_reconciliation.sql'),'utf8'));
+  await pool.query('COMMIT');
+  await check('migration 025 preserves existing balances, currencies and complete immutable financial rows',async()=>{
+    assert.deepEqual((await pool.query('SELECT * FROM customer_wallets ORDER BY customer_id')).rows,beforeWallets);
+    const current=(await pool.query('SELECT * FROM customer_wallet_ledger ORDER BY id')).rows;
+    for(let i=0;i<historical.length;i++){
+      for(const [k,v] of Object.entries(historical[i]))assert.deepEqual(current[i][k],v);
+      for(const k of ['actor_display_snapshot','operation_source','posting_sequence','correlation_id','reason','customer_note','correction_of_id'])assert.equal(current[i][k],null);
+    }
+  });
   const c=await pool.connect();let ownerCookieA,ownerCookieB;
   try{
     ownerCookieA='bhru_session='+await api.createSession(c,{id:ownerA,subscriber_id:sidA,full_name:'Owner A',admin:false});
@@ -95,9 +120,10 @@ try{
     });r.on('error',fail);if(payload)r.write(payload);r.end();
   });
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
+  await testLedgerAttribution({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await check('customer projections redact legacy internal reasons without changing immutable entries',async()=>{
     const original=(await pool.query("SELECT * FROM customer_wallet_ledger WHERE customer_id=$1 AND type='admin_credit' LIMIT 1",[newClient.id])).rows[0];
-    const legacy={...original,description:'Private staff reason',internal_note:'Private staff reason\nPrivate staff details'};
+    const legacy={...original,reason:null,description:'Private staff reason',internal_note:'Private staff reason\nPrivate staff details'};
     assert.equal(api.ledgerView(legacy).description,'Reseller credit');
     assert.equal(api.ledgerView(legacy,true).description,'Private staff reason');
     assert.ok(!('internalNote' in api.ledgerView(legacy)));
@@ -120,8 +146,8 @@ try{
     assert.ok(!visible.text.includes(reason));
     assert.equal((await req(path+'?search='+reason,{cookie:login.cookie})).json.data.length,0);
     assert.ok((await req(path+'?search=Wallet%20adjustment',{cookie:login.cookie})).json.data.some(e=>e.id===row.id));
-    const stored=(await pool.query('SELECT description,internal_note FROM customer_wallet_ledger WHERE id=$1',[row.id])).rows[0];
-    assert.equal(stored.description,reason);assert.equal(stored.internal_note,reason);
+    const stored=(await pool.query('SELECT description,internal_note,reason FROM customer_wallet_ledger WHERE id=$1',[row.id])).rows[0];
+    assert.equal(stored.description,'Wallet adjustment');assert.equal(stored.internal_note,'');assert.equal(stored.reason,reason);
   });
   await check('summary reads preserve exact balances, ledger history and immutable account currency',async()=>{
     const before=(await pool.query('SELECT * FROM customer_wallets WHERE subscriber_id=$1 AND customer_id=$2',[sidA,newClient.id])).rows[0];

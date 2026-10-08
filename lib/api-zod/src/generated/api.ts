@@ -171,6 +171,34 @@ export const AssignClientGroupBody = zod.object({
 export const AssignClientGroupResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
 
 
+/**
+ * @summary Read-only financial integrity diagnostic for an authorized reseller
+ */
+export const GetClientReconciliationParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetClientReconciliationResponse = zod.object({
+  "status": zod.enum(['MATCH', 'MISMATCH', 'UNVERIFIED']),
+  "accountCurrency": zod.string(),
+  "storedBalance": zod.string().describe('Exact account units at 10^12 scale'),
+  "ledgerDerivedBalance": zod.string().nullable(),
+  "difference": zod.string().nullable().describe('Stored minus ledger-derived in exact account units'),
+  "formattedStoredBalance": zod.string(),
+  "formattedLedgerDerivedBalance": zod.string().nullable(),
+  "formattedDifference": zod.string().nullable(),
+  "openingBalance": zod.string().nullable(),
+  "baselineBasis": zod.string().nullable(),
+  "baselineRecordedAt": zod.coerce.date().nullable(),
+  "entryCount": zod.number().int(),
+  "legacyEntryCount": zod.number().int(),
+  "currencyIssues": zod.number().int(),
+  "sequenceIssues": zod.number().int(),
+  "orderIssues": zod.number().int(),
+  "readOnly": zod.boolean()
+})
+
+
 export const GetClientWalletParams = zod.object({
   "id": zod.coerce.string().uuid()
 })
