@@ -191,7 +191,7 @@ export const MutateClientWalletBody = zod.object({
   "operation": zod.enum(['add', 'deduct', 'adjustment']),
   "direction": zod.enum(['credit', 'debit']),
   "amount": zod.string().regex(mutateClientWalletBodyAmountRegExp),
-  "currency": zod.string().min(mutateClientWalletBodyCurrencyMin).max(mutateClientWalletBodyCurrencyMax),
+  "currency": zod.string().min(mutateClientWalletBodyCurrencyMin).max(mutateClientWalletBodyCurrencyMax).optional(),
   "reason": zod.string().min(1).max(mutateClientWalletBodyReasonMax),
   "method": zod.string().min(1).max(mutateClientWalletBodyMethodMax),
   "transactionReference": zod.string().max(mutateClientWalletBodyTransactionReferenceMax).optional(),
@@ -357,6 +357,7 @@ export const placeCustomerServiceOrderBodyCurrencyMin = 3;
 export const placeCustomerServiceOrderBodyCurrencyMax = 3;
 
 export const placeCustomerServiceOrderBodyExpectedPriceUsdUnitsRegExp = new RegExp('^[0-9]{1,24}$');
+export const placeCustomerServiceOrderBodyExpectedPriceAccountUnitsRegExp = new RegExp('^[0-9]{1,24}$');
 export const placeCustomerServiceOrderBodyInputsMaxOne = 4000;
 
 
@@ -364,7 +365,8 @@ export const placeCustomerServiceOrderBodyInputsMaxOne = 4000;
 export const PlaceCustomerServiceOrderBody = zod.object({
   "serviceId": zod.string().uuid(),
   "currency": zod.string().min(placeCustomerServiceOrderBodyCurrencyMin).max(placeCustomerServiceOrderBodyCurrencyMax).optional(),
-  "expectedPriceUsdUnits": zod.string().regex(placeCustomerServiceOrderBodyExpectedPriceUsdUnitsRegExp).describe('Stale-quote guard only. Actual charge always comes from locked server service row.'),
+  "expectedPriceUsdUnits": zod.string().regex(placeCustomerServiceOrderBodyExpectedPriceUsdUnitsRegExp).describe('Source-price stale-quote guard. Actual charge is server-calculated in the fixed client account currency.'),
+  "expectedPriceAccountUnits": zod.string().regex(placeCustomerServiceOrderBodyExpectedPriceAccountUnitsRegExp).optional().describe('Account-currency stale-quote guard; required for non-USD clients.'),
   "idempotencyKey": zod.string().uuid(),
   "inputs": zod.record(zod.string(), zod.string().max(placeCustomerServiceOrderBodyInputsMaxOne))
 })

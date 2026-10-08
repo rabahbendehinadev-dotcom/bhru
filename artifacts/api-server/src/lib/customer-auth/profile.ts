@@ -43,9 +43,7 @@ export async function validatePreferences(subscriber: string, language: string |
 }
 export async function effectiveCustomerProfile(customer: CustomerIdentity, db: CustomerDB) {
   const { customerProfile } = await import('./types');
-  const options = await registrationOptions(customer.subscriber_id, db);
-  return { ...customerProfile(customer), effectiveCurrency: options.currencies.some(c => c.code === customer.preferredCurrency)
-    ? customer.preferredCurrency : options.defaultCurrency };
+  return { ...customerProfile(customer), accountCurrency:customer.preferredCurrency,effectiveCurrency:customer.preferredCurrency };
 }
 export const CUSTOMER_PROFILE_SELECT = `c.id,c.subscriber_id,c.first_name AS "firstName",c.last_name AS "lastName",c.email,
  c.client_code AS "clientCode",c.username,c.whatsapp_phone AS "whatsappPhone",c.preferred_language AS "preferredLanguage",

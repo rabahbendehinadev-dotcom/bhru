@@ -32,7 +32,7 @@ export interface Financial {
   formattedAvailable: string; formattedLocked: string; formattedTotalSpent: string; formattedTotalCredits: string; formattedTotalDebits: string; formattedDue: string; currency: string;
 }
 export interface LedgerEntry {
-  id: string; type: string; direction: 'credit' | 'debit'; amountUsdUnits: string; formattedAmount: string; formattedBalanceAfter: string; currency: string; description?: string | null;
+  id: string; type: string; direction: 'credit' | 'debit'; amountUsdUnits: string | null; amountAccountUnits: string; formattedAmount: string; formattedBalanceAfter: string; currency: string; description?: string | null;
   referenceType?: string | null; referenceId?: string | null; createdAt: string; method?: string | null; transactionReference?: string | null; internalNote?: string | null; createdByType?: string | null;
 }
 

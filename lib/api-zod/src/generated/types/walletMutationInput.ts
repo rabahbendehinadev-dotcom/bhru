@@ -17,7 +17,7 @@ export interface WalletMutationInput {
      * @minLength 3
      * @maxLength 3
      */
-  currency: string;
+  currency?: string;
   /**
      * @minLength 1
      * @maxLength 500

@@ -46,11 +46,20 @@ async function baseCurrency(id: string,client: PoolClient): Promise<string> {
   if(!row)throw new HttpError(503,'Accounting reference is unavailable. Apply the currency initialization migration.');
   return row.code;
 }
+async function requireUnusedClientCurrency(id:string,code:string,client:PoolClient) {
+  // Serialize against registration's currency share lock before counting.
+  // A registration that just committed must produce the same clear 409,
+  // not a late trigger error after a stale zero count.
+  await client.query('SELECT code FROM subscriber_currencies WHERE subscriber_id=$1 AND code=$2 FOR UPDATE',[id,code]);
+  const count=(await client.query('SELECT count(*)::int n FROM public_customer_accounts WHERE subscriber_id=$1 AND preferred_currency=$2',[id,code])).rows[0].n;
+  if(count)throw new HttpError(409,`This currency is currently used by ${count} client accounts and cannot be disabled or deleted until those accounts are handled.`);
+}
 export async function saveCurrency(id: string, raw: unknown, client: PoolClient) {
   await requireUsdModel(id,client);
   const input = currencyInput.parse(raw);
   const standard = currencyCatalog.find(c => c.code === input.code);
   const rows = await currencies(id, client), old = rows.find(c => c.code === input.code);
+  if(old&&!input.enabled)await requireUnusedClientCurrency(id,input.code,client);
   if (input.create_only && old) throw new HttpError(409, 'This currency is already configured. Use Edit instead.');
   if (!standard && !old) throw new HttpError(400, 'Choose an active currency from the supported currency catalog.');
   // Grandfather only this row's unchanged persisted style; never accept new custom strings.
@@ -77,6 +86,7 @@ export async function deleteCurrency(id: string, code: string, client: PoolClien
   if (!/^[A-Z]{3}$/.test(code)) throw new HttpError(400, 'Invalid currency code.');
   const rows = await currencies(id, client), row = rows.find(c => c.code === code);
   if (!row) throw new HttpError(404, 'Currency not found.');
+  await requireUnusedClientCurrency(id,code,client);
   if(code==='USD')throw new HttpError(409,'The permanent USD reference cannot be deleted.');
   if (row.client_default) throw new HttpError(409, 'Select another Client Default before deleting this currency.');
   await client.query('DELETE FROM subscriber_currencies WHERE subscriber_id=$1 AND code=$2', [id,code]);

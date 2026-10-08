@@ -15,10 +15,15 @@ export interface ServicePurchaseInput {
      */
   currency?: string;
   /**
-     * Stale-quote guard only. Actual charge always comes from locked server service row.
+     * Source-price stale-quote guard. Actual charge is server-calculated in the fixed client account currency.
      * @pattern ^[0-9]{1,24}$
      */
   expectedPriceUsdUnits: string;
+  /**
+     * Account-currency stale-quote guard; required for non-USD clients.
+     * @pattern ^[0-9]{1,24}$
+     */
+  expectedPriceAccountUnits?: string;
   idempotencyKey: string;
   inputs: ServicePurchaseInputInputs;
 }

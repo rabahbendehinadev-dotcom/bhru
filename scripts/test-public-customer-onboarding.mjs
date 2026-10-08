@@ -3,7 +3,7 @@
 // by an operator, and never connects to development/production databases.
 import assert from 'node:assert/strict';
 import { randomUUID, createHash } from 'node:crypto';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, mkdir, copyFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -12,6 +12,7 @@ import { pathToFileURL } from 'node:url';
 import { Script } from 'node:vm';
 import { build } from '../artifacts/api-server/node_modules/esbuild/lib/main.js';
 import { testWalletServices } from './test-wallet-services.mjs';
+import { testStrictAccountCurrency } from './test-strict-account-currency.mjs';
 
 const root=resolve(import.meta.dirname,'..'), temp=await mkdtemp(join(tmpdir(),'bhru-onboarding-'));
 const data=join(temp,'data'), log=join(temp,'postgres.log');
@@ -96,7 +97,14 @@ try {
   connection.release();
   connection=undefined;
   await check('020 migration applies additively; old migration checksums are skipped',async()=>{
-    const out=command('node',[join(root,'artifacts/api-server/dist/migrate.mjs')]);
+    // Run the real previous-release runner in an isolated directory, so legacy
+    // USD money exists before 022 and its preservation is actually checked.
+    const oldRelease=join(temp,'previous-release');
+    await mkdir(join(oldRelease,'migrations'),{recursive:true});
+    await copyFile(join(root,'artifacts/api-server/dist/migrate.mjs'),join(oldRelease,'migrate.mjs'));
+    for(const file of files.filter(f=>Number.parseInt(f,10)<=21))
+      await copyFile(join(root,'lib/db/src/migrations',file),join(oldRelease,'migrations',file));
+    const out=command('node',[join(oldRelease,'migrate.mjs')]);
     assert.match(out,/Applied: 020_public_customer_onboarding.sql/);
     assert.match(out,/Applied: 021_customer_wallet_manual_services.sql/);
     assert.equal((out.match(/Already applied:/g)||[]).length,files.filter(f=>Number.parseInt(f,10)<20).length);
@@ -105,6 +113,44 @@ try {
     assert.equal(after.password_hash,legacyBefore.password_hash);assert.equal(+after.created_at,+legacyBefore.created_at);
     assert.equal(after.whatsapp_phone,null);assert.equal(after.terms_accepted_at,null);
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM public_customer_sessions')).rows[0].n,1);
+  });
+  await check('022 preserves an existing USD wallet and its original audit snapshots',async()=>{
+    const legacyCurrency={code:'DZD',name:'Dinar',prefix:'',suffix:'DZD',number_format:'1,000.99',rate:'260.000000',decimals:2,enabled:true};
+    await pool.query(`INSERT INTO customer_wallet_ledger(id,subscriber_id,customer_id,type,direction,amount_usd_units,balance_after,
+      currency_snapshot,description,method,created_by_type,created_by_id,reference_type,idempotency_key,request_hash)
+      VALUES($1,$2,$3,'admin_credit','credit',7000000000000,7000000000000,$4,'Legacy verified payment','Cash','reseller',$5,'manual',$6,'legacy-fixture')`,
+      [randomUUID(),sidA,legacyId,legacyCurrency,ownerA,randomUUID()]);
+    const before=(await pool.query('SELECT * FROM customer_wallet_ledger WHERE customer_id=$1',[legacyId])).rows[0];
+    // Older installations could have a DZD display preference on a USD wallet.
+    await pool.query("UPDATE public_customer_accounts SET preferred_currency='DZD' WHERE id=$1",[legacyId]);
+    const service=randomUUID(),order=randomUUID(),debit=randomUUID();
+    await pool.query('BEGIN');
+    try {
+      await pool.query(`INSERT INTO manual_services(id,subscriber_id,service_type,name,selling_price_usd_units,active)
+        VALUES($1,$2,'remote','Legacy USD service',2000000000000,false)`,[service,sidA]);
+      await pool.query(`INSERT INTO service_orders(id,reference,subscriber_id,customer_id,service_id,service_type,
+        customer_input_snapshot,service_name_snapshot,price_usd_units,currency_snapshot,wallet_debit_reference,idempotency_key,request_hash)
+        VALUES($1,'SO-LEGACY-CURRENCY-TEST',$2,$3,$4,'remote','{}','Legacy USD service',2000000000000,$5,$6,$7,'legacy-order')`,
+        [order,sidA,legacyId,service,legacyCurrency,debit,randomUUID()]);
+      await pool.query(`INSERT INTO customer_wallet_ledger(id,subscriber_id,customer_id,type,direction,amount_usd_units,balance_after,
+        currency_snapshot,description,created_by_type,created_by_id,reference_type,reference_id,idempotency_key,request_hash)
+        VALUES($1,$2,$3,'order_debit','debit',2000000000000,5000000000000,$4,'Legacy order','customer',$3,'service_order',$5,$6,'legacy-order')`,
+        [debit,sidA,legacyId,legacyCurrency,order,randomUUID()]);
+      await pool.query('COMMIT');
+    } catch(e) {await pool.query('ROLLBACK');throw e;}
+    const out=command('node',[join(root,'artifacts/api-server/dist/migrate.mjs')]);
+    assert.match(out,/Applied: 022_strict_client_account_currency.sql/);
+    const wallet=(await pool.query('SELECT * FROM customer_wallets WHERE customer_id=$1',[legacyId])).rows[0];
+    assert.equal(wallet.accounting_currency,'USD');assert.equal(wallet.available_balance,'5000000000000');
+    const after=(await pool.query('SELECT * FROM customer_wallet_ledger WHERE id=$1',[before.id])).rows[0];
+    assert.deepEqual(after.currency_snapshot,before.currency_snapshot);
+    assert.equal(after.amount_usd_units,before.amount_usd_units);
+    assert.equal(after.amount_account_units,before.amount_usd_units);
+    assert.equal(after.account_currency_snapshot.code,'USD');
+    const migratedOrder=(await pool.query('SELECT * FROM service_orders WHERE id=$1',[order])).rows[0];
+    assert.equal(migratedOrder.price_account_units,'2000000000000');
+    assert.equal(migratedOrder.currency_snapshot.code,'DZD');assert.equal(migratedOrder.account_currency_snapshot.code,'USD');
+    assert.equal((await pool.query('SELECT preferred_currency FROM public_customer_accounts WHERE id=$1',[legacyId])).rows[0].preferred_currency,'USD');
   });
   await check('existing db:migrate rerun is safe and skips every applied file',async()=>{
     const out=command('node',[join(root,'artifacts/api-server/dist/migrate.mjs')]);
@@ -151,6 +197,15 @@ try {
     return req(`/api/public/customer/${slug}/register`,{method:'POST',host,cookie:challengeData.cookie,
       body:{...profile,...extra,challengeId:challengeData.id,challengeAnswer:challengeData.answer}});
   }
+  async function setDefault(code) {
+    const db=await pool.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query('UPDATE subscriber_currencies SET client_default=false WHERE subscriber_id=$1 AND client_default',[sidA]);
+      await db.query('UPDATE subscriber_currencies SET client_default=true WHERE subscriber_id=$1 AND code=$2',[sidA,code]);
+      await db.query('COMMIT');
+    } catch(e) {await db.query('ROLLBACK');throw e;} finally {db.release();}
+  }
   await check('registration options contain only owning tenant enabled currencies, supported language and ISO countries',async()=>{
     await pool.query(`INSERT INTO subscriber_currencies(subscriber_id,code,name,prefix,suffix,rate,decimals,enabled,client_default,rate_configured)
       VALUES($1,'DZD','Dinar','','DZD',260,2,false,false,true)`,[sidA]);
@@ -158,9 +213,9 @@ try {
     assert.equal(res.status,200);assert.deepEqual(res.json.currencies.map(c=>c.code),['USD']);
     assert.ok(res.json.languages.some(l=>l.code==='ar'));assert.ok(res.json.countries.some(c=>c.code==='DZ'));
   });
-  await check('legacy account is immediately visible with zero orders, same password and valid old session',async()=>{
+  await check('legacy account remains visible with its existing order, same password and valid old session',async()=>{
     const list=await req('/api/clients',{cookie:ownerCookieA});
-    assert.equal(list.status,200);assert.equal(list.json.data[0].id,legacyId);assert.equal(list.json.data[0].orderCount,0);
+    assert.equal(list.status,200);assert.equal(list.json.data[0].id,legacyId);assert.equal(list.json.data[0].orderCount,1);
     const res=await req('/api/public/customer/site-a/session',{cookie:legacyCookie});
     assert.equal(res.status,200);assert.equal(res.json.customer.email,'legacy@example.invalid');
     assert.match(res.json.customer.clientCode,/^[A-Z0-9]{8}$/);
@@ -291,13 +346,15 @@ try {
     assert.equal(again.status,200);customerCookie=again.cookie;
     assert.equal((await req(`/api/clients/${newClient.id}`,{cookie:ownerCookieA})).json.notes.length,1);
   });
-  await check('disabled stored preference falls back to current Client Default without changing stored history',async()=>{
+  await check('account currency is immutable; default changes do not switch existing clients',async()=>{
     await pool.query("UPDATE subscriber_currencies SET enabled=true WHERE subscriber_id=$1 AND code='DZD'",[sidA]);
-    assert.equal((await req(`/api/clients/${newClient.id}`,{method:'PATCH',body:{...editor,preferredCurrency:'DZD'},cookie:ownerCookieA})).status,200);
-    await pool.query("UPDATE subscriber_currencies SET enabled=false WHERE subscriber_id=$1 AND code='DZD'",[sidA]);
+    assert.equal((await req(`/api/clients/${newClient.id}`,{method:'PATCH',body:{...editor,preferredCurrency:'DZD'},cookie:ownerCookieA})).status,409);
+    await assert.rejects(pool.query("UPDATE public_customer_accounts SET preferred_currency='DZD' WHERE id=$1",[newClient.id]),/immutable/);
+    await setDefault('DZD');
     const state=await req('/api/public/customer/site-a/session',{cookie:customerCookie});
-    assert.equal(state.json.customer.preferredCurrency,'DZD');assert.equal(state.json.customer.effectiveCurrency,'USD');
-    assert.equal((await req(`/api/clients/${newClient.id}`,{method:'PATCH',body:{...editor,firstName:'Still Updated',preferredCurrency:'DZD'},cookie:ownerCookieA})).status,200);
+    assert.equal(state.json.customer.preferredCurrency,'USD');assert.equal(state.json.customer.effectiveCurrency,'USD');
+    assert.equal((await req(`/api/clients/${newClient.id}`,{method:'PATCH',body:{...editor,firstName:'Still Updated'},cookie:ownerCookieA})).status,200);
+    await setDefault('USD');
   });
   let productId;
   await check('authenticated orders bind server-side identity; guest orders and matching contacts are not merged',async()=>{
@@ -356,6 +413,7 @@ try {
     assert.equal((await req('/private-test-entry',{cookie:ownerCookieA})).status,403);
   });
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
+  await testStrictAccountCurrency({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,register,password});
   console.log(`\n${checks} focused onboarding/client-management SQL and HTTP groups passed. No production database, DNS, browser or deployment used.`);
 } finally {
   if(server) await new Promise(r=>server.close(r));

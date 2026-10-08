@@ -56,7 +56,7 @@ export function FinancialPanel({ id, d }: { id: string; d: ResellerClientDetail 
   const [op, setOp] = useState<Op>('add');
   const [adjDir, setAdjDir] = useState<'credit' | 'debit'>('credit');
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState(d.options.currencies[0]?.code ?? d.options.defaultCurrency ?? 'USD');
+  const currency = d.client.preferredCurrency ?? '';
   const [reason, setReason] = useState('');
   const [method, setMethod] = useState('');
   const [ref, setRef] = useState('');
@@ -66,6 +66,7 @@ export function FinancialPanel({ id, d }: { id: string; d: ResellerClientDetail 
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
   const direction = op === 'add' ? 'credit' : op === 'deduct' ? 'debit' : adjDir;
   const validate = () => {
+    if (!currency) return 'Account currency is unavailable. Reload the client before changing funds.';
     if (!AMOUNT.test(amount.trim())) return 'Amount must be a positive decimal with up to 6 fractional digits.';
     if (/^0+(\.0+)?$/.test(amount.trim())) return 'Amount must be greater than zero.';
     if (!reason.trim()) return 'A reason is required.';
@@ -104,7 +105,7 @@ export function FinancialPanel({ id, d }: { id: string; d: ResellerClientDetail 
           <Field label="Operation"><select className="input" disabled={locked} value={op} onChange={(e) => { setOp(e.target.value as Op); setMsg(null); }} data-testid="select-wallet-operation"><option value="add">Add funds</option><option value="deduct">Deduct funds</option><option value="adjustment">Adjustment</option></select></Field>
           {op === 'adjustment' && <Field label="Direction"><select className="input" disabled={locked} value={adjDir} onChange={(e) => setAdjDir(e.target.value as 'credit' | 'debit')} data-testid="select-wallet-direction"><option value="credit">Credit</option><option value="debit">Debit</option></select></Field>}
           <Field label="Amount"><input className="input font-mono" inputMode="decimal" value={amount} onChange={(e) => { setAmount(e.target.value); setMsg(null); }} placeholder="0.00" disabled={locked} data-testid="input-wallet-amount" /></Field>
-          <Field label="Currency"><select className="input" disabled={locked} value={currency} onChange={(e) => setCurrency(e.target.value)} data-testid="select-wallet-currency">{d.options.currencies.map((c) => <option key={c.code} value={c.code}>{c.code} - {c.name}</option>)}{d.options.currencies.length === 0 && <option value="USD">USD</option>}</select></Field>
+          <Field label="Account Currency" hint="All wallet amounts use this client's fixed account currency."><div className="input flex items-center" data-testid="text-wallet-account-currency">{currency}</div></Field>
           <Field label="Method"><input className="input" maxLength={100} value={method} onChange={(e) => setMethod(e.target.value)} placeholder="Bank transfer, Cash..." disabled={locked} data-testid="input-wallet-method" /></Field>
           <Field label="Transaction reference (optional)"><input className="input" maxLength={200} value={ref} onChange={(e) => setRef(e.target.value)} disabled={locked} data-testid="input-wallet-reference" /></Field>
         </div>

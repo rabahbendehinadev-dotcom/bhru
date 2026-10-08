@@ -963,7 +963,7 @@ components:
         requirements: {type: array, maxItems: 12, items: {$ref: '#/components/schemas/ServiceRequirement'}}
     WalletMutationInput:
       type: object
-      required: [operation, direction, amount, currency, reason, method, idempotencyKey]
+      required: [operation, direction, amount, reason, method, idempotencyKey]
       additionalProperties: false
       properties:
         operation: {type: string, enum: [add, deduct, adjustment]}
@@ -990,7 +990,8 @@ components:
       properties:
         serviceId: {type: string, format: uuid}
         currency: {type: string, minLength: 3, maxLength: 3}
-        expectedPriceUsdUnits: {type: string, pattern: '^[0-9]{1,24}$', description: Stale-quote guard only. Actual charge always comes from locked server service row.}
+        expectedPriceUsdUnits: {type: string, pattern: '^[0-9]{1,24}$', description: Source-price stale-quote guard. Actual charge is server-calculated in the fixed client account currency.}
+        expectedPriceAccountUnits: {type: string, pattern: '^[0-9]{1,24}$', description: Account-currency stale-quote guard; required for non-USD clients.}
         idempotencyKey: {type: string, format: uuid}
         inputs: {type: object, additionalProperties: {type: string, maxLength: 4000}}
     ServiceOrderTransition:

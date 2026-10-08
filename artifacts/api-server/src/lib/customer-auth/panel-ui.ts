@@ -105,7 +105,7 @@ export const PANEL_SCRIPT = String.raw`(() => {
 
     async services() {
       const p = params();
-      if (p.service) return serviceDetail(p.service, p.currency);
+      if (p.service) return serviceDetail(p.service);
       const page = Math.max(1, parseInt(p.page || '1', 10) || 1);
       const d = await call('/panel/services' + qs({ page, search: p.search, serviceType: p.serviceType, groupId: p.groupId }));
       const groups = [['', 'All groups']].concat((d.groups || []).map(g => [g.id, g.name]));
@@ -159,18 +159,14 @@ export const PANEL_SCRIPT = String.raw`(() => {
     mount(...kids);
   }
 
-  async function serviceDetail(id, cur) {
+  async function serviceDetail(id) {
     const d = await call('/panel/services/' + encodeURIComponent(id));
     const sv = d.service || d;
-    const list = await call('/panel/services' + qs({ page: 1 })).catch(() => ({}));
-    const currencies = list.currencies || d.currencies || [];
-    let currency = cur || list.defaultCurrency || d.defaultCurrency || '';
+    const currency = sv.currency;
     let quote = null, key = uuid(), busy = false, attempt = null;
     const form = h('form', { class: 'pn-f', novalidate: true });
     const status = h('div', {});
     const fields = {};
-    const curSel = currencies.length ? h('select', { id: 'pn-currency', 'aria-label': 'Currency' }, currencies.map(c => h('option', { value: c.code || c, text: c.name ? c.code + ' - ' + c.name : (c.code || c) }))) : null;
-    if (curSel) { curSel.value = currency; if (!curSel.value && currencies[0]) { currency = currencies[0].code || currencies[0]; curSel.value = currency; } }
     const quoteBox = h('div', {});
     const order = h('button', { class: 'pn-btn', type: 'submit', text: 'Place order', disabled: true });
     const getQuote = h('button', { class: 'pn-btn alt', type: 'button', text: 'Get quote' });
@@ -185,7 +181,7 @@ export const PANEL_SCRIPT = String.raw`(() => {
       fields[r.key] = el;
       form.appendChild(h('div', {}, [h('label', { for: 'pn-f-' + r.key }, [r.label, r.required ? h('span', { class: 'req', text: ' *' }) : null]), el]));
     });
-    if (curSel) { curSel.addEventListener('change', () => { currency = curSel.value; invalidate(); }); form.insertBefore(h('div', {}, [h('label', { for: 'pn-currency', text: 'Currency' }), curSel]), form.firstChild); }
+    form.insertBefore(h('p', { text: 'Account Currency: ' + currency }), form.firstChild);
     const inputs = () => { const o = {}; reqs.forEach(r => { o[r.key] = String(fields[r.key].value || '').trim(); }); return o; };
     const check = () => { for (const r of reqs) { const v = String(fields[r.key].value || '').trim(); if (r.required && !v) return r.label + ' is required.'; if (v && r.type === 'number' && !/^-?\d+(\.\d+)?$/.test(v)) return r.label + ' must be a number.'; if (v && r.type === 'imei' && !/^\d{14,16}$/.test(v)) return r.label + ' must be 14 to 16 digits.'; } return ''; };
     const note = (t, c) => { clear(status); if (t) status.appendChild(msg(t, c)); };
@@ -205,14 +201,14 @@ export const PANEL_SCRIPT = String.raw`(() => {
         if (dtl.formattedTotal || dtl.formattedBalance || dtl.formattedMissing) quoteBox.appendChild(h('div', { class: 'pn-card' }, [h('dl', { class: 'ca-dl' }, [['Total', dtl.formattedTotal], ['Your balance', dtl.formattedBalance], ['Missing', dtl.formattedMissing]].filter(r => r[1]).map(r => h('div', {}, [h('dt', { text: r[0] }), h('dd', { text: r[1] })])))]));
       } finally { getQuote.disabled = false; }
     });
-    const lockForm = on => { Object.keys(fields).forEach(k => { fields[k].disabled = on; }); if (curSel) curSel.disabled = on; getQuote.disabled = on; };
+    const lockForm = on => { Object.keys(fields).forEach(k => { fields[k].disabled = on; }); getQuote.disabled = on; };
     form.addEventListener('submit', async ev => {
       ev.preventDefault();
       if (busy || !quote || !quote.sufficient) return;
       if (!attempt) {
         const e = check(); if (e) return note(e, 'err');
         // Snapshot payload and key so a network retry resends exactly the same request.
-        attempt = Object.assign({ serviceId: sv.id, inputs: inputs(), idempotencyKey: key, expectedPriceUsdUnits: String(quote.priceUsdUnits) }, currency ? { currency } : {});
+        attempt = Object.assign({ serviceId: sv.id, inputs: inputs(), idempotencyKey: key, expectedPriceUsdUnits: String(quote.priceUsdUnits), expectedPriceAccountUnits: String(quote.priceAccountUnits) }, currency ? { currency } : {});
       }
       busy = true; order.disabled = true; lockForm(true); note('Placing order...');
       try {
@@ -250,7 +246,7 @@ function profileDetails(c: Profile): string {
   const rows: [string, unknown][] = [
     ['Name', (c.firstName + ' ' + c.lastName).trim()], ['Email', c.email], ['Client code', c.clientCode], ['Username', c.username], ['WhatsApp', c.whatsappPhone],
     ['Address', [c.addressLine1, c.addressLine2].filter(Boolean).join(', ')], ['City', c.city], ['State / province', c.state], ['Postal code', c.postalCode], ['Country', c.countryCode],
-    ['Language', c.preferredLanguage], ['Currency', c.effectiveCurrency ?? c.preferredCurrency], ['Newsletter', c.newsletterOptIn ? 'Subscribed' : 'Not subscribed'], ['Member since', dt(c.createdAt)],
+    ['Language', c.preferredLanguage], ['Account Currency', c.preferredCurrency], ['Newsletter', c.newsletterOptIn ? 'Subscribed' : 'Not subscribed'], ['Member since', dt(c.createdAt)],
   ];
   return `<dl class="ca-dl">${rows.filter(([, v]) => v).map(([k, v]) => `<div><dt>${e(k)}</dt><dd>${e(String(v))}</dd></div>`).join('')}</dl>`;
 }

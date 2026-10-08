@@ -2,7 +2,7 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { z } from '@workspace/api-zod';
 import type { PoolClient } from '@workspace/db';
 import { HttpError } from '../auth';
-import { lockClient, walletRow, displayCurrency, money, hashRequest, appendMovement, audit } from './wallet';
+import { lockClient, walletRow, displayCurrency, money, accountPrice, hashRequest, appendMovement, audit } from './wallet';
 import { serviceRow, serviceView, validateServiceInputs } from './catalog';
 
 export const orderQuery=z.object({
@@ -18,11 +18,11 @@ export async function orderRow(sub:string,id:string,db:PoolClient,customer?:stri
   return row;
 }
 export function orderView(row:Record<string,any>,internal=false) {
-  const currency=row.currency_snapshot;
+  const currency=row.account_currency_snapshot;
   return {
     id:row.id,reference:row.reference,serviceId:row.service_id,customerId:row.customer_id,
     serviceName:row.service_name_snapshot,serviceType:row.service_type,status:row.status,
-    priceUsdUnits:String(row.price_usd_units),currency:currency.code,amountFormatted:money(row.price_usd_units,currency),
+    priceUsdUnits:String(row.price_usd_units),priceAccountUnits:String(row.price_account_units),currency:currency.code,amountFormatted:money(row.price_account_units,currency),
     customerInput:row.customer_input_snapshot,result:row.result,rejectionReason:row.rejection_reason,
     createdAt:row.created_at,updatedAt:row.updated_at,completedAt:row.completed_at,rejectedAt:row.rejected_at,
     ...(internal?{clientName:row.client_name,clientCode:row.client_code,internalNote:row.internal_note}:{}),
@@ -56,8 +56,8 @@ export const quoteInput=z.object({serviceId:z.string().uuid(),currency:z.string(
 export async function quoteService(sub:string,customer:string,raw:unknown,db:PoolClient) {
   const q=quoteInput.parse(raw),service=await serviceRow(sub,q.serviceId,db,true);
   const currency=await displayCurrency(sub,customer,db,q.currency),wallet=await walletRow(sub,customer,db);
-  const amount=BigInt(service.selling_price_usd_units),balance=BigInt(wallet.available_balance),missing=amount>balance?amount-balance:0n;
-  return {service:serviceView(service,currency),priceUsdUnits:amount.toString(),formattedTotal:money(amount,currency),
+  const amount=accountPrice(service.selling_price_usd_units,currency),balance=BigInt(wallet.available_balance),missing=amount>balance?amount-balance:0n;
+  return {service:serviceView(service,currency),priceUsdUnits:String(service.selling_price_usd_units),priceAccountUnits:amount.toString(),formattedTotal:money(amount,currency),
     currency:currency.code,formattedBalance:money(balance,currency),formattedMissing:money(missing,currency),sufficient:balance>=amount};
 }
 export class InsufficientBalance extends HttpError {
@@ -66,6 +66,7 @@ export class InsufficientBalance extends HttpError {
 export const purchaseInput=quoteInput.extend({
   idempotencyKey:z.string().uuid(),inputs:z.record(z.string(),z.string().max(4000)),
   expectedPriceUsdUnits:z.string().regex(/^\d{1,24}$/),
+  expectedPriceAccountUnits:z.string().regex(/^\d{1,24}$/).optional(),
 }).strict();
 export async function purchaseService(sub:string,customer:string,raw:unknown,db:PoolClient) {
   const input=purchaseInput.parse(raw);
@@ -77,20 +78,25 @@ export async function purchaseService(sub:string,customer:string,raw:unknown,db:
     if(existing.request_hash!==hash)throw new HttpError(409,'Idempotency key was used for a different order.');
     return orderView(await orderRow(sub,existing.id,db,customer));
   }
-  const service=await serviceRow(sub,input.serviceId,db,true,true),amount=BigInt(service.selling_price_usd_units);
-  if(BigInt(input.expectedPriceUsdUnits)!==amount)throw new HttpError(409,'PRICE_CHANGED: refresh the server quote before ordering.');
+  const service=await serviceRow(sub,input.serviceId,db,true,true);
+  if(BigInt(input.expectedPriceUsdUnits)!==BigInt(service.selling_price_usd_units))throw new HttpError(409,'PRICE_CHANGED: refresh the server quote before ordering.');
   const values=validateServiceInputs(service.requirements,input.inputs),currency=await displayCurrency(sub,customer,db,input.currency);
+  const amount=accountPrice(service.selling_price_usd_units,currency);
+  if(currency.code!=='USD'&&!input.expectedPriceAccountUnits)throw new HttpError(400,'Refresh the server quote to confirm the account-currency total.');
+  if(input.expectedPriceAccountUnits&&BigInt(input.expectedPriceAccountUnits)!==amount)throw new HttpError(409,'PRICE_CHANGED: refresh the server quote before ordering.');
   const wallet=await walletRow(sub,customer,db,true),balance=BigInt(wallet.available_balance);
   if(balance<amount)throw new InsufficientBalance({formattedBalance:money(balance,currency),formattedTotal:money(amount,currency),formattedMissing:money(amount-balance,currency),currency:currency.code});
   const id=randomUUID(),debit=randomUUID();
   await db.query(`INSERT INTO service_orders(id,reference,subscriber_id,customer_id,service_id,service_type,customer_input_snapshot,
-    service_name_snapshot,price_usd_units,currency_snapshot,wallet_debit_reference,idempotency_key,request_hash)
-    VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10::jsonb,$11,$12,$13)`,
+    service_name_snapshot,price_usd_units,currency_snapshot,wallet_debit_reference,idempotency_key,request_hash,
+    price_account_units,account_currency_snapshot)
+    VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10::jsonb,$11,$12,$13,$14,$15::jsonb)`,
     [id,`SO-${randomBytes(8).toString('hex').toUpperCase()}`,sub,customer,service.id,service.service_type,
-      JSON.stringify(values),service.name,amount.toString(),JSON.stringify(currency),debit,input.idempotencyKey,hash]);
+      JSON.stringify(values),service.name,String(service.selling_price_usd_units),JSON.stringify(currency),debit,input.idempotencyKey,hash,
+      amount.toString(),JSON.stringify(currency)]);
   await appendMovement(sub,customer,{id:debit,type:'order_debit',direction:'debit',amount,currency,
     description:`Service order: ${service.name}`,actorType:'customer',actor:customer,referenceId:id,
-    key:input.idempotencyKey,hash},db);
+    key:input.idempotencyKey,hash,sourceUsdUnits:String(service.selling_price_usd_units)},db);
   await audit(sub,customer,'service_order_placed',null,db);
   return orderView(await orderRow(sub,id,db,customer));
 }
@@ -111,9 +117,10 @@ export async function transitionOrder(sub:string,id:string,raw:unknown,actor:str
     if(!debit)throw new HttpError(409,'Original wallet charge was not found.');
     await walletRow(sub,order.customer_id,db,true);
     await appendMovement(sub,order.customer_id,{
-      type:'order_refund',direction:'credit',amount:BigInt(debit.amount_usd_units),currency:debit.currency_snapshot,
+      type:'order_refund',direction:'credit',amount:BigInt(debit.amount_account_units),currency:debit.account_currency_snapshot,
       description:`Refund: ${order.reference} — ${input.reason}`,actorType:'reseller',actor,referenceId:id,
       originalDebit:debit.id,key:randomUUID(),hash:hashRequest({refund:id,debit:debit.id}),
+      sourceUsdUnits:debit.amount_usd_units==null?null:String(debit.amount_usd_units),legacyCurrencySnapshot:debit.currency_snapshot,
     },db);
   }
   await db.query(`UPDATE service_orders SET status=$3,result=$4,rejection_reason=$5,internal_note=$6,updated_at=now(),

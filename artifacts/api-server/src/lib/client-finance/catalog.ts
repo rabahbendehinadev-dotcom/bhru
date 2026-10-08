@@ -4,7 +4,7 @@ import type { PoolClient } from '@workspace/db';
 import { HttpError } from '../auth';
 import { parseUsd } from '../commerce/currency-money';
 import { registrationOptions } from '../customer-auth/profile';
-import { displayCurrency, money, usdText } from './wallet';
+import { displayCurrency, money, accountPrice, usdText } from './wallet';
 
 const field=z.object({
   key:z.string().regex(/^[a-z][a-z0-9_]{0,31}$/).refine(k=>!['constructor','prototype'].includes(k),'Choose a different field key.'),
@@ -38,7 +38,7 @@ export async function serviceRow(sub:string,id:string,db:PoolClient,active=false
 export function serviceView(row:Record<string,any>,currency?:Awaited<ReturnType<typeof displayCurrency>>) {
   return {id:row.id,name:row.name,serviceType:row.service_type,groupId:row.group_id,groupName:row.group_name??null,
     description:row.description,priceUsd:usdText(row.selling_price_usd_units),priceUsdUnits:String(row.selling_price_usd_units),
-    formattedPrice:currency?money(row.selling_price_usd_units,currency):`${usdText(row.selling_price_usd_units)} USD`,
+    formattedPrice:currency?money(accountPrice(row.selling_price_usd_units,currency),currency):`${usdText(row.selling_price_usd_units)} USD`,
     currency:currency?.code??'USD',estimatedTime:row.estimated_time,active:row.active,displayOrder:row.display_order,
     requirements:row.requirements,createdAt:row.created_at,updatedAt:row.updated_at};
 }
@@ -67,7 +67,7 @@ export async function listServices(sub:string,raw:unknown,db:PoolClient,customer
   const options=await registrationOptions(sub,db),currency=customer?await displayCurrency(sub,customer,db,q.currency):undefined;
   return {data:rows.slice(0,30).map(r=>serviceView(r,currency)),page:q.page,hasMore:rows.length>30,
     groups:(await db.query('SELECT id,name FROM manual_service_groups WHERE subscriber_id=$1 ORDER BY name',[sub])).rows,
-    currencies:options.currencies,defaultCurrency:currency?.code??options.defaultCurrency};
+    currencies:customer?[{code:currency!.code,name:currency!.name}]:options.currencies,defaultCurrency:currency?.code??options.defaultCurrency};
 }
 export function validateServiceInputs(requirements:z.infer<typeof field>[],raw:Record<string,string>) {
   const known=new Set(requirements.map(f=>f.key)),out:Record<string,string>=Object.create(null);

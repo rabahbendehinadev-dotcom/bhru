@@ -43,7 +43,6 @@ function ProfileForm({ id, d }: { id: string; d: ResellerClientDetail }) {
     try { await update.mutateAsync({ id, data: { ...f, firstName: f.firstName.trim(), lastName: f.lastName.trim(), username: f.username.trim() } }); setMsg({ ok: true, t: 'Profile saved.' }); }
     catch (e) { setMsg({ ok: false, t: errText(e) }); }
   };
-  const curCode = f.preferredCurrency, curKnown = !curCode || d.options.currencies.some((c) => c.code === curCode);
   const langKnown = !f.preferredLanguage || d.options.languages.some((c) => c.code === f.preferredLanguage);
   return (
     <Card className="space-y-3 p-3.5">
@@ -54,8 +53,7 @@ function ProfileForm({ id, d }: { id: string; d: ResellerClientDetail }) {
         <Field label="WhatsApp" hint="International format, for example +39 333 1234567">{txt('whatsappPhone', '', 30).props.children}</Field>
         <Field label="Preferred language"><select className="input" value={f.preferredLanguage ?? ''} onChange={(e) => set('preferredLanguage', e.target.value || null)} data-testid="select-client-language">
           <option value="">Not set</option>{!langKnown && <option value={f.preferredLanguage!}>{f.preferredLanguage}</option>}{d.options.languages.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}</select></Field>
-        <Field label="Preferred currency" hint={!curKnown ? 'Saved currency is no longer enabled; it stays unless you change it.' : undefined}><select className="input" value={f.preferredCurrency ?? ''} onChange={(e) => set('preferredCurrency', e.target.value || null)} data-testid="select-client-currency">
-          <option value="">Not set</option>{!curKnown && <option value={curCode!}>{curCode} (disabled)</option>}{d.options.currencies.map((c) => <option key={c.code} value={c.code}>{c.code} - {c.name}</option>)}</select></Field>
+        <Field label="Account Currency" hint="Fixed at registration; currency migration is not available."><div className="input flex items-center" data-testid="text-client-account-currency">{d.client.preferredCurrency}</div></Field>
         {txt('addressLine1', 'Address line 1', 200)}{txt('addressLine2', 'Address line 2', 200)}
         <Field label="Country"><select className="input" value={f.countryCode ?? ''} onChange={(e) => set('countryCode', e.target.value || null)} data-testid="select-client-country">
           <option value="">Not set</option>{d.options.countries.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select></Field>

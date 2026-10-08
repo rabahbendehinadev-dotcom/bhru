@@ -86,10 +86,10 @@ export async function updateClientProfile(subscriber: string, id: string, raw: u
   // Same lock order as registration prevents username/client-code namespace races.
   await db.query('SELECT id FROM subscribers WHERE id=$1 FOR UPDATE',[subscriber]);
   const prior = await ownedClient(subscriber,id,db,true);
+  if(input.preferredCurrency!==prior.preferredCurrency)throw new HttpError(409,'Account currency is immutable after registration.');
   if (input.countryCode) input.countryCode=input.countryCode.toUpperCase();
   if (input.whatsappPhone) input.whatsappPhone=normalizePhone(input.whatsappPhone);
-  await validatePreferences(subscriber,input.preferredLanguage,
-    input.preferredCurrency===prior.preferredCurrency ? null : input.preferredCurrency,input.countryCode,db);
+  await validatePreferences(subscriber,input.preferredLanguage,null,input.countryCode,db);
   if ((await db.query(`SELECT id FROM public_customer_accounts WHERE subscriber_id=$1 AND id<>$2
     AND (lower(username)=lower($3) OR lower(client_code)=lower($3))`,[subscriber,id,input.username])).rowCount) throw new HttpError(400,'Choose another username.');
   await db.query(`UPDATE public_customer_accounts SET first_name=$3,last_name=$4,username=$5,whatsapp_phone=$6,

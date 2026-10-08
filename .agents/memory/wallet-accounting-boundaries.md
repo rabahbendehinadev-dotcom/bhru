@@ -3,11 +3,11 @@ name: BHRU wallet and FX safeguards
 description: Non-obvious business and migration decisions for prepaid service orders and legacy currency configurations.
 ---
 
-New prepaid BHRU service wallets must be accounted in exact canonical USD units; an older subscriber's non-USD-based currency rates must never be silently treated as USD exchange rates. When there is no verified USD basis, restrict wallet currency conversion to canonical USD rather than inventing a rate or transferring retail balances.
+Each client has one immutable registration-selected account currency. Wallet credits, debits, adjustments, balances, statements and refunds use that currency without funding FX. Catalog services remain USD-based and convert once into account money using verified manual USD rates. Older non-USD-based rates must never be silently treated as USD FX.
 
-**Why:** Existing subscriber configurations can retain legacy non-USD accounting references. Assuming their rates are USD-based could charge or refund the wrong amount. The user explicitly made wallet-funded manual service orders the core BHRU workflow while requiring Retail/E-Commerce checkout to remain separate.
+**Why:** The user corrected the original USD-wallet/display-preference model: a DZD client's 1000 DZD funding must add exactly 1000 DZD, and neither reseller defaults nor financial-form selections may change an account's currency. Retail/E-Commerce checkout must remain separate.
 
-**How to apply:** On future funding, order, provider-automation or currency work, preserve USD wallet/order/ledger snapshots and fail closed for unverified FX rates. Do not rewrite old retail pricing, alter customer credit automatically or convert historical balances without separately approved conversion.
+**How to apply:** Freeze the final charged account amount and rate snapshot; refund that amount without current FX. Existing USD wallets remain USD, including zero wallets with old non-USD display preferences. Preserve legacy audit snapshots and amounts; never silently convert historical balances. Account-currency migration needs a separately approved financial process.
 
 In PostgreSQL trigger functions, use separate explicit credit/debit branches instead of embedding a CASE expression within a PL/pgSQL IF guard.
 

@@ -1,0 +1,342 @@
+BHRU — STRICT CLIENT ACCOUNT CURRENCY
+
+We identified an important business-rule mismatch.
+
+BHRU must follow a strict per-client account currency model similar to the intended DHRU behavior.
+
+CURRENT PROBLEM:
+
+A customer account currently has a USD wallet, but the reseller Financial screen still allows selecting DZD or another currency when adding funds.
+
+This is NOT acceptable.
+
+A customer must operate in exactly ONE account currency.
+
+==================================================
+CORE RULE
+==================================================
+
+The currency selected by the customer during registration becomes the customer's ACCOUNT CURRENCY.
+
+Example:
+
+Customer registers with USD
+→ Wallet is USD
+→ Balance is USD
+→ Add Funds is USD
+→ Deduct Funds is USD
+→ Adjustments are USD
+→ Services are displayed to that customer in USD
+→ Orders are charged in USD
+→ Statement is USD
+→ Refunds are USD
+
+If another customer registers with DZD:
+everything financial for that customer is DZD.
+
+NO mixed-currency wallet operations.
+
+==================================================
+1. ACCOUNT CURRENCY
+==================================================
+
+Replace the concept of a mutable "preferred currency" for financial operations with a strict:
+
+account_currency_id
+
+or equivalent existing canonical field.
+
+Use the existing customer currency field if it can safely serve this purpose.
+
+Do not create duplicate currency fields unnecessarily.
+
+The registration-selected currency becomes the canonical client account currency.
+
+==================================================
+2. IMMUTABLE AFTER REGISTRATION
+==================================================
+
+After successful registration:
+
+the customer's account currency cannot be changed through normal customer Profile UI.
+
+The reseller must also NOT have a normal editable currency dropdown in the customer Profile.
+
+Do not silently change client currency when subscriber defaults change.
+
+The client's currency is persistent.
+
+If a future currency-migration feature is needed, it must be a separate controlled financial operation.
+
+Do NOT implement that migration feature now.
+
+==================================================
+3. WALLET CURRENCY
+==================================================
+
+Each customer wallet operates in exactly the customer's account currency.
+
+Wallet must not accept balances in multiple currencies.
+
+The wallet currency must match:
+
+customer.account_currency
+
+at all times.
+
+No hidden internal wallet FX conversion during Add Funds.
+
+==================================================
+4. RESELLER ADD FUNDS UI
+==================================================
+
+Remove the editable Currency dropdown from:
+
+Client → Financial → Wallet adjustment
+
+Instead show read-only:
+
+Account Currency: USD
+
+or:
+
+Account Currency: DZD
+
+depending on the client.
+
+When reseller enters:
+
+Amount: 1000
+
+that means:
+
+1000 of the CLIENT'S ACCOUNT CURRENCY.
+
+Example:
+
+Client currency DZD
+Add Funds 1000
+→ +1000 DZD
+
+Client currency USD
+Add Funds 1000
+→ +1000 USD
+
+The reseller must not choose another currency.
+
+==================================================
+5. DEDUCT / ADJUSTMENT
+==================================================
+
+Same rule for:
+
+- Add Funds
+- Deduct Funds
+- Adjustment
+- Refund
+- Order debit
+
+All operations use the customer's account currency.
+
+No per-operation currency selector.
+
+==================================================
+6. LEDGER
+==================================================
+
+All wallet ledger entries for a customer use that customer's account currency.
+
+A customer's wallet statement must never contain mixed USD/DZD/EUR entries.
+
+Store currency snapshot on every ledger entry for historical integrity.
+
+But that currency must equal the client's account currency.
+
+==================================================
+7. SERVICE DISPLAY
+==================================================
+
+Services may internally use BHRU's existing subscriber/base pricing architecture.
+
+However, when shown to a customer:
+
+the final selling price must be calculated in the customer's account currency.
+
+Example:
+
+Subscriber manages service pricing from USD basis.
+
+Customer A account currency = USD
+→ sees 10.00 USD
+
+Customer B account currency = DZD
+→ sees the converted subscriber-defined selling price in DZD
+
+Use BHRU's existing manual currency-rate architecture.
+
+Do NOT add live FX.
+
+==================================================
+8. ORDER SNAPSHOT
+==================================================
+
+When customer places an order:
+
+store:
+
+- final price in client account currency
+- client currency snapshot
+- applicable conversion/rate snapshot if conversion was needed
+
+Wallet debit must use exactly that final client-currency amount.
+
+Never debit USD from a DZD wallet or vice versa.
+
+==================================================
+9. REFUNDS
+==================================================
+
+Refund exactly the original charged amount in the original order/client currency.
+
+Example:
+
+Order charged:
+2500 DZD
+
+Rejected:
+refund exactly:
+2500 DZD
+
+Do not recalculate using today's/current exchange rate.
+
+==================================================
+10. CLIENT DASHBOARD
+==================================================
+
+Every customer financial widget must use only account currency:
+
+- Available Balance
+- Locked
+- Total Spent
+- Due
+- Statement
+- Order totals
+
+No mixed currency display in the wallet/account dashboard.
+
+==================================================
+11. RESELLER CLIENT LIST
+==================================================
+
+Client list balance must display in that client's account currency.
+
+Example:
+
+Client A:
+$45.00 USD
+
+Client B:
+12,000 DZD
+
+Do not convert all client balances to Panel Display Currency for the client financial record itself.
+
+Panel-wide reporting conversion can be handled separately later.
+
+==================================================
+12. SUBSCRIBER CURRENCY SETTINGS
+==================================================
+
+A reseller may enable multiple currencies for customer registration.
+
+Example:
+
+USD
+DZD
+EUR
+
+The customer chooses ONE during registration.
+
+After registration:
+that account remains locked to that currency.
+
+Do not silently switch an existing customer if the reseller changes Client Default Currency.
+
+==================================================
+13. DISABLING A CURRENCY
+==================================================
+
+Do not silently migrate existing clients away from a disabled currency.
+
+If a reseller tries to disable a currency that is already used by existing client accounts:
+
+prefer preventing the destructive disable and show a clear message such as:
+
+"This currency is currently used by X client accounts and cannot be disabled until those accounts are handled."
+
+Do not mutate existing wallets automatically.
+
+==================================================
+14. EXISTING CUSTOMERS
+==================================================
+
+Existing customers created before this rule must keep their existing current wallet/account currency.
+
+For the existing production customer currently showing USD:
+
+Account Currency = USD
+
+Do not convert the existing zero wallet to DZD simply because DZD is currently selectable in Financial.
+
+==================================================
+15. DATABASE SAFETY
+==================================================
+
+Inspect migration 020 and 021 first.
+
+Reuse existing currency/customer/wallet columns where possible.
+
+Only create migration 022 if schema changes are actually required.
+
+Do not modify migrations 019, 020 or 021.
+
+Any new migration must be additive.
+
+==================================================
+16. TESTS
+==================================================
+
+Run focused tests for:
+
+- customer registers USD → wallet USD
+- customer registers DZD → wallet DZD
+- USD customer cannot be funded in DZD
+- DZD customer cannot be funded in USD
+- reseller Financial screen has no editable currency selector
+- Add Funds uses account currency
+- Deduct uses account currency
+- Adjustment uses account currency
+- service displayed in customer account currency
+- order debit uses account currency
+- statement uses account currency
+- rejected order refunds exact original amount/currency
+- changing subscriber Client Default Currency does not change existing client currency
+- cross-tenant protections remain intact
+- existing customer wallet remains compatible
+
+Do not run broad E2E tests.
+
+DO NOT PUSH.
+DO NOT DEPLOY.
+
+Return:
+1. current currency-model issue found
+2. account-currency model implemented
+3. schema/migration changes
+4. registration behavior
+5. Financial UI changes
+6. service pricing behavior
+7. order snapshot behavior
+8. refund behavior
+9. existing-client compatibility
+10. focused test results
+11. files changed

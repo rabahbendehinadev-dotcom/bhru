@@ -25,8 +25,8 @@ export async function testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,
       FROM public_customer_accounts a LEFT JOIN customer_wallets w ON w.subscriber_id=a.subscriber_id AND w.customer_id=a.id
       WHERE a.subscriber_id=$1`,[sidA])).rows;
     assert.ok(accounts.length>=2);
-    assert.ok(accounts.every(r=>r.b==='0'&&r.l==='0'));
-    assert.equal(await scalar('SELECT count(*)::int value FROM customer_wallet_ledger WHERE subscriber_id=$1',[sidA]),'0');
+    assert.ok(accounts.every(r=>(r.b==='0'||r.b==='5000000000000')&&r.l==='0'));
+    assert.equal(await scalar('SELECT count(*)::int value FROM customer_wallet_ledger WHERE customer_id=$1',[newClient.id]),'0');
     const wallet=await req(client+'/wallet',{cookie:ownerCookieA});
     assert.equal(wallet.status,200,wallet.text);
     assert.equal(wallet.json.availableBalance,'0');assert.equal(wallet.json.lockedAmount,'0');
@@ -140,16 +140,20 @@ export async function testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,
     await assert.rejects(pool.query("DELETE FROM customer_wallet_ledger WHERE id=$1",[id]),/immutable/);
     await assert.rejects(pool.query("UPDATE customer_wallet_ledger SET description='changed' WHERE id=$1",[id]),/immutable/);
   });
-  await check('original FX snapshot is retained and rejection credits exact original USD charge after rate changes',async()=>{
+  await check('USD clients cannot fund or quote in another currency; refunds keep original account charge',async()=>{
     await pool.query(`INSERT INTO subscriber_currencies(subscriber_id,code,name,prefix,suffix,rate,decimals,enabled,client_default,is_base,rate_configured)
       VALUES($1,'EUR','Euro','','EUR',2,2,true,false,false,true)`,[sidA]);
     const credit=await send(client+'/wallet',{operation:'add',direction:'credit',amount:'4.00',currency:'EUR',
       reason:'Manual EUR transfer',method:'Cash',idempotencyKey:randomUUID()});
-    assert.equal(credit.status,200,credit.text);assert.equal(credit.json.entry.amountUsdUnits,'2000000000000');
-    const quotation=await send(url+'/quote',{serviceId:svc.json.id,currency:'EUR'},customer);
+    assert.equal(credit.status,400,credit.text);
+    assert.equal((await send(client+'/wallet',{operation:'add',direction:'credit',amount:'1000',currency:'DZD',
+      reason:'Wrong currency',method:'Cash',idempotencyKey:randomUUID()})).status,400);
+    assert.equal((await send(url+'/quote',{serviceId:svc.json.id,currency:'EUR'},customer)).status,400);
+    const valid=await fund('2.00');assert.equal(valid.status,200,valid.text);
+    const quotation=await send(url+'/quote',{serviceId:svc.json.id,currency:'USD'},customer);
     assert.equal(quotation.status,200,quotation.text);
     assert.equal(quotation.json.priceUsdUnits,svc.json.priceUsdUnits);
-    const o=await purchase(svc.json.id,quotation.json.priceUsdUnits,randomUUID(),{imei:'490154203237518'},'EUR');
+    const o=await purchase(svc.json.id,quotation.json.priceUsdUnits,randomUUID(),{imei:'490154203237518'},'USD');
     assert.equal(o.status,201,o.text);
     const initial=(await pool.query("SELECT currency_snapshot FROM customer_wallet_ledger WHERE reference_id=$1 AND type='order_debit'",[o.json.id])).rows[0].currency_snapshot;
     await pool.query("UPDATE subscriber_currencies SET rate=3 WHERE subscriber_id=$1 AND code='EUR'",[sidA]);
