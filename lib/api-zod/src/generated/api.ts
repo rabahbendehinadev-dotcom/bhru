@@ -8,6 +8,122 @@
 import * as zod from 'zod';
 
 
+/**
+ * Separate public customer realm. Tenant is derived from the verified Host and public slug, never a body ID. New and existing emails receive the same response; registration does not log in automatically.
+ */
+export const registerPublicCustomerPathSlugMax = 63;
+
+
+
+export const RegisterPublicCustomerParams = zod.object({
+  "slug": zod.coerce.string().max(registerPublicCustomerPathSlugMax)
+})
+
+export const RegisterPublicCustomerHeader = zod.object({
+  "X-BHRU-Customer-Request": zod.enum(['1'])
+})
+
+export const registerPublicCustomerBodyFirstNameMax = 100;
+
+export const registerPublicCustomerBodyLastNameMax = 100;
+
+export const registerPublicCustomerBodyEmailMin = 3;
+export const registerPublicCustomerBodyEmailMax = 254;
+
+export const registerPublicCustomerBodyPasswordMin = 8;
+export const registerPublicCustomerBodyPasswordMax = 128;
+
+export const registerPublicCustomerBodyConfirmPasswordMin = 8;
+export const registerPublicCustomerBodyConfirmPasswordMax = 128;
+
+
+
+export const RegisterPublicCustomerBody = zod.object({
+  "firstName": zod.string().min(1).max(registerPublicCustomerBodyFirstNameMax),
+  "lastName": zod.string().min(1).max(registerPublicCustomerBodyLastNameMax),
+  "email": zod.string().email().min(registerPublicCustomerBodyEmailMin).max(registerPublicCustomerBodyEmailMax),
+  "password": zod.string().min(registerPublicCustomerBodyPasswordMin).max(registerPublicCustomerBodyPasswordMax),
+  "confirmPassword": zod.string().min(registerPublicCustomerBodyConfirmPasswordMin).max(registerPublicCustomerBodyConfirmPasswordMax)
+})
+
+export const RegisterPublicCustomerResponse = zod.object({
+  "message": zod.string(),
+  "next": zod.string()
+})
+
+
+export const loginPublicCustomerPathSlugMax = 63;
+
+
+
+export const LoginPublicCustomerParams = zod.object({
+  "slug": zod.coerce.string().max(loginPublicCustomerPathSlugMax)
+})
+
+export const LoginPublicCustomerHeader = zod.object({
+  "X-BHRU-Customer-Request": zod.enum(['1'])
+})
+
+export const loginPublicCustomerBodyEmailMin = 3;
+export const loginPublicCustomerBodyEmailMax = 254;
+
+export const loginPublicCustomerBodyPasswordMax = 128;
+
+
+
+export const LoginPublicCustomerBody = zod.object({
+  "email": zod.string().email().min(loginPublicCustomerBodyEmailMin).max(loginPublicCustomerBodyEmailMax),
+  "password": zod.string().min(1).max(loginPublicCustomerBodyPasswordMax)
+})
+
+export const LoginPublicCustomerResponse = zod.object({
+  "customer": zod.object({
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "email": zod.string().email()
+}),
+  "next": zod.string()
+})
+
+
+export const logoutPublicCustomerPathSlugMax = 63;
+
+
+
+export const LogoutPublicCustomerParams = zod.object({
+  "slug": zod.coerce.string().max(logoutPublicCustomerPathSlugMax)
+})
+
+export const LogoutPublicCustomerHeader = zod.object({
+  "X-BHRU-Customer-Request": zod.enum(['1'])
+})
+
+export const LogoutPublicCustomerBody = zod.object({
+
+})
+
+export const LogoutPublicCustomerResponse = zod.object({
+  "next": zod.string()
+})
+
+
+export const getPublicCustomerSessionPathSlugMax = 63;
+
+
+
+export const GetPublicCustomerSessionParams = zod.object({
+  "slug": zod.coerce.string().max(getPublicCustomerSessionPathSlugMax)
+})
+
+export const GetPublicCustomerSessionResponse = zod.object({
+  "customer": zod.union([zod.object({
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "email": zod.string().email()
+}),zod.null()])
+})
+
+
 export const GetCustomDomainsResponse = zod.object({
   "enabled": zod.boolean(),
   "limit": zod.number().int(),

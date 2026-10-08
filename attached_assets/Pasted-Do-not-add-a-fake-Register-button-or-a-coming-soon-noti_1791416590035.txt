@@ -1,0 +1,174 @@
+Do not add a fake Register button or a coming-soon notice.
+
+Implement the real Public Customer Authentication foundation for BHRU.
+
+CONTEXT
+
+BHRU has two completely different user types:
+
+1. Subscriber/Owner
+   - owns and manages a BHRU server/account
+   - existing /login and /register belong to this BHRU subscriber system
+
+2. Public Customer
+   - visits a subscriber's public website/store
+   - must have completely separate customer authentication
+   - must never authenticate through the subscriber-owner auth system
+
+CURRENT STATE
+
+- Standard public website header only shows Login.
+- E-Commerce header shows Login + Register, but both currently open the same coming-soon customer-access notice.
+- There is currently no real public customer login/registration flow.
+- Public websites can be accessed either through:
+  - bhru.net/{subscriber_public_slug}
+  - a verified custom domain such as gab-digital.com
+
+TASK
+
+Design and implement Public Customer Authentication Phase 1.
+
+FIRST:
+Inspect the current public-site, ecommerce, customer, order and tenant-resolution architecture before changing code.
+
+REQUIREMENTS
+
+1. Separate authentication boundary
+- Public customers must use their own account/session model.
+- Do NOT reuse subscriber owner accounts.
+- Do NOT reuse Platform Admin auth.
+- Do NOT use /register or /login if those belong to BHRU subscribers.
+- Customer sessions must be isolated from subscriber/admin sessions.
+
+2. Tenant-safe customer accounts
+A customer account must belong to the correct subscriber/tenant.
+
+The same email may exist as a customer under different BHRU subscribers without conflict unless current architecture intentionally defines otherwise.
+
+Never trust a tenant ID supplied by the browser.
+Resolve the subscriber from the verified public host / public slug using the existing public tenant-resolution architecture.
+
+3. Registration
+Provide a real customer registration page with at minimum:
+- First name
+- Last name
+- Email
+- Password
+- Confirm password
+
+Use proper password hashing.
+Never store plaintext passwords.
+
+Validate inputs server-side.
+
+4. Login
+Provide a real customer login page:
+- Email
+- Password
+
+Login must authenticate only against customers belonging to the current public subscriber.
+
+5. Logout
+Provide customer logout.
+
+6. Session
+Use a secure customer session/cookie separate from BHRU subscriber/admin authentication.
+
+Production cookie requirements:
+- HttpOnly
+- Secure
+- SameSite appropriate for this architecture
+
+The session must work correctly on:
+- bhru.net/{public_slug}
+- verified custom domains
+
+Do not allow a customer session from one subscriber to become authenticated on another subscriber's site.
+
+7. Public header
+
+STANDARD PUBLIC WEBSITE:
+- Show Login and Register when visitor is logged out.
+- After login, replace them appropriately with customer account/logout UI using the existing visual style.
+
+E-COMMERCE PUBLIC HEADER:
+- Replace the current coming-soon Login/Register behavior with the same real customer auth flow.
+
+CMS Live Preview should visually show Login + Register for logged-out customers.
+
+8. Routing
+
+Do not invent unsafe routes blindly.
+
+Inspect the current public routing architecture and implement clean public-customer routes that work for BOTH:
+- bhru.net/{public_slug}
+- custom-domain root sites
+
+The custom domain must remain visible in the browser.
+
+Report the exact routes chosen.
+
+9. Existing Customers module
+
+Inspect the existing E-Commerce / Customers implementation.
+
+If it is appropriate, connect registered public customer accounts to the existing customer entity rather than creating duplicate business/customer records.
+
+Preserve guest checkout support.
+A visitor must NOT be forced to register in order to place an order unless a subscriber setting explicitly requires it in the future.
+
+10. Security
+- tenant isolation
+- server-side authorization
+- password hashing
+- rate limiting on login/register
+- generic invalid-login responses
+- no account enumeration
+- no cross-tenant customer access
+- no subscriber/admin auth leakage
+
+11. Existing subscribers
+The feature must work automatically for all existing and future subscribers.
+Do not require manual per-subscriber initialization.
+
+12. UI
+Keep the current public website visual design.
+Do not redesign CMS or the public template.
+Only add the customer authentication pages/components necessary for this feature.
+
+13. Scope boundaries
+Do not touch:
+- Custom Domains infrastructure
+- currency system
+- provider APIs
+- Platform Admin authentication
+- subscriber owner authentication
+
+Create a database migration only if the customer authentication data model actually requires it.
+
+TESTING
+
+Run focused checks only:
+- backend TypeScript
+- frontend TypeScript/build for affected code
+- focused auth/tenant tests
+
+Do not run large browser/E2E suites.
+Do not push.
+Do not deploy.
+
+FINAL REPORT
+
+Return:
+1. architecture found
+2. customer auth data model
+3. migrations created
+4. exact public customer routes
+5. how tenant resolution works on bhru.net/{slug}
+6. how tenant resolution works on custom domains
+7. Login/Register header behavior
+8. relationship with existing Customers module
+9. guest checkout behavior
+10. files changed
+11. focused checks performed
+12. any remaining limitation

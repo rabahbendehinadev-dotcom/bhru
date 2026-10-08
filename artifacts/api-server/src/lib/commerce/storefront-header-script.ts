@@ -13,7 +13,7 @@ export const STOREFRONT_HEADER_SCRIPT = String.raw`(function(){
 'use strict';
 var node=document.getElementById('sf-config');if(!node)return;
 var cfg;try{cfg=JSON.parse(node.textContent||'{}');}catch(e){return;}
-var header=document.querySelector('.sf-header'),dialog=document.getElementById('sf-customer-auth');
+var header=document.querySelector('.sf-header');
 if(!header)return;
 var money=window.bhruStorefrontMoney;
 var key='bhru-storefront-preferences:'+cfg.slug,selected={language:cfg.defaultLanguage,currency:cfg.defaultCurrency};
@@ -61,16 +61,6 @@ header.addEventListener('click',function(ev){
  var l=t.closest('[data-sf-language-option]'),c=t.closest('[data-sf-currency-option]');
  if(l||c){var picker=(l||c).closest('.sf-picker');if(l)selected.language=l.dataset.sfLanguageOption;if(c)selected.currency=c.dataset.sfCurrencyOption;persist();sync();closePickers();
   if(picker)picker.querySelector('summary').focus();return;}
- var a=t.closest('[data-sf-auth]');
- if(a&&dialog){
-  closePickers();var menu=header.querySelector('details.menu');
-  var mobile=window.matchMedia('(max-width:959px)').matches;
-  if(menu.open){menu.open=false;menu.dispatchEvent(new Event('toggle'));}
-  document.getElementById('sf-auth-title').textContent='Customer '+a.dataset.sfAuth;
-  var restore=mobile?menu.querySelector('summary'):a;
-  dialog.addEventListener('close',function(){restore.focus();},{once:true});
-  dialog.showModal();
- }
 });
 document.addEventListener('click',function(ev){if(!header.contains(ev.target))closePickers();});
 document.addEventListener('keydown',function(ev){

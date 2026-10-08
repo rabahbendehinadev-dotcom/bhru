@@ -12,6 +12,8 @@ import { publicMediaRouter } from "./routes/public-website";
 import { publicCommerceRouter } from "./routes/commerce";
 import { tryCommerceDocument, commerceNavigation } from "./lib/commerce/navigation";
 import { customDomainGateway } from "./lib/domains/gateway";
+import { customerPublicContext } from "./lib/customer-auth/context";
+import customerAuthRouter from "./routes/customer-auth";
 
 const app: Express = express();
 app.disable("x-powered-by");
@@ -44,6 +46,9 @@ app.use((req, res, next) => {
   next();
 });
 // Public documents deliberately finish before session/account middleware.
+// Customer realm also finishes before owner/admin session middleware; verified
+// custom-host customer routes are handled here, not by changing the host firewall.
+app.use(customerPublicContext, customerAuthRouter);
 app.use(customDomainGateway);
 // The 204 response means "existing application namespace", never public data.
 app.get("/api/public/site-document", async (req, res) => {

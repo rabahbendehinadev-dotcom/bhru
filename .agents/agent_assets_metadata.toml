@@ -196,3 +196,17 @@ mtime_ms = 1791322527508
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/0843c8f1-0b3d-4173-b2f8-5ad49dd46414/e53c65c2-288e-4b8d-bf68-6dc8c73f01e5"
 storage_version_token = "1791323853500061"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "vwj42IjHwif0ihuyGMQ_N"
+uri = "file://BHRU_PUBLIC_CUSTOMER_AUTH.md"
+type = "text"
+title = "Public Customer Authentication — Phase 1 report"
+description = "Architecture, exact routes, tenant isolation, additive migration, changed files, focused checks and runtime limitations."
+logical_id = "c2e9de19-ba47-4fa1-82a7-2a83a947c6a4"
+content_hash = "sha256:794d0edc810c50a3ed19a12532f229555021487643dffe110da1c1eae90ec151"
+size = 13555
+mtime_ms = 1791418129963
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/c2e9de19-ba47-4fa1-82a7-2a83a947c6a4/f41ee747-4a6f-450c-8de6-97fbe7041fd9"
+storage_version_token = "1791418162349683"
+content_type = "text/markdown"

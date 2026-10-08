@@ -11,6 +11,83 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /public/customer/{slug}/register:
+    parameters:
+      - { in: path, name: slug, required: true, schema: { type: string, maxLength: 63 } }
+    post:
+      operationId: registerPublicCustomer
+      description: Separate public customer realm. Tenant is derived from the verified Host and public slug, never a body ID. New and existing emails receive the same response; registration does not log in automatically.
+      parameters:
+        - { in: header, name: X-BHRU-Customer-Request, required: true, schema: { type: string, enum: ["1"] } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CustomerRegistrationInput" }
+      responses:
+        "201":
+          description: Registration processed without disclosing account existence
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerRegistrationResult" }
+        "400": { description: Invalid input }
+        "403": { description: Cross-site request rejected }
+        "404": { description: Public website not found }
+        "429": { description: Rate limited }
+  /public/customer/{slug}/login:
+    parameters:
+      - { in: path, name: slug, required: true, schema: { type: string, maxLength: 63 } }
+    post:
+      operationId: loginPublicCustomer
+      parameters:
+        - { in: header, name: X-BHRU-Customer-Request, required: true, schema: { type: string, enum: ["1"] } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CustomerLoginInput" }
+      responses:
+        "200":
+          description: Customer session created using a tenant-scoped host-only HttpOnly cookie
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerLoginResult" }
+        "401": { description: Invalid email or password }
+        "403": { description: Cross-site request rejected }
+        "404": { description: Public website not found }
+        "429": { description: Rate limited }
+  /public/customer/{slug}/logout:
+    parameters:
+      - { in: path, name: slug, required: true, schema: { type: string, maxLength: 63 } }
+    post:
+      operationId: logoutPublicCustomer
+      parameters:
+        - { in: header, name: X-BHRU-Customer-Request, required: true, schema: { type: string, enum: ["1"] } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CustomerLogoutInput" }
+      responses:
+        "200":
+          description: Only the current tenant's customer session/cookie is removed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerLogoutResult" }
+        "403": { description: Cross-site request rejected }
+        "404": { description: Public website not found }
+  /public/customer/{slug}/session:
+    parameters:
+      - { in: path, name: slug, required: true, schema: { type: string, maxLength: 63 } }
+    get:
+      operationId: getPublicCustomerSession
+      responses:
+        "200":
+          description: Current public customer profile, or null when logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerSessionView" }
+        "404": { description: Public website not found }
   /domains:
     get:
       operationId: getCustomDomains
@@ -579,6 +656,59 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    CustomerRegistrationInput:
+      type: object
+      additionalProperties: false
+      required: [firstName, lastName, email, password, confirmPassword]
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 100 }
+        lastName: { type: string, minLength: 1, maxLength: 100 }
+        email: { type: string, format: email, minLength: 3, maxLength: 254 }
+        password: { type: string, minLength: 8, maxLength: 128 }
+        confirmPassword: { type: string, minLength: 8, maxLength: 128 }
+    CustomerLoginInput:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, minLength: 3, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+    CustomerLogoutInput:
+      type: object
+      additionalProperties: false
+    PublicCustomerProfile:
+      type: object
+      additionalProperties: false
+      required: [firstName, lastName, email]
+      properties:
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string, format: email }
+    CustomerRegistrationResult:
+      type: object
+      required: [message, next]
+      properties:
+        message: { type: string }
+        next: { type: string }
+    CustomerLoginResult:
+      type: object
+      required: [customer, next]
+      properties:
+        customer: { $ref: "#/components/schemas/PublicCustomerProfile" }
+        next: { type: string }
+    CustomerLogoutResult:
+      type: object
+      required: [next]
+      properties:
+        next: { type: string }
+    CustomerSessionView:
+      type: object
+      required: [customer]
+      properties:
+        customer:
+          anyOf:
+            - { $ref: "#/components/schemas/PublicCustomerProfile" }
+            - { type: "null" }
     NewDomainInput:
       type: object
       required: [hostname]

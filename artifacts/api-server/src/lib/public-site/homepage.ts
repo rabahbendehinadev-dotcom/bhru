@@ -10,6 +10,7 @@ import { renderCta } from './components/cta';
 import { renderFooter } from './components/footer';
 import { PUBLIC_MENU_SCRIPT } from './mobile-menu';
 import { renderTopArea, renderBanner, renderPresentationStyles, renderBannerScript, renderBannerPreload } from './presentation-render';
+import { CUSTOMER_AUTH_STYLES, CUSTOMER_AUTH_SCRIPT } from '../customer-auth/ui';
 
 export function renderPublicHome(model: PublicSiteModel): string {
   const title = `${model.siteName} — Public website`;
@@ -28,11 +29,11 @@ export function renderPublicHome(model: PublicSiteModel): string {
 <meta name="description" content="${d}">
 <meta name="robots" content="noindex,nofollow">
 <meta property="og:type" content="website"><meta property="og:title" content="${t}"><meta property="og:description" content="${d}"><meta property="og:site_name" content="${escapeHTML(model.siteName)}">
-<style>${renderStyles(model)}${renderPresentationStyles(model)}</style></head><body data-public-template="bhru-v1">
+<style>${renderStyles(model)}${renderPresentationStyles(model)}${CUSTOMER_AUTH_STYLES}</style></head><body data-public-template="bhru-v1">
 ${renderTopArea(model)}${renderHeader(model)}
 <button class="mobile-menu-backdrop" type="button" aria-label="Close mobile menu" tabindex="-1" hidden></button>
 <main>${renderBanner(model)||renderHero(model)}${renderServices(model)}${renderWhy(model)}${renderStatistics(model)}${renderCta(model)}</main>
 ${renderFooter(model)}
-<script>${PUBLIC_MENU_SCRIPT}</script>${renderBannerScript(model)}
+<script>${PUBLIC_MENU_SCRIPT}</script>${renderBannerScript(model)}<script>${CUSTOMER_AUTH_SCRIPT}</script>
 </body></html>`;
 }

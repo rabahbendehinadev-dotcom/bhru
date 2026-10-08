@@ -30,6 +30,13 @@ import type {
   CommerceInput,
   CredentialsInput,
   CustomDomainConfiguration,
+  CustomerLoginInput,
+  CustomerLoginResult,
+  CustomerLogoutInput,
+  CustomerLogoutResult,
+  CustomerRegistrationInput,
+  CustomerRegistrationResult,
+  CustomerSessionView,
   GeneralSettings,
   GeneralSettingsInput,
   GetCommerceResourceParams,
@@ -80,6 +87,329 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getRegisterPublicCustomerUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/customer/${slug}/register`
+}
+
+/**
+ * Separate public customer realm. Tenant is derived from the verified Host and public slug, never a body ID. New and existing emails receive the same response; registration does not log in automatically.
+ */
+export const registerPublicCustomer = async (slug: string,
+    customerRegistrationInput: CustomerRegistrationInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerRegistrationResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerRegistrationResult>(getRegisterPublicCustomerUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerRegistrationInput)
+  }
+);}
+
+
+
+
+
+export const getRegisterPublicCustomerMutationKey = () => ['registerPublicCustomer'] as const;
+
+export const getRegisterPublicCustomerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPublicCustomer>>, TError,RegisterPublicCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerPublicCustomer>>, TError,RegisterPublicCustomerMutationVariables, TContext> => {
+
+const mutationKey = getRegisterPublicCustomerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerPublicCustomer>>, RegisterPublicCustomerMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  registerPublicCustomer(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterPublicCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof registerPublicCustomer>>>
+    export type RegisterPublicCustomerMutationBody = BodyType<CustomerRegistrationInput>
+    export type RegisterPublicCustomerMutationError = ErrorType<void>
+    export type RegisterPublicCustomerMutationVariables = {slug: string;data: BodyType<CustomerRegistrationInput>}
+
+    export const useRegisterPublicCustomer = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPublicCustomer>>, TError,RegisterPublicCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerPublicCustomer>>,
+        TError,
+        RegisterPublicCustomerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRegisterPublicCustomerMutationOptions(options));
+    }
+
+export const getLoginPublicCustomerUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/customer/${slug}/login`
+}
+
+export const loginPublicCustomer = async (slug: string,
+    customerLoginInput: CustomerLoginInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerLoginResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerLoginResult>(getLoginPublicCustomerUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerLoginInput)
+  }
+);}
+
+
+
+
+
+export const getLoginPublicCustomerMutationKey = () => ['loginPublicCustomer'] as const;
+
+export const getLoginPublicCustomerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginPublicCustomer>>, TError,LoginPublicCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginPublicCustomer>>, TError,LoginPublicCustomerMutationVariables, TContext> => {
+
+const mutationKey = getLoginPublicCustomerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginPublicCustomer>>, LoginPublicCustomerMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  loginPublicCustomer(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LoginPublicCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof loginPublicCustomer>>>
+    export type LoginPublicCustomerMutationBody = BodyType<CustomerLoginInput>
+    export type LoginPublicCustomerMutationError = ErrorType<void>
+    export type LoginPublicCustomerMutationVariables = {slug: string;data: BodyType<CustomerLoginInput>}
+
+    export const useLoginPublicCustomer = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginPublicCustomer>>, TError,LoginPublicCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof loginPublicCustomer>>,
+        TError,
+        LoginPublicCustomerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getLoginPublicCustomerMutationOptions(options));
+    }
+
+export const getLogoutPublicCustomerUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/customer/${slug}/logout`
+}
+
+export const logoutPublicCustomer = async (slug: string,
+    customerLogoutInput: CustomerLogoutInput, options?: Parameters<typeof customFetch>[1]): Promise<CustomerLogoutResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CustomerLogoutResult>(getLogoutPublicCustomerUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerLogoutInput)
+  }
+);}
+
+
+
+
+
+export const getLogoutPublicCustomerMutationKey = () => ['logoutPublicCustomer'] as const;
+
+export const getLogoutPublicCustomerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutPublicCustomer>>, TError,LogoutPublicCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof logoutPublicCustomer>>, TError,LogoutPublicCustomerMutationVariables, TContext> => {
+
+const mutationKey = getLogoutPublicCustomerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logoutPublicCustomer>>, LogoutPublicCustomerMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  logoutPublicCustomer(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogoutPublicCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof logoutPublicCustomer>>>
+    export type LogoutPublicCustomerMutationBody = BodyType<CustomerLogoutInput>
+    export type LogoutPublicCustomerMutationError = ErrorType<void>
+    export type LogoutPublicCustomerMutationVariables = {slug: string;data: BodyType<CustomerLogoutInput>}
+
+    export const useLogoutPublicCustomer = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutPublicCustomer>>, TError,LogoutPublicCustomerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof logoutPublicCustomer>>,
+        TError,
+        LogoutPublicCustomerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getLogoutPublicCustomerMutationOptions(options));
+    }
+
+export const getGetPublicCustomerSessionUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/customer/${slug}/session`
+}
+
+export const getPublicCustomerSession = async (slug: string, options?: Parameters<typeof customFetch>[1]): Promise<CustomerSessionView> => {
+
+  return customFetch<CustomerSessionView>(getGetPublicCustomerSessionUrl(slug),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicCustomerSessionQueryKey = (slug: string,) => {
+    return [
+    `/api/public/customer/${slug}/session`
+    ] as const;
+    }
+
+
+export const getGetPublicCustomerSessionQueryOptions = <TData = Awaited<ReturnType<typeof getPublicCustomerSession>>, TError = ErrorType<void>>(slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicCustomerSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicCustomerSessionQueryKey(slug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicCustomerSession>>> = ({ signal }) => getPublicCustomerSession(slug, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicCustomerSession>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicCustomerSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicCustomerSession>>>
+export type GetPublicCustomerSessionQueryError = ErrorType<void>
+
+
+
+export function useGetPublicCustomerSession<TData = Awaited<ReturnType<typeof getPublicCustomerSession>>, TError = ErrorType<void>>(
+ slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicCustomerSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicCustomerSessionQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetCustomDomainsUrl = () => {
 

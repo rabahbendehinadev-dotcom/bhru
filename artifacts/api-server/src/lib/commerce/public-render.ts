@@ -144,7 +144,7 @@ export function renderCommerceDocument(model: PublicSiteModel, slugIn: string, s
   if (view === 'home') {
     // Replace only the legacy placeholder area; preserve the surrounding V2 sections.
     const cta = renderCta(model);
-    // The CTA renderer also contains the existing Login overlay. Keep that untouched.
+    // Remove only the non-commerce device CTA; customer actions live in the header.
     const deviceCta = cta.slice(0, cta.indexOf('</section>') + '</section>'.length);
     html = html.replace(renderServices(model), () => content).replace(deviceCta, '')
       .replace('<footer', '<span id="contact" aria-hidden="true"></span><footer');

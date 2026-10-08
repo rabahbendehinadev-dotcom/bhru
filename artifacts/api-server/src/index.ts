@@ -22,6 +22,8 @@ if (!Number.isInteger(port) || port <= 0 || port > 65535) {
 try {
   await pool.query("SELECT name FROM schema_migrations LIMIT 1");
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
+  await pool.query("SELECT subscriber_id FROM public_customer_accounts LIMIT 0");
+  await pool.query("SELECT subscriber_id FROM public_customer_sessions LIMIT 0");
   await pool.query("SELECT hostname,check_generation,dns_checked_at FROM subscriber_custom_domains LIMIT 0");
   await pool.query("SELECT subscriber_id,logo_strip_settings,announcement_ticker_settings FROM public_site_presentation LIMIT 0");
   await pool.query("SELECT icon_text FROM public_site_announcements LIMIT 0");

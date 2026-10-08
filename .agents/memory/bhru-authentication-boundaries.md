@@ -1,6 +1,6 @@
 ---
 name: BHRU authentication UX boundaries
-description: User-requested separation of subscriber and platform administrator sign-in without redesign.
+description: User-requested separation of subscriber, public customer and platform administrator authentication without redesign.
 ---
 
 Keep subscriber sign-in and administrator sign-in separate. Do not expose the administrator entry in subscriber-facing Login, Register, Panel, Navigation, Footer or HTML links. Subscriber registration creates a real account, never a predefined or demo subscriber. A Platform Admin must NEVER register as a subscriber first; never use the owner's existing subscriber as the administrative solution.
@@ -41,3 +41,9 @@ The public Login/Register visual reference is a close composition target, not lo
 **Why:** The user rejected the earlier flat editor-like previews and loose interpretation of the reference. They want screenshot-quality BHRU product presentation, without changing working authentication.
 
 **How to apply:** Preserve recognizable subscriber/storefront visual language in the showcase. For presentation-only revisions, keep verification short and leave functional/visual acceptance to the user; do not repeat account-creation tests.
+
+Public customers are a separate user type from subscriber owners and Platform Admins. They must have real tenant-owned accounts/sessions, not a fake Register button or coming-soon notice. The same email may belong independently to customers of different subscribers.
+
+**Why:** The user explicitly authorized Public Customer Authentication Phase 1 and rejected routing visitors into BHRU subscriber authentication or adding placeholder customer controls.
+
+**How to apply:** Resolve the tenant from its canonical public slug or verified original Host, never a browser tenant ID. Preserve owner/admin authentication, custom-domain infrastructure and frozen public styling. Preserve guest checkout. Do not claim historical guest orders merely by matching unverified email/phone: guest contact snapshots do not prove account ownership.

@@ -5,6 +5,8 @@ import { publicSiteHTML } from "./public-site-html";
 import type { PublicSiteModel } from "./public-site/model";
 import { loadSubscriberPublicSiteData } from "./public-site/data";
 import { publicScriptSources } from "./public-site/presentation-render";
+import { withRequestCustomer } from "./customer-auth/links";
+import { CUSTOMER_AUTH_HASH } from "./customer-auth/ui";
 
 const APPLICATION_ROOTS = new Set([
   'login', 'register', 'dashboard', 'settings', 'm', 'api', 'admin',
@@ -67,16 +69,17 @@ export async function resolvePublicDocument(
 
 export function writePublicDocument(req: Request, res: Response, result: DocumentResult): void {
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Vary', 'Host, Cookie');
   if (result.kind === 'application') { res.status(204).end(); return; }
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'" +
-    (result.kind === 'site' ? "; img-src 'self' https: data:; script-src " + publicScriptSources(result.site) : ''));
+    (result.kind === 'site' ? "; img-src 'self' https: data:; connect-src 'self'; script-src " + publicScriptSources(result.site) + ` 'sha256-${CUSTOMER_AUTH_HASH}'` : ''));
   if (result.kind === 'unavailable') {
     req.log.error({ code: result.errorCode }, 'Public site unavailable');
     res.setHeader('Retry-After', '60');
   }
   res.status(result.status).type('html').end(publicSiteHTML(
-    result.kind === 'site' ? result.site : undefined, result.kind === 'unavailable',
+    result.kind === 'site' ? withRequestCustomer(result.site, req) : undefined, result.kind === 'unavailable',
   ));
 }
 

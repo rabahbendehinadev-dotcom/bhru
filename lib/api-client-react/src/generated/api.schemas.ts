@@ -5,6 +5,73 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface CustomerRegistrationInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  firstName: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  lastName: string;
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  email: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  confirmPassword: string;
+}
+
+export interface CustomerLoginInput {
+  /**
+     * @minLength 3
+     * @maxLength 254
+     */
+  email: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  password: string;
+}
+
+export interface CustomerLogoutInput { [key: string]: unknown }
+
+export interface PublicCustomerProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface CustomerRegistrationResult {
+  message: string;
+  next: string;
+}
+
+export interface CustomerLoginResult {
+  customer: PublicCustomerProfile;
+  next: string;
+}
+
+export interface CustomerLogoutResult {
+  next: string;
+}
+
+export interface CustomerSessionView {
+  customer: PublicCustomerProfile | null;
+}
+
 export interface NewDomainInput {
   /** @maxLength 2048 */
   hostname: string;

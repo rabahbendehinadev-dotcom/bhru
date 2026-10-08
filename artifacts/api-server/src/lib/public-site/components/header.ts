@@ -1,5 +1,6 @@
 import { escapeHTML, safePublicHref, safePublicImage } from '../safety';
 import type { PublicSiteModel } from '../model';
+import { renderCustomerActions } from '../../customer-auth/ui';
 
 export function renderLogo(m: PublicSiteModel): string {
   const img = safePublicImage(m.logo);
@@ -14,8 +15,8 @@ export function renderHeader(m: PublicSiteModel): string {
   return `<header class="site-header"><div class="wrap bar">
 ${renderLogo(m)}
 <nav class="nav-desktop" aria-label="Primary">${links}</nav>
-<a class="login" href="#customer-access">Login</a>
+${renderCustomerActions(m)}
 <details class="menu"><summary aria-label="Open mobile menu" aria-controls="mobile-navigation"><span class="burger" aria-hidden="true"></span></summary>
-<div class="menu-panel" id="mobile-navigation"><nav aria-label="Mobile">${links}<a class="btn btn-solid" href="#customer-access">Login</a></nav></div></details>
+<div class="menu-panel" id="mobile-navigation"><nav aria-label="Mobile">${links}${renderCustomerActions(m, true)}</nav></div></details>
 </div></header>`;
 }

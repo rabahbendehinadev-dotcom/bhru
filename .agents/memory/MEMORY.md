@@ -1,5 +1,5 @@
 - [BHRU product boundaries](bhru-product-boundaries.md) — Separate subscribers from customers; source changes stay in requested scope; follow the VPS testing workflow; licence blocks never delete data.
-- [BHRU authentication boundaries](bhru-authentication-boundaries.md) — Separate subscriber/admin entry, no user-facing admin links; retain existing designs and require server authorization.
+- [BHRU authentication boundaries](bhru-authentication-boundaries.md) — Separate owner/admin/customer realms; no public admin links or placeholder customer auth; preserve guest checkout.
 - [Docker sandbox verification](docker-sandbox-verification.md) — Builds and initial processes can work while exec-based health checks fail due to sandbox restrictions.
 - [Subscriber visual standard](subscriber-visual-standard.md) — Final light-first reference supersedes dark-only requests; future subscriber pages share both themes, without affecting Platform Admin.
 - [Frontend cascade](frontend-cascade.md) — Declare Tailwind layer order before component-imported styles; otherwise responsive visibility or component padding can silently break.
@@ -17,3 +17,4 @@
 - [Platform Admin visual standard](platform-admin-visual-standard.md) — Light-first compact ERP reference; admin-only theme, real metrics, no changes to subscriber/public designs or private auth.
 - [SQL stub fidelity](sql-stub-validation.md) — Focused test substitutes must honor SELECT projections; excess mock metadata can falsely fail strict schemas.
 - [Custom domains](custom-domain-boundaries.md) — Shared host routing authorized; no slug redirect or per-tenant containers; real TLS requires the user's Traefik integration.
+- [Node Host forwarding](node-fetch-host-header.md) — Built-in fetch can ignore Host overrides; use node:http and confirm the received host in tenant-routing checks.

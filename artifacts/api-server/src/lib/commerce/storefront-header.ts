@@ -1,6 +1,7 @@
 import { escapeHTML, safePublicHref } from '../public-site/safety';
 import { renderLogo } from '../public-site/components/header';
 import type { PublicSiteModel } from '../public-site/model';
+import { renderCustomerActions } from '../customer-auth/ui';
 import type { storefrontPreferences } from './storefront-preferences';
 
 type Preferences = ReturnType<typeof storefrontPreferences>;
@@ -14,8 +15,8 @@ function selectors(p: Preferences, suffix: string): string {
 <div class="sf-options" role="group" aria-label="Languages" id="sf-languages-${suffix}">${p.languages.map(l => `<button type="button" data-sf-language-option="${e(l.code)}" aria-pressed="${l.code === 'en'}"><img src="https://flagcdn.com/w40/${l.flag}.png" alt="" width="20" height="14" loading="lazy"><span>${e(l.name)}</span>${l.code !== 'en' ? '<small>English fallback</small>' : ''}</button>`).join('')}</div></details>
 </div>`;
 }
-function auth() {
-  return '<div class="sf-auth"><button type="button" class="sf-login" data-sf-auth="Login">Login</button><button type="button" class="sf-register" data-sf-auth="Register">Register</button></div>';
+function auth(m: PublicSiteModel) {
+  return renderCustomerActions(m, false, true);
 }
 export function renderStorefrontHeader(m: PublicSiteModel, slug: string, p: Preferences): string {
   const links = `<a href="/${slug}#store-products">Products</a>` + m.navigation.map(l => `<a href="/${slug}${e(safePublicHref(l.href))}">${e(l.label)}</a>`).join('');
@@ -23,14 +24,12 @@ export function renderStorefrontHeader(m: PublicSiteModel, slug: string, p: Pref
   return `<header class="site-header sf-header"><div class="wrap bar">
 ${renderLogo(m).replace('href="#home"', `href="/${slug}#home"`)}
 <nav class="nav-desktop" aria-label="Primary">${links}</nav>
-<div class="sf-desktop">${cart}${selectors(p, 'desktop')}${auth()}</div>
+<div class="sf-desktop">${cart}${selectors(p, 'desktop')}${auth(m)}</div>
 <details class="menu"><summary aria-label="Open mobile menu" aria-controls="mobile-navigation"><span class="burger" aria-hidden="true"></span></summary>
-<div class="menu-panel" id="mobile-navigation"><nav aria-label="Mobile">${links}${cart}</nav>${selectors(p, 'mobile')}${auth()}</div></details>
+<div class="menu-panel" id="mobile-navigation"><nav aria-label="Mobile">${links}${cart}</nav>${selectors(p, 'mobile')}${auth(m)}</div></details>
 </div><div class="wrap sf-notice" data-sf-notice role="status" hidden></div></header>`;
 }
-export const STOREFRONT_AUTH_NOTICE = `<dialog class="sf-auth-dialog" id="sf-customer-auth" aria-labelledby="sf-auth-title">
-<h2 id="sf-auth-title">Customer access</h2><p>Customer Login and Register are not available yet. You can browse the store and place a guest order. This is not the subscriber or administrator login.</p>
-<form method="dialog"><button class="cx-btn" autofocus>Close</button></form></dialog>`;
+export const STOREFRONT_AUTH_NOTICE = '';
 
 export const STOREFRONT_HEADER_STYLES = `
 .sf-header .sf-desktop{display:none}.sf-header .bar{gap:10px}.sf-selectors,.sf-auth{display:flex;gap:8px;align-items:center;min-width:0}

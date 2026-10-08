@@ -7,6 +7,8 @@ import { transaction, getSubscriber, audit } from '../lib/platform';
 import { websiteConfiguration, websiteNames, websiteFields, valueSchema, validateWebsiteValues, ownedImages, configuredPublicModel } from '../lib/public-site/configuration';
 import { MAX_IMAGE_BYTES, normalizeImage, writeImage, readImage, removeImage, previewImageUrl, validPreviewToken } from '../lib/public-site/media';
 import { renderPublicHome } from '../lib/public-site/homepage';
+import { customerLinks, withCustomerAccess } from '../lib/customer-auth/links';
+import { CUSTOMER_AUTH_HASH } from '../lib/customer-auth/ui';
 import { publicScriptSources } from '../lib/public-site/presentation-render';
 import { presentationSchema, validatePresentation, presentationConfiguration, savePresentation, readPresentation, attachPresentation, presentationAssetIds, SAVED_MEDIA_REFERENCE, PUBLISHED_MEDIA_REFERENCE } from '../lib/public-site/presentation';
 
@@ -83,9 +85,9 @@ router.post('/cms/public-website/preview', async (req,res) => {
     const names = await websiteNames(user.subscriber_id,client);
     const images = await ownedImages(user.subscriber_id,values,client);
     const presentation=input.presentation?validatePresentation(input.presentation,req.get('host')):(await readPresentation(user.subscriber_id,client)).values;
-    const model = await attachPresentation(configuredPublicModel(names,values,images,true),user.subscriber_id,client,presentation,true);
+    const model = withCustomerAccess(await attachPresentation(configuredPublicModel(names,values,images,true),user.subscriber_id,client,presentation,true),customerLinks(names.public_slug));
     const assets=await ownedImages(user.subscriber_id,values,client,presentationAssetIds(presentation));
-    const policy = `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https: data:; script-src ${publicScriptSources(model)}; base-uri 'none'; form-action 'none'`;
+    const policy = `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https: data:; script-src ${publicScriptSources(model)} 'sha256-${CUSTOMER_AUTH_HASH}'; base-uri 'none'; form-action 'none'`;
     return {
       html: renderPublicHome(model).replace('<meta charset="utf-8">', `<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}">`),
       logo_url: model.logo, hero_image_url: model.heroImage,

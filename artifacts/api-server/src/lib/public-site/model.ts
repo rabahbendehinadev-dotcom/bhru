@@ -2,6 +2,16 @@ import type { PublicStripSettings, PublicTickerSettings } from '@workspace/api-z
 /** Public rendering contract. No account IDs, sessions or licence fields. */
 export interface PublicSiteNames { businessName: string; companyName: string }
 export interface PublicLink { label: string; href: string }
+/** Visitor-specific customer navigation; never contains tenant/account IDs or tokens. */
+export interface PublicCustomerAccess {
+  homeHref: string;
+  loginHref: string;
+  registerHref: string;
+  accountHref: string;
+  apiBase: string;
+  authenticated: boolean;
+  firstName?: string;
+}
 export interface PublicService {
   title: string;
   description: string;
@@ -14,6 +24,7 @@ export interface PublicService {
   ctaLabel?: string;
 }
 export interface PublicSiteModel extends PublicSiteNames {
+  customerAccess?: PublicCustomerAccess;
   presentation?: {
     logoSettings?: PublicStripSettings;
     tickerSettings?: PublicTickerSettings;
