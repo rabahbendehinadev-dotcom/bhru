@@ -1,0 +1,648 @@
+BHRU — DEEP CLIENT ACCOUNT GAP AUDIT VS DHRU
+
+Goal:
+Perform a READ-ONLY architecture audit of BHRU's current client/customer account system and compare it against the business capabilities visible in the DHRU schema.
+
+This task is ANALYSIS ONLY.
+
+DO NOT:
+- modify application code
+- create migrations
+- change database schema
+- change data
+- commit
+- push
+- deploy
+- access VPS
+- access Dokploy
+
+Use the current BHRU source/schema and compare against the DHRU business model described below.
+
+==================================================
+REFERENCE: DHRU CLIENT ACCOUNT CAPABILITIES
+==================================================
+
+DHRU has a canonical client/user entity with capabilities around:
+
+IDENTITY / PROFILE
+- first name
+- last name
+- company
+- contact / phone
+- username
+- email
+- address
+- address2
+- city
+- state
+- zip
+- country
+- language
+- timezone
+- account creation date
+- last login
+- last login IP
+
+ACCOUNT STATUS / CONTROL
+- user status
+- block reason
+- verification state
+- recharge block
+- close account
+- fraud protection
+- mobile verification
+- registration state
+- current online/session state
+
+CURRENCY / FINANCIAL
+- default/account currency
+- credit left
+- credit used
+- credit in process
+- sell credit limit
+- max credit
+- credit limit
+- credit validity
+- credit date
+- low-credit behavior/notifications
+
+CLIENT GROUPS
+- client_group
+- group-level fee
+- min/max add-fund limits
+- max credit
+- ID verification requirement
+- retail/group classification
+- group-level pricing
+- discount
+- per-service price
+- currency-specific price
+
+SERVICE ACCESS PER CLIENT
+- IMEI service access
+- specific IMEI services
+- File service access
+- specific File services
+- Server/Logs access
+- specific Server services
+- Shop service access
+- specific Shop services
+
+API ACCESS
+- api_access
+- api_key
+- API IP restrictions
+- multiple allowed IP ranges
+
+SECURITY / LOGIN
+- login history
+- failed login counter
+- session identifiers
+- current login time
+- online status
+- login country
+- login IP
+- security question/reset-related state
+- master PIN / secondary security concepts
+
+STATEMENT / LEDGER
+- credit/debit statement entries
+- amount
+- resulting balance
+- relation/order id
+- transaction/service family
+- admin note
+- user note
+- IP
+- transfer fee
+- date/time
+
+TRANSACTIONS
+- payment gateway
+- transaction id
+- amount in
+- amount out
+- fees
+- rate
+- invoice relation
+- refund relation
+- notes
+- currency
+
+INVOICES
+- invoice number
+- subtotal
+- credit
+- tax
+- total
+- status
+- payment method
+- paid date
+- due date
+- received amount
+- invoice items
+
+LOGIN HISTORY
+- username
+- IP
+- timestamp
+- user id
+
+CREDIT TRANSFER / RESELLER RELATION
+- reseller relation
+- credit transfer enablement
+- credit reseller relation
+
+NOTIFICATIONS / PREFERENCES
+- newsletter
+- credit notifications
+- invoice notifications
+- activity notifications
+- order SMS
+- price change notification/preferences
+
+AFFILIATE / OTHER ADVANCED
+- affiliate state
+- affiliate balance
+- visitors/signup
+- payout settings
+
+==================================================
+CURRENT BHRU KNOWN ARCHITECTURE TO PRESERVE
+==================================================
+
+Important existing BHRU rules:
+
+- public_customer_accounts is the canonical client identity
+- do NOT create a duplicate client/customer identity table
+- immutable Account Currency from migration 022
+- reseller-controlled registration currencies from migration 023
+- wallet + immutable ledger already exists
+- manual service catalog + service orders already exist
+- exact-currency refunds
+- atomic debit
+- idempotency
+- tenant isolation
+- client detail pages exist
+- Financial/Profile/Orders/Activity/Notes already exist
+- customer Dashboard/Services/Orders/Wallet/Transactions/Announcements/Profile/Security exist
+- retail/e-commerce orders remain separate
+- guest checkout remains separate
+- provider integration not yet implemented
+
+==================================================
+AUDIT TASK
+==================================================
+
+Inspect the current BHRU source, migrations, database models, API routes and customer/reseller UI.
+
+For each DHRU capability, determine one of:
+
+- COMPLETE
+- PARTIAL
+- MISSING
+- NOT RECOMMENDED / LEGACY
+- EXISTS UNDER DIFFERENT BHRU DESIGN
+
+Do NOT judge only by UI.
+Check actual backend/data model/security behavior.
+
+==================================================
+OUTPUT REQUIRED
+==================================================
+
+Create a detailed audit table with columns:
+
+1. Area
+2. DHRU capability
+3. BHRU current status
+4. Existing BHRU implementation
+5. Gap
+6. Business importance
+7. Recommended BHRU design
+8. Database/schema impact
+9. API impact
+10. UI impact
+11. Priority
+12. Risk if omitted
+
+Priority levels:
+- P0 = core client account/business-critical
+- P1 = important for serious server businesses
+- P2 = useful advanced feature
+- P3 = optional/legacy
+
+==================================================
+SPECIFIC AREAS TO ANALYZE DEEPLY
+==================================================
+
+1. CLIENT GROUPS / PRICING GROUPS
+
+Determine whether BHRU currently supports:
+- assigning a client to a pricing group
+- Retail / VIP / Reseller / Wholesale concepts
+- group-specific service prices
+- group discounts
+- group-specific min/max add funds
+- group-specific max credit / due limits
+- group-specific verification policy
+
+Recommend how this should fit BHRU without duplicating service catalog architecture.
+
+==================================================
+
+2. CREDIT / DUE MODEL
+
+BHRU currently has wallet balances and Due/Credit display concepts.
+
+Audit whether it truly supports:
+
+- prepaid wallet
+- credit line
+- unpaid/due balance
+- credit limit
+- max debt
+- locked/in-process funds
+- account credit expiration/validity
+
+Clearly explain the difference between:
+
+Available balance
+Locked balance
+Due
+Credit limit
+Total spent
+Total credits
+Total debits
+
+Recommend an authoritative financial model.
+
+Do not mix wallet funds and credit debt incorrectly.
+
+==================================================
+
+3. CLIENT-SPECIFIC SERVICE ACCESS
+
+Audit whether one reseller can:
+
+- allow all services for Client A
+- hide specific groups from Client B
+- allow specific services only for VIP clients
+- deny File/Server/IMEI categories for a client
+- apply per-client override access
+
+Recommend clean precedence rules such as:
+
+Service enabled globally
+→ Group enabled
+→ Pricing group access
+→ Client-specific allow/deny override
+
+Do not implement yet.
+
+==================================================
+
+4. CLIENT PRICING
+
+Audit current service pricing model.
+
+Determine whether BHRU supports:
+
+- base subscriber price
+- client group price
+- client-specific price override
+- discount percentage
+- fixed price override
+- account-currency conversion
+- immutable charged-price snapshot
+
+Recommend pricing precedence.
+
+Example:
+
+client override
+> client group price
+> subscriber service sell price
+> fallback/base price
+
+Account Currency conversion must remain authoritative.
+
+==================================================
+
+5. API CLIENT ACCESS
+
+Audit if public customers currently have API capability.
+
+Recommend BHRU design for:
+
+- API enabled toggle
+- API key generation/rotation
+- API secret handling
+- IP whitelist
+- multiple IP entries
+- API usage logs
+- rate limits
+- disable/revoke
+- service access respecting the same wallet/pricing/account-currency rules
+
+Do not build provider API here.
+This is CUSTOMER API access.
+
+==================================================
+
+6. SECURITY / LOGIN HISTORY
+
+Audit existing sessions/security.
+
+Determine current support for:
+
+- last login
+- last login IP
+- login history
+- session list
+- revoke individual sessions
+- revoke all sessions
+- failed login attempts
+- account lockout
+- 2FA
+- password last changed
+- trusted devices
+- security events
+
+Recommend a modern BHRU replacement for DHRU's legacy security fields.
+
+Do NOT copy insecure legacy patterns such as security questions/master PIN unless justified.
+
+==================================================
+
+7. STATEMENT / TRANSACTION / INVOICE SEPARATION
+
+Audit whether BHRU correctly separates:
+
+A. Wallet Ledger / Statement
+B. Payment Transaction
+C. Invoice
+D. Service Order
+E. Retail Order
+
+Recommend clear boundaries.
+
+Statement should be an immutable financial history.
+
+Payment transaction should represent external/internal payment movement.
+
+Invoice should represent billing document.
+
+Order should represent service/product fulfillment.
+
+Do not merge them into one table.
+
+==================================================
+
+8. CLIENT ACTIVITY
+
+Audit existing Activity tab.
+
+Determine whether it includes:
+
+- login
+- logout
+- password change
+- profile change
+- wallet adjustment
+- service order created
+- service order status changes
+- refund
+- account block/unblock
+- API key changes
+- session revocation
+
+Recommend audit-event architecture.
+
+==================================================
+
+9. PROFILE / ACCOUNT PREFERENCES
+
+Audit support for:
+
+- language
+- timezone
+- newsletter
+- phone/WhatsApp
+- address
+- country
+- company
+- notification preferences
+
+Clearly distinguish:
+
+editable profile fields
+
+from
+
+immutable/security-sensitive account fields such as:
+- Account Currency
+- Client Code
+- historical registration metadata
+
+==================================================
+
+10. VERIFICATION / ACCOUNT STATUS
+
+Audit current status model.
+
+Recommend clear states such as:
+
+Active
+Blocked
+Pending Verification
+Suspended
+Closed
+
+Also analyze:
+
+- block reason
+- staff note
+- customer-facing reason
+- session revocation on block
+- whether existing history remains accessible to reseller
+
+==================================================
+
+11. CREDIT TRANSFER
+
+Audit whether BHRU has any client-to-client credit transfer.
+
+Recommend whether it should be:
+
+- omitted
+- reseller-controlled
+- allowed only within same tenant
+- optional by client group
+- commission/transfer-fee aware
+
+Do NOT implement.
+
+==================================================
+
+12. INVOICES / RECEIPTS
+
+Audit current BHRU billing capabilities.
+
+Determine what is missing for professional server businesses:
+
+- invoice numbering
+- invoice status
+- receipt/payment proof
+- amount paid
+- amount due
+- wallet funding receipt
+- service-order invoice
+- printable/downloadable invoice
+- account currency snapshot
+
+Do not merge with retail invoice logic blindly.
+
+==================================================
+
+13. CLIENT NOTES
+
+Audit existing Notes tab.
+
+Recommend distinction between:
+
+- internal reseller notes
+- customer-visible notes
+- financial transaction notes
+- order-specific notes
+
+==================================================
+
+14. RESELLER VIEW OF CLIENT
+
+Review the current BHRU client detail page.
+
+Recommend final sections/tabs for a mature client account.
+
+Possible target:
+
+Overview
+Financial
+Pricing & Group
+Service Access
+Orders
+Transactions
+Invoices
+API Access
+Security
+Activity
+Profile
+Notes
+
+Do not add tabs just because DHRU had fields.
+Only recommend tabs justified by actual business workflows.
+
+==================================================
+ARCHITECTURE PRINCIPLES
+==================================================
+
+Do NOT recommend copying DHRU's schema literally.
+
+DHRU is legacy and uses many overloaded fields.
+
+BHRU should use:
+- normalized PostgreSQL tables
+- immutable financial ledger
+- explicit statuses
+- foreign keys
+- tenant isolation
+- audit history
+- integer money/minor units where appropriate
+- strict account currency
+- clear security boundaries
+
+Never store:
+- raw card data
+- CVV
+- plaintext passwords
+- weak security question secrets
+
+==================================================
+FINAL DELIVERABLE
+==================================================
+
+Create:
+
+docs/BHRU_CLIENT_ACCOUNT_GAP_AUDIT.md
+
+The report must include:
+
+A. Executive summary
+
+B. Complete capability comparison matrix
+
+C. Top missing P0 capabilities
+
+D. P1 capabilities
+
+E. P2/P3 capabilities
+
+F. Recommended future client-account architecture
+
+G. Recommended table/domain model additions
+
+H. Recommended client-detail UI/tabs
+
+I. Recommended customer-panel additions
+
+J. Suggested implementation phases
+
+Suggested phases should be dependency-aware.
+
+For example:
+
+Phase A:
+Client Groups + Pricing
+
+Phase B:
+Credit/Due financial model
+
+Phase C:
+Service access overrides
+
+Phase D:
+Security/Login History
+
+Phase E:
+Invoices/Payments
+
+Phase F:
+Customer API Access
+
+But choose the phases based on actual audit findings, not this example.
+
+==================================================
+IMPORTANT
+==================================================
+
+Analysis only.
+
+Do not implement anything.
+
+Do not create migrations.
+
+Do not change source code.
+
+Do not git commit.
+
+Do not git push.
+
+Do not deploy.
+
+At the end return only:
+
+1. audit completed
+2. top 10 gaps
+3. recommended implementation order
+4. report path
+5. confirmation no application/schema changes were made
