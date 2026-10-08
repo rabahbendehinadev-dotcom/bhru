@@ -50,6 +50,13 @@ _Populate as you build — explicit user instructions worth remembering across s
 - The post-merge setup installs dependencies only; it never pushes or resets the database.
 - Test scripts deliberately refuse invocation from a production environment and must only use Development PostgreSQL.
 
+## Replit Preview database boundary
+
+- Preview uses the isolated Replit-managed **development** PostgreSQL database. The real installation uses separate VPS PostgreSQL; never copy its connection string into Preview or run Preview migrations against it.
+- Before a development migration, verify the API's configured connection matches the database reached by `executeSql` with `environment: "development"` without printing connection strings or credentials. A matching database name alone is not sufficient.
+- Build the API, explicitly run the existing `pnpm db:migrate` against that verified target, then start the existing `artifacts/api-server: API Server` and `artifacts/bhru: web` workflows. Keep the startup migration guard intact; do not add automatic migrations to Preview startup.
+- `/api/healthz` should return 200. Management APIs require sign-in; a 401 while signed out is expected. Open `/m/clients` after signing in with a development subscriber, use its service-management menu, and use that subscriber's public customer panel for manual review. Development accounts and balances are not VPS accounts or balances.
+
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details

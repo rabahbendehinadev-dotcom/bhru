@@ -1,3 +1,4 @@
 - [BHRU product boundaries](bhru-product-boundaries.md) — separate subscriber customers and service orders from Retail; stop after each user-approved phase.
 - [Wallet and FX safeguards](wallet-accounting-boundaries.md) — fixed client account currency; no funding FX; catalog-only USD conversion; preserve legacy USD wallets and exact refunds.
 - [Development and production boundaries](bhru-deployment-workflow.md) — verify a separate development target before Preview migrations; never use VPS production for Preview.
+- [Preview database isolation](preview-database-isolation.md) — database proxy hostnames need identity verification, not hostname-only loopback checks.
