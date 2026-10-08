@@ -3,6 +3,8 @@ import { escapeHTML as e } from '../public-site/safety';
 import { renderHeader } from '../public-site/components/header';
 import { renderStyles } from '../public-site/styles';
 import { PUBLIC_MENU_SCRIPT, PUBLIC_MENU_SCRIPT_HASH } from '../public-site/mobile-menu';
+import { renderTopArea, TOP_AREA_STYLES } from '../public-site/top-area-render';
+import { TOP_AREA_SCRIPT, TOP_AREA_SCRIPT_HASH } from '../public-site/top-area-script';
 import type { PublicSiteModel } from '../public-site/model';
 
 import type { CustomerProfile as Profile } from './types';
@@ -153,6 +155,8 @@ export function renderCustomerDocument(m: PublicSiteModel, mode: CustomerPageMod
   const api = localPath(ca?.apiBase) ?? '';
   const login = localPath(ca?.loginHref) ?? home, register = localPath(ca?.registerHref) ?? home, account = localPath(ca?.accountHref) ?? home;
   const copy: PublicSiteModel = { ...m };
+  // Shared authenticated shell: every panel page reuses this tenant's CMS Top Area.
+  const topArea = panel ? renderTopArea(copy) : '';
   const header = (panel ? renderClientHeader(copy, { page: panel, firstName: customer?.firstName }) : renderHeader(copy)).replace(/href="#([a-z][a-z0-9-]*)"/g, (_x, id) => `href="${e(home)}#${id}"`);
   let body = '';
   if (mode === 'login') {
@@ -173,12 +177,12 @@ ${accountDetails(c)}
 <button type="button" class="ca-out" data-customer-logout data-endpoint="${e(api + '/logout')}" data-home="${e(home)}">Logout</button>`;
   }
   const title = mode === 'login' ? 'Login' : mode === 'register' ? 'Register' : panel ? panelTitle(panel) : 'My account';
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}${mode === 'register' ? ONBOARDING_STYLES : ''}${panel ? PANEL_HEADER_STYLES + PANEL_STYLES : ''}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style></head><body>
-${header}<button type="button" class="mobile-menu-backdrop" aria-label="Close mobile menu" hidden></button>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}${mode === 'register' ? ONBOARDING_STYLES : ''}${topArea ? TOP_AREA_STYLES : ''}${panel ? PANEL_HEADER_STYLES + PANEL_STYLES : ''}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style></head><body>
+${topArea}${header}<button type="button" class="mobile-menu-backdrop" aria-label="Close mobile menu" hidden></button>
  ${panel ? renderPanelMain(m, panel, customer) : `<main class="ca-page"><div class="ca-card${mode === 'register' ? ' ca-wide' : ''}">${body}<noscript><p class="ca-status">JavaScript is required for customer sign-in and registration.</p></noscript></div></main>`}
-<script>${PUBLIC_MENU_SCRIPT}</script><script>${CUSTOMER_AUTH_SCRIPT}</script>${panel ? `<script>${PANEL_SCRIPT}</script>` : ''}${mode === 'register' ? `<script>${ONBOARDING_SCRIPT}</script>` : ''}</body></html>`;
+<script>${PUBLIC_MENU_SCRIPT}</script>${topArea ? `<script>${TOP_AREA_SCRIPT}</script>` : ''}<script>${CUSTOMER_AUTH_SCRIPT}</script>${panel ? `<script>${PANEL_SCRIPT}</script>` : ''}${mode === 'register' ? `<script>${ONBOARDING_SCRIPT}</script>` : ''}</body></html>`;
 }
 
-export const CUSTOMER_DOCUMENT_SCRIPT_HASHES = [PUBLIC_MENU_SCRIPT_HASH, CUSTOMER_AUTH_HASH, ONBOARDING_HASH, PANEL_SCRIPT_HASH];
+export const CUSTOMER_DOCUMENT_SCRIPT_HASHES = [PUBLIC_MENU_SCRIPT_HASH, CUSTOMER_AUTH_HASH, ONBOARDING_HASH, PANEL_SCRIPT_HASH, TOP_AREA_SCRIPT_HASH];
 
 export { PANEL_SCRIPT_HASH, PANEL_STYLES, PANEL_SCRIPT };

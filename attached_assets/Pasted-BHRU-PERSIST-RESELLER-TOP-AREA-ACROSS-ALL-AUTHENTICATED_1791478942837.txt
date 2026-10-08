@@ -1,0 +1,139 @@
+BHRU — PERSIST RESELLER TOP AREA ACROSS ALL AUTHENTICATED CUSTOMER PAGES
+
+Important clarification:
+
+The reseller Public Top Area must NOT appear only on the customer Dashboard.
+
+It must remain visible on EVERY authenticated customer page.
+
+Reference behavior:
+In DHRU, when the customer moves between:
+
+Client Area
+Place Order
+Order History
+Account
+etc.
+
+the top reseller branding/promotional area remains in place.
+
+Only the page content below changes.
+
+==================================================
+REQUIRED ARCHITECTURE
+==================================================
+
+Implement the reseller Top Area inside the SHARED AUTHENTICATED CUSTOMER LAYOUT / SHELL.
+
+Do NOT add the Top Area separately inside each page.
+
+Structure:
+
+AuthenticatedCustomerLayout
+
+1. Reseller partner/tool logo strip
+2. Primary promo ticker
+3. Secondary promo/banner if configured
+4. Contact/info strip
+5. Authenticated customer navigation
+6. Route/page content
+
+Then route content changes below this shared shell.
+
+==================================================
+MUST APPLY TO ALL CUSTOMER ROUTES
+==================================================
+
+The same Top Area must remain visible on:
+
+/customer/dashboard
+/customer/services
+/customer/orders
+/customer/wallet
+/customer/transactions
+/customer/announcements
+/customer/profile
+/customer/security
+
+and any future authenticated customer route.
+
+Also support the shared-host slug versions of these routes.
+
+==================================================
+EXAMPLE
+==================================================
+
+Customer opens:
+
+businesshubs.net/customer/dashboard
+
+Top Area visible.
+
+Then clicks:
+
+Place Order
+
+businesshubs.net/customer/services
+
+Top Area stays exactly the same.
+
+Then clicks:
+
+Orders
+
+businesshubs.net/customer/orders
+
+Top Area stays exactly the same.
+
+Only the content section below the customer navigation changes.
+
+==================================================
+DO NOT DUPLICATE COMPONENTS
+==================================================
+
+Reuse existing public CMS Top Area components.
+
+Do not:
+- copy/paste the same header into each page
+- create duplicate logo-strip code
+- duplicate ticker data
+- duplicate contact data
+- create separate customer-only CMS fields
+
+Use one shared authenticated customer shell.
+
+==================================================
+TENANT / CUSTOM DOMAIN
+==================================================
+
+Everything must remain tenant scoped.
+
+Each reseller shows only their own:
+
+- tool/partner logos
+- promo tickers
+- banners
+- contact details
+- branding
+
+Custom domain customer pages must remain on the same origin.
+
+==================================================
+IMPORTANT
+==================================================
+
+This does NOT mean the header should necessarily be position: fixed or sticky while scrolling.
+
+The requirement is:
+
+the Top Area must remain part of the page layout on every authenticated customer route, just like DHRU.
+
+Do not change dashboard design again.
+Do not change typography.
+Do not change financial/order/auth logic.
+
+PREVIEW ONLY.
+
+Do not git commit.
+Do not git push.
+Do not deploy.

@@ -17,6 +17,17 @@ corrected the visual brief to require compact production-SaaS proportions.
 **How to apply:** Preserve the separate customer identity, existing sessions,
 account-currency finances and reseller-origin navigation when extending the panel.
 
+The reseller CMS Top Area belongs in the shared authenticated customer shell,
+above customer navigation, on every current and future client page. This applies
+to shared-host slug URLs and custom domains. Persistence means inclusion across
+pages, not a requirement to make the area fixed or sticky.
+
+**Why:** The user clarified that Dashboard-only branding/promotions are insufficient;
+only the page content beneath the shared reseller shell should change.
+
+**How to apply:** Reuse the public CMS Top Area renderer, styles and motion behavior.
+Do not duplicate its data or add customer-only CMS fields.
+
 Reuse the existing subscriber CMS announcements for current client messages
 instead of introducing a second content system. Do not invent publication dates
 or historical messages. A durable archive requires a separately approved scope.
