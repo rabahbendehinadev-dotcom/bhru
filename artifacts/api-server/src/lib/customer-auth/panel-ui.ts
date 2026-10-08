@@ -54,11 +54,13 @@ export const PANEL_STYLES_V2 = `
 .pn-tbl{font-size:13px}.pn-tbl th{font-size:12px;font-weight:600;padding:8px 10px}.pn-tbl td{padding:9px 10px;vertical-align:middle}.pn-tbl a{font-weight:600}
 .pn-grid{gap:10px;margin:0 0 14px}.pn-msg{font-size:13px;padding:9px 12px}
 .pd{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.pd>*{min-width:0}
-@media(min-width:1024px){.pn[data-page=dashboard]{width:min(1320px,100% - 32px)}.pd{grid-template-columns:minmax(0,7fr) minmax(0,3fr);align-items:stretch}.pd>.pd-main{grid-column:1}.pd>.pd-ann{grid-column:2;grid-row:1/span 3;align-self:start;display:flex;flex-direction:column;min-height:0}.pd>.pd-ann .pd-anl{max-height:360px;min-height:0}.pd>.pd-main:last-child{grid-row:4}}
-.pd-bal{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;border-left:3px solid var(--accent)}
-.pd-bv{font-size:28px;font-weight:700;line-height:1.2;margin:2px 0 10px}.pd-dv{font-size:22px;font-weight:600;color:var(--muted);margin-top:2px}.pd-br{padding-left:16px;border-left:1px solid var(--line);min-width:120px}
+@media(min-width:700px) and (max-width:1023px){.pd{grid-template-columns:repeat(2,minmax(0,1fr))}.pd>*{grid-column:1/-1}.pd>.pd-bal,.pd>.pd-due{grid-column:auto}}
+@media(min-width:1024px){.pn[data-page=dashboard]{width:min(92vw,1920px)}.pd{grid-template-columns:minmax(0,32.64fr) minmax(0,35.36fr) minmax(0,32fr);gap:12px;align-items:stretch}.pd>.pd-bal{grid-column:1;grid-row:1}.pd>.pd-due{grid-column:2;grid-row:1}.pd>.pd-grp,.pd>.pd-rec{grid-column:1/3}.pd>.pd-ann{grid-column:3;grid-row:1/span 3;align-self:stretch;display:flex;flex-direction:column;min-height:0}.pd>.pd-ann .pd-anl{flex:1 1 auto;min-height:0;max-height:clamp(380px,calc(100vh - 280px),720px)}}
+.pd-bal,.pd-due{display:flex;min-height:132px;flex-direction:column;align-items:flex-start;justify-content:space-between}.pd-due{border-left:3px solid var(--line)}.pd-c3 .pd-c{padding:6px 28px}.pd-c3 .pd-c:first-child{padding-left:0}.pd-ann{min-height:260px}
+.pd-bal{gap:12px;border-left:3px solid var(--accent)}
+.pd-bv{font-size:28px;font-weight:700;line-height:1.2;margin:2px 0 10px}.pd-dv{font-size:22px;font-weight:600;color:var(--muted);margin-top:2px}.pd-br{min-width:120px}
 .pd-acts{display:flex;gap:8px;flex-wrap:wrap}.pd-btn{text-decoration:none}
-.pd>.pd-grp{padding-block:6px}.pd-grp h2{font-weight:600;color:var(--muted);margin:0 0 6px}
+.pd>.pd-grp{padding-block:14px}.pd-grp h2{font-weight:600;color:var(--muted);margin:0 0 6px}
 .pd-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.pd-cols.pd-c5{grid-template-columns:repeat(5,minmax(0,1fr))}
 .pd-c{display:flex;gap:9px;align-items:center;padding:2px 12px;border-left:1px solid var(--line);min-width:0}.pd-c:first-child{border-left:0;padding-left:0}
 .pd-c b{display:block;font-size:22px;font-weight:600;overflow-wrap:anywhere}.pd-c span.l{font-size:12px;color:var(--muted)}
@@ -128,15 +130,16 @@ export const PANEL_SCRIPT = String.raw`(() => {
       const bal = h('div', { class: 'pn-card pd-main pd-bal' }, [h('div', { class: 'pd-bl' }, [h('div', { class: 'pn-k', text: 'Available balance' }), h('div', { class: 'pd-bv', text: f.formattedAvailable == null ? '-' : String(f.formattedAvailable) }),
         ZERO(f.availableBalance) ? h('div', { class: 'pn-k', text: 'Balance is empty. Funds are added by your reseller.' }) : null,
         h('div', { class: 'pd-acts' }, [h('a', { class: 'pn-btn pd-btn', href: BASE + '/wallet#add-funds', text: 'Add Funds' }), h('a', { class: 'pn-btn alt pd-btn', href: BASE + '/services', text: 'Place New Order' })])]),
-        h('div', { class: 'pd-br' }, [h('div', { class: 'pn-k', text: 'Due / Credit' }), h('div', { class: 'pd-dv', text: f.formattedDue == null ? '-' : String(f.formattedDue) })])]);
+      ]);
+      const due = h('div', { class: 'pn-card pd-main pd-due' }, [h('div', { class: 'pd-br' }, [h('div', { class: 'pn-k', text: 'Due / Credit' }), h('div', { class: 'pd-dv', text: f.formattedDue == null ? '-' : String(f.formattedDue) })])]);
       const met = h('div', { class: 'pn-card pd-main pd-grp' }, [h('h2', { text: 'Financial summary' }), h('div', { class: 'pd-cols pd-c3' }, [cell('Total credits', f.formattedTotalCredits, '<path d="M12 5v14M5 12h14"/>'), cell('Locked balance', f.formattedLocked, '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'), cell('Total spent', f.formattedTotalSpent, '<path d="M4 18l5-6 4 3 7-9"/>')])]);
       const stats = h('div', { class: 'pn-card pd-main pd-grp' }, [h('h2', { text: 'Order status' }), h('div', { class: 'pd-cols pd-c5' }, [cell('Total', s.totalOrders, '<path d="M7 3h8l4 4v14H7z"/><path d="M14 3v5h5"/>', 'info'), cell('Completed', s.completed, '<circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>', 'ok'), cell('Processing', s.processing, '<path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/>', 'info'), cell('Pending', s.pending, '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>', 'warn'), cell('Rejected', s.rejected, '<circle cx="12" cy="12" r="8"/><path d="M9 9l6 6M15 9l-6 6"/>', 'bad')])]);
       const an = (d.announcements || []).slice(0, 8);
       const ann = h('div', { class: 'pn-card pd-ann' }, [h('div', { class: 'pd-head' }, [h('h2', { text: 'Announcements' }), h('a', { href: BASE + '/announcements', text: 'View all announcements' })]), an.length ? h('div', { class: 'pd-anl' }, an.map(annNode)) : h('p', { class: 'pn-k', text: 'No announcements right now.' })]);
-      const rec = h('div', { class: 'pn-card pd-main' }, [h('div', { class: 'pd-head' }, [h('h2', { text: 'Recent orders' }), h('a', { href: BASE + '/orders', text: 'View all orders' })]),
+      const rec = h('div', { class: 'pn-card pd-main pd-rec' }, [h('div', { class: 'pd-head' }, [h('h2', { text: 'Recent orders' }), h('a', { href: BASE + '/orders', text: 'View all orders' })]),
         rows.length === 0 ? h('div', { class: 'pd-empty' }, [h('span', { text: 'No orders yet.' }), h('a', { class: 'pn-btn pd-btn', href: BASE + '/services', text: 'Browse Services' })]) :
         table(['Order ID', 'Service', 'Amount', 'Status', 'Date', 'Action'], rows.map(o => h('tr', {}, [h('td', { text: o.reference }), h('td', { text: o.serviceName }), h('td', { text: o.amountFormatted }), h('td', {}, [tag(o.status)]), h('td', { text: fmtDate(o.createdAt) }), h('td', {}, [h('a', { href: BASE + '/orders?id=' + encodeURIComponent(o.id), text: 'View' })])])))]);
-      mount(h('div', { class: 'pd' }, [bal, met, stats, ann, rec]));
+      mount(h('div', { class: 'pd' }, [bal, due, met, stats, ann, rec]));
     },
 
     async announcements() {

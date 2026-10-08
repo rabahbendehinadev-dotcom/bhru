@@ -1,0 +1,296 @@
+BHRU — CUSTOMER DASHBOARD LAYOUT MUST FOLLOW DHRU PROPORTIONS
+
+Important clarification:
+
+The current BHRU customer Dashboard is still too narrow and centered.
+
+The problem is NOT typography anymore.
+
+The main problem is the overall dashboard width, proportions and information layout.
+
+Use the provided DHRU screenshot as the reference for PAGE PROPORTIONS and INFORMATION HIERARCHY.
+
+Do NOT copy DHRU colors or old styling.
+
+Keep BHRU modern, but make the authenticated Dashboard use the screen like DHRU does.
+
+==================================================
+1. REMOVE THE NARROW CENTERED DASHBOARD
+==================================================
+
+The current BHRU Dashboard uses too little horizontal space and leaves large empty margins on both sides.
+
+For desktop authenticated customer Dashboard:
+
+DO NOT use the current 1280px / 1320px centered max-width.
+
+Use approximately:
+
+width: 90%–94% of the viewport
+
+with a reasonable absolute maximum only for extremely large monitors.
+
+Target behavior:
+
+On a 1600–1700px desktop screen, the Dashboard should occupy almost the full useful screen width, similar to DHRU.
+
+Approximate horizontal margins:
+
+5%–6% on each side maximum.
+
+Do NOT make it edge-to-edge.
+
+==================================================
+2. PAGE TITLE AREA
+==================================================
+
+Like DHRU, keep the dashboard title area across the full useful content width.
+
+Example:
+
+Client Area Dashboard
+
+or:
+
+Welcome back, Rabah
+
+Keep it compact.
+
+Do not center it inside a small column.
+
+==================================================
+3. DESKTOP MAIN GRID — DHRU-LIKE PROPORTIONS
+==================================================
+
+Use approximately:
+
+MAIN FINANCIAL / ORDERS AREA: 66–70%
+ANNOUNCEMENTS AREA: 30–34%
+
+Small gutter between them.
+
+The announcements column should be substantial and visually important, like DHRU.
+
+Do not make Announcements a narrow sidebar.
+
+==================================================
+4. FIRST ROW
+==================================================
+
+Reorganize the first row closer to DHRU hierarchy.
+
+MAIN AREA:
+
+Create two financial blocks side by side:
+
+A. Current / Available Balance
+- available amount
+- Add Funds button
+
+B. Due / Credit
+- current due/credit amount
+
+Recommended proportions inside main area:
+
+Available Balance: ~48%
+Due / Credit: ~52%
+
+or visually balanced based on available content.
+
+Do NOT place Due/Credit as a tiny value inside the far edge of the balance card.
+
+It should be its own clear financial section, similar to DHRU's Current Balance + Unpaid Balance layout.
+
+==================================================
+5. SECOND FINANCIAL BLOCK
+==================================================
+
+Below the first row, use ONE wide card across the main area.
+
+Inside it display:
+
+Total Credits
+Locked Balance
+Total Spent
+
+Use large horizontal spacing between these internal metrics.
+
+This should feel like DHRU's large secondary financial section.
+
+Do not make three separate floating cards.
+
+==================================================
+6. ANNOUNCEMENTS
+==================================================
+
+Announcements should begin at the same vertical level as the first financial row.
+
+It should span vertically alongside:
+
+- balance row
+- financial summary
+- optionally part of order status
+
+Like DHRU.
+
+Use:
+
+max-height appropriate to the viewport
+internal scroll when needed
+
+The panel should feel substantial and useful.
+
+Do not leave a tiny short announcement box.
+
+==================================================
+7. ORDER STATUS
+==================================================
+
+Below the financial summary:
+
+One wide Order Status section.
+
+Show:
+
+Total
+Completed
+Processing
+Pending
+Rejected
+
+Use horizontal columns.
+
+Keep compact typography.
+
+Use subtle status indicators.
+
+==================================================
+8. RECENT ORDERS
+==================================================
+
+Recent Orders should use the full width of the main left area.
+
+When empty:
+small compact empty state.
+
+When populated:
+table/list with:
+
+Order
+Service
+Amount
+Status
+Date
+Action
+
+==================================================
+9. VERTICAL DENSITY
+==================================================
+
+The dashboard should visually fill the page more naturally.
+
+Avoid large unused empty zones.
+
+Use moderate card heights similar to mature server panels.
+
+Do not make sections too short simply to keep everything compact.
+
+The screen should feel operational and populated even when the account has little data.
+
+==================================================
+10. KEEP CURRENT TOP AREA
+==================================================
+
+Do NOT change:
+
+- partner/tool logo strip
+- promotional tickers
+- reseller header
+- authenticated navigation
+- logo behavior
+- custom-domain behavior
+
+Those are already correct.
+
+Only redesign the content area below the authenticated navigation.
+
+==================================================
+11. KEEP CURRENT TYPOGRAPHY
+==================================================
+
+Do NOT enlarge text.
+
+Current typography scale is acceptable.
+
+Use layout and proportion—not giant fonts—to create hierarchy.
+
+==================================================
+12. TARGET VISUAL DIFFERENCE
+==================================================
+
+Current BHRU:
+narrow centered SaaS dashboard with too much empty margin.
+
+Target:
+wide professional server Client Area using most of the screen, like DHRU, but with BHRU's cleaner modern visual style.
+
+Think:
+
+DHRU layout density
++
+BHRU modern styling
+
+NOT:
+generic centered SaaS dashboard.
+
+==================================================
+13. RESPONSIVE
+==================================================
+
+Desktop:
+wide 66–70% main + 30–34% announcements.
+
+Tablet:
+adapt to two columns where practical.
+
+Mobile:
+single column.
+
+Do not create horizontal overflow.
+
+==================================================
+14. DO NOT CHANGE FUNCTIONALITY
+==================================================
+
+Do not change:
+
+- wallet calculations
+- account currency
+- customer authentication
+- orders
+- ledger
+- announcements source
+- tenant isolation
+- routes
+- Top Area
+- navigation
+
+UI/layout only.
+
+==================================================
+15. PREVIEW ONLY
+==================================================
+
+Do not git commit.
+Do not git push.
+Do not deploy.
+Do not access VPS/Dokploy.
+
+Return:
+
+1. final dashboard width strategy
+2. first-row structure
+3. main/announcements proportions
+4. financial summary structure
+5. order status structure
+6. files changed

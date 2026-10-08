@@ -11,6 +11,9 @@ typography/cards or an exaggerated AI-mockup appearance. Favor mature
 server-panel density, restrained icons, subtle surfaces and limited accent use.
 For Dashboard content, prefer a few grouped operational sections with internal
 separators over nine or ten equal floating metric cards; preserve the typography scale.
+Use DHRU-like wide operational page proportions and information hierarchy,
+not a narrow centered SaaS layout. Keep BHRU styling rather than copying legacy
+DHRU colors. Available Balance and Due/Credit should be distinct financial blocks.
 
 **Why:** The user explicitly chose a true server/client panel as the signed-in
 product experience without removing the public marketing website, and explicitly
@@ -19,6 +22,8 @@ The user further rejected fragmented equal-card analytics styling in favor of
 a grouped financial summary and order-status panel.
 The user confirmed the grouped Dashboard structure is good and requested polish
 only, not another redesign.
+The user subsequently clarified that the page remained too narrow: the issue
+was screen usage and information layout, not typography.
 
 **How to apply:** Preserve the separate customer identity, existing sessions,
 account-currency finances and reseller-origin navigation when extending the panel.
