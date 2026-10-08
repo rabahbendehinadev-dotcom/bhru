@@ -4,7 +4,7 @@ export interface CommerceSettingsFields {
  email_mode: 'hidden' | 'optional' | 'required'; address_mode: 'hidden' | 'optional' | 'required';
  show_state: boolean; show_city: boolean; show_note: boolean; whatsapp: string; confirmation_message: string;
 }
-export function commerceSettingsPayload(f: CommerceSettingsFields, usdModel: boolean): CommerceSettingsFields {
+export function commerceSettingsPayload(f: CommerceSettingsFields, usdModel: boolean): CommerceSettingsFields & Record<string, unknown> {
  return {
   enabled:f.enabled,title:f.title.trim(),currency:usdModel?'USD':f.currency,featured_first:f.featured_first,
   email_mode:f.email_mode,address_mode:f.address_mode,show_state:f.show_state,show_city:f.show_city,show_note:f.show_note,
