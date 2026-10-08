@@ -7,7 +7,7 @@ import type { PublicSiteModel } from '../public-site/model';
 
 import type { CustomerProfile as Profile } from './types';
 import type { CustomerPageMode } from './context';
-import { renderClientHeader, CLIENT_HEADER_STYLES } from './client-header';
+import { renderClientHeader, CLIENT_HEADER_STYLES, PANEL_HEADER_STYLES } from './client-header';
 import { PANEL_STYLES, PANEL_SCRIPT, PANEL_SCRIPT_HASH, renderPanelMain, panelTitle, type PanelPage } from './panel-ui';
 import { ONBOARDING_STYLES, ONBOARDING_HASH, ONBOARDING_SCRIPT, renderRegistrationWizard } from './onboarding-ui';
 const localPath = (v: unknown): string | null =>
@@ -153,7 +153,7 @@ export function renderCustomerDocument(m: PublicSiteModel, mode: CustomerPageMod
   const api = localPath(ca?.apiBase) ?? '';
   const login = localPath(ca?.loginHref) ?? home, register = localPath(ca?.registerHref) ?? home, account = localPath(ca?.accountHref) ?? home;
   const copy: PublicSiteModel = { ...m };
-  const header = (panel ? renderClientHeader(copy) : renderHeader(copy)).replace(/href="#([a-z][a-z0-9-]*)"/g, (_x, id) => `href="${e(home)}#${id}"`);
+  const header = (panel ? renderClientHeader(copy, { page: panel, firstName: customer?.firstName }) : renderHeader(copy)).replace(/href="#([a-z][a-z0-9-]*)"/g, (_x, id) => `href="${e(home)}#${id}"`);
   let body = '';
   if (mode === 'login') {
     body = `<h1>Customer login</h1><p class="ca-sub">Sign in to ${e(m.siteName)}.</p>
@@ -173,7 +173,7 @@ ${accountDetails(c)}
 <button type="button" class="ca-out" data-customer-logout data-endpoint="${e(api + '/logout')}" data-home="${e(home)}">Logout</button>`;
   }
   const title = mode === 'login' ? 'Login' : mode === 'register' ? 'Register' : panel ? panelTitle(panel) : 'My account';
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}${mode === 'register' ? ONBOARDING_STYLES : ''}${panel ? PANEL_STYLES : ''}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style></head><body>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}${mode === 'register' ? ONBOARDING_STYLES : ''}${panel ? PANEL_HEADER_STYLES + PANEL_STYLES : ''}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style></head><body>
 ${header}<button type="button" class="mobile-menu-backdrop" aria-label="Close mobile menu" hidden></button>
  ${panel ? renderPanelMain(m, panel, customer) : `<main class="ca-page"><div class="ca-card${mode === 'register' ? ' ca-wide' : ''}">${body}<noscript><p class="ca-status">JavaScript is required for customer sign-in and registration.</p></noscript></div></main>`}
 <script>${PUBLIC_MENU_SCRIPT}</script><script>${CUSTOMER_AUTH_SCRIPT}</script>${panel ? `<script>${PANEL_SCRIPT}</script>` : ''}${mode === 'register' ? `<script>${ONBOARDING_SCRIPT}</script>` : ''}</body></html>`;

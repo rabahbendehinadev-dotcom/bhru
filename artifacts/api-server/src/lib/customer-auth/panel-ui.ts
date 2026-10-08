@@ -16,7 +16,7 @@ export function panelBase(m: PublicSiteModel): string {
   return a.replace(/\/(account|dashboard)\/?$/, '') || '';
 }
 
-export const PANEL_STYLES = `
+export const PANEL_STYLES_BASE = `
 body{--bg:#f6f8fc;--card:#fff;--ink:#142033;--muted:#586579;--line:#e1e7ef;background:var(--bg);color:var(--ink)}
 .pn-nav{flex-wrap:wrap;overflow:visible}.pn-nav a{padding:8px 12px;min-height:40px;font-size:13px}.pn-nav a:focus-visible,.pn-btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .pn-hero{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 18px}.pn-btn{text-decoration:none}.pn-card.accent{border-left:4px solid var(--accent)}.pn-h{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
@@ -46,6 +46,25 @@ body{--bg:#f6f8fc;--card:#fff;--ink:#142033;--muted:#586579;--line:#e1e7ef;backg
 .pn-two{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}@media(min-width:900px){.pn-two{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}}
 `;
 
+export const PANEL_STYLES_V2 = `
+.pn{width:min(1400px,100% - 32px);padding:18px 0 48px;font-size:14px}
+.pn h1{font-size:clamp(20px,3vw,24px);font-weight:600;margin:0 0 2px}.pn h2{font-size:16px;font-weight:600;margin:0 0 10px}.pn .pn-sub{font-size:13px;margin:0 0 14px}
+.pn-card{border-radius:10px;padding:14px;box-shadow:0 1px 2px rgba(20,32,51,.05)}.pn-btn{min-height:36px;padding:0 14px;font-size:13px;font-weight:600;border-radius:8px}
+.pn-k{font-size:12px;font-weight:500;letter-spacing:0;text-transform:none}.pn-v{font-size:22px;font-weight:600;margin-top:4px}.pn-tag{font-size:11px;font-weight:600;padding:1px 8px}
+.pn-tbl{font-size:13px}.pn-tbl th{font-size:12px;font-weight:600;padding:8px 10px}.pn-tbl td{padding:9px 10px;vertical-align:middle}.pn-tbl a{font-weight:600}
+.pn-grid{gap:10px;margin:0 0 14px}.pn-msg{font-size:13px;padding:9px 12px}
+.pd{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.pd>*{min-width:0}
+@media(min-width:1024px){.pd{grid-template-columns:repeat(12,minmax(0,1fr))}.pd>.pd-main{grid-column:1/9}.pd>.pd-ann{grid-column:9/13;grid-row:1/span 4;align-self:start}}
+.pd-bal{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;border-left:3px solid var(--accent)}
+.pd-bv{font-size:28px;font-weight:700;line-height:1.2;margin:2px 0}.pd-bv small{font-size:13px;font-weight:500;color:var(--muted)}.pd-acts{display:flex;gap:8px;flex-wrap:wrap}.pd-btn{text-decoration:none}
+.pd-met{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.pd-m{display:flex;gap:9px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.pd-m b{display:block;font-size:22px;font-weight:600;overflow-wrap:anywhere}.pd-m span.l{font-size:12px;color:var(--muted)}
+.pd-i{flex:none;width:28px;height:28px;border-radius:7px;display:grid;place-items:center;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.pd-st{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}.pd-s.ok .pd-i{color:#2f855a}.pd-s.bad .pd-i{color:#b42318}.pd-s.warn .pd-i{color:#b7791f}.pd-s.info .pd-i{color:#2b6cb0}
+.pd-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px}.pd-head h2{margin:0}.pd-head a{font-size:13px;font-weight:600;color:var(--accent-text,var(--ink));text-decoration:underline}
+.pd-anl{max-height:300px;overflow-y:auto;display:grid;gap:6px}.pd .pn-ann{background:transparent!important;color:var(--ink)!important;margin:0;padding:8px 10px;font-size:13px;border-radius:8px}.pd .pn-ann a{text-decoration:underline}
+.pd-empty{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;font-size:13px;color:var(--muted)}
+`;
 export const PANEL_SCRIPT = String.raw`(() => {
   const root = document.querySelector('[data-panel]');
   if (!root) return;
@@ -92,25 +111,28 @@ export const PANEL_SCRIPT = String.raw`(() => {
   };
   const input = (name, ph, val) => h('input', { name, type: 'search', placeholder: ph, 'aria-label': ph, value: val || '', maxlength: 100 });
   const select = (name, label, opts, val) => { const s = h('select', { name, 'aria-label': label }, opts.map(o => h('option', { value: o[0], text: o[1] }))); s.value = val || ''; return s; };
+  const ico = path => { const s = h('span', { class: 'pd-i', 'aria-hidden': 'true' }); s.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>'; return s; };
+  const setHdr = f => { const b = document.querySelector('[data-hdr-bal]'), c = document.querySelector('[data-hdr-cur]'); if (!b) return; const cur = f && (f.accountCurrency || f.currency); if (!f || f.formattedAvailable == null) { b.textContent = 'Balance unavailable'; if (c) c.textContent = ''; return; } b.textContent = String(f.formattedAvailable); if (c) c.textContent = 'Available balance' + (cur ? ' · ' + cur : ''); };
   const ZERO = x => !x || /^0+(\.0+)?$/.test(String(x));
 
   const pages = {
     async dashboard() {
       const d = await call('/panel');
       const f = d.financial || {}, s = d.orderSummary || {}, rows = d.recentOrders || [], cur = f.accountCurrency || f.currency || '';
-      const due = f.formattedDue;
-      const kids = [h('div', { class: 'pn-hero' }, [h('a', { class: 'pn-btn', href: BASE + '/services', text: 'Place New Order' }), h('a', { class: 'pn-btn alt', href: BASE + '/wallet#add-funds', text: 'Add Funds' }), h('a', { class: 'pn-btn alt', href: BASE + '/orders', text: 'View Orders' })]),
-        h('p', { class: 'pn-h', text: 'Wallet' + (cur ? ' (Account Currency: ' + cur + ')' : '') }),
-        h('div', { class: 'pn-grid' }, [stat('Available Balance', f.formattedAvailable), stat('Locked Balance', f.formattedLocked), stat('Due / Credit', due), stat('Total Spent', f.formattedTotalSpent), stat('Total Credits / Added Funds', f.formattedTotalCredits)]),
-        h('p', { class: 'pn-h', text: 'Service orders' }),
-        h('div', { class: 'pn-grid' }, [stat('Total orders', s.totalOrders), stat('Pending', s.pending), stat('Processing', s.processing), stat('Completed', s.completed), stat('Rejected', s.rejected)])];
-      if (ZERO(f.availableBalance)) kids.push(msg('Your wallet balance is empty. Contact your reseller to add funds; online payment is not available on this website.', 'warn'));
-      kids.push(h('div', { class: 'pn-card' }, [h('h2', { text: 'Recent orders' }), rows.length === 0 ? h('p', { text: 'No orders yet. Browse the services to place your first order.' }) :
-        table(['Reference', 'Service', 'Amount', 'Currency', 'Status', 'Date'], rows.map(o => h('tr', {}, [h('td', {}, [h('a', { href: BASE + '/orders?id=' + encodeURIComponent(o.id), text: o.reference })]), h('td', { text: o.serviceName }), h('td', { text: o.amountFormatted }), h('td', { text: o.currency || cur || '-' }), h('td', {}, [tag(o.status)]), h('td', { text: fmtDate(o.createdAt) })]))),
-        h('p', {}, [h('a', { class: 'pn-btn', href: BASE + '/services', text: 'Browse Services', style: 'margin-top:14px' })])]));
-      const an = (d.announcements || []).slice(0, 3);
-      kids.push(h('div', { class: 'pn-card', style: 'margin-top:14px' }, [h('h2', { text: 'Latest announcements' }), an.length ? h('div', {}, an.map(annNode)) : h('p', { text: 'No announcements right now.' })]));
-      mount(...kids);
+      setHdr(f);
+      const m = (k, v, ic) => h('div', { class: 'pd-m' }, [ico(ic), h('div', {}, [h('span', { class: 'l', text: k }), h('b', { text: v == null ? '-' : v })])]);
+      const st = (k, v, cls, ic) => h('div', { class: 'pd-m pd-s ' + cls }, [ico(ic), h('div', {}, [h('span', { class: 'l', text: k }), h('b', { text: v == null ? '-' : v })])]);
+      const bal = h('div', { class: 'pn-card pd-main pd-bal' }, [h('div', {}, [h('div', { class: 'pn-k', text: 'Available balance' }), h('div', { class: 'pd-bv', text: f.formattedAvailable == null ? '-' : String(f.formattedAvailable) }), cur ? h('div', { class: 'pn-k', text: 'Account currency: ' + cur }) : null,
+        ZERO(f.availableBalance) ? h('div', { class: 'pn-k', text: 'Balance is empty. Funds are added by your reseller.' }) : null]),
+        h('div', { class: 'pd-acts' }, [h('a', { class: 'pn-btn pd-btn', href: BASE + '/wallet#add-funds', text: 'Add Funds' }), h('a', { class: 'pn-btn alt pd-btn', href: BASE + '/services', text: 'Place New Order' })])]);
+      const met = h('div', { class: 'pd-main pd-met' }, [m('Locked balance', f.formattedLocked, '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'), m('Total spent', f.formattedTotalSpent, '<path d="M4 18l5-6 4 3 7-9"/>'), m('Due / Credit', f.formattedDue, '<path d="M12 4v16M16 8H10a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/>'), m('Total credits', f.formattedTotalCredits, '<path d="M12 5v14M5 12h14"/>')]);
+      const stats = h('div', { class: 'pd-main pd-st' }, [st('Total orders', s.totalOrders, 'info', '<path d="M7 3h8l4 4v14H7z"/><path d="M14 3v5h5"/>'), st('Pending', s.pending, 'warn', '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'), st('Processing', s.processing, 'info', '<path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/>'), st('Completed', s.completed, 'ok', '<circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>'), st('Rejected', s.rejected, 'bad', '<circle cx="12" cy="12" r="8"/><path d="M9 9l6 6M15 9l-6 6"/>')]);
+      const an = (d.announcements || []).slice(0, 6);
+      const ann = h('div', { class: 'pn-card pd-ann' }, [h('div', { class: 'pd-head' }, [h('h2', { text: 'Announcements' }), h('a', { href: BASE + '/announcements', text: 'View all announcements' })]), an.length ? h('div', { class: 'pd-anl' }, an.map(annNode)) : h('p', { class: 'pn-k', text: 'No announcements right now.' })]);
+      const rec = h('div', { class: 'pn-card pd-main' }, [h('div', { class: 'pd-head' }, [h('h2', { text: 'Recent orders' }), h('a', { href: BASE + '/orders', text: 'View all orders' })]),
+        rows.length === 0 ? h('div', { class: 'pd-empty' }, [h('span', { text: 'No orders yet. Place your first service order.' }), h('a', { class: 'pn-btn pd-btn', href: BASE + '/services', text: 'Browse Services' })]) :
+        table(['Order', 'Service', 'Amount', 'Status', 'Date', 'Action'], rows.map(o => h('tr', {}, [h('td', { text: o.reference }), h('td', { text: o.serviceName }), h('td', { text: o.amountFormatted }), h('td', {}, [tag(o.status)]), h('td', { text: fmtDate(o.createdAt) }), h('td', {}, [h('a', { href: BASE + '/orders?id=' + encodeURIComponent(o.id), text: 'View' })])])))]);
+      mount(h('div', { class: 'pd' }, [bal, met, stats, ann, rec]));
     },
 
     async announcements() {
@@ -260,8 +282,10 @@ export const PANEL_SCRIPT = String.raw`(() => {
 
   const run = pages[PAGE];
   if (run) guard(run)();
+  if (PAGE !== 'dashboard' && document.querySelector('[data-hdr-bal]')) call('/panel').then(d => setHdr(d.financial || {})).catch(() => setHdr(null));
 })();`;
 
+export const PANEL_STYLES = PANEL_STYLES_BASE + PANEL_STYLES_V2;
 export const PANEL_SCRIPT_HASH = createHash('sha256').update(PANEL_SCRIPT).digest('base64');
 
 const dt = (v: unknown): string => { if (!v) return ''; const d = new Date(v as string); return Number.isNaN(+d) ? '' : d.toISOString().slice(0, 10); };
@@ -281,16 +305,11 @@ export function renderPanelMain(m: PublicSiteModel, page: PanelPage, customer?: 
   const api = localPath(ca?.apiBase) ?? '';
   const login = localPath(ca?.loginHref) ?? '/';
   const href = (p: PanelPage) => `${base}/${p}`;
-  const nav = PANEL_PAGES.map((p) => `<a href="${e(href(p))}"${p === page ? ' aria-current="page"' : ''}>${e(TITLES[p])}</a>`).join('');
-  const greeting = page === 'dashboard' ? `<h1>Welcome${customer?.firstName ? ', ' + e(customer.firstName) : ''}</h1><p class="pn-sub">Your wallet, orders and services with ${e(m.siteName)}.</p>` : `<h1>${e(TITLES[page])}</h1><p class="pn-sub">${e(m.siteName)}</p>`;
+  const greeting = page === 'dashboard' ? `<h1>Welcome back${customer?.firstName ? ', ' + e(customer.firstName) : ''}</h1><p class="pn-sub">Manage your balance, services and orders.</p>` : `<h1>${e(TITLES[page])}</h1><p class="pn-sub">${e(m.siteName)}</p>`;
   const addFunds = page === 'wallet' ? `<section class="pn-card accent" id="add-funds" tabindex="-1" style="margin:0 0 18px"><h2>Add Funds</h2><p>Account Currency: <strong data-acct-currency>${e(customer?.effectiveCurrency ?? customer?.preferredCurrency ?? '')}</strong>. Your account currency is fixed and cannot be changed.</p><p>Funds are added by your reseller. Contact ${e(m.siteName)} through their listed channels, tell them your client code${customer?.clientCode ? ' (' + e(customer.clientCode) + ')' : ''} and the amount, and the credit will appear in your wallet once confirmed. There is no online payment on this website.</p></section>` : '';
   const security = page === 'security' ? `<div class="pn-card"><h2>Account security</h2><dl class="ca-dl"><div><dt>Email</dt><dd>${e(customer?.email ?? '')}</dd></div>${customer?.clientCode ? `<div><dt>Client code</dt><dd>${e(customer.clientCode)}</dd></div>` : ''}<div><dt>Account Currency</dt><dd>${e(customer?.effectiveCurrency ?? customer?.preferredCurrency ?? '-')} (immutable)</dd></div></dl><p>Your email, client code and account currency are fixed identity details and cannot be changed from this panel.</p><p>Sign out when using a shared or public device. Never share your password or order details. Your session is kept by a secure cookie and ends when you log out. To change your password or details, contact your reseller.</p><button type="button" class="pn-btn alt" data-customer-logout data-endpoint="${e(api + '/logout')}" data-home="${e(localPath(ca?.homeHref) ?? '/')}">Logout</button></div>` : '';
   const content = page === 'security' ? security : page === 'profile'
     ? `<div class="pn-card">${profileDetails(customer ?? { firstName: '', lastName: '', email: '' })}<p class="pn-sub">Profile details are managed by your reseller. Contact them to change anything.</p></div>`
     : `<div id="pn-out" aria-live="polite"><div class="pn-skel"></div></div><noscript><p class="pn-msg">JavaScript is required to load this page.</p></noscript>`;
-  const profileSummary=page==='dashboard'&&customer
-    ? `<div class="pn-card pn-account-summary"><strong>Your account</strong><span>Email: ${e(customer.email)}</span>
-      ${customer.addressLine1?`<span>Address: ${e(customer.addressLine1)}</span>`:''}
-      <a href="${e(href('profile'))}">View profile</a></div>`:'';
-  return `<main class="pn" data-panel data-api="${e(api)}" data-base="${e(base)}" data-page="${page}" data-login="${e(login)}"><nav class="pn-nav" aria-label="Customer panel">${nav}</nav>${greeting}${addFunds}${content}${profileSummary}</main>`;
+  return `<main class="pn" data-panel data-api="${e(api)}" data-base="${e(base)}" data-page="${page}" data-login="${e(login)}">${greeting}${addFunds}${content}</main>`;
 }

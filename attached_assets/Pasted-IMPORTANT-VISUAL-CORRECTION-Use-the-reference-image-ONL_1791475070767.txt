@@ -1,0 +1,96 @@
+IMPORTANT VISUAL CORRECTION
+
+Use the reference image ONLY for layout hierarchy and component placement.
+
+DO NOT copy its oversized typography, oversized cards, annotation style, exaggerated spacing or "AI dashboard mockup" appearance.
+
+I want the final BHRU customer panel to look like a real production SaaS/server panel designed by a professional product team.
+
+TYPOGRAPHY:
+- Keep text compact and restrained.
+- Do not use oversized headings.
+- Do not let typography dominate the interface.
+- Dashboard page title around 22–26px maximum.
+- Section titles around 15–17px.
+- Card labels around 12–13px.
+- Metric values around 22–28px depending on importance.
+- Navigation around 13–14px.
+- Buttons around 13–14px.
+- Normal body text around 13–14px.
+
+Avoid excessive bold text.
+Use font weight hierarchy carefully:
+- 600/700 only where important
+- normal content mostly 400/500
+
+LAYOUT:
+- compact professional spacing
+- smaller vertical gaps
+- cards should not feel oversized
+- avoid giant welcome sections
+- avoid excessive empty whitespace
+- dashboard should fit more useful information above the fold
+
+VISUAL STYLE:
+- no artificial-looking gradients everywhere
+- no neon/glow effects
+- no excessive rounded cards
+- no huge icon boxes
+- no cartoonish illustrations
+- no fake decorative UI
+- no excessive shadows
+- no oversized colored status pills
+- no glassmorphism
+
+Use:
+- subtle borders
+- restrained shadows
+- clean white/light surfaces
+- realistic enterprise SaaS proportions
+- professional server-panel density
+- reseller accent color only where useful
+
+HEADER:
+Keep it compact.
+Logo should be visible but not huge.
+Navigation should feel like a real application header, not a marketing hero.
+
+BALANCE:
+Available Balance can remain the most important card, but do not make it enormous.
+It should be stronger than other metrics without dominating half the screen.
+
+ANNOUNCEMENTS:
+Keep them readable and compact.
+Do not render large colored banners unless the reseller explicitly created one for the public website.
+
+ORDER STATS:
+Use compact cards/status items.
+Do not make five large equal-size cards that consume the whole row.
+
+RECENT ORDERS:
+Compact operational table/list.
+Do not create huge empty-state blocks.
+
+REFERENCE IMAGE:
+Use the image only for:
+- main content + right announcements column
+- balance priority
+- compact order overview
+- recent orders placement
+- authenticated application header
+
+Do NOT reproduce:
+- large text
+- large spacing
+- oversized cards
+- annotation callouts
+- "AI-generated SaaS mockup" aesthetic
+
+Target:
+A real production interface similar in density to mature admin/server panels,
+but cleaner and more modern than DHRU.
+
+PREVIEW ONLY.
+Do not git commit.
+Do not git push.
+Do not deploy.

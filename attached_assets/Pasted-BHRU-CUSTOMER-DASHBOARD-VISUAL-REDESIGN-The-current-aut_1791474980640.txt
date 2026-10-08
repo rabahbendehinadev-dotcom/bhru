@@ -1,0 +1,372 @@
+BHRU — CUSTOMER DASHBOARD VISUAL REDESIGN
+
+The current authenticated customer dashboard is functionally correct, but visually it feels too sparse and generic.
+
+We want to redesign ONLY the authenticated customer panel presentation/layout.
+
+Use DHRU Client Area as a BUSINESS LAYOUT reference only:
+- strong balance visibility
+- clear order overview
+- announcements visible immediately
+- real client-panel feeling
+
+DO NOT clone DHRU styling.
+Keep BHRU cleaner, more modern and professional.
+
+IMPORTANT:
+Do not change financial logic, authentication, routes, wallet rules, order logic, tenant isolation or account currency behavior.
+
+This is primarily a UI/UX redesign.
+
+==================================================
+1. MAIN PROBLEM TO FIX
+==================================================
+
+Current dashboard problems:
+
+- content container is too narrow on large desktop screens
+- too much unused whitespace
+- every metric card has almost the same visual importance
+- available balance does not stand out
+- announcements are too low on the page
+- recent orders consumes too much space when empty
+- authenticated header looks like a normal marketing navbar
+- reseller logo is too small
+- dashboard lacks icons/status visual hierarchy
+- customer does not immediately feel they are inside a professional server/client panel
+
+==================================================
+2. DESKTOP LAYOUT
+==================================================
+
+Increase authenticated panel max width.
+
+Target approximately:
+
+1280–1440px usable dashboard width
+
+depending on viewport.
+
+Do not leave huge empty margins on 1600px+ screens.
+
+Use a 12-column responsive dashboard grid.
+
+Desktop main structure:
+
+LEFT / MAIN AREA:
+approximately 8 columns
+
+RIGHT SIDEBAR:
+approximately 4 columns
+
+Right sidebar should contain Announcements.
+
+Announcements must be visible without scrolling down the entire dashboard.
+
+==================================================
+3. AUTHENTICATED HEADER
+==================================================
+
+Redesign the authenticated customer header into an application-style panel header.
+
+Left:
+- reseller logo, larger and clearer
+- reseller/server name
+
+Center/navigation:
+- Dashboard
+- Place Order
+- Orders
+- Wallet
+- Announcements
+
+Right:
+- current available balance
+- account currency
+- customer name/avatar/menu
+- Logout inside account menu if appropriate
+
+Example:
+
+[LOGO] gabschool
+
+Dashboard | Place Order | Orders | Wallet | Announcements
+
+$1.00 USD    Rabah ▾
+
+Keep "Public Website" accessible but secondary.
+It should NOT visually compete with the main panel navigation.
+
+Do not expose BHRU platform branding unless already required.
+This is the reseller's customer area.
+
+==================================================
+4. WELCOME AREA
+==================================================
+
+Simplify the current large Welcome section.
+
+Use:
+
+Welcome back, Rabah
+Manage your balance, services and orders.
+
+Do not waste excessive vertical height.
+
+==================================================
+5. AVAILABLE BALANCE HERO
+==================================================
+
+Available Balance must become the strongest financial element.
+
+Create one prominent balance card.
+
+Example content:
+
+AVAILABLE BALANCE
+
+$1.00 USD
+
+[ Add Funds ] [ Place New Order ]
+
+The balance amount should be much larger than secondary metrics.
+
+Use the reseller branding accent for the primary action.
+
+Account currency must come from the immutable customer Account Currency.
+
+==================================================
+6. SECONDARY FINANCIAL METRICS
+==================================================
+
+Below or beside the primary balance card show compact secondary metrics:
+
+- Locked Balance
+- Total Spent
+- Due / Credit
+- Total Credits / Added Funds
+
+These should NOT visually compete with Available Balance.
+
+Use small icons where appropriate.
+
+Keep the layout clean and compact.
+
+==================================================
+7. ANNOUNCEMENTS SIDEBAR
+==================================================
+
+Move latest announcements into the right column on desktop.
+
+The sidebar card should include:
+
+Announcements
+--------------------------------
+announcement title/content
+optional date if actual date exists
+--------------------------------
+announcement
+--------------------------------
+
+Display several latest announcements with internal scrolling if necessary.
+
+Do not invent dates.
+
+Do not transform CMS content into large dark full-width banners on the dashboard.
+
+If CMS announcement content contains custom background styling, render it safely but normalize its dashboard presentation so announcements remain readable and professional.
+
+Add:
+View all announcements
+
+==================================================
+8. ORDER OVERVIEW
+==================================================
+
+Replace the current five identical large cards with a cleaner order summary.
+
+Show:
+
+Total Orders
+Pending
+Processing
+Completed
+Rejected
+
+Use:
+- small icons
+- status indicators
+- compact cards
+
+Completed can use a positive visual state.
+Rejected can use an error visual state.
+Pending/Processing use neutral/warning states.
+
+Do not hardcode colors if the design system already provides semantic tokens.
+
+==================================================
+9. RECENT ORDERS
+==================================================
+
+Recent Orders should look like an actual operational panel.
+
+When orders exist, use a compact table/list:
+
+Order
+Service
+Amount
+Status
+Date
+Action
+
+Example:
+
+#1042 | iPhone GSX Check | $3.50 | Completed | 08 Oct | View
+
+When no orders exist:
+
+Use a compact empty state.
+
+Do NOT create a huge empty card.
+
+Example:
+
+No orders yet.
+Place your first service order.
+
+[ Browse Services ]
+
+==================================================
+10. QUICK ACTIONS
+==================================================
+
+Do not keep three disconnected buttons under Welcome.
+
+Primary quick actions should live naturally inside relevant areas:
+
+Balance:
+Add Funds
+
+Orders/Services:
+Place New Order
+
+Recent Orders:
+View All Orders
+
+Avoid duplicated CTAs.
+
+==================================================
+11. CUSTOMER PANEL VISUAL STYLE
+==================================================
+
+Keep BHRU modern:
+
+- light background
+- white cards
+- subtle borders
+- soft shadows
+- modern radius
+- clear typography
+- reseller accent colors
+- professional spacing
+
+Avoid:
+- oversized empty sections
+- excessive card duplication
+- legacy gradients
+- visually noisy design
+
+We want:
+
+Modern SaaS + professional unlock/server client panel.
+
+==================================================
+12. RESPONSIVE
+==================================================
+
+Desktop:
+main content + announcements sidebar.
+
+Tablet:
+responsive two-column or stacked layout.
+
+Mobile:
+single-column.
+
+On mobile:
+- balance first
+- actions
+- financial metrics
+- order stats
+- announcements
+- recent orders
+
+Authenticated navigation can use the existing mobile drawer.
+
+No horizontal page overflow.
+
+==================================================
+13. PRESERVE EXISTING FUNCTIONALITY
+==================================================
+
+Do NOT change:
+
+- customer authentication
+- custom-domain routing
+- account currency
+- wallet calculation
+- ledger
+- service quote
+- atomic debit
+- refund logic
+- order statuses
+- tenant isolation
+- CMS tenant isolation
+- service group availability
+- existing routes
+
+All current functionality must continue to work.
+
+==================================================
+14. DO NOT REDESIGN PUBLIC WEBSITE
+==================================================
+
+This task applies only to authenticated customer panel pages.
+
+Do not redesign:
+
+Home
+About
+Contact
+public marketing website
+registration/login unless shared authenticated header code requires safe adjustment.
+
+==================================================
+15. PREVIEW ONLY
+==================================================
+
+Implement in Replit Preview.
+
+Do NOT:
+- git commit
+- git push
+- deploy
+- access VPS
+- access Dokploy
+- access production
+
+Do not spend credits on broad automated browser testing.
+
+Only perform focused build/type sanity checks required to ensure the UI compiles.
+
+Return:
+
+1. dashboard layout changes
+2. authenticated header changes
+3. balance hero design
+4. financial metrics design
+5. order overview design
+6. announcements sidebar behavior
+7. recent orders behavior
+8. responsive behavior
+9. files changed
