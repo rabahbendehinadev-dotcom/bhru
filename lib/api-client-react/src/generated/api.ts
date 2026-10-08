@@ -28,6 +28,7 @@ import type {
   CommerceAsset,
   CommerceEnvelope,
   CommerceInput,
+  CreateCustomerRegistrationChallenge200,
   CredentialsInput,
   CustomDomainConfiguration,
   CustomerLoginInput,
@@ -35,6 +36,7 @@ import type {
   CustomerLogoutInput,
   CustomerLogoutResult,
   CustomerRegistrationInput,
+  CustomerRegistrationOptions,
   CustomerRegistrationResult,
   CustomerSessionView,
   GeneralSettings,
@@ -43,6 +45,7 @@ import type {
   GetPublicCommerceCatalogParams,
   GetPublicSiteDocumentParams,
   HealthStatus,
+  ListResellerClientsParams,
   NewDomainInput,
   PanelAccess,
   PlanInput,
@@ -53,6 +56,11 @@ import type {
   PublicWebsiteConfiguration,
   PublicWebsitePreviewInput,
   PublicWebsiteUpdate,
+  ResellerClientDetail,
+  ResellerClientList,
+  ResellerClientNoteInput,
+  ResellerClientProfileInput,
+  ResellerClientStatusInput,
   ResolveAuthEntryParams,
   Subscriber,
   SubscriberUpdate,
@@ -87,6 +95,558 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getListResellerClientsUrl = (params?: ListResellerClientsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/clients?${stringifiedParams}` : `/api/clients`
+}
+
+export const listResellerClients = async (params?: ListResellerClientsParams, options?: Parameters<typeof customFetch>[1]): Promise<ResellerClientList> => {
+
+  return customFetch<ResellerClientList>(getListResellerClientsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListResellerClientsQueryKey = (params?: ListResellerClientsParams,) => {
+    return [
+    `/api/clients`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListResellerClientsQueryOptions = <TData = Awaited<ReturnType<typeof listResellerClients>>, TError = ErrorType<unknown>>(params?: ListResellerClientsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listResellerClients>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListResellerClientsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listResellerClients>>> = ({ signal }) => listResellerClients(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listResellerClients>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListResellerClientsQueryResult = NonNullable<Awaited<ReturnType<typeof listResellerClients>>>
+export type ListResellerClientsQueryError = ErrorType<unknown>
+
+
+
+export function useListResellerClients<TData = Awaited<ReturnType<typeof listResellerClients>>, TError = ErrorType<unknown>>(
+ params?: ListResellerClientsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listResellerClients>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListResellerClientsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetResellerClientUrl = (id: string,) => {
+
+
+
+
+  return `/api/clients/${id}`
+}
+
+export const getResellerClient = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ResellerClientDetail> => {
+
+  return customFetch<ResellerClientDetail>(getGetResellerClientUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetResellerClientQueryKey = (id: string,) => {
+    return [
+    `/api/clients/${id}`
+    ] as const;
+    }
+
+
+export const getGetResellerClientQueryOptions = <TData = Awaited<ReturnType<typeof getResellerClient>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getResellerClient>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetResellerClientQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getResellerClient>>> = ({ signal }) => getResellerClient(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getResellerClient>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetResellerClientQueryResult = NonNullable<Awaited<ReturnType<typeof getResellerClient>>>
+export type GetResellerClientQueryError = ErrorType<unknown>
+
+
+
+export function useGetResellerClient<TData = Awaited<ReturnType<typeof getResellerClient>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getResellerClient>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetResellerClientQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateResellerClientUrl = (id: string,) => {
+
+
+
+
+  return `/api/clients/${id}`
+}
+
+export const updateResellerClient = async (id: string,
+    resellerClientProfileInput: ResellerClientProfileInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getUpdateResellerClientUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(resellerClientProfileInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateResellerClientMutationKey = () => ['updateResellerClient'] as const;
+
+export const getUpdateResellerClientMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateResellerClient>>, TError,UpdateResellerClientMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateResellerClient>>, TError,UpdateResellerClientMutationVariables, TContext> => {
+
+const mutationKey = getUpdateResellerClientMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateResellerClient>>, UpdateResellerClientMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateResellerClient(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateResellerClientMutationResult = NonNullable<Awaited<ReturnType<typeof updateResellerClient>>>
+    export type UpdateResellerClientMutationBody = BodyType<ResellerClientProfileInput>
+    export type UpdateResellerClientMutationError = ErrorType<unknown>
+    export type UpdateResellerClientMutationVariables = {id: string;data: BodyType<ResellerClientProfileInput>}
+
+    export const useUpdateResellerClient = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateResellerClient>>, TError,UpdateResellerClientMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateResellerClient>>,
+        TError,
+        UpdateResellerClientMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateResellerClientMutationOptions(options));
+    }
+
+export const getSetResellerClientStatusUrl = (id: string,) => {
+
+
+
+
+  return `/api/clients/${id}/status`
+}
+
+export const setResellerClientStatus = async (id: string,
+    resellerClientStatusInput: ResellerClientStatusInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getSetResellerClientStatusUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(resellerClientStatusInput)
+  }
+);}
+
+
+
+
+
+export const getSetResellerClientStatusMutationKey = () => ['setResellerClientStatus'] as const;
+
+export const getSetResellerClientStatusMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setResellerClientStatus>>, TError,SetResellerClientStatusMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setResellerClientStatus>>, TError,SetResellerClientStatusMutationVariables, TContext> => {
+
+const mutationKey = getSetResellerClientStatusMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setResellerClientStatus>>, SetResellerClientStatusMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  setResellerClientStatus(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetResellerClientStatusMutationResult = NonNullable<Awaited<ReturnType<typeof setResellerClientStatus>>>
+    export type SetResellerClientStatusMutationBody = BodyType<ResellerClientStatusInput>
+    export type SetResellerClientStatusMutationError = ErrorType<unknown>
+    export type SetResellerClientStatusMutationVariables = {id: string;data: BodyType<ResellerClientStatusInput>}
+
+    export const useSetResellerClientStatus = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setResellerClientStatus>>, TError,SetResellerClientStatusMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setResellerClientStatus>>,
+        TError,
+        SetResellerClientStatusMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetResellerClientStatusMutationOptions(options));
+    }
+
+export const getAddResellerClientNoteUrl = (id: string,) => {
+
+
+
+
+  return `/api/clients/${id}/notes`
+}
+
+export const addResellerClientNote = async (id: string,
+    resellerClientNoteInput: ResellerClientNoteInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getAddResellerClientNoteUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(resellerClientNoteInput)
+  }
+);}
+
+
+
+
+
+export const getAddResellerClientNoteMutationKey = () => ['addResellerClientNote'] as const;
+
+export const getAddResellerClientNoteMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addResellerClientNote>>, TError,AddResellerClientNoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addResellerClientNote>>, TError,AddResellerClientNoteMutationVariables, TContext> => {
+
+const mutationKey = getAddResellerClientNoteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addResellerClientNote>>, AddResellerClientNoteMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  addResellerClientNote(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddResellerClientNoteMutationResult = NonNullable<Awaited<ReturnType<typeof addResellerClientNote>>>
+    export type AddResellerClientNoteMutationBody = BodyType<ResellerClientNoteInput>
+    export type AddResellerClientNoteMutationError = ErrorType<unknown>
+    export type AddResellerClientNoteMutationVariables = {id: string;data: BodyType<ResellerClientNoteInput>}
+
+    export const useAddResellerClientNote = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addResellerClientNote>>, TError,AddResellerClientNoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addResellerClientNote>>,
+        TError,
+        AddResellerClientNoteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAddResellerClientNoteMutationOptions(options));
+    }
+
+export const getGetCustomerRegistrationOptionsUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/customer/${slug}/options`
+}
+
+export const getCustomerRegistrationOptions = async (slug: string, options?: Parameters<typeof customFetch>[1]): Promise<CustomerRegistrationOptions> => {
+
+  return customFetch<CustomerRegistrationOptions>(getGetCustomerRegistrationOptionsUrl(slug),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerRegistrationOptionsQueryKey = (slug: string,) => {
+    return [
+    `/api/public/customer/${slug}/options`
+    ] as const;
+    }
+
+
+export const getGetCustomerRegistrationOptionsQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerRegistrationOptions>>, TError = ErrorType<unknown>>(slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerRegistrationOptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerRegistrationOptionsQueryKey(slug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerRegistrationOptions>>> = ({ signal }) => getCustomerRegistrationOptions(slug, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerRegistrationOptions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerRegistrationOptionsQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerRegistrationOptions>>>
+export type GetCustomerRegistrationOptionsQueryError = ErrorType<unknown>
+
+
+
+export function useGetCustomerRegistrationOptions<TData = Awaited<ReturnType<typeof getCustomerRegistrationOptions>>, TError = ErrorType<unknown>>(
+ slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerRegistrationOptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerRegistrationOptionsQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateCustomerRegistrationChallengeUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/customer/${slug}/challenge`
+}
+
+export const createCustomerRegistrationChallenge = async (slug: string,
+    customerLogoutInput?: CustomerLogoutInput, options?: Parameters<typeof customFetch>[1]): Promise<CreateCustomerRegistrationChallenge200> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CreateCustomerRegistrationChallenge200>(getCreateCustomerRegistrationChallengeUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(customerLogoutInput)
+  }
+);}
+
+
+
+
+
+export const getCreateCustomerRegistrationChallengeMutationKey = () => ['createCustomerRegistrationChallenge'] as const;
+
+export const getCreateCustomerRegistrationChallengeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomerRegistrationChallenge>>, TError,CreateCustomerRegistrationChallengeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCustomerRegistrationChallenge>>, TError,CreateCustomerRegistrationChallengeMutationVariables, TContext> => {
+
+const mutationKey = getCreateCustomerRegistrationChallengeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCustomerRegistrationChallenge>>, CreateCustomerRegistrationChallengeMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  createCustomerRegistrationChallenge(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCustomerRegistrationChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof createCustomerRegistrationChallenge>>>
+    export type CreateCustomerRegistrationChallengeMutationBody = BodyType<CustomerLogoutInput> | undefined
+    export type CreateCustomerRegistrationChallengeMutationError = ErrorType<unknown>
+    export type CreateCustomerRegistrationChallengeMutationVariables = {slug: string;data?: BodyType<CustomerLogoutInput>}
+
+    export const useCreateCustomerRegistrationChallenge = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomerRegistrationChallenge>>, TError,CreateCustomerRegistrationChallengeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCustomerRegistrationChallenge>>,
+        TError,
+        CreateCustomerRegistrationChallengeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateCustomerRegistrationChallengeMutationOptions(options));
+    }
 
 export const getRegisterPublicCustomerUrl = (slug: string,) => {
 

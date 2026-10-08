@@ -7,7 +7,7 @@ import Module from '@/pages/module';
 import Settings from '@/pages/settings';
 import { WorkspaceTabs, panelId, tabId } from './WorkspaceTabs';
 import { workspaceReducer, createWorkspaceState, type WorkspacePage } from './workspace-model';
-import { workspacePageForPath } from './workspace-pages';
+import { workspacePageForPath, LEGACY_CLIENTS_PATH } from './workspace-pages';
 import { WorkspacePageContext } from './WorkspacePageContext';
 
 /**
@@ -31,6 +31,7 @@ function PageContent({ page }: { page: WorkspacePage }) {
 function Workspace() {
   const [location, navigate] = useLocation();
   const current = workspacePageForPath(location)!;
+  useLayoutEffect(() => { if (location === LEGACY_CLIENTS_PATH) navigate('/m/clients', { replace: true }); }, [location, navigate]);
   const [state, dispatch] = useReducer(workspaceReducer, current, createWorkspaceState);
   useLayoutEffect(() => {
     dispatch({ type: 'visit', page: current });

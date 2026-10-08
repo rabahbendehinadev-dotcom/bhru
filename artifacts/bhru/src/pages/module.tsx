@@ -9,6 +9,8 @@ import GeneralSettingsPage from '@/pages/general-settings';
 import EcommercePage from '@/pages/ecommerce';
 import CurrenciesPage from '@/pages/currencies';
 import PublicWebsitePage from '@/pages/public-website';
+import ClientsPage from '@/pages/clients';
+import ClientDetailPage from '@/pages/client-detail';
 import CustomDomainsPage from '@/pages/custom-domains';
 
 function Crumbs({ items }: { items: string[] }) {
@@ -26,8 +28,10 @@ function Crumbs({ items }: { items: string[] }) {
 
 export default function Module() {
   const [, p] = useRoute('/m/:slug');
+  const [isDetail, dp] = useRoute('/m/clients/:id');
   const r = p ? resolveSlug(p.slug) : undefined;
   const staff = useOnlineStaff();
+  if (isDetail && dp) return <ClientDetailPage id={dp.id} />;
 
   if (!r) return (
     <>
@@ -45,6 +49,8 @@ export default function Module() {
   if (r.entry.id === 'settings' && r.child?.label === 'Currencies') {
     return <><Crumbs items={r.crumbs} /><CurrenciesPage /></>;
   }
+
+  if (r.slug === 'clients') return <><Crumbs items={r.crumbs} /><ClientsPage /></>;
 
   if (r.slug === 'ecommerce') return <EcommercePage />;
 

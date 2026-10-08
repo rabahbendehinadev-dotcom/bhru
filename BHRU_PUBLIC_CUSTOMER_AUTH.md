@@ -187,15 +187,23 @@ pnpm --filter @workspace/bhru exec tsc --noEmit --skipLibCheck \
 pnpm --filter @workspace/bhru run build
 ```
 
-The focused auth script uses real HTTP routes and real scrypt hashing with an
-isolated in-memory database substitute. It does not run browser/E2E suites, issue
-DNS requests, apply migrations or touch any real subscriber database.
-It covers 32 focused groups: registration/duplicates/concurrency, normalization
-and validation, same-email tenant isolation, generic failures, cookie security,
-owner/admin-cookie rejection, own-account rendering/escaping, logged-out preview,
-both public headers, verified and rejected custom hosts, current eligibility,
-duplicate Host rejection, CSRF, session rotation/expiry/logout, rate limiting,
-private-route fallthrough and additive migration constraints.
+After migration 020, this entry point delegates to
+`scripts/test-public-customer-onboarding.mjs`. It now uses a disposable local
+PostgreSQL cluster under `/tmp` and the current three-step registration contract,
+including real challenge validation. Build the API server first and make sure
+`initdb` and `pg_ctl` are available. Existing password/session/tenant-realm
+compatibility is checked without connecting to production or the configured
+application database. See `BHRU_PUBLIC_CUSTOMER_ONBOARDING.md` for the current
+implementation and acceptance report.
+
+The original Phase 1 implementation was validated using 32 isolated in-memory
+HTTP/auth groups. The current runner instead validates the expanded contract
+against real, disposable local PostgreSQL: registration/duplicates/concurrency,
+normalization/validation, legacy hash/session compatibility, tenant isolation,
+challenge binding/expiry/single-use, cookie security, custom-host routing, CSRF,
+blocking/logout, notes, canonical-client order links, guest separation and
+additive migration tracking/reruns. It does not run browser/E2E suites, issue DNS
+requests or touch the configured application or production database.
 
 The full frontend TypeScript command also ran and found an existing unrelated
 `ecommerce.tsx:402` incompatibility between `CommerceSettingsFields` and

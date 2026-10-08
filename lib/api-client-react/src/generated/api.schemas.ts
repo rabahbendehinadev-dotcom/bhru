@@ -5,6 +5,185 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface ResellerClientStatusInput {
+  enabled: boolean;
+}
+
+export interface ResellerClientNoteInput {
+  /**
+     * @minLength 1
+     * @maxLength 4000
+     */
+  body: string;
+}
+
+export interface CustomerOption {
+  code: string;
+  name: string;
+}
+
+export interface CustomerRegistrationOptions {
+  /** @nullable */
+  defaultCurrency: string | null;
+  currencies: CustomerOption[];
+  languages: CustomerOption[];
+  countries: CustomerOption[];
+}
+
+export interface PublicCustomerProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  /** @nullable */
+  clientCode?: string | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  whatsappPhone?: string | null;
+  /** @nullable */
+  preferredLanguage?: string | null;
+  /** @nullable */
+  preferredCurrency?: string | null;
+  /** @nullable */
+  effectiveCurrency?: string | null;
+  newsletterOptIn?: boolean;
+  /** @nullable */
+  addressLine1?: string | null;
+  /** @nullable */
+  addressLine2?: string | null;
+  /** @nullable */
+  countryCode?: string | null;
+  /** @nullable */
+  state?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  postalCode?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
+  lastLoginAt?: string | null;
+  /** @nullable */
+  termsAcceptedAt?: string | null;
+}
+
+export type ResellerClient = PublicCustomerProfile & {
+  id: string;
+  enabled: boolean;
+  orderCount: number;
+  availableBalance: string;
+  due: string;
+};
+
+export interface ResellerClientList {
+  data: ResellerClient[];
+  page: number;
+  hasMore: boolean;
+}
+
+export interface ResellerClientProfileInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  firstName: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  lastName: string;
+  /**
+     * @minLength 3
+     * @maxLength 32
+     */
+  username: string;
+  /**
+     * @maxLength 30
+     * @nullable
+     */
+  whatsappPhone: string | null;
+  /** @nullable */
+  preferredLanguage: string | null;
+  /** @nullable */
+  preferredCurrency: string | null;
+  newsletterOptIn: boolean;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  addressLine1: string | null;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  addressLine2: string | null;
+  /**
+     * @maxLength 2
+     * @nullable
+     */
+  countryCode: string | null;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  state: string | null;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  city: string | null;
+  /**
+     * @maxLength 24
+     * @nullable
+     */
+  postalCode: string | null;
+}
+
+export type ResellerClientDetailFinancial = {
+  availableBalance: string;
+  lockedAmount: string;
+  due: string;
+  formattedZero: string;
+  ledgerAvailable: boolean;
+};
+
+export type ResellerClientDetailOrderSummary = {
+  totalOrders: number;
+  retailOrders: number;
+};
+
+export type ResellerClientDetailActivityItem = {
+  id: string;
+  action: string;
+  createdAt: string;
+};
+
+export type ResellerClientDetailNotesItem = {
+  id: string;
+  body: string;
+  createdAt: string;
+};
+
+export interface ClientOrderSnapshot {
+  id: string;
+  reference: string;
+  status: string;
+  createdAt: string;
+  totalMinor: string;
+  currency: string;
+  formattedTotal: string;
+}
+
+export interface ResellerClientDetail {
+  client: ResellerClient;
+  options: CustomerRegistrationOptions;
+  financial: ResellerClientDetailFinancial;
+  orderSummary: ResellerClientDetailOrderSummary;
+  orders: ClientOrderSnapshot[];
+  activity: ResellerClientDetailActivityItem[];
+  notes: ResellerClientDetailNotesItem[];
+}
+
 export interface CustomerRegistrationInput {
   /**
      * @minLength 1
@@ -31,10 +210,48 @@ export interface CustomerRegistrationInput {
      * @maxLength 128
      */
   confirmPassword: string;
+  /** @maxLength 32 */
+  username?: string;
+  /**
+     * @minLength 8
+     * @maxLength 30
+     */
+  whatsappPhone: string;
+  /** @maxLength 8 */
+  preferredLanguage: string;
+  /**
+     * @minLength 3
+     * @maxLength 3
+     */
+  preferredCurrency: string;
+  newsletterOptIn?: boolean;
+  /** @maxLength 200 */
+  addressLine1?: string;
+  /** @maxLength 200 */
+  addressLine2?: string;
+  /**
+     * @minLength 2
+     * @maxLength 2
+     */
+  countryCode: string;
+  /** @maxLength 100 */
+  state?: string;
+  /** @maxLength 100 */
+  city?: string;
+  /** @maxLength 24 */
+  postalCode?: string;
+  termsAccepted: boolean;
+  challengeId: string;
+  /**
+     * @minLength 1
+     * @maxLength 16
+     */
+  challengeAnswer: string;
 }
 
 export interface CustomerLoginInput {
   /**
+     * Email or tenant-scoped username/client code
      * @minLength 3
      * @maxLength 254
      */
@@ -47,12 +264,6 @@ export interface CustomerLoginInput {
 }
 
 export interface CustomerLogoutInput { [key: string]: unknown }
-
-export interface PublicCustomerProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-}
 
 export interface CustomerRegistrationResult {
   message: string;
@@ -723,6 +934,32 @@ export interface CommerceEnvelope {
  * Strict resource inputs. Products price/compare_at are canonical USD decimal strings, max 12 decimals; price_usd_units is the authoritative 10^12-scaled integer in model 2. price_minor is a derived cents projection only. Currency rates are manual target units per USD, max six decimals. display-currency accepts {code} and persists a user display preference only. Model 1 amounts retain their legacy denomination. Quotes/snapshots expose money_model_version, canonical_scale and immutable converted customer amounts.
  */
 export interface CommerceInput { [key: string]: unknown }
+
+export type ListResellerClientsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @maxLength 100
+ */
+search?: string;
+status?: ListResellerClientsStatus;
+};
+
+export type ListResellerClientsStatus = typeof ListResellerClientsStatus[keyof typeof ListResellerClientsStatus];
+
+
+export const ListResellerClientsStatus = {
+  active: 'active',
+  blocked: 'blocked',
+} as const;
+
+export type CreateCustomerRegistrationChallenge200 = {
+  id: string;
+  image: string;
+  expiresAt: string;
+};
 
 export type GetCommerceResourceParams = {
 /**

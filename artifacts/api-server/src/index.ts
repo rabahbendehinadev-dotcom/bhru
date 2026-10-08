@@ -22,13 +22,16 @@ if (!Number.isInteger(port) || port <= 0 || port > 65535) {
 try {
   await pool.query("SELECT name FROM schema_migrations LIMIT 1");
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
-  await pool.query("SELECT subscriber_id FROM public_customer_accounts LIMIT 0");
+  await pool.query("SELECT subscriber_id,client_code,username,last_login_at FROM public_customer_accounts LIMIT 0");
   await pool.query("SELECT subscriber_id FROM public_customer_sessions LIMIT 0");
+  await pool.query("SELECT id FROM public_customer_registration_challenges LIMIT 0");
+  await pool.query("SELECT id FROM reseller_client_notes LIMIT 0");
+  await pool.query("SELECT id FROM public_customer_activity LIMIT 0");
   await pool.query("SELECT hostname,check_generation,dns_checked_at FROM subscriber_custom_domains LIMIT 0");
   await pool.query("SELECT subscriber_id,logo_strip_settings,announcement_ticker_settings FROM public_site_presentation LIMIT 0");
   await pool.query("SELECT icon_text FROM public_site_announcements LIMIT 0");
   await pool.query("SELECT subscriber_id FROM subscriber_modules LIMIT 0");
-  await pool.query("SELECT id,money_model_version,total_usd_units FROM store_orders LIMIT 0");
+  await pool.query("SELECT id,money_model_version,total_usd_units,customer_id FROM store_orders LIMIT 0");
   await pool.query("SELECT price_usd_units,provider_cost_usd_units FROM store_products LIMIT 0");
   await pool.query("SELECT panel_display_currency FROM account_users LIMIT 0");
   const collision = await pool.query(

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, ArrowLeft, ArrowRight, ExternalLink, ImagePlus, Lock, Plus, Search, Trash2, X } from 'lucide-react';
 import { Btn, Card, ConfirmDialog, Field, Modal } from '@/components/bhru/ui';
+import { ClientTable } from '@/pages/clients';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import { useWorkspacePage } from '@/components/subscriber/workspace/WorkspacePageContext';
 import {
@@ -370,7 +371,7 @@ function OrdersSection() {
 }
 
 /* ---------------- Customers ---------------- */
-function CustomersSection() {
+function GuestCustomers() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const q = useCommerceList<Customer[]>('customers', { page, ...(search ? { search } : {}) });
@@ -384,6 +385,19 @@ function CustomersSection() {
         )}
       <Paging page={page} hasMore={q.hasMore} onPage={setPage} />
     </Card>
+  );
+}
+
+function CustomersSection() {
+  const [view, setView] = useState<'registered' | 'guest'>('registered');
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-1" role="group" aria-label="Customer view">
+        <Btn sm v={view === 'registered' ? 'brand' : 'default'} aria-pressed={view === 'registered'} onClick={() => setView('registered')} data-testid="button-customers-registered">Registered clients</Btn>
+        <Btn sm v={view === 'guest' ? 'brand' : 'default'} aria-pressed={view === 'guest'} onClick={() => setView('guest')} data-testid="button-customers-guest">Guest contacts</Btn>
+      </div>
+      {view === 'registered' ? <ClientTable embedded /> : <><p className="text-[11.5px] text-muted-foreground">Guest contacts come from orders placed without an account. They are separate from registered clients.</p><GuestCustomers /></>}
+    </div>
   );
 }
 

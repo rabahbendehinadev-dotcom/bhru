@@ -32,4 +32,41 @@ export interface CustomerRegistrationInput {
      * @maxLength 128
      */
   confirmPassword: string;
+  /** @maxLength 32 */
+  username?: string;
+  /**
+     * @minLength 8
+     * @maxLength 30
+     */
+  whatsappPhone: string;
+  /** @maxLength 8 */
+  preferredLanguage: string;
+  /**
+     * @minLength 3
+     * @maxLength 3
+     */
+  preferredCurrency: string;
+  newsletterOptIn?: boolean;
+  /** @maxLength 200 */
+  addressLine1?: string;
+  /** @maxLength 200 */
+  addressLine2?: string;
+  /**
+     * @minLength 2
+     * @maxLength 2
+     */
+  countryCode: string;
+  /** @maxLength 100 */
+  state?: string;
+  /** @maxLength 100 */
+  city?: string;
+  /** @maxLength 24 */
+  postalCode?: string;
+  termsAccepted: boolean;
+  challengeId: string;
+  /**
+     * @minLength 1
+     * @maxLength 16
+     */
+  challengeAnswer: string;
 }

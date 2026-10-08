@@ -8,6 +8,7 @@
 
 export interface CustomerLoginInput {
   /**
+     * Email or tenant-scoped username/client code
      * @minLength 3
      * @maxLength 254
      */

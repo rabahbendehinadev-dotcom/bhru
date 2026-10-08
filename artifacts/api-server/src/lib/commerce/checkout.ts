@@ -44,7 +44,7 @@ export async function quote(id:string,input:z.infer<typeof linesInput>,currency:
 export function customerQuote(priced:Awaited<ReturnType<typeof quote>>) {
   return {...priced,items:priced.items.map(({provider_cost_usd_units,...line})=>line)};
 }
-export async function createOrder(id:string,raw:unknown,settings:StoreSettings,client:PoolClient) {
+export async function createOrder(id:string,raw:unknown,settings:StoreSettings,client:PoolClient,customerId?:string) {
   const input=orderInput.parse(raw);
   input.phone=input.phone.replace(/[ ()-]/g,'');
   if(!/^\+?\d{7,20}$/.test(input.phone))throw new HttpError(400,'Enter a valid phone number.');
@@ -57,7 +57,9 @@ export async function createOrder(id:string,raw:unknown,settings:StoreSettings,c
   if(input.email&&!z.string().email().safeParse(input.email).success)throw new HttpError(400,'Enter a valid email.');
   if(settings.address_mode==='required'&&!input.address)throw new HttpError(400,'Address is required.');
   input.items.sort((a,b)=>a.product_id.localeCompare(b.product_id));
-  const requestHash=createHash('sha256').update(JSON.stringify(input)).digest('hex');
+  if(customerId && !(await client.query(`SELECT id FROM public_customer_accounts
+    WHERE subscriber_id=$1 AND id=$2 AND enabled FOR SHARE`,[id,customerId])).rowCount) throw new HttpError(401,'Customer session is no longer active.');
+  const requestHash=createHash('sha256').update(JSON.stringify(customerId ? {...input,customerId} : input)).digest('hex');
   // Serialize a retry key before stock is touched, including simultaneous POSTs.
   await client.query('SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))',[id,input.checkout_key]);
   const prior=(await client.query('SELECT reference,customer_name,total_minor,currency,status,request_hash,currency_snapshot FROM store_orders WHERE subscriber_id=$1 AND checkout_key=$2',[id,input.checkout_key])).rows[0];
@@ -76,9 +78,9 @@ export async function createOrder(id:string,raw:unknown,settings:StoreSettings,c
   }
   const orderId=randomUUID();
   const reference=`ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${randomBytes(8).toString('hex').toUpperCase()}`;
-  await client.query(`INSERT INTO store_orders(id,subscriber_id,reference,checkout_key,request_hash,customer_name,phone,email,state,city,address,note,subtotal_minor,total_minor,currency,currency_snapshot,money_model_version,subtotal_usd_units,total_usd_units)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
-    [orderId,id,reference,input.checkout_key,requestHash,input.customer_name,input.phone,input.email,input.state,input.city,input.address,input.note,priced.subtotal_minor,priced.total_minor,settings.currency,JSON.stringify(priced.currency_snapshot),priced.money_model_version,priced.subtotal_usd_units,priced.total_usd_units]);
+  await client.query(`INSERT INTO store_orders(id,subscriber_id,reference,checkout_key,request_hash,customer_name,phone,email,state,city,address,note,subtotal_minor,total_minor,currency,currency_snapshot,money_model_version,subtotal_usd_units,total_usd_units,customer_id)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
+    [orderId,id,reference,input.checkout_key,requestHash,input.customer_name,input.phone,input.email,input.state,input.city,input.address,input.note,priced.subtotal_minor,priced.total_minor,settings.currency,JSON.stringify(priced.currency_snapshot),priced.money_model_version,priced.subtotal_usd_units,priced.total_usd_units,customerId??null]);
   for(const line of priced.items) {
     await client.query(`INSERT INTO store_order_items(id,subscriber_id,order_id,product_id,product_name,sku,image_key,unit_price_minor,quantity,line_total_minor,unit_price_usd_units,line_total_usd_units,provider_cost_usd_units)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,

@@ -11,6 +11,104 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /clients:
+    get:
+      operationId: listResellerClients
+      tags: [Clients]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: search, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: status, in: query, schema: { type: string, enum: [active, blocked] } }
+      responses:
+        "200":
+          description: Canonical registered clients, including clients with no orders
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResellerClientList" }
+  /clients/{id}:
+    get:
+      operationId: getResellerClient
+      tags: [Clients]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Owning reseller's client profile, summaries, recent orders, activity and internal notes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResellerClientDetail" }
+    patch:
+      operationId: updateResellerClient
+      tags: [Clients]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResellerClientProfileInput" }
+      responses:
+        "200": { description: Profile saved }
+  /clients/{id}/status:
+    put:
+      operationId: setResellerClientStatus
+      tags: [Clients]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResellerClientStatusInput" }
+      responses:
+        "200": { description: Status saved and blocked sessions revoked }
+  /clients/{id}/notes:
+    post:
+      operationId: addResellerClientNote
+      tags: [Clients]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResellerClientNoteInput" }
+      responses:
+        "201": { description: Internal note added }
+  /public/customer/{slug}/options:
+    get:
+      operationId: getCustomerRegistrationOptions
+      tags: [PublicCustomer]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Tenant's enabled currencies and supported languages/countries
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerRegistrationOptions" }
+  /public/customer/{slug}/challenge:
+    post:
+      operationId: createCustomerRegistrationChallenge
+      tags: [PublicCustomer]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CustomerLogoutInput" }
+      responses:
+        "200":
+          description: Short-lived browser-bound single-use image challenge
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, image, expiresAt]
+                properties:
+                  id: { type: string, format: uuid }
+                  image: { type: string }
+                  expiresAt: { type: string }
   /public/customer/{slug}/register:
     parameters:
       - { in: path, name: slug, required: true, schema: { type: string, maxLength: 63 } }
@@ -656,22 +754,149 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    ResellerClientStatusInput:
+      type: object
+      required: [enabled]
+      additionalProperties: false
+      properties: { enabled: { type: boolean } }
+    ResellerClientNoteInput:
+      type: object
+      required: [body]
+      additionalProperties: false
+      properties: { body: { type: string, minLength: 1, maxLength: 4000 } }
+    CustomerRegistrationOptions:
+      type: object
+      required: [currencies, defaultCurrency, languages, countries]
+      properties:
+        defaultCurrency: { type: [string, "null"] }
+        currencies: { type: array, items: { $ref: "#/components/schemas/CustomerOption" } }
+        languages: { type: array, items: { $ref: "#/components/schemas/CustomerOption" } }
+        countries: { type: array, items: { $ref: "#/components/schemas/CustomerOption" } }
+    CustomerOption:
+      type: object
+      required: [code, name]
+      properties:
+        code: { type: string }
+        name: { type: string }
+    ResellerClient:
+      allOf:
+        - { $ref: "#/components/schemas/PublicCustomerProfile" }
+        - type: object
+          required: [id, enabled, orderCount, availableBalance, due]
+          properties:
+            id: { type: string, format: uuid }
+            enabled: { type: boolean }
+            orderCount: { type: integer }
+            availableBalance: { type: string }
+            due: { type: string }
+    ResellerClientList:
+      type: object
+      required: [data, page, hasMore]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/ResellerClient" } }
+        page: { type: integer }
+        hasMore: { type: boolean }
+    ResellerClientProfileInput:
+      type: object
+      additionalProperties: false
+      required: [firstName, lastName, username, whatsappPhone, preferredLanguage, preferredCurrency, newsletterOptIn, addressLine1, addressLine2, countryCode, state, city, postalCode]
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 100 }
+        lastName: { type: string, minLength: 1, maxLength: 100 }
+        username: { type: string, minLength: 3, maxLength: 32 }
+        whatsappPhone: { type: [string, "null"], maxLength: 30 }
+        preferredLanguage: { type: [string, "null"] }
+        preferredCurrency: { type: [string, "null"] }
+        newsletterOptIn: { type: boolean }
+        addressLine1: { type: [string, "null"], maxLength: 200 }
+        addressLine2: { type: [string, "null"], maxLength: 200 }
+        countryCode: { type: [string, "null"], maxLength: 2 }
+        state: { type: [string, "null"], maxLength: 100 }
+        city: { type: [string, "null"], maxLength: 100 }
+        postalCode: { type: [string, "null"], maxLength: 24 }
+    ResellerClientDetail:
+      type: object
+      required: [client, options, financial, orderSummary, orders, activity, notes]
+      properties:
+        client: { $ref: "#/components/schemas/ResellerClient" }
+        options: { $ref: "#/components/schemas/CustomerRegistrationOptions" }
+        financial:
+          type: object
+          required: [availableBalance, lockedAmount, due, formattedZero, ledgerAvailable]
+          properties:
+            availableBalance: { type: string }
+            lockedAmount: { type: string }
+            due: { type: string }
+            formattedZero: { type: string }
+            ledgerAvailable: { type: boolean }
+        orderSummary:
+          type: object
+          required: [totalOrders, retailOrders]
+          properties:
+            totalOrders: { type: integer }
+            retailOrders: { type: integer }
+        orders:
+          type: array
+          items: { $ref: "#/components/schemas/ClientOrderSnapshot" }
+        activity:
+          type: array
+          items:
+            type: object
+            required: [id, action, createdAt]
+            properties:
+              id: { type: string }
+              action: { type: string }
+              createdAt: { type: string }
+        notes:
+          type: array
+          items:
+            type: object
+            required: [id, body, createdAt]
+            properties:
+              id: { type: string }
+              body: { type: string }
+              createdAt: { type: string }
+    ClientOrderSnapshot:
+      type: object
+      required: [id, reference, status, createdAt, totalMinor, currency, formattedTotal]
+      properties:
+        id: { type: string }
+        reference: { type: string }
+        status: { type: string }
+        createdAt: { type: string }
+        totalMinor: { type: string }
+        currency: { type: string }
+        formattedTotal: { type: string }
     CustomerRegistrationInput:
       type: object
       additionalProperties: false
-      required: [firstName, lastName, email, password, confirmPassword]
+      required: [firstName, lastName, email, password, confirmPassword, whatsappPhone, preferredLanguage, preferredCurrency, countryCode, termsAccepted, challengeId, challengeAnswer]
       properties:
         firstName: { type: string, minLength: 1, maxLength: 100 }
         lastName: { type: string, minLength: 1, maxLength: 100 }
         email: { type: string, format: email, minLength: 3, maxLength: 254 }
         password: { type: string, minLength: 8, maxLength: 128 }
         confirmPassword: { type: string, minLength: 8, maxLength: 128 }
+        username: { type: string, maxLength: 32 }
+        whatsappPhone: { type: string, minLength: 8, maxLength: 30 }
+        preferredLanguage: { type: string, maxLength: 8 }
+        preferredCurrency: { type: string, minLength: 3, maxLength: 3 }
+        newsletterOptIn: { type: boolean, default: false }
+        addressLine1: { type: string, maxLength: 200, default: "" }
+        addressLine2: { type: string, maxLength: 200, default: "" }
+        countryCode: { type: string, minLength: 2, maxLength: 2 }
+        state: { type: string, maxLength: 100, default: "" }
+        city: { type: string, maxLength: 100, default: "" }
+        postalCode: { type: string, maxLength: 24, default: "" }
+        termsAccepted: { type: boolean }
+        challengeId: { type: string, format: uuid }
+        challengeAnswer: { type: string, minLength: 1, maxLength: 16 }
     CustomerLoginInput:
       type: object
       additionalProperties: false
       required: [email, password]
       properties:
-        email: { type: string, format: email, minLength: 3, maxLength: 254 }
+        email: { type: string, minLength: 3, maxLength: 254, description: Email or tenant-scoped username/client code }
         password: { type: string, minLength: 1, maxLength: 128 }
     CustomerLogoutInput:
       type: object
@@ -684,6 +909,22 @@ components:
         firstName: { type: string }
         lastName: { type: string }
         email: { type: string, format: email }
+        clientCode: { type: [string, "null"] }
+        username: { type: [string, "null"] }
+        whatsappPhone: { type: [string, "null"] }
+        preferredLanguage: { type: [string, "null"] }
+        preferredCurrency: { type: [string, "null"] }
+        effectiveCurrency: { type: [string, "null"] }
+        newsletterOptIn: { type: boolean }
+        addressLine1: { type: [string, "null"] }
+        addressLine2: { type: [string, "null"] }
+        countryCode: { type: [string, "null"] }
+        state: { type: [string, "null"] }
+        city: { type: [string, "null"] }
+        postalCode: { type: [string, "null"] }
+        createdAt: { type: [string, "null"] }
+        lastLoginAt: { type: [string, "null"] }
+        termsAcceptedAt: { type: [string, "null"] }
     CustomerRegistrationResult:
       type: object
       required: [message, next]

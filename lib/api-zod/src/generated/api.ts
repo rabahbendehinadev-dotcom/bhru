@@ -8,6 +8,238 @@
 import * as zod from 'zod';
 
 
+
+export const listResellerClientsQuerySearchMax = 100;
+
+
+
+export const ListResellerClientsQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).optional(),
+  "search": zod.coerce.string().max(listResellerClientsQuerySearchMax).optional(),
+  "status": zod.enum(['active', 'blocked']).optional()
+})
+
+export const ListResellerClientsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "email": zod.string().email(),
+  "clientCode": zod.string().nullish(),
+  "username": zod.string().nullish(),
+  "whatsappPhone": zod.string().nullish(),
+  "preferredLanguage": zod.string().nullish(),
+  "preferredCurrency": zod.string().nullish(),
+  "effectiveCurrency": zod.string().nullish(),
+  "newsletterOptIn": zod.boolean().optional(),
+  "addressLine1": zod.string().nullish(),
+  "addressLine2": zod.string().nullish(),
+  "countryCode": zod.string().nullish(),
+  "state": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "postalCode": zod.string().nullish(),
+  "createdAt": zod.string().nullish(),
+  "lastLoginAt": zod.string().nullish(),
+  "termsAcceptedAt": zod.string().nullish()
+}).and(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "orderCount": zod.number().int(),
+  "availableBalance": zod.string(),
+  "due": zod.string()
+}))),
+  "page": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+export const GetResellerClientParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetResellerClientResponse = zod.object({
+  "client": zod.object({
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "email": zod.string().email(),
+  "clientCode": zod.string().nullish(),
+  "username": zod.string().nullish(),
+  "whatsappPhone": zod.string().nullish(),
+  "preferredLanguage": zod.string().nullish(),
+  "preferredCurrency": zod.string().nullish(),
+  "effectiveCurrency": zod.string().nullish(),
+  "newsletterOptIn": zod.boolean().optional(),
+  "addressLine1": zod.string().nullish(),
+  "addressLine2": zod.string().nullish(),
+  "countryCode": zod.string().nullish(),
+  "state": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "postalCode": zod.string().nullish(),
+  "createdAt": zod.string().nullish(),
+  "lastLoginAt": zod.string().nullish(),
+  "termsAcceptedAt": zod.string().nullish()
+}).and(zod.object({
+  "id": zod.string().uuid(),
+  "enabled": zod.boolean(),
+  "orderCount": zod.number().int(),
+  "availableBalance": zod.string(),
+  "due": zod.string()
+})),
+  "options": zod.object({
+  "defaultCurrency": zod.string().nullable(),
+  "currencies": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string()
+})),
+  "languages": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string()
+})),
+  "countries": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string()
+}))
+}),
+  "financial": zod.object({
+  "availableBalance": zod.string(),
+  "lockedAmount": zod.string(),
+  "due": zod.string(),
+  "formattedZero": zod.string(),
+  "ledgerAvailable": zod.boolean()
+}),
+  "orderSummary": zod.object({
+  "totalOrders": zod.number().int(),
+  "retailOrders": zod.number().int()
+}),
+  "orders": zod.array(zod.object({
+  "id": zod.string(),
+  "reference": zod.string(),
+  "status": zod.string(),
+  "createdAt": zod.string(),
+  "totalMinor": zod.string(),
+  "currency": zod.string(),
+  "formattedTotal": zod.string()
+})),
+  "activity": zod.array(zod.object({
+  "id": zod.string(),
+  "action": zod.string(),
+  "createdAt": zod.string()
+})),
+  "notes": zod.array(zod.object({
+  "id": zod.string(),
+  "body": zod.string(),
+  "createdAt": zod.string()
+}))
+})
+
+
+export const UpdateResellerClientParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateResellerClientBodyFirstNameMax = 100;
+
+export const updateResellerClientBodyLastNameMax = 100;
+
+export const updateResellerClientBodyUsernameMin = 3;
+export const updateResellerClientBodyUsernameMax = 32;
+
+export const updateResellerClientBodyWhatsappPhoneMax = 30;
+
+export const updateResellerClientBodyAddressLine1Max = 200;
+
+export const updateResellerClientBodyAddressLine2Max = 200;
+
+export const updateResellerClientBodyCountryCodeMax = 2;
+
+export const updateResellerClientBodyStateMax = 100;
+
+export const updateResellerClientBodyCityMax = 100;
+
+export const updateResellerClientBodyPostalCodeMax = 24;
+
+
+
+export const UpdateResellerClientBody = zod.object({
+  "firstName": zod.string().min(1).max(updateResellerClientBodyFirstNameMax),
+  "lastName": zod.string().min(1).max(updateResellerClientBodyLastNameMax),
+  "username": zod.string().min(updateResellerClientBodyUsernameMin).max(updateResellerClientBodyUsernameMax),
+  "whatsappPhone": zod.string().max(updateResellerClientBodyWhatsappPhoneMax).nullable(),
+  "preferredLanguage": zod.string().nullable(),
+  "preferredCurrency": zod.string().nullable(),
+  "newsletterOptIn": zod.boolean(),
+  "addressLine1": zod.string().max(updateResellerClientBodyAddressLine1Max).nullable(),
+  "addressLine2": zod.string().max(updateResellerClientBodyAddressLine2Max).nullable(),
+  "countryCode": zod.string().max(updateResellerClientBodyCountryCodeMax).nullable(),
+  "state": zod.string().max(updateResellerClientBodyStateMax).nullable(),
+  "city": zod.string().max(updateResellerClientBodyCityMax).nullable(),
+  "postalCode": zod.string().max(updateResellerClientBodyPostalCodeMax).nullable()
+})
+
+export const UpdateResellerClientResponse = zod.unknown()
+
+
+export const SetResellerClientStatusParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const SetResellerClientStatusBody = zod.object({
+  "enabled": zod.boolean()
+})
+
+export const SetResellerClientStatusResponse = zod.unknown()
+
+
+export const AddResellerClientNoteParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const addResellerClientNoteBodyBodyMax = 4000;
+
+
+
+export const AddResellerClientNoteBody = zod.object({
+  "body": zod.string().min(1).max(addResellerClientNoteBodyBodyMax)
+})
+
+export const AddResellerClientNoteResponse = zod.void()
+
+
+export const GetCustomerRegistrationOptionsParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const GetCustomerRegistrationOptionsResponse = zod.object({
+  "defaultCurrency": zod.string().nullable(),
+  "currencies": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string()
+})),
+  "languages": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string()
+})),
+  "countries": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string()
+}))
+})
+
+
+export const CreateCustomerRegistrationChallengeParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const CreateCustomerRegistrationChallengeBody = zod.object({
+
+})
+
+export const CreateCustomerRegistrationChallengeResponse = zod.object({
+  "id": zod.string().uuid(),
+  "image": zod.string(),
+  "expiresAt": zod.string()
+})
+
+
 /**
  * Separate public customer realm. Tenant is derived from the verified Host and public slug, never a body ID. New and existing emails receive the same response; registration does not log in automatically.
  */
@@ -36,6 +268,37 @@ export const registerPublicCustomerBodyPasswordMax = 128;
 export const registerPublicCustomerBodyConfirmPasswordMin = 8;
 export const registerPublicCustomerBodyConfirmPasswordMax = 128;
 
+export const registerPublicCustomerBodyUsernameMax = 32;
+
+export const registerPublicCustomerBodyWhatsappPhoneMin = 8;
+export const registerPublicCustomerBodyWhatsappPhoneMax = 30;
+
+export const registerPublicCustomerBodyPreferredLanguageMax = 8;
+
+export const registerPublicCustomerBodyPreferredCurrencyMin = 3;
+export const registerPublicCustomerBodyPreferredCurrencyMax = 3;
+
+export const registerPublicCustomerBodyNewsletterOptInDefault = false;
+export const registerPublicCustomerBodyAddressLine1Default = ``;
+export const registerPublicCustomerBodyAddressLine1Max = 200;
+
+export const registerPublicCustomerBodyAddressLine2Default = ``;
+export const registerPublicCustomerBodyAddressLine2Max = 200;
+
+export const registerPublicCustomerBodyCountryCodeMin = 2;
+export const registerPublicCustomerBodyCountryCodeMax = 2;
+
+export const registerPublicCustomerBodyStateDefault = ``;
+export const registerPublicCustomerBodyStateMax = 100;
+
+export const registerPublicCustomerBodyCityDefault = ``;
+export const registerPublicCustomerBodyCityMax = 100;
+
+export const registerPublicCustomerBodyPostalCodeDefault = ``;
+export const registerPublicCustomerBodyPostalCodeMax = 24;
+
+export const registerPublicCustomerBodyChallengeAnswerMax = 16;
+
 
 
 export const RegisterPublicCustomerBody = zod.object({
@@ -43,7 +306,21 @@ export const RegisterPublicCustomerBody = zod.object({
   "lastName": zod.string().min(1).max(registerPublicCustomerBodyLastNameMax),
   "email": zod.string().email().min(registerPublicCustomerBodyEmailMin).max(registerPublicCustomerBodyEmailMax),
   "password": zod.string().min(registerPublicCustomerBodyPasswordMin).max(registerPublicCustomerBodyPasswordMax),
-  "confirmPassword": zod.string().min(registerPublicCustomerBodyConfirmPasswordMin).max(registerPublicCustomerBodyConfirmPasswordMax)
+  "confirmPassword": zod.string().min(registerPublicCustomerBodyConfirmPasswordMin).max(registerPublicCustomerBodyConfirmPasswordMax),
+  "username": zod.string().max(registerPublicCustomerBodyUsernameMax).optional(),
+  "whatsappPhone": zod.string().min(registerPublicCustomerBodyWhatsappPhoneMin).max(registerPublicCustomerBodyWhatsappPhoneMax),
+  "preferredLanguage": zod.string().max(registerPublicCustomerBodyPreferredLanguageMax),
+  "preferredCurrency": zod.string().min(registerPublicCustomerBodyPreferredCurrencyMin).max(registerPublicCustomerBodyPreferredCurrencyMax),
+  "newsletterOptIn": zod.boolean().default(registerPublicCustomerBodyNewsletterOptInDefault),
+  "addressLine1": zod.string().max(registerPublicCustomerBodyAddressLine1Max).default(registerPublicCustomerBodyAddressLine1Default),
+  "addressLine2": zod.string().max(registerPublicCustomerBodyAddressLine2Max).default(registerPublicCustomerBodyAddressLine2Default),
+  "countryCode": zod.string().min(registerPublicCustomerBodyCountryCodeMin).max(registerPublicCustomerBodyCountryCodeMax),
+  "state": zod.string().max(registerPublicCustomerBodyStateMax).default(registerPublicCustomerBodyStateDefault),
+  "city": zod.string().max(registerPublicCustomerBodyCityMax).default(registerPublicCustomerBodyCityDefault),
+  "postalCode": zod.string().max(registerPublicCustomerBodyPostalCodeMax).default(registerPublicCustomerBodyPostalCodeDefault),
+  "termsAccepted": zod.boolean(),
+  "challengeId": zod.string().uuid(),
+  "challengeAnswer": zod.string().min(1).max(registerPublicCustomerBodyChallengeAnswerMax)
 })
 
 export const RegisterPublicCustomerResponse = zod.object({
@@ -72,7 +349,7 @@ export const loginPublicCustomerBodyPasswordMax = 128;
 
 
 export const LoginPublicCustomerBody = zod.object({
-  "email": zod.string().email().min(loginPublicCustomerBodyEmailMin).max(loginPublicCustomerBodyEmailMax),
+  "email": zod.string().min(loginPublicCustomerBodyEmailMin).max(loginPublicCustomerBodyEmailMax).describe('Email or tenant-scoped username/client code'),
   "password": zod.string().min(1).max(loginPublicCustomerBodyPasswordMax)
 })
 
@@ -80,7 +357,23 @@ export const LoginPublicCustomerResponse = zod.object({
   "customer": zod.object({
   "firstName": zod.string(),
   "lastName": zod.string(),
-  "email": zod.string().email()
+  "email": zod.string().email(),
+  "clientCode": zod.string().nullish(),
+  "username": zod.string().nullish(),
+  "whatsappPhone": zod.string().nullish(),
+  "preferredLanguage": zod.string().nullish(),
+  "preferredCurrency": zod.string().nullish(),
+  "effectiveCurrency": zod.string().nullish(),
+  "newsletterOptIn": zod.boolean().optional(),
+  "addressLine1": zod.string().nullish(),
+  "addressLine2": zod.string().nullish(),
+  "countryCode": zod.string().nullish(),
+  "state": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "postalCode": zod.string().nullish(),
+  "createdAt": zod.string().nullish(),
+  "lastLoginAt": zod.string().nullish(),
+  "termsAcceptedAt": zod.string().nullish()
 }),
   "next": zod.string()
 })
@@ -119,7 +412,23 @@ export const GetPublicCustomerSessionResponse = zod.object({
   "customer": zod.union([zod.object({
   "firstName": zod.string(),
   "lastName": zod.string(),
-  "email": zod.string().email()
+  "email": zod.string().email(),
+  "clientCode": zod.string().nullish(),
+  "username": zod.string().nullish(),
+  "whatsappPhone": zod.string().nullish(),
+  "preferredLanguage": zod.string().nullish(),
+  "preferredCurrency": zod.string().nullish(),
+  "effectiveCurrency": zod.string().nullish(),
+  "newsletterOptIn": zod.boolean().optional(),
+  "addressLine1": zod.string().nullish(),
+  "addressLine2": zod.string().nullish(),
+  "countryCode": zod.string().nullish(),
+  "state": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "postalCode": zod.string().nullish(),
+  "createdAt": zod.string().nullish(),
+  "lastLoginAt": zod.string().nullish(),
+  "termsAcceptedAt": zod.string().nullish()
 }),zod.null()])
 })
 

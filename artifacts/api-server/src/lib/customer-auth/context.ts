@@ -10,7 +10,8 @@ import type { CustomerDB, CustomerTenant } from './types';
 import { loadCustomerSession } from './session';
 
 const SLUG = '[a-z0-9]+(?:-[a-z0-9]+)*';
-const CUSTOMER_API = new RegExp(`^/api/public/customer/(${SLUG})/(login|register|logout|session)$`);
+const CUSTOMER_API = new RegExp(`^/api/public/customer/(${SLUG})/(login|register|logout|session|options|challenge)$`);
+const CUSTOMER_COMMERCE_API = new RegExp(`^/api/public/commerce/(${SLUG})/orders$`);
 const SLUG_PAGE = new RegExp(`^/(${SLUG})(?:/(customer/(?:login|register|account)|product/${SLUG}|cart|checkout|confirmation))?$`);
 const ROOT_PAGE = new RegExp(`^/(?:customer/(?:login|register|account)|product/${SLUG}|cart|checkout|confirmation)?$`);
 export function customerPageMode(path: unknown): 'login' | 'register' | 'account' | null {
@@ -28,7 +29,7 @@ function sharedHost(host: string): boolean {
 /** Reuses verified host mapping and existing public-site eligibility. No client tenant IDs. */
 export async function resolveCustomerTenant(req: Request, path: unknown, db: CustomerDB = pool): Promise<CustomerTenant | null> {
   if (typeof path !== 'string') return null;
-  const apiMatch = CUSTOMER_API.exec(path), pageMatch = SLUG_PAGE.exec(path);
+  const apiMatch = CUSTOMER_API.exec(path) ?? CUSTOMER_COMMERCE_API.exec(path), pageMatch = SLUG_PAGE.exec(path);
   const api = apiMatch?.[0] === path ? apiMatch : null, page = pageMatch?.[0] === path ? pageMatch : null;
   const rootPage = ROOT_PAGE.exec(path)?.[0] === path;
   // Do not load customer sessions or business data for owner/admin/private namespaces.
@@ -66,11 +67,14 @@ export async function customerPublicContext(req: Request, _res: Response, next: 
   const path = req.path === '/api/public/site-document' ? req.query.path : req.path;
   try {
     const tenant = await resolveCustomerTenant(req, path);
-    if (tenant) req.customerPublic = { tenant, ...await loadCustomerSession(req, tenant) };
+    if (tenant) {
+      req.customerPublic = { tenant, customer: null };
+      Object.assign(req.customerPublic, await loadCustomerSession(req, tenant));
+    }
     next();
   } catch (error) {
     // Existing non-auth public routing keeps its own generic unavailable/missing UI.
-    if (!isCustomerApi(req.path) && !customerPageMode(path)) { next(); return; }
+    if (!isCustomerApi(req.path) && !customerPageMode(path) && !req.customerPublic) { next(); return; }
     next(error);
   }
 }

@@ -21,7 +21,7 @@ export const NAV_DATA: NavEntryDef[] = [
     ...col(2, ['Quick Checkout Pending Orders', 'Quick Checkout Pending Refund', 'User Withdrawal Request', 'IMEI Direct Order', 'IP Search', 'Price Check', 'APi Status']),
   ] },
   { id: 'clients-suppliers', label: 'Clients/Suppliers', children: [
-    ...grp('Clients', ['View / Search Clients', '+ Add New Client', '+ Add Bulk Client', 'Client Group', 'Update Multiple Account', 'Block Multiple Account', 'Checkout as Guest']),
+    ...grp('Clients', [{ label: 'View / Search Clients', slug: 'clients' }, '+ Add New Client', '+ Add Bulk Client', 'Client Group', 'Update Multiple Account', 'Block Multiple Account', 'Checkout as Guest']),
     ...grp('Suppliers', ['View / Search Suppliers', '+ Add New Supplier']),
   ] },
   { id: 'products-services', label: 'Products/Services', children: ['IMEI Service', 'File Service', 'Server Service', 'Remote Service', 'Catalog / Cart'].map((label) => ({ label })) },

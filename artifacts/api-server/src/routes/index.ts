@@ -6,6 +6,7 @@ import generalSettingsRouter from "./general-settings";
 import publicWebsiteRouter from "./public-website";
 import commerceRouter from "./commerce";
 import domainsRouter from "./domains";
+import clientsRouter from "./clients";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(generalSettingsRouter);
 router.use(publicWebsiteRouter);
 router.use(commerceRouter);
 router.use(domainsRouter);
+router.use(clientsRouter);
 
 export default router;

@@ -2,6 +2,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
 import type { Request } from 'express';
 import { pool } from '@workspace/db';
 import type { CustomerDB, CustomerIdentity, CustomerTenant } from './types';
+import { CUSTOMER_PROFILE_SELECT } from './profile';
 
 const MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const digest = (token: string) => createHash('sha256').update(token).digest('hex');
@@ -28,7 +29,7 @@ export function customerTokenHash(req: Request, tenant: Pick<CustomerTenant, 'id
 export async function loadCustomerSession(req: Request, tenant: CustomerTenant, db: CustomerDB = pool) {
   const hash = customerTokenHash(req, tenant);
   if (!hash) return { customer: null };
-  const result = await db.query(`SELECT c.id,c.subscriber_id,c.first_name AS "firstName",c.last_name AS "lastName",c.email
+  const result = await db.query(`SELECT ${CUSTOMER_PROFILE_SELECT}
     FROM public_customer_sessions s JOIN public_customer_accounts c
       ON c.id=s.customer_id AND c.subscriber_id=s.subscriber_id
     WHERE s.token_hash=$1 AND s.subscriber_id=$2 AND s.expires_at>now() AND c.enabled`, [hash, tenant.id]);

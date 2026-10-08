@@ -5,7 +5,8 @@ import { renderStyles } from '../public-site/styles';
 import { PUBLIC_MENU_SCRIPT, PUBLIC_MENU_SCRIPT_HASH } from '../public-site/mobile-menu';
 import type { PublicSiteModel } from '../public-site/model';
 
-type Profile = { firstName: string; lastName: string; email: string };
+import type { CustomerProfile as Profile } from './types';
+import { ONBOARDING_STYLES, ONBOARDING_HASH, ONBOARDING_SCRIPT, renderRegistrationWizard } from './onboarding-ui';
 const localPath = (v: unknown): string | null =>
   typeof v === 'string' && /^\/(?!\/)[^\s"'<>\\]*$/.test(v) ? v : null;
 
@@ -92,7 +93,7 @@ export const CUSTOMER_AUTH_SCRIPT = String.raw`(() => {
   });
   const reg = document.querySelector('[data-registered]');
   if (reg && new URLSearchParams(window.location.search).get('registered') === '1') reg.hidden = false;
-  document.querySelectorAll('form[data-customer-form]').forEach(form => {
+  document.querySelectorAll('form[data-customer-form=login]').forEach(form => {
     const mode = form.dataset.customerForm;
     const status = form.querySelector('[data-status]');
     const submit = form.querySelector('button[type=submit]');
@@ -109,20 +110,13 @@ export const CUSTOMER_AUTH_SCRIPT = String.raw`(() => {
       event.preventDefault();
       if (submit.disabled) return;
       const v = n => (form.elements[n] ? form.elements[n].value : '');
-      const body = mode === 'register'
-        ? { firstName: v('firstName').trim(), lastName: v('lastName').trim(), email: v('email').trim(), password: v('password'), confirmPassword: v('confirmPassword') }
-        : { email: v('email').trim(), password: v('password') };
+      const body = { email: v('email').trim(), password: v('password') };
       fieldErrors(null);
-      if (mode === 'register' && body.password !== body.confirmPassword) {
-        fieldErrors({ confirmPassword: 'Passwords do not match.' });
-        show('Please correct the highlighted field.', true);
-        return;
-      }
       submit.disabled = true;
-      show(mode === 'register' ? 'Creating your account...' : 'Signing in...', false);
+      show('Signing in...', false);
       try {
         const d = await post(form.dataset.endpoint, body);
-        if (mode === 'login') show('Signed in. Redirecting...', false);
+        show('Signed in. Redirecting...', false);
         go(d.next, form.dataset.fallback);
       } catch (err) {
         fieldErrors(err.fields);
@@ -139,6 +133,16 @@ function field(id: string, label: string, type: string, auto: string, extra = ''
   return `<div class="ca-field"><label for="ca-${id}">${label}</label><input id="ca-${id}" name="${id}" type="${type}" autocomplete="${auto}" required aria-describedby="ca-${id}-err"${extra}><div class="ca-ferr" id="ca-${id}-err" data-error-for="${id}" aria-live="polite"></div></div>`;
 }
 
+const dt = (v: unknown): string => { if (!v) return ''; const d = new Date(v as string); return Number.isNaN(+d) ? '' : d.toISOString().slice(0, 10); };
+function accountDetails(c: Profile): string {
+  const rows: [string, unknown][] = [
+    ['Name', (c.firstName + ' ' + c.lastName).trim()], ['Email', c.email], ['Client code', c.clientCode], ['Username', c.username], ['WhatsApp', c.whatsappPhone],
+    ['Address', [c.addressLine1, c.addressLine2].filter(Boolean).join(', ')], ['City', c.city], ['State / province', c.state], ['Postal code', c.postalCode], ['Country', c.countryCode],
+    ['Language', c.preferredLanguage], ['Currency', c.effectiveCurrency ?? c.preferredCurrency], ['Newsletter', c.newsletterOptIn ? 'Subscribed' : 'Not subscribed'], ['Member since', dt(c.createdAt)],
+  ];
+  return `<dl class="ca-dl">${rows.filter(([, v]) => v).map(([k, v]) => `<div><dt>${e(k)}</dt><dd>${e(String(v))}</dd></div>`).join('')}</dl>`;
+}
+
 export function renderCustomerDocument(m: PublicSiteModel, mode: 'login' | 'register' | 'account', customer?: Profile): string {
   const ca = m.customerAccess;
   const home = localPath(ca?.homeHref) ?? '/';
@@ -151,27 +155,22 @@ export function renderCustomerDocument(m: PublicSiteModel, mode: 'login' | 'regi
     body = `<h1>Customer login</h1><p class="ca-sub">Sign in to ${e(m.siteName)}.</p>
 <div class="ca-status" role="status" data-registered hidden>Registration processed. You can now sign in with your email and password.</div>
 <form class="ca-form" method="post" action="${e(api + '/login')}" data-customer-form="login" data-endpoint="${e(api + '/login')}" data-fallback="${e(account)}" novalidate>
-${field('email', 'Email', 'email', 'email', ' maxlength="254"')}${field('password', 'Password', 'password', 'current-password', ' maxlength="128"')}
+${field('email', 'Email, username or client code', 'text', 'username', ' maxlength="254"')}${field('password', 'Password', 'password', 'current-password', ' maxlength="128"')}
 <div class="ca-status" role="status" aria-live="polite" data-status hidden></div><button class="ca-submit" type="submit">Login</button></form>
 <p class="ca-alt">New here? <a href="${e(register)}">Create an account</a></p>`;
   } else if (mode === 'register') {
-    body = `<h1>Create your account</h1><p class="ca-sub">Register with ${e(m.siteName)}.</p>
-<form class="ca-form" method="post" action="${e(api + '/register')}" data-customer-form="register" data-endpoint="${e(api + '/register')}" data-fallback="${e(login)}" novalidate>
-<div class="ca-row">${field('firstName', 'First name', 'text', 'given-name', ' maxlength="100"')}${field('lastName', 'Last name', 'text', 'family-name', ' maxlength="100"')}</div>
-${field('email', 'Email', 'email', 'email', ' maxlength="254"')}${field('password', 'Password (at least 8 characters)', 'password', 'new-password', ' minlength="8" maxlength="128"')}${field('confirmPassword', 'Confirm password', 'password', 'new-password', ' minlength="8" maxlength="128"')}
-<div class="ca-status" role="status" aria-live="polite" data-status hidden></div><button class="ca-submit" type="submit">Register</button></form>
-<p class="ca-alt">Already registered? <a href="${e(login)}">Login</a></p>`;
+    body = renderRegistrationWizard(api, login, m.siteName);
   } else {
-    const c = customer ?? { firstName: '', lastName: '', email: '' };
+    const c: Profile = customer ?? { firstName: '', lastName: '', email: '' };
     body = `<h1>My account</h1><p class="ca-sub">Your details with ${e(m.siteName)}.</p>
-<dl class="ca-dl"><div><dt>Name</dt><dd>${e((c.firstName + ' ' + c.lastName).trim())}</dd></div><div><dt>Email</dt><dd>${e(c.email)}</dd></div></dl>
+${accountDetails(c)}
 <button type="button" class="ca-out" data-customer-logout data-endpoint="${e(api + '/logout')}" data-home="${e(home)}">Logout</button>`;
   }
   const title = mode === 'login' ? 'Login' : mode === 'register' ? 'Register' : 'My account';
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}</style></head><body>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}${mode === 'register' ? ONBOARDING_STYLES : ''}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style></head><body>
 ${header}<button type="button" class="mobile-menu-backdrop" aria-label="Close mobile menu" hidden></button>
- <main class="ca-page"><div class="ca-card">${body}<noscript><p class="ca-status">JavaScript is required for customer sign-in and registration.</p></noscript></div></main>
-<script>${PUBLIC_MENU_SCRIPT}</script><script>${CUSTOMER_AUTH_SCRIPT}</script></body></html>`;
+ <main class="ca-page"><div class="ca-card${mode === 'register' ? ' ca-wide' : ''}">${body}<noscript><p class="ca-status">JavaScript is required for customer sign-in and registration.</p></noscript></div></main>
+<script>${PUBLIC_MENU_SCRIPT}</script><script>${CUSTOMER_AUTH_SCRIPT}</script>${mode === 'register' ? `<script>${ONBOARDING_SCRIPT}</script>` : ''}</body></html>`;
 }
 
-export const CUSTOMER_DOCUMENT_SCRIPT_HASHES = [PUBLIC_MENU_SCRIPT_HASH, CUSTOMER_AUTH_HASH];
+export const CUSTOMER_DOCUMENT_SCRIPT_HASHES = [PUBLIC_MENU_SCRIPT_HASH, CUSTOMER_AUTH_HASH, ONBOARDING_HASH];

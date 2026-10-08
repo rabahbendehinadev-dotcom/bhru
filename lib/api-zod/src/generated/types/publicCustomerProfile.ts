@@ -10,4 +10,35 @@ export interface PublicCustomerProfile {
   firstName: string;
   lastName: string;
   email: string;
+  /** @nullable */
+  clientCode?: string | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  whatsappPhone?: string | null;
+  /** @nullable */
+  preferredLanguage?: string | null;
+  /** @nullable */
+  preferredCurrency?: string | null;
+  /** @nullable */
+  effectiveCurrency?: string | null;
+  newsletterOptIn?: boolean;
+  /** @nullable */
+  addressLine1?: string | null;
+  /** @nullable */
+  addressLine2?: string | null;
+  /** @nullable */
+  countryCode?: string | null;
+  /** @nullable */
+  state?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  postalCode?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
+  lastLoginAt?: string | null;
+  /** @nullable */
+  termsAcceptedAt?: string | null;
 }

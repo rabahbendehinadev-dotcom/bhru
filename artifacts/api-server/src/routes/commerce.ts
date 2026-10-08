@@ -74,7 +74,7 @@ router.get('/commerce/:resource',async(req,res)=>{
       case 'customers': {
         const rows=(await client.query(`SELECT DISTINCT ON (phone) phone,customer_name,email,
           count(*) OVER(PARTITION BY phone)::int order_count,max(created_at) OVER(PARTITION BY phone) last_order_at
-          FROM store_orders WHERE subscriber_id=$1 AND ($2::text IS NULL OR phone ILIKE $2 OR customer_name ILIKE $2)
+          FROM store_orders WHERE subscriber_id=$1 AND customer_id IS NULL AND ($2::text IS NULL OR phone ILIKE $2 OR customer_name ILIKE $2)
           ORDER BY phone,created_at DESC LIMIT $3 OFFSET $4`,[id,q.search?`%${q.search}%`:null,PAGE_SIZE+1,(q.page-1)*PAGE_SIZE])).rows;
         return {data:rows.slice(0,PAGE_SIZE),page:q.page,has_more:rows.length>PAGE_SIZE};
       }
@@ -217,7 +217,9 @@ publicCommerceRouter.post('/api/public/commerce/:slug/orders',async(req,res)=>{
   if(req.get('X-BHRU-Request')!=='1'||!req.is('application/json')||req.get('sec-fetch-site')==='cross-site')throw new HttpError(403,'Request not permitted.');
   const data=await transaction(async client=>{
     const store=await publicStore(String(req.params.slug),client);
-    return createOrder(store.id,req.body,store.settings,client);
+    const customer = req.customerPublic?.customer;
+    if(customer && customer.subscriber_id!==store.id) throw new HttpError(404,'Store not available.');
+    return createOrder(store.id,req.body,store.settings,client,customer?.id);
   });
   res.status(201).json({data});
 });

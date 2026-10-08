@@ -1,0 +1,1212 @@
+BHRU — PUBLIC CUSTOMER ONBOARDING + RESELLER CLIENT MANAGEMENT
+PRODUCTION-GRADE IMPLEMENTATION
+
+We are extending the existing BHRU Public Customer Authentication system into a complete reseller-client architecture inspired by DHRU's workflow, while preserving BHRU's own design, security boundaries, tenant model, and code architecture.
+
+DO NOT blindly copy DHRU UI, HTML, branding, database model, or terminology.
+Use DHRU only as a functional/workflow reference.
+
+==================================================
+CURRENT PRODUCTION STATE
+==================================================
+
+Public Customer Auth Phase 1 already exists and is working in production.
+
+Existing production behavior includes:
+
+- Separate Public Customer authentication.
+- Separate Subscriber/Owner authentication.
+- Separate Platform Admin authentication.
+- Customer registration.
+- Customer login.
+- Customer logout.
+- Customer account page.
+- Tenant-scoped customer accounts.
+- Tenant-scoped customer sessions.
+- Secure password hashing.
+- Custom domain support.
+- Platform public slug support.
+- Guest checkout remains supported.
+
+Current public customer routes:
+
+Platform URL:
+- /{slug}/customer/login
+- /{slug}/customer/register
+- /{slug}/customer/account
+
+Verified custom domain:
+- /customer/login
+- /customer/register
+- /customer/account
+
+Current customer tables originate from:
+
+- public_customer_accounts
+- public_customer_sessions
+
+Migration already exists:
+
+019_public_customer_auth.sql
+
+DO NOT destroy or replace this existing Phase 1 architecture.
+
+==================================================
+CURRENT BUSINESS PROBLEM
+==================================================
+
+When a visitor registers successfully on a reseller's public website:
+
+- authentication works
+- customer account exists
+- My Account works
+
+BUT:
+
+The registered customer does NOT automatically appear as a real client inside the reseller's Clients/Suppliers management.
+
+The current E-Commerce Customers implementation is mainly based on guest/order contact information and is NOT a proper registered-client management system.
+
+This must be fixed.
+
+DESIRED BUSINESS MODEL:
+
+Public customer registers
+→ becomes a real reseller client
+→ immediately appears in Clients/Suppliers
+→ reseller can open the client profile
+→ reseller sees client identity, profile, WhatsApp, location, account status, financial summary and orders
+→ no order is required before the client appears.
+
+A newly registered client with zero orders must still exist in the reseller panel.
+
+==================================================
+FIRST: ARCHITECTURE INSPECTION
+==================================================
+
+Before modifying code, inspect the existing implementation of:
+
+- public_customer_accounts
+- public_customer_sessions
+- migration 019
+- Clients/Suppliers module
+- E-Commerce → Customers
+- guest checkout
+- order/contact snapshots
+- reseller/subscriber authorization
+- current public customer registration flow
+- customer login/session handling
+- currencies
+- languages
+- order families
+- financial/balance/invoice models, if any
+- existing country/location utilities
+- existing rate limiting
+- existing CAPTCHA / anti-bot mechanisms
+
+Determine whether Clients/Suppliers already has a canonical persisted client entity.
+
+ARCHITECTURE RULE:
+
+Do NOT create a third disconnected customer identity.
+
+Choose the cleanest canonical model:
+
+OPTION A:
+If an existing canonical reseller client entity already exists and is suitable:
+link Public Customer Account 1:1 to that client entity.
+
+OPTION B:
+If no suitable canonical client entity exists:
+extend public_customer_accounts so it becomes the canonical registered client identity for the reseller.
+
+Do not duplicate customer records just to display them in multiple modules.
+
+Report the architecture chosen.
+
+==================================================
+PART 1 — MULTI-STEP PUBLIC REGISTRATION
+==================================================
+
+Replace the basic Phase 1 registration form with a professional multi-step registration flow inspired by DHRU behavior, but styled using BHRU's existing public website design system.
+
+Use exactly these logical steps:
+
+STEP 1 — ACCOUNT INFORMATION
+
+Fields:
+
+1. Email
+   - required
+   - normalized
+   - unique per subscriber/tenant
+
+2. Username
+   - optional
+   - unique per subscriber if provided
+
+If username is left blank:
+generate a tenant-unique client username/code automatically.
+
+Prefer a short professional uppercase alphanumeric client code similar in concept to:
+
+APS86SCB
+
+Requirements:
+- tenant unique
+- collision checked server-side
+- never rely only on frontend generation
+- do not expose sequential database IDs
+- preserve email login regardless of generated username
+
+3. WhatsApp / Mobile Number
+   - REQUIRED
+
+Use:
+- international country dialing code
+- normalized phone number
+- preferably E.164 normalized storage
+
+Store the normalized number as the customer's canonical contact phone.
+
+It must later appear in:
+- reseller client list
+- client profile
+- search
+- customer account
+
+Do NOT require WhatsApp OTP verification in this phase.
+
+4. Password
+   - required
+
+5. Confirm Password
+   - required
+
+6. Preferred Language
+   - use languages supported by BHRU public website
+
+7. Preferred Currency
+   - must come only from currencies enabled by the reseller/subscriber
+   - no arbitrary currencies
+   - server-side validation required
+
+8. Newsletter Subscription
+   - optional checkbox
+
+==================================================
+PART 2 — BILLING DETAILS
+==================================================
+
+STEP 2 — BILLING DETAILS
+
+Fields:
+
+- First Name — required
+- Last Name — required
+- Address Line 1
+- Address Line 2 — optional
+- Country — required
+- State / Province
+- City
+- Postal / ZIP Code
+
+Country should use a stable country code where practical.
+
+Do not add a large third-party location dependency unless BHRU already has one.
+
+State and City may initially remain normal validated fields/selects if that matches the current stack.
+
+These billing details belong to the registered customer and should later be reusable by checkout.
+
+==================================================
+PART 3 — VERIFICATION
+==================================================
+
+STEP 3 — VERIFICATION
+
+Requirements:
+
+- checkbox:
+  "I have read and accept the Terms of Service"
+
+This checkbox is REQUIRED.
+
+Store:
+- terms_accepted_at
+
+Add anti-bot verification.
+
+FIRST inspect whether BHRU already has a CAPTCHA / anti-bot implementation.
+
+If one exists:
+reuse it.
+
+If none exists:
+implement a real server-validated registration challenge.
+
+Do NOT implement a fake frontend-only CAPTCHA.
+
+Requirements:
+- server generated or reputable external provider
+- short expiry
+- single use where practical
+- protected by registration rate limiting
+- invalid/expired challenge cannot register
+- no security decision based only on client JavaScript
+
+If an external CAPTCHA provider requires production credentials:
+make them environment-configurable and report the exact environment variables.
+
+Registration must not complete until:
+
+- all required fields are valid
+- password confirmation matches
+- email is valid
+- username is valid/available
+- WhatsApp/mobile is valid
+- preferred currency is allowed for tenant
+- Terms accepted
+- verification succeeds
+
+==================================================
+PART 4 — DATABASE / CUSTOMER PROFILE
+==================================================
+
+Extend the existing customer model cleanly.
+
+Fields may include, where not already present:
+
+- client_code / generated username if needed
+- username
+- first_name
+- last_name
+- whatsapp_phone
+- preferred_language
+- preferred_currency
+- newsletter_opt_in
+- address_line_1
+- address_line_2
+- country_code
+- state
+- city
+- postal_code
+- account_status
+- terms_accepted_at
+- created_at
+- updated_at
+- last_login_at
+
+Do NOT duplicate fields already stored canonically elsewhere.
+
+Use an ADDITIVE migration only.
+
+Suggested next migration number:
+020
+
+But inspect repository migrations first and use the correct next available number.
+
+DO NOT modify or destroy migration 019.
+
+Existing Phase 1 customers must continue working.
+
+Existing customer passwords/sessions must remain valid.
+
+For existing customers:
+new profile fields may initially be NULL/defaulted safely.
+
+They must NOT be required to register again.
+
+==================================================
+PART 5 — CANONICAL RESELLER CLIENT LIST
+==================================================
+
+Registered public customers must appear immediately in:
+
+Clients/Suppliers
+
+They should be classified as CLIENTS, not suppliers.
+
+A client should appear immediately after successful registration even when:
+
+Order Count = 0
+Total Spent = 0
+Balance = 0
+Due = 0
+
+No synchronization task.
+No background import.
+No reseller action.
+No order required.
+
+Prefer direct canonical database visibility.
+
+==================================================
+PART 6 — CLIENTS/SUPPLIERS TABLE
+==================================================
+
+Create/refactor the reseller client list into a compact professional BHRU table inspired by DHRU's workflow.
+
+Display at minimum:
+
+- Username / Client Code
+- Customer Name
+- Email
+- WhatsApp / Mobile
+- Country
+- Status
+- Registration Date
+- Preferred Currency
+- Available Balance
+- Due
+- Order Count
+- Actions
+
+DHRU functional reference:
+
+Username
+E-Mail
+Flag / Status
+Registration Date
+Available Balance
+Due
+Actions
+
+Do NOT copy DHRU styling.
+
+Use BHRU styling.
+
+==================================================
+PART 7 — CLIENT LIST SEARCH / FILTER
+==================================================
+
+Support reseller search using:
+
+- Username / Client Code
+- First Name
+- Last Name
+- Full Name
+- Email
+- WhatsApp / Mobile
+
+Support filters where appropriate:
+
+- Active
+- Blocked
+- Registered
+- Guest, if guest contacts remain in this screen
+
+Add pagination.
+
+Use server-side tenant-scoped queries.
+
+==================================================
+PART 8 — CLIENT DETAIL PAGE
+==================================================
+
+Clicking the customer's:
+
+- username
+- client code
+- name
+or
+- email
+
+should open a dedicated reseller client page.
+
+Preferred route:
+
+/m/clients/:customerId
+
+Use BHRU's existing workspace/tab navigation.
+
+Do NOT expose raw cross-tenant IDs without authorization.
+
+==================================================
+PART 9 — CLIENT DETAIL HEADER
+==================================================
+
+Client page summary should show:
+
+- initials/avatar
+- Username / Client Code
+- Full Name
+- Email
+- WhatsApp / Mobile
+- Country
+- City
+- Registration Date
+- Account Status
+- Preferred Language
+- Preferred Currency
+
+Status should clearly show:
+
+ACTIVE
+or
+BLOCKED
+
+==================================================
+PART 10 — CLIENT DETAIL NAVIGATION
+==================================================
+
+Create client detail navigation inspired by DHRU's information architecture, but only implement features BHRU actually supports.
+
+Initial sections/tabs:
+
+1. Overview
+2. Financial
+3. Profile
+4. Orders
+5. Activity / Login History
+6. Notes
+
+Invoices may be included ONLY if BHRU already has a suitable invoice architecture.
+
+Do NOT create fake modules merely because DHRU has them.
+
+Do NOT implement unrelated DHRU modules such as:
+- affiliate systems
+- API pricing
+- KYC
+- advanced custom pricing
+unless those already exist in BHRU and integrate cleanly.
+
+==================================================
+PART 11 — OVERVIEW PAGE
+==================================================
+
+OVERVIEW must contain:
+
+PERSONAL INFORMATION
+
+- Client Code / Username
+- First Name
+- Last Name
+- Email
+- WhatsApp
+- Address Line 1
+- Address Line 2
+- Country
+- State
+- City
+- Postal Code
+- Preferred Language
+- Preferred Currency
+- Newsletter status
+- Customer Since
+- Terms Accepted Date
+- Last Login
+- Account Status
+
+FINANCIAL SUMMARY
+
+Show:
+
+- Available Balance
+- Locked Amount if BHRU has it
+- Total Paid / Receipts if safely derivable
+- Due / Unpaid Balance
+
+IMPORTANT:
+
+Inspect BHRU's existing financial architecture.
+
+If no real customer wallet/ledger/debt system exists yet:
+
+Available Balance = 0
+Locked Amount = 0
+Due = 0
+
+Do NOT invent fake balances.
+
+Use clean service boundaries so a future customer ledger can replace these zero values.
+
+Format monetary values using the correct customer/subscriber currency formatter.
+
+==================================================
+PART 12 — ORDER SUMMARY
+==================================================
+
+Show actual BHRU order information.
+
+Inspect supported order families.
+
+Where available show counts such as:
+
+- Total Orders
+- IMEI Orders
+- Server Orders
+- Remote Orders
+- Retail / E-Commerce Orders
+
+Do not invent order families that do not exist.
+
+Also show:
+
+- recent orders
+- order count
+- total spent where safely derivable
+
+Preserve immutable historical order monetary snapshots.
+
+==================================================
+PART 13 — AUTHENTICATED ORDER ASSOCIATION
+==================================================
+
+For future orders placed while a registered customer is authenticated:
+
+associate the order with the canonical customer account.
+
+Do NOT create another customer record.
+
+Order/customer link should use an immutable customer/account ID.
+
+Keep existing order contact snapshots for historical accuracy.
+
+If customer changes:
+- email
+- phone
+- name
+later,
+
+historical order snapshots should remain unchanged.
+
+==================================================
+PART 14 — GUEST CHECKOUT
+==================================================
+
+Guest checkout MUST continue to work.
+
+Do not force registration to order.
+
+Guest orders should remain guest/order-contact data unless architecture explicitly converts them through a verified workflow.
+
+IMPORTANT:
+
+Do NOT automatically merge old guest orders with registered accounts merely because:
+
+- email matches
+or
+- phone matches
+
+This could cause incorrect ownership.
+
+Registered clients and guest contacts must be distinguishable.
+
+==================================================
+PART 15 — E-COMMERCE → CUSTOMERS
+==================================================
+
+Inspect the current E-Commerce → Customers module.
+
+Do NOT leave BHRU with two confusing independent customer systems.
+
+Preferred architecture:
+
+Clients/Suppliers
+= canonical registered reseller clients
+
+E-Commerce → Customers
+= either:
+A. an e-commerce-specific filtered view of canonical clients
+plus guest contacts
+
+OR
+
+B. reuse/redirect into canonical client management where appropriate.
+
+Registered customer must never appear as unrelated duplicate identities.
+
+Guest/order-only contacts may be clearly labelled:
+
+Guest
+
+Registered accounts:
+
+Registered
+
+==================================================
+PART 16 — PROFILE MANAGEMENT
+==================================================
+
+Reseller should be able to view the customer profile.
+
+If current authorization patterns safely support editing, reseller may edit non-security profile fields:
+
+- First Name
+- Last Name
+- Username
+- WhatsApp
+- Address
+- Country
+- State
+- City
+- Postal Code
+- Preferred Language
+- Preferred Currency
+- Account Status
+
+Do NOT expose or allow reading:
+
+- password hashes
+- session tokens
+- password reset secrets
+- cookie secrets
+- auth credentials
+
+==================================================
+PART 17 — ACCOUNT STATUS / BLOCKING
+==================================================
+
+Support at minimum:
+
+ACTIVE
+BLOCKED
+
+Only the owning reseller may change customer status.
+
+When customer is BLOCKED:
+
+- customer cannot login
+- current customer sessions should be invalidated or rejected
+- customer data remains intact
+- orders remain intact
+- reseller can reactivate customer
+
+Existing subscriber/admin authentication must be unaffected.
+
+==================================================
+PART 18 — LOGIN
+==================================================
+
+Keep email login working.
+
+Also support:
+
+Email OR Username
++
+Password
+
+Username uniqueness must be tenant-scoped.
+
+The same username may exist under another reseller if tenant model permits it.
+
+Generic invalid login response:
+
+Do not reveal whether:
+- email exists
+- username exists
+- account belongs to another tenant
+
+==================================================
+PART 19 — CUSTOMER ACCOUNT PAGE
+==================================================
+
+Expand the customer-facing:
+
+/customer/account
+
+and:
+
+/{slug}/customer/account
+
+At minimum allow VIEWING:
+
+- Username / Client Code
+- First Name
+- Last Name
+- Email
+- WhatsApp
+- Preferred Language
+- Preferred Currency
+- Billing Address
+- Country
+- State
+- City
+- Postal Code
+- Registration Date
+
+Do not significantly expand into a complete profile-editing product unless it fits naturally.
+
+If customer self-editing becomes large scope:
+report it as next phase.
+
+==================================================
+PART 20 — LOGIN AS CLIENT / IMPERSONATION
+==================================================
+
+DHRU provides "Login as client".
+
+Do NOT implement this insecurely.
+
+Inspect current BHRU session architecture.
+
+Only implement reseller impersonation if it can be done correctly with:
+
+- authenticated reseller authorization
+- tenant ownership verification
+- temporary impersonation session
+- no password disclosure
+- clear UI showing impersonation
+- exit impersonation action
+- audit log:
+  reseller/admin
+  customer
+  timestamp
+
+If it cannot be safely completed within this feature:
+DEFER IT.
+
+Do not create a shortcut that exposes customer credentials.
+
+Report whether this was implemented or deferred.
+
+==================================================
+PART 21 — NOTES
+==================================================
+
+If BHRU already has a suitable notes model:
+use it.
+
+Otherwise a simple tenant-scoped internal customer notes feature may be added if it is clean and small.
+
+Notes are reseller/internal only.
+
+Customers must never see internal reseller notes.
+
+==================================================
+PART 22 — SECURITY / MULTI-TENANCY
+==================================================
+
+CRITICAL.
+
+Every reseller-side customer endpoint must derive subscriber ownership from the authenticated reseller session.
+
+NEVER trust:
+
+- subscriber_id from body
+- subscriber_id from query
+- subscriber_id from frontend
+- tenant ID supplied by browser
+
+A reseller must only access customers belonging to their own subscriber account.
+
+Subscriber A must never see:
+- Subscriber B customers
+- profiles
+- phone numbers
+- orders
+- balances
+- notes
+- sessions
+
+Cross-tenant customer IDs should return the current BHRU-safe not-found/forbidden behavior.
+
+Public registration tenant resolution must continue using:
+
+Platform:
+bhru.net/{public_slug}
+
+Custom Domain:
+verified original Host mapping
+
+Do not trust X-Forwarded-Host as tenant identity.
+
+==================================================
+PART 23 — SAME EMAIL ACROSS DIFFERENT RESELLERS
+==================================================
+
+Preserve the Phase 1 rule:
+
+The same email may register under two different BHRU resellers.
+
+Uniqueness is per subscriber.
+
+Example:
+
+Customer:
+user@example.com
+
+may exist at:
+
+Reseller A
+and
+Reseller B
+
+as two isolated accounts.
+
+Same applies to tenant-scoped username uniqueness where appropriate.
+
+==================================================
+PART 24 — CUSTOMER SESSIONS
+==================================================
+
+Preserve:
+
+- dedicated public-customer session boundary
+- no owner/admin cookie reuse
+- HttpOnly cookies
+- Secure in production
+- appropriate SameSite
+- session rotation
+- expiry
+- logout revocation
+
+Blocked accounts must not continue authenticating via old sessions.
+
+==================================================
+PART 25 — WHATSAPP / MOBILE
+==================================================
+
+WhatsApp / Mobile is REQUIRED during registration.
+
+Store normalized value safely.
+
+Prefer:
+
+country calling code
++
+national number
+→ normalized international phone
+
+Use it in:
+
+- registration
+- Clients/Suppliers
+- search
+- client profile
+- customer account
+- future checkout reuse
+
+Do not store only a display-formatted string if normalized storage can be implemented cleanly.
+
+==================================================
+PART 26 — CURRENCY
+==================================================
+
+Preferred Currency must use the subscriber's enabled customer currencies.
+
+Do NOT modify BHRU currency conversion logic.
+
+Do NOT introduce live FX.
+
+Do NOT alter:
+- USD base/reference behavior
+- manual subscriber rates
+- panel display currency
+- order monetary snapshots
+
+If customer's previously preferred currency becomes disabled:
+fall back safely to the reseller's current Client Default Currency while preserving stored historical preference where appropriate.
+
+==================================================
+PART 27 — LANGUAGE
+==================================================
+
+Preferred Language must use BHRU supported public languages.
+
+Store customer preference.
+
+Do not redesign BHRU localization in this task.
+
+==================================================
+PART 28 — CLIENT ID / USERNAME
+==================================================
+
+DHRU commonly displays generated identifiers such as:
+
+APS86SCB
+
+BHRU may provide an equivalent professional client code.
+
+Requirements:
+
+- not sequential DB ID
+- tenant unique
+- collision safe
+- server generated
+- human-readable
+- searchable
+
+If a user chooses their own username:
+keep the generated immutable client code separately if useful.
+
+Do not make architecture confusing.
+
+Report the chosen design:
+client_code vs username.
+
+==================================================
+PART 29 — REGISTRATION DATE / LAST LOGIN
+==================================================
+
+Track/display:
+
+- registration date
+- last login date/time
+
+Update last_login_at only on successful authentication.
+
+Do not alter created_at.
+
+==================================================
+PART 30 — DATABASE INDEXING
+==================================================
+
+Add only necessary indexes.
+
+Consider indexes for:
+
+- subscriber_id + email
+- subscriber_id + username
+- subscriber_id + client_code
+- subscriber_id + status
+- subscriber_id + created_at
+- normalized WhatsApp where useful
+- order customer/account foreign key
+
+Do not over-index unnecessarily.
+
+==================================================
+PART 31 — EXISTING PHASE 1 CUSTOMER COMPATIBILITY
+==================================================
+
+CRITICAL.
+
+Customers already created through migration 019 must continue working.
+
+Example:
+existing production customer already registered and logged in successfully.
+
+After this deployment:
+
+- same password must still work
+- no re-registration
+- account appears automatically in Clients/Suppliers
+- profile may show missing optional data until completed
+- existing sessions should remain valid unless schema/security requires rotation
+
+Do not silently delete/reset Phase 1 customer data.
+
+==================================================
+PART 32 — PUBLIC HEADER
+==================================================
+
+Preserve current public behavior:
+
+Logged out:
+- Login
+- Register
+
+Logged in:
+- My Account
+- Logout
+
+Works on:
+
+- standard public website
+- E-Commerce public website
+- CMS Live Preview
+- custom domains
+- bhru.net/{slug}
+
+Do not redesign unrelated public headers.
+
+==================================================
+PART 33 — UI / UX
+==================================================
+
+PUBLIC REGISTRATION:
+
+Professional multi-step card/wizard:
+
+Step 1
+Account Information
+
+Step 2
+Billing Details
+
+Step 3
+Verification
+
+Show:
+- progress indicator
+- Previous
+- Next
+- Register
+
+Responsive desktop/mobile.
+
+RESELLER CLIENT LIST:
+
+Compact professional table.
+
+CLIENT DETAIL:
+
+Use BHRU workspace styling.
+
+Information architecture can be inspired by DHRU:
+- summary
+- left/tabs navigation
+- personal information
+- financial summary
+- order summary
+- activity
+- notes
+
+Do not copy DHRU pixels or branding.
+
+==================================================
+PART 34 — DO NOT TOUCH
+==================================================
+
+DO NOT modify:
+
+- Platform Admin authentication
+- Subscriber/Owner authentication
+- private Platform Admin route
+- Custom Domain infrastructure
+- Traefik
+- custom domain watcher
+- DNS verification
+- provider API system
+- currency calculation architecture
+- unrelated CMS
+- media storage
+- unrelated E-Commerce functionality
+
+Do not change working production behavior outside this feature.
+
+==================================================
+PART 35 — MIGRATION SAFETY
+==================================================
+
+All migrations must be:
+
+- additive
+- idempotent according to BHRU migration system
+- safe for existing production data
+- compatible with migration 019
+- safe to execute automatically during application startup
+
+Do not perform destructive migrations.
+
+Do not manually access production database.
+
+Do not run production migration.
+
+==================================================
+PART 36 — FOCUSED TESTING
+==================================================
+
+Run focused tests ONLY.
+
+Required focused acceptance coverage:
+
+1. New public customer registers.
+2. WhatsApp required.
+3. Multi-step registration validation.
+4. Terms required.
+5. Anti-bot verification required.
+6. Registered customer immediately appears in reseller Clients/Suppliers.
+7. Registered customer with 0 orders appears.
+8. Existing Phase 1 customer appears automatically.
+9. Client detail page loads.
+10. Client WhatsApp is visible.
+11. Search by username works.
+12. Search by email works.
+13. Search by WhatsApp works.
+14. Same email can exist under different subscribers.
+15. Username uniqueness is tenant-scoped.
+16. Subscriber A cannot access Subscriber B customer.
+17. Active customer can login.
+18. Blocked customer cannot login.
+19. Blocking invalidates/rejects active customer sessions.
+20. Authenticated new order links to canonical customer.
+21. Guest checkout remains available.
+22. Guest orders are not incorrectly merged.
+23. Custom-domain registration/login/account continues working.
+24. bhru.net/{slug} registration/login/account continues working.
+25. Existing password hashes remain compatible.
+26. Customer login by email works.
+27. Customer login by username works if implemented.
+28. Preferred currency validation is tenant-safe.
+29. Available balance/due never fabricate values.
+
+Also run:
+
+- backend TypeScript check
+- backend build
+- affected frontend TypeScript/build
+
+Do NOT run broad browser/E2E/full regression suites.
+
+==================================================
+PART 37 — SOURCE CONTROL
+==================================================
+
+DO NOT push.
+
+DO NOT deploy.
+
+DO NOT access Dokploy.
+
+DO NOT access the VPS.
+
+DO NOT rewrite Git history.
+
+Do not include:
+- pasted instruction attachments
+- .agents memory files
+- irrelevant metadata
+
+Only modify files required by this feature.
+
+==================================================
+FINAL REPORT REQUIRED
+==================================================
+
+At completion return a precise report containing:
+
+1. Existing architecture found.
+2. Root cause of registered customers not appearing in Clients/Suppliers.
+3. Canonical client/customer model chosen.
+4. Relationship between:
+   - Public Customer Account
+   - Reseller Client
+   - Guest Contact
+5. Migration created.
+6. Every registration field implemented.
+7. Username/client-code strategy.
+8. WhatsApp/mobile storage and normalization.
+9. Multi-step registration behavior.
+10. CAPTCHA/anti-bot implementation.
+11. Terms acceptance implementation.
+12. Exact reseller client-list columns.
+13. Search/filter behavior.
+14. Exact client-detail route.
+15. Client-detail sections/tabs.
+16. Financial Balance/Due implementation and whether a real ledger exists.
+17. Order association behavior.
+18. Guest checkout behavior.
+19. E-Commerce Customers relationship to Clients/Suppliers.
+20. Account blocking behavior.
+21. Login by email/username behavior.
+22. Existing Phase 1 compatibility.
+23. Same-email/different-subscriber behavior.
+24. Tenant-isolation implementation.
+25. Login-as-client:
+    - implemented safely
+    OR
+    - explicitly deferred
+26. Files changed.
+27. Migration filename.
+28. Focused tests performed and results.
+29. Any unrelated existing errors discovered.
+30. Required environment variables, if any.
+31. Remaining limitations / recommended next phase.
+
+STOP after implementation and report.
+
+Do not push or deploy.
