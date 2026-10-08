@@ -9,7 +9,8 @@ export const ONBOARDING_STYLES = `
 .ob-steps li[aria-current=step]{border-color:var(--accent);color:var(--ink)}.ob-steps li.is-done{border-color:var(--accent)}
 .ob-step[hidden]{display:none}.ob-step:focus{outline:none}.ob-step h2{font-size:20px;margin:0 0 14px}
 .ob-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
-.ca-field select,.ca-field textarea{width:100%;min-height:48px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.ca-field select,.ca-field [data-fixed-currency],.ca-field textarea{width:100%;min-height:48px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.ca-field [hidden]{display:none!important}
 .ca-field select:focus-visible{outline:3px solid var(--accent);outline-offset:1px}.ca-field select[aria-invalid=true]{border-color:#b42318}
 .ob-phone{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center}.ob-plus{font-weight:700;font-size:18px}
 .ob-hint{font-size:12px;color:var(--muted)}.ob-check{display:flex;gap:10px;align-items:flex-start;font-size:14px}.ob-check input{width:20px;height:20px;margin-top:2px;flex:none}
@@ -105,6 +106,16 @@ export const ONBOARDING_SCRIPT = String.raw`(() => {
       const fill = (n, list, def) => { const s = el(n); (list || []).forEach(o => { const op = document.createElement('option'); op.value = o.code; op.textContent = o.name + (n === 'preferredCurrency' ? ' (' + o.code + ')' : ''); s.appendChild(op); }); if (def) s.value = def; };
       fill('preferredLanguage', d.languages, (d.languages || [])[0] && d.languages[0].code);
       fill('preferredCurrency', d.currencies, d.defaultCurrency);
+      const singleCurrency = (d.currencies || []).length === 1;
+      const currencySelect = el('preferredCurrency'), fixed = form.querySelector('[data-fixed-currency]');
+      currencySelect.hidden = singleCurrency;
+      fixed.hidden = !singleCurrency;
+      if (singleCurrency) {
+        currencySelect.value = d.currencies[0].code;
+        fixed.value = d.currencies[0].name + ' (' + d.currencies[0].code + ')';
+      }
+      form.querySelector('[data-currency-label]').htmlFor = singleCurrency ? 'ob-currency-fixed' : 'ob-preferredCurrency';
+      if (!d.currencies?.length) { show('This reseller has no currencies available for registration.', true); next.disabled = true; }
       fill('countryCode', d.countries, '');
     } catch (_) { show('Could not load registration options. Please reload the page.', true); next.disabled = true; }
   }
@@ -163,7 +174,12 @@ ${fld('username', 'Username', 'text', 'username', ' maxlength="32"', false, '3 t
 <div class="ca-field ob-full"><label for="ob-dialCode">WhatsApp number</label><div class="ob-phone"><span class="ob-plus" aria-hidden="true">+</span><input id="ob-dialCode" name="dialCode" inputmode="numeric" autocomplete="tel-country-code" maxlength="4" size="4" aria-label="Country dialing code" placeholder="39" style="width:84px;min-height:48px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit"><input id="ob-nationalPhone" name="nationalPhone" inputmode="tel" autocomplete="tel-national" maxlength="24" aria-label="National number" placeholder="333 1234567" aria-describedby="ob-phone-hint ob-nationalPhone-err ob-dialCode-err" style="width:100%;min-height:48px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit"></div><div class="ob-hint" id="ob-phone-hint">Dialing code first, then your number. Spaces and dashes are ignored; keep any leading zero. Maximum 15 digits in total.</div><div class="ca-ferr" id="ob-dialCode-err" data-error-for="dialCode" aria-live="polite"></div><div class="ca-ferr" id="ob-nationalPhone-err" data-error-for="nationalPhone" aria-live="polite"></div></div>
 ${fld('password', 'Password (at least 8 characters)', 'password', 'new-password', ' minlength="8" maxlength="128"')}
 ${fld('confirmPassword', 'Confirm password', 'password', 'new-password', ' minlength="8" maxlength="128"')}
-${sel('preferredLanguage', 'Preferred language', 'language')}${sel('preferredCurrency', 'Preferred currency', 'off')}
+${sel('preferredLanguage', 'Preferred language', 'language')}
+<div class="ca-field"><label data-currency-label for="ob-preferredCurrency">Account Currency</label>
+<select id="ob-preferredCurrency" name="preferredCurrency" autocomplete="off" required aria-describedby="ob-preferredCurrency-hint ob-preferredCurrency-err"><option value="">Loading...</option></select>
+<input data-fixed-currency id="ob-currency-fixed" type="text" readonly hidden aria-describedby="ob-preferredCurrency-hint">
+<div class="ob-hint" id="ob-preferredCurrency-hint">Choose your account currency. It will be used for your wallet, services and orders and cannot be changed after registration.</div>
+<div class="ca-ferr" id="ob-preferredCurrency-err" data-error-for="preferredCurrency" aria-live="polite"></div></div>
 <label class="ob-check ob-full"><input type="checkbox" name="newsletterOptIn"> <span>Send me news and offers by email.</span></label>
 </div></fieldset>
 <fieldset class="ob-step" hidden style="border:0;padding:0;margin:0;min-width:0"><legend><h2>Billing Details</h2></legend><div class="ob-grid">

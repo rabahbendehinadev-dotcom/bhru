@@ -2,7 +2,7 @@ import { formatCurrencyPresentation, parseNumberFormat, SUPPORTED_NUMBER_FORMATS
 export { formatCurrencyPresentation, parseNumberFormat, SUPPORTED_NUMBER_FORMATS };
 export interface StoreCurrency {
   code: string; name: string; prefix: string; suffix: string; number_format: string;
-  rate: string; decimals: number; enabled: boolean; client_default: boolean; is_base?: boolean; rate_configured?: boolean;
+  rate: string; decimals: number; enabled: boolean; client_default: boolean; is_base?: boolean; rate_configured?: boolean; registration_available?: boolean;
   presentation_version?: number;
 }
 export const MAX_MINOR = 9223372036854775807n;

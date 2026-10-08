@@ -27,7 +27,7 @@ export const profileEditInput = z.object({
 }).strict();
 export async function registrationOptions(subscriber: string, db: CustomerDB) {
   const configured = await currencies(subscriber, db as Parameters<typeof currencies>[1]);
-  const enabled = configured.filter(c => c.enabled && c.rate_configured !== false);
+  const enabled = configured.filter(c => c.enabled && c.rate_configured !== false && c.registration_available);
   const names = new Intl.DisplayNames(['en'], { type: 'region' });
   return {
     currencies: enabled.map(c => ({ code: c.code, name: c.name })),
@@ -39,7 +39,7 @@ export async function registrationOptions(subscriber: string, db: CustomerDB) {
 export async function validatePreferences(subscriber: string, language: string | null, currency: string | null, country: string | null, db: CustomerDB) {
   if (language !== null && !STOREFRONT_LANGUAGES.some(([code]) => code === language)) throw new HttpError(400, 'Choose a supported public language.');
   if (country !== null && !COUNTRY_CODES.has(country)) throw new HttpError(400, 'Choose a valid country.');
-  if (currency !== null && !(await registrationOptions(subscriber, db)).currencies.some(c => c.code === currency)) throw new HttpError(400, 'Choose a currency currently enabled by this reseller.');
+  if (currency !== null && !(await registrationOptions(subscriber, db)).currencies.some(c => c.code === currency)) throw new HttpError(400, 'Choose a currency offered for registration by this reseller.');
 }
 export async function effectiveCustomerProfile(customer: CustomerIdentity, db: CustomerDB) {
   const { customerProfile } = await import('./types');

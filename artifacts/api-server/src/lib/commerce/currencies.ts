@@ -11,12 +11,12 @@ export const currencyInput = z.object({
   rate: z.string().trim().regex(/^\d{1,9}(?:\.\d{1,6})?$/, 'Enter a positive manual rate with up to 6 decimal places.')
     .refine(v => /^\d{1,9}(?:\.\d{1,6})?$/.test(v)&&rateUnits(v)>0n && rateUnits(v)<=999999999000000n, 'Enter a positive manual rate up to 999999999 with six decimal places.')
     .transform(v => { const [whole, fraction = ''] = v.split('.'); return `${BigInt(whole!).toString()}.${fraction.padEnd(6, '0')}`; }),
-  enabled: z.boolean(), client_default: z.boolean(),
+  enabled: z.boolean(), client_default: z.boolean(), registration_available: z.boolean().optional(),
   create_only: z.boolean().optional().default(false),
 }).strict();
 
 export async function currencies(id: string, client: PoolClient): Promise<StoreCurrency[]> {
-  return (await client.query(`SELECT code,name,prefix,suffix,number_format,rate::text,decimals,enabled,client_default,is_base,rate_configured
+  return (await client.query(`SELECT code,name,prefix,suffix,number_format,rate::text,decimals,enabled,client_default,is_base,rate_configured,registration_available
     FROM subscriber_currencies WHERE subscriber_id=$1 ORDER BY is_base DESC,code FOR SHARE`, [id])).rows;
 }
 export async function currencyConfig(id: string, client: PoolClient, userId?: string) {
@@ -67,6 +67,10 @@ export async function saveCurrency(id: string, raw: unknown, client: PoolClient)
     throw new HttpError(400, 'Choose a supported number format. Only an unchanged saved format can be retained.');
   }
   const isBase = input.code === await baseCurrency(id,client);
+  const registrationAvailable = input.enabled && (input.registration_available ?? old?.registration_available ?? true);
+  if (input.registration_available && !input.enabled) throw new HttpError(400,'Enable this currency before offering it at registration.');
+  if (input.client_default && !registrationAvailable) throw new HttpError(400,'The Client Default currency must be available for customer registration.');
+  if (old?.client_default && !registrationAvailable && !input.client_default) throw new HttpError(400,'Select another Client Default before removing this currency from registration.');
   if (input.client_default && !input.enabled) throw new HttpError(400, 'The Client Default currency must be enabled.');
   if (isBase && !/^0*1(?:\.0+)?$/.test(input.rate)) {
     throw new HttpError(400, 'The base currency rate must stay 1.');
@@ -74,11 +78,12 @@ export async function saveCurrency(id: string, raw: unknown, client: PoolClient)
   if(isBase&&!input.enabled)throw new HttpError(400,'The permanent USD reference must remain enabled.');
   if (old?.client_default && !input.client_default) throw new HttpError(400, 'Select another currency as Client Default first.');
   if (input.client_default) await client.query('UPDATE subscriber_currencies SET client_default=false WHERE subscriber_id=$1 AND client_default', [id]);
-  await client.query(`INSERT INTO subscriber_currencies(subscriber_id,code,name,prefix,suffix,number_format,rate,decimals,enabled,client_default,is_base)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+  await client.query(`INSERT INTO subscriber_currencies(subscriber_id,code,name,prefix,suffix,number_format,rate,decimals,enabled,client_default,is_base,registration_available)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
     ON CONFLICT(subscriber_id,code) DO UPDATE SET name=EXCLUDED.name,prefix=EXCLUDED.prefix,suffix=EXCLUDED.suffix,
-    number_format=EXCLUDED.number_format,rate=EXCLUDED.rate,enabled=EXCLUDED.enabled,client_default=EXCLUDED.client_default,rate_configured=true,updated_at=now()`,
-    [id,input.code,input.name,input.prefix,input.suffix,input.number_format,input.rate,isBase?2:old?.decimals??standard!.decimals,input.enabled,input.client_default,isBase]);
+    number_format=EXCLUDED.number_format,rate=EXCLUDED.rate,enabled=EXCLUDED.enabled,client_default=EXCLUDED.client_default,
+    registration_available=EXCLUDED.registration_available,rate_configured=true,updated_at=now()`,
+    [id,input.code,input.name,input.prefix,input.suffix,input.number_format,input.rate,isBase?2:old?.decimals??standard!.decimals,input.enabled,input.client_default,isBase,registrationAvailable]);
   return { code: input.code };
 }
 export async function deleteCurrency(id: string, code: string, client: PoolClient) {

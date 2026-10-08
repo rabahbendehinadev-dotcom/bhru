@@ -1,0 +1,379 @@
+BHRU — CORRECT RESELLER-CONTROLLED CUSTOMER CURRENCY MODEL
+
+Clarification of the required business model:
+
+Do NOT associate customer registration currencies with Algeria, DZD, reseller country, customer country, or any automatic geographic rule.
+
+BHRU is a multi-tenant SaaS sold to resellers in different countries.
+
+Each reseller independently decides which currencies THEIR customers are allowed to choose during public registration.
+
+==================================================
+CORE RULE
+==================================================
+
+Every new BHRU subscriber/reseller starts with:
+
+USD = available by default
+
+USD is the initial/default currency foundation.
+
+The reseller can then add/enable other currencies according to their own business.
+
+Examples:
+
+ALGERIAN RESELLER:
+
+USD
+DZD
+EUR
+
+Public registration for this reseller shows:
+
+USD
+DZD
+EUR
+
+
+SAUDI RESELLER:
+
+USD
+SAR
+EUR
+
+Public registration for this reseller shows:
+
+USD
+SAR
+EUR
+
+DZD must NOT appear simply because BHRU itself was developed or hosted for an Algerian owner.
+
+
+EUROPEAN RESELLER:
+
+USD
+EUR
+GBP
+
+Public registration shows only:
+
+USD
+EUR
+GBP
+
+==================================================
+1. NEW SUBSCRIBER DEFAULT
+==================================================
+
+When a new BHRU reseller/subscriber account is created:
+
+initialize its currency configuration with USD only.
+
+USD should be:
+
+- present
+- enabled
+- usable as the initial Client Default Currency
+- available for customer registration
+
+Do not automatically add DZD or any other local currency.
+
+Do not infer currencies from:
+- reseller country
+- server location
+- browser language
+- IP
+- platform owner country
+
+==================================================
+2. RESELLER ADDS CURRENCIES
+==================================================
+
+The reseller Currency Settings must allow the reseller to add/manage additional currencies.
+
+Examples:
+
+SAR
+DZD
+EUR
+GBP
+AED
+CAD
+etc.
+
+Use BHRU's existing currency architecture.
+
+Do not create a separate global registration-currency catalog if the existing subscriber currency system already supports adding currencies.
+
+Each currency belongs to that subscriber's configuration.
+
+==================================================
+3. AVAILABLE TO CUSTOMERS
+==================================================
+
+Each reseller currency needs a clear setting such as:
+
+Available for Customer Registration
+
+Example:
+
+USD   Enabled ✅
+SAR   Enabled ✅
+EUR   Enabled ✅
+DZD   Disabled ❌
+
+Only currencies marked available for customers may appear on that reseller's public registration page.
+
+==================================================
+4. PUBLIC REGISTRATION
+==================================================
+
+Public registration must resolve the reseller first.
+
+This works through:
+
+- bhru.net/{public_slug}
+or
+- verified custom domain
+
+Then retrieve ONLY that reseller's customer-enabled currencies.
+
+Never use a global list.
+
+Never use another subscriber's currency list.
+
+==================================================
+5. CUSTOMER SELECTION
+==================================================
+
+If reseller offers:
+
+USD + SAR + EUR
+
+customer may choose one of those during registration.
+
+Once registration succeeds:
+
+selected currency becomes:
+
+CLIENT ACCOUNT CURRENCY
+
+It becomes immutable for that customer.
+
+Example:
+
+Customer A chooses USD
+→ wallet/services/orders/statement = USD
+
+Customer B chooses SAR
+→ wallet/services/orders/statement = SAR
+
+Customer C chooses EUR
+→ wallet/services/orders/statement = EUR
+
+All three may belong to the same reseller.
+
+==================================================
+6. DEFAULT CURRENCY
+==================================================
+
+USD should be the initial default for a fresh reseller.
+
+However, if the reseller later wants:
+
+Enabled registration currencies:
+USD
+SAR
+EUR
+
+and wants SAR preselected for NEW customers,
+
+allow them to set:
+
+Client Default Currency = SAR
+
+This only controls the initial selection on NEW registrations.
+
+It must NEVER modify existing customer account currencies.
+
+==================================================
+7. ONE CURRENCY
+==================================================
+
+If the reseller offers only USD:
+
+Registration should show:
+
+Account Currency
+USD
+
+read-only.
+
+No pointless dropdown.
+
+==================================================
+8. MULTIPLE CURRENCIES
+==================================================
+
+If reseller offers multiple currencies:
+
+show selector:
+
+Account Currency
+- USD
+- SAR
+- EUR
+
+Use reseller's Client Default Currency as the initial selected option.
+
+Helper text:
+
+"Choose your account currency. It will be used for your wallet, services and orders and cannot be changed after registration."
+
+==================================================
+9. DO NOT HARDCODE DZD
+==================================================
+
+Search the current implementation carefully.
+
+Remove any logic that assumes:
+
+DZD is automatically available
+DZD is automatically a registration option
+Algerian customers/resellers require DZD
+platform country determines client currencies
+
+DZD must behave like SAR, EUR, GBP, AED or any other reseller-configured currency.
+
+==================================================
+10. TENANT ISOLATION
+==================================================
+
+Critical:
+
+Subscriber A currencies must never affect Subscriber B.
+
+Example:
+
+Subscriber A:
+USD / DZD / EUR
+
+Subscriber B:
+USD / SAR
+
+A customer registering for Subscriber B must NEVER see DZD.
+
+Registration currency lookup must always be tenant scoped.
+
+==================================================
+11. EXISTING STRICT ACCOUNT CURRENCY
+==================================================
+
+Preserve migration 022 behavior:
+
+Once a customer chooses a currency and account is created:
+
+- Account Currency is immutable
+- Wallet uses same currency
+- Add Funds uses same currency
+- Deduct uses same currency
+- Service prices display in same currency
+- Orders charge same currency
+- Ledger uses same currency
+- Refund restores exact original account-currency amount
+
+Do not weaken this rule.
+
+==================================================
+12. RESELLER SETTINGS UI
+==================================================
+
+Make Currency Settings clearly separate these concepts:
+
+Panel Display Currency
+Client Default Currency
+Available for Customer Registration
+
+Example table:
+
+Currency | Rate | Live | Customer Registration | Client Default | Actions
+
+USD | 1.000000 | Yes | Yes | Yes | ...
+SAR | manual rate | Yes | Yes | No | ...
+EUR | manual rate | Yes | No | No | ...
+
+Use BHRU's existing compact currency UI where possible.
+
+==================================================
+13. DISABLING A CURRENCY FOR NEW CUSTOMERS
+==================================================
+
+Allow reseller to stop offering a currency to NEW registrations without breaking existing customers.
+
+Example:
+
+Existing SAR customers remain SAR.
+
+Reseller disables:
+
+SAR → Available for Customer Registration = No
+
+Result:
+
+- existing SAR clients continue normally
+- new registrations no longer see SAR
+- no wallet conversion
+- no customer migration
+
+This is different from deleting the currency itself.
+
+==================================================
+14. SERVER VALIDATION
+==================================================
+
+Registration API must verify that selected currency:
+
+- exists in that subscriber's currency configuration
+- is enabled
+- is allowed for customer registration
+
+Never trust frontend options alone.
+
+==================================================
+15. TESTS
+==================================================
+
+Focused tests:
+
+1. Fresh subscriber receives USD only.
+2. No DZD is automatically created for a fresh subscriber.
+3. Subscriber A enables USD/DZD/EUR.
+4. Subscriber B enables USD/SAR.
+5. A registration shows exactly USD/DZD/EUR.
+6. B registration shows exactly USD/SAR.
+7. Subscriber B cannot submit DZD manually.
+8. Reseller can add SAR without affecting other tenants.
+9. One enabled currency renders read-only.
+10. Multiple enabled currencies render selector.
+11. Client Default controls only initial registration selection.
+12. Existing account currency never changes.
+13. Disabling SAR for registration does not break existing SAR customers.
+14. Strict wallet/order/refund account-currency behavior remains intact.
+
+Do NOT push.
+Do NOT deploy.
+
+Return:
+
+1. current behavior found
+2. changes required
+3. whether any DZD-specific assumption existed
+4. fresh-subscriber currency behavior
+5. reseller currency-management behavior
+6. public registration behavior
+7. tenant isolation behavior
+8. existing customer compatibility
+9. migration needed, if any
+10. focused test results
+11. files changed

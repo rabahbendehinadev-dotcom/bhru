@@ -19,6 +19,55 @@ export async function testStrictAccountCurrency({req,pool,check,sidA,sidB,ownerC
   const walletPath=()=>`/api/clients/${dinar.id}/wallet`;
   const mutate=(amount,operation='add',direction='credit',currency)=>send(walletPath(),{
     amount,operation,direction,...(currency?{currency}:{}),reason:'Verified isolated test payment',method:'Cash',idempotencyKey:randomUUID()});
+  await check('fresh reseller defaults to USD alone, without geographic currency inference',async()=>{
+    const id=randomUUID();
+    await pool.query("INSERT INTO subscribers(id,business,public_slug) VALUES($1,'Saudi fixture','fresh-reseller')",[id]);
+    const rows=(await pool.query('SELECT code,enabled,client_default,registration_available FROM subscriber_currencies WHERE subscriber_id=$1',[id])).rows;
+    assert.deepEqual(rows,[{code:'USD',enabled:true,client_default:true,registration_available:true}]);
+  });
+  await check('reseller currency choices, defaults, live flags and tenant-specific registration eligibility stay separate',async()=>{
+    const body=(code,name,rate,registration_available,client_default=false)=>({code,name,rate,
+      prefix:'',suffix:code,number_format:'1,000.99',enabled:true,registration_available,client_default});
+    // Tenant A's DZD exists but was disabled before the new availability flag.
+    let r=await send('/api/commerce/currencies',body('DZD','Dinar','260.000000',true));
+    assert.equal(r.status,200,r.text);
+    r=await req('/api/commerce/currencies',{cookie:ownerCookieA});
+    assert.equal(r.status,200,r.text);
+    assert.equal(r.json.data.currencies.find(c=>c.code==='DZD').registration_available,true);
+    r=await send('/api/commerce/currencies',body('SAR','Saudi Riyal','3.750000',true),ownerCookieB);
+    assert.equal(r.status,200,r.text);
+    r=await send('/api/commerce/currencies',body('EUR','Euro','1.000000',false),ownerCookieB);
+    assert.equal(r.status,200,r.text);
+    const optionsA=await req('/api/public/customer/site-a/options');
+    const optionsB=await req('/api/public/customer/site-b/options');
+    assert.deepEqual(optionsA.json.currencies.map(c=>c.code),['USD','DZD','EUR']);
+    assert.deepEqual(optionsB.json.currencies.map(c=>c.code),['USD','SAR']);
+    assert.equal(optionsA.json.defaultCurrency,'USD');
+    assert.equal(optionsB.json.defaultCurrency,'USD');
+    assert.equal((await register({email:'foreign-dzd@example.invalid',preferredCurrency:'DZD'},undefined,'site-b')).status,400);
+    assert.equal((await register({email:'blocked-eur@example.invalid',preferredCurrency:'EUR'},undefined,'site-b')).status,400);
+    r=await send('/api/commerce/currencies',body('SAR','Saudi Riyal','3.750000',true,true),ownerCookieB);
+    assert.equal(r.status,200,r.text);
+    assert.equal((await req('/api/public/customer/site-b/options')).json.defaultCurrency,'SAR');
+    r=await register({email:'sar-customer@example.invalid',username:'SaudiClient',preferredCurrency:'SAR'},undefined,'site-b');
+    assert.equal(r.status,201,r.text);
+    const sar=(await pool.query("SELECT id,preferred_currency FROM public_customer_accounts WHERE subscriber_id=$1 AND email='sar-customer@example.invalid'",[sidB])).rows[0];
+    assert.equal(sar.preferred_currency,'SAR');
+    // Removing SAR only from future registration is allowed for existing SAR wallets.
+    r=await send('/api/commerce/currencies',body('USD','US Dollar','1.000000',true,true),ownerCookieB);
+    assert.equal(r.status,200,r.text);
+    r=await send('/api/commerce/currencies',body('SAR','Saudi Riyal','3.750000',false),ownerCookieB);
+    assert.equal(r.status,200,r.text);
+    assert.deepEqual((await req('/api/public/customer/site-b/options')).json.currencies.map(c=>c.code),['USD']);
+    assert.equal((await register({email:'later-sar@example.invalid',preferredCurrency:'SAR'},undefined,'site-b')).status,400);
+    assert.equal((await pool.query('SELECT accounting_currency FROM customer_wallets WHERE customer_id=$1',[sar.id])).rows[0].accounting_currency,'SAR');
+    await assert.rejects(pool.query("UPDATE public_customer_accounts SET preferred_currency='USD' WHERE id=$1",[sar.id]),/immutable/);
+    await assert.rejects(pool.query("INSERT INTO public_customer_accounts(id,subscriber_id,first_name,last_name,email,password_hash,preferred_currency) VALUES($1,$2,'Bypass','Attempt','bypass@example.invalid','not-a-hash','SAR')",[randomUUID(),sidB]),/offered for registration/);
+    const source=await readFile(new URL('../artifacts/api-server/src/lib/customer-auth/onboarding-ui.ts',import.meta.url),'utf8');
+    assert.match(source,/currencySelect\.hidden = singleCurrency/);
+    assert.match(source,/fixed\.hidden = !singleCurrency/);
+    assert.match(source,/cannot be changed after registration/);
+  });
   await check('DZD registration fixes account and wallet currency; USD registration remains USD',async()=>{
     const r=await register({email:'strict-dzd@example.invalid',username:'StrictDinar',preferredCurrency:'DZD'});
     assert.equal(r.status,201,r.text);
