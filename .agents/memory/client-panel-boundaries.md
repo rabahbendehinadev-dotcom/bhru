@@ -9,10 +9,14 @@ with reseller branding rather than a visually heavy legacy DHRU clone.
 Use visual references only for hierarchy and component placement, not oversized
 typography/cards or an exaggerated AI-mockup appearance. Favor mature
 server-panel density, restrained icons, subtle surfaces and limited accent use.
+For Dashboard content, prefer a few grouped operational sections with internal
+separators over nine or ten equal floating metric cards; preserve the typography scale.
 
 **Why:** The user explicitly chose a true server/client panel as the signed-in
 product experience without removing the public marketing website, and explicitly
 corrected the visual brief to require compact production-SaaS proportions.
+The user further rejected fragmented equal-card analytics styling in favor of
+a grouped financial summary and order-status panel.
 
 **How to apply:** Preserve the separate customer identity, existing sessions,
 account-currency finances and reseller-origin navigation when extending the panel.

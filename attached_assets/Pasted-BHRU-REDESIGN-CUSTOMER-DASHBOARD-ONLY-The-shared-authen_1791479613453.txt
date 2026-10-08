@@ -1,0 +1,257 @@
+BHRU — REDESIGN CUSTOMER DASHBOARD ONLY
+
+The shared authenticated Top Area/header is now correct.
+
+DO NOT change:
+- partner logo strip
+- promo tickers
+- reseller header/navigation
+- customer routes
+- typography scale
+- wallet/order/auth logic
+- announcements data source
+
+Redesign ONLY the customer Dashboard content area.
+
+The current dashboard still looks too much like a generic AI/SaaS template because it has too many equal small metric cards.
+
+We want a more operational server-panel dashboard inspired by DHRU's information hierarchy, but cleaner and more modern.
+
+==================================================
+1. REMOVE THE CURRENT "MANY SMALL CARDS" FEEL
+==================================================
+
+Do not show 9–10 equal metric boxes.
+
+Reduce visual fragmentation.
+
+Use a few larger structured sections.
+
+The dashboard must feel like a real unlock/server client area, not a generic analytics SaaS dashboard.
+
+==================================================
+2. DESKTOP STRUCTURE
+==================================================
+
+Use approximately:
+
+LEFT MAIN AREA: 68–72%
+RIGHT ANNOUNCEMENTS: 28–32%
+
+Keep Announcements visible on the right, similar to DHRU.
+
+Do not make the announcements column too narrow.
+
+==================================================
+3. PRIMARY BALANCE ROW
+==================================================
+
+Create a strong first financial row.
+
+LEFT:
+Current / Available Balance
+
+Example:
+
+Available Balance
+$1.00 USD
+
+[ Add Funds ]
+
+RIGHT inside the same main financial area:
+Due / Credit if applicable.
+
+Do not make huge text.
+Keep the current compact typography.
+
+The balance should be important through layout and spacing, not oversized font.
+
+==================================================
+4. SECOND FINANCIAL SECTION
+==================================================
+
+Below the balance row, create ONE larger card divided internally into 2–3 columns.
+
+Show:
+
+Total Credits
+Locked Balance
+Total Spent
+
+Do not create separate floating cards for every value.
+
+Use subtle separators inside one shared container.
+
+This should visually resemble a financial summary panel.
+
+==================================================
+5. ORDER STATUS
+==================================================
+
+Replace the current five small cards with a single "Order Status" section.
+
+Inside one card show:
+
+Total
+Completed
+Processing
+Pending
+Rejected
+
+Use compact columns or inline stat blocks.
+
+Example:
+
+Total        Completed      Processing      Pending      Rejected
+0            0              0               0            0
+
+Small semantic icons are fine.
+
+Do not create five separate large cards.
+
+==================================================
+6. ANNOUNCEMENTS
+==================================================
+
+Keep Announcements on the right side.
+
+Make the panel taller so it visually aligns with the financial + order sections.
+
+Show several reseller announcements in a compact list.
+
+Use:
+- subtle separators
+- readable text
+- optional real date only if available
+
+Do not render announcement content as large dark CMS banners.
+
+Add:
+View all announcements
+
+==================================================
+7. RECENT ORDERS
+==================================================
+
+Below financial/order sections on the left:
+
+Recent Orders
+
+When orders exist:
+use a compact table:
+
+Order ID
+Service
+Amount
+Status
+Date
+Action
+
+When empty:
+show a small professional empty state.
+
+Do not use a large empty white box.
+
+==================================================
+8. REMOVE REDUNDANT INFORMATION
+==================================================
+
+Do not repeat:
+
+Account Currency
+USD
+
+in multiple places.
+
+If the balance already displays:
+
+$1.00 USD
+
+the currency is already clear.
+
+Account currency can remain visible in Wallet/Profile, but the Dashboard does not need repetitive helper text everywhere.
+
+==================================================
+9. REMOVE THE LARGE WELCOME EMPHASIS
+==================================================
+
+Keep:
+
+Welcome back, Rabah
+
+but make it subtle and compact.
+
+It should not act as a hero section.
+
+No large marketing copy.
+
+==================================================
+10. VISUAL DENSITY
+==================================================
+
+Target the density of a mature operational panel.
+
+Use:
+- compact 12–14px body text
+- restrained headings
+- subtle borders
+- minimal shadows
+- small radius
+- efficient vertical spacing
+
+Do NOT:
+- enlarge typography
+- create huge cards
+- add gradients
+- add decorative illustrations
+- add excessive colored backgrounds
+- make it look AI-generated
+
+==================================================
+11. REFERENCE BEHAVIOR
+==================================================
+
+Use DHRU only as information hierarchy reference:
+
+- Balance prominent
+- Financial summary grouped
+- Order statistics grouped
+- Announcements immediately visible
+- Operational client-panel feeling
+
+Do NOT copy DHRU's old visual styling.
+
+==================================================
+12. RESPONSIVE
+==================================================
+
+Desktop:
+main panel + right announcements column.
+
+Tablet/mobile:
+stack:
+1. Balance
+2. Financial summary
+3. Order status
+4. Announcements
+5. Recent orders
+
+No horizontal overflow.
+
+==================================================
+13. PREVIEW ONLY
+==================================================
+
+Do not git commit.
+Do not git push.
+Do not deploy.
+
+Do not modify the shared Top Area/header again.
+
+Return only:
+1. dashboard layout changed
+2. financial hierarchy changed
+3. order status design
+4. announcements placement
+5. recent orders behavior
+6. files changed
