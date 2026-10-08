@@ -1,0 +1,105 @@
+BHRU — CLEAN COMMIT AND PUSH FOR RESELLER-CONTROLLED REGISTRATION CURRENCIES
+
+The reseller-controlled customer registration currency feature is complete.
+
+IMPORTANT GIT CONTEXT:
+
+The local Replit main branch previously diverged from origin/main.
+
+DO NOT blindly push the current local branch.
+DO NOT force-push.
+DO NOT rewrite Git history.
+DO NOT merge project memory commits into main.
+
+First fetch origin and verify the latest remote main.
+
+The last known production feature commit on origin/main is:
+
+b2cd0ab7020a74377a812714142e513c2b89d0b4
+Implement strict immutable client account currency
+
+Create a clean feature commit containing ONLY the reseller-controlled registration currency implementation on top of the current origin/main.
+
+Preserve the completed implementation, but exclude all project memory files.
+
+==================================================
+INCLUDE
+==================================================
+
+Include only the actual implementation/tests/docs required for this feature, including:
+
+- 023_customer_registration_currency_availability.sql
+- API currency availability logic
+- currency-money changes required by this feature
+- customer registration/onboarding currency behavior
+- reseller Currency Settings UI changes
+- focused strict account currency tests
+- relevant documentation update
+
+Expected implementation files include, where actually changed:
+
+artifacts/api-server/src/index.ts
+artifacts/api-server/src/lib/commerce/currencies.ts
+artifacts/api-server/src/lib/commerce/currency-money.ts
+artifacts/api-server/src/lib/customer-auth/profile.ts
+artifacts/api-server/src/lib/customer-auth/onboarding-ui.ts
+artifacts/bhru/src/pages/currencies.tsx
+lib/db/src/migrations/023_customer_registration_currency_availability.sql
+scripts/test-strict-account-currency.mjs
+docs/BHRU_CLIENT_WALLET_SERVICES.md
+
+==================================================
+EXCLUDE
+==================================================
+
+Do NOT include:
+
+- project memory files
+- .agents/*
+- attached_assets/*
+- pasted instructions
+- temporary/debug files
+- unrelated metadata
+- unrelated source changes
+
+Do not modify:
+ecommerce.tsx:416
+
+==================================================
+GIT SAFETY
+==================================================
+
+Because local main previously diverged:
+
+- fetch origin first
+- preserve the feature changes
+- integrate them cleanly on top of current origin/main
+- use a normal fast-forward push
+- no force push
+- no history rewrite
+
+If needed, use a clean temporary branch/worktree or equivalent safe Git workflow.
+
+Do not accidentally include the old local memory-boundary commits.
+
+==================================================
+NO DEPLOYMENT
+==================================================
+
+Do NOT deploy.
+Do NOT access VPS.
+Do NOT access Dokploy.
+Do NOT access production database.
+
+==================================================
+RETURN ONLY
+==================================================
+
+1. feature commit hash
+2. confirmation origin/main push succeeded
+3. confirmation push was fast-forward/non-forced
+4. files included in the feature commit
+5. confirmation 023_customer_registration_currency_availability.sql is included
+6. confirmation no memory/.agents/attached_assets files were included
+7. confirmation ecommerce.tsx:416 remains untouched
+8. final origin/main HEAD hash
