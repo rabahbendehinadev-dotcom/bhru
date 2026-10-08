@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ClientFinancialSummary } from './clientFinancialSummary';
 import type { PublicCustomerProfile } from './publicCustomerProfile';
 
 export type ResellerClient = PublicCustomerProfile & ({
@@ -15,5 +16,5 @@ export type ResellerClient = PublicCustomerProfile & ({
   lockedAmount?: string;
   /** @nullable */
   groupId?: string | null;
-  due: string;
+  financial: ClientFinancialSummary;
 });

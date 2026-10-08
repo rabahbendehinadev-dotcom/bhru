@@ -120,7 +120,7 @@ export default function ClientDetailPage({ id }: { id: string }) {
             <Row k="Location" v={[c.city, c.state, c.countryCode].filter(Boolean).join(', ')} /><Row k="Registered" v={when(c.createdAt)} /><Row k="Last login" v={when(c.lastLoginAt)} /></dl></Card>
           <Card className="p-3.5"><h2 className="mb-1 text-[13px] font-semibold">Summary</h2><dl>
             <Row k="Status" v={c.enabled ? 'Active' : 'Blocked'} /><Row k="Total orders" v={d.orderSummary.totalOrders} /><Row k="Retail orders" v={d.orderSummary.retailOrders} />
-            <Row k="Available balance" v={fmt(d, 'formattedAvailable', 'availableBalance')} /><Row k="Locked" v={fmt(d, 'formattedLocked', 'lockedAmount')} /><Row k="Due" v={fmt(d, 'formattedDue', 'due')} /></dl></Card></div>}
+            <Row k="Available balance" v={fmt(d, 'formattedAvailable', 'availableBalance')} /><Row k="Account currency" v={d.client.effectiveCurrency} /><Row k="Total spent" v={fmt(d, 'formattedTotalSpent', 'totalSpent')} /><Row k="Ledger credits" v={fmt(d, 'formattedLedgerCredits', 'ledgerCredits')} /><Row k="Ledger debits" v={fmt(d, 'formattedLedgerDebits', 'ledgerDebits')} />{BigInt(d.financial.lockedAmount) !== 0n && <Row k="Locked balance" v={fmt(d, 'formattedLocked', 'lockedAmount')} />}</dl></Card></div>}
         {tab === 'Financial' && <FinancialPanel id={id} d={d} />}
         {tab === 'Profile' && <><ProfileForm id={id} d={d} /><ClientGroupAssign id={id} d={d} /></>}
         {tab === 'Orders' && <ClientOrdersPanel id={id} d={d} />}

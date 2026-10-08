@@ -329,7 +329,7 @@ try {
     assert.equal(note.status,201);
     const d=await req(`/api/clients/${newClient.id}`,{cookie:ownerCookieA});
     assert.equal(d.status,200);assert.equal(d.json.notes[0].body,'Internal fixture note');
-    assert.equal(d.json.financial.availableBalance,'0');assert.equal(d.json.financial.lockedAmount,'0');assert.equal(d.json.financial.due,'0');
+    assert.equal(d.json.financial.availableBalance,'0');assert.equal(d.json.financial.lockedAmount,'0');assert.ok(!('due' in d.json.financial));
     assert.equal(d.json.financial.ledgerAvailable,true);assert.match(d.json.financial.formattedZero,/0\.00/);
     const publicAccount=await req('/site-a/customer/account',{cookie:customerCookie});
     assert.equal(publicAccount.status,200);assert.ok(publicAccount.text.includes('Updated Street'));

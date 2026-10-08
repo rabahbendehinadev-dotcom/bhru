@@ -247,6 +247,50 @@ export interface PublicCustomerProfile {
   termsAcceptedAt?: string | null;
 }
 
+export type ClientFinancialSummaryReportingVersion = typeof ClientFinancialSummaryReportingVersion[keyof typeof ClientFinancialSummaryReportingVersion];
+
+
+export const ClientFinancialSummaryReportingVersion = {
+  NUMBER_2: 2,
+} as const;
+
+/**
+ * Exact integer account-currency units (10^12); ledger totals include adjustments and refunds. Unsupported credit-facility figures are omitted.
+ */
+export interface ClientFinancialSummary {
+  reportingVersion: ClientFinancialSummaryReportingVersion;
+  /** Spendable prepaid wallet balance. */
+  availableBalance: string;
+  /** Preserved underlying field; show only when nonzero. */
+  lockedAmount: string;
+  /** Posted charges linked to completed service orders only. */
+  totalSpent: string;
+  /** All service-order debits minus exact order refunds. */
+  netServiceCharges: string;
+  /** All positive posted wallet movements. */
+  ledgerCredits: string;
+  /** All negative posted wallet movements. */
+  ledgerDebits: string;
+  /** Compatibility alias for ledgerCredits; not customer deposits. */
+  totalCredits: string;
+  /** Compatibility alias for ledgerDebits. */
+  totalDebits: string;
+  formattedAvailable: string;
+  formattedLocked: string;
+  formattedTotalSpent: string;
+  formattedNetServiceCharges: string;
+  formattedLedgerCredits: string;
+  formattedLedgerDebits: string;
+  formattedTotalCredits: string;
+  formattedTotalDebits: string;
+  formattedZero: string;
+  currency: string;
+  /** Immutable client account currency. */
+  accountCurrency: string;
+  accountingCurrency: string;
+  ledgerAvailable: boolean;
+}
+
 export type ResellerClient = PublicCustomerProfile & ({
   id: string;
   enabled: boolean;
@@ -255,7 +299,7 @@ export type ResellerClient = PublicCustomerProfile & ({
   lockedAmount?: string;
   /** @nullable */
   groupId?: string | null;
-  due: string;
+  financial: ClientFinancialSummary;
 });
 
 export interface ResellerClientList {
@@ -322,14 +366,6 @@ export interface ResellerClientProfileInput {
   postalCode: string | null;
 }
 
-export type ResellerClientDetailFinancial = {
-  availableBalance: string;
-  lockedAmount: string;
-  due: string;
-  formattedZero: string;
-  ledgerAvailable: boolean;
-};
-
 export type ResellerClientDetailOrderSummary = {
   totalOrders: number;
   retailOrders: number;
@@ -360,7 +396,7 @@ export interface ClientOrderSnapshot {
 export interface ResellerClientDetail {
   client: ResellerClient;
   options: CustomerRegistrationOptions;
-  financial: ResellerClientDetailFinancial;
+  financial: ClientFinancialSummary;
   orderSummary: ResellerClientDetailOrderSummary;
   orders: ClientOrderSnapshot[];
   activity: ResellerClientDetailActivityItem[];

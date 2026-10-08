@@ -2,7 +2,69 @@
 ## Financial semantics and client activity/audit baseline
 
 Date: 2026-10-08  
-Status: **proposed design only — not implemented or migration-approved**
+Status: **design approved; Slice 1 implemented in Replit Preview only. Remaining slices are not implemented; future migrations require separate approval.**
+
+### Implemented Slice 1 — truthful vocabulary and consistent reporting
+
+Implemented on 2026-10-08. This status applies only to Slice 1; the future-domain
+and additive-migration recommendations below are still design boundaries.
+
+- **Available Balance:** stored, spendable prepaid account-currency balance.
+- **Ledger Credits / Ledger Debits:** PostgreSQL exact sums of all posted credit /
+  debit magnitudes, including manual adjustments and refunds.
+- **Total Spent:** exact posted debit amounts referenced by **completed** service
+  orders, joined on subscriber, customer and immutable debit reference. Pending,
+  processing and rejected/refunded orders are excluded. Live catalog prices,
+  current FX rates and Retail orders are not used.
+- **Net Service Charges:** all service-order debits minus exact order refunds,
+  including open orders. Shown in reseller Financial, not duplicated throughout
+  the customer panel.
+- **Account Currency:** unchanged immutable client account currency.
+
+One batch-capable financial-summary path supplies customer Dashboard/Wallet/
+Statement, reseller client detail/wallet and client-list financial summaries.
+Wallet balance, ledger totals and completed charges are selected in one SQL
+statement/MVCC snapshot. Currency presentation configuration is read separately;
+there is no funding FX or second live wallet read within the calculation.
+`reportingVersion: 2` identifies the new completed-only `totalSpent` semantics.
+`totalCredits`/`totalDebits` and their formatting keys remain compatibility aliases
+for the new explicit ledger-credit/debit fields. The OpenAPI contract and generated
+clients document these meanings.
+
+Due/Credit and fabricated credit-facility fields are removed from summaries/APIs.
+Unused zero Locked Balance is hidden in customer Wallet/Statement and reseller
+Financial/Overview/client lists; raw locked fields/schema remain unchanged.
+Dashboard removes the unused Locked metric. Its wide DHRU-inspired main/sidebar
+grid is retained; Available Balance occupies the former Due/Credit gap. Order
+status, announcements, Top Area and navigation structure are unchanged.
+
+Customer Transactions is titled **Account Statement**, retaining its existing
+route. Rows show date/time, customer-visible description, credit/debit, amount,
+resulting balance, posted context and an order link/reference when available.
+It is explicitly not external payment history. Legacy manual descriptions that
+equal the internal reason are redacted in the customer read projection and search,
+while explicit separate customer notes and original immutable ledger rows remain
+intact. Internal reseller ledger views remain unchanged.
+
+Reseller Financial retains Add funds, Deduct and Adjustment, shows Account
+Currency, and explains completed spending versus net service charges. No new
+funding, payment, invoice, reservation, credit or authentication behavior exists.
+
+**Schema/migrations:** none added or modified; migration 025 is not required.
+No existing wallet balance, currency, order snapshot or ledger row is changed by
+summary reads. Atomic debit, refund, idempotency and tenant isolation are unchanged.
+
+**Validation:** all 16 dedicated finance SQL/HTTP groups passed. API TypeScript/build and frontend TypeScript passed; generated
+contract/library typecheck passed. The dedicated finance harness uses a disposable
+Unix-socket PostgreSQL cluster, not Preview/production databases. It exercises
+pending/processing/completed/rejected semantics, identical summaries across
+customer/reseller/list views, statement ledger totals, exact refunds, concurrent
+spending, rollback, idempotency, immutable history/currency, tenant isolation,
+Retail isolation, statement privacy/search and inline-JavaScript/CSP integrity.
+The older onboarding harness stopped at its pre-existing server-rendered profile
+address expectation after `/customer/account` became the Dashboard; no unrelated
+application change was made to satisfy that assertion. No browser/E2E suite,
+production access, push or deployment is part of this slice.
 
 ## A. Executive summary
 
@@ -55,7 +117,12 @@ This is source-level analysis. No database was queried, no balances were examine
 no runtime tests were run, and production/VPS/Dokploy were not accessed. Assertions
 about existing guards describe source, not a production-data certification.
 
-## B. Current BHRU financial model
+## B. Pre-Slice 1 BHRU financial model — audit baseline
+
+Sections B/C retain the original audit findings for traceability. The implemented
+Slice 1 status above identifies the reporting, vocabulary and privacy issues now
+resolved; later ledger-attribution/activity/credit recommendations remain future
+work.
 
 ### Canonical identity and boundaries
 
@@ -927,6 +994,7 @@ must not be smuggled into an audit-foundation implementation.
 ### Approval boundary and task completion
 
 Only `docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md` was authored for this task.
-No application files, schema, migrations or data were changed. No commit, push,
+Slice 1 changes application reporting/UI, contracts, focused tests and this
+specification only. No schema, migrations or existing data were changed. No commit, push,
 deployment, production access, VPS/Dokploy access, browser test or workflow restart
 was performed.

@@ -77,7 +77,7 @@ paths:
     get:
       operationId: getClientWallet
       responses:
-        '200': {description: Real USD-basis financial summary, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+        '200': {description: Consistent account-currency financial summary with completed-only spending, content: {application/json: {schema: {$ref: '#/components/schemas/ClientFinancialSummary'}}}}
     post:
       operationId: mutateClientWallet
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/WalletMutationInput'}}}}
@@ -1044,7 +1044,7 @@ components:
       allOf:
         - { $ref: "#/components/schemas/PublicCustomerProfile" }
         - type: object
-          required: [id, enabled, orderCount, availableBalance, due]
+          required: [id, enabled, orderCount, availableBalance, financial]
           properties:
             id: { type: string, format: uuid }
             enabled: { type: boolean }
@@ -1052,7 +1052,34 @@ components:
             availableBalance: { type: string }
             lockedAmount: {type: string}
             groupId: {type: [string, 'null'], format: uuid}
-            due: { type: string }
+            financial: { $ref: "#/components/schemas/ClientFinancialSummary" }
+    ClientFinancialSummary:
+      type: object
+      description: Exact integer account-currency units (10^12); ledger totals include adjustments and refunds. Unsupported credit-facility figures are omitted.
+      required: [reportingVersion, availableBalance, lockedAmount, totalSpent, netServiceCharges, ledgerCredits, ledgerDebits, totalCredits, totalDebits, formattedAvailable, formattedLocked, formattedTotalSpent, formattedNetServiceCharges, formattedLedgerCredits, formattedLedgerDebits, formattedTotalCredits, formattedTotalDebits, formattedZero, currency, accountCurrency, accountingCurrency, ledgerAvailable]
+      properties:
+        reportingVersion: { type: integer, enum: [2] }
+        availableBalance: { type: string, description: Spendable prepaid wallet balance. }
+        lockedAmount: { type: string, description: Preserved underlying field; show only when nonzero. }
+        totalSpent: { type: string, description: Posted charges linked to completed service orders only. }
+        netServiceCharges: { type: string, description: All service-order debits minus exact order refunds. }
+        ledgerCredits: { type: string, description: All positive posted wallet movements. }
+        ledgerDebits: { type: string, description: All negative posted wallet movements. }
+        totalCredits: { type: string, description: Compatibility alias for ledgerCredits; not customer deposits. }
+        totalDebits: { type: string, description: Compatibility alias for ledgerDebits. }
+        formattedAvailable: { type: string }
+        formattedLocked: { type: string }
+        formattedTotalSpent: { type: string }
+        formattedNetServiceCharges: { type: string }
+        formattedLedgerCredits: { type: string }
+        formattedLedgerDebits: { type: string }
+        formattedTotalCredits: { type: string }
+        formattedTotalDebits: { type: string }
+        formattedZero: { type: string }
+        currency: { type: string }
+        accountCurrency: { type: string, description: Immutable client account currency. }
+        accountingCurrency: { type: string }
+        ledgerAvailable: { type: boolean }
     ResellerClientList:
       type: object
       required: [data, page, hasMore]
@@ -1084,15 +1111,7 @@ components:
       properties:
         client: { $ref: "#/components/schemas/ResellerClient" }
         options: { $ref: "#/components/schemas/CustomerRegistrationOptions" }
-        financial:
-          type: object
-          required: [availableBalance, lockedAmount, due, formattedZero, ledgerAvailable]
-          properties:
-            availableBalance: { type: string }
-            lockedAmount: { type: string }
-            due: { type: string }
-            formattedZero: { type: string }
-            ledgerAvailable: { type: boolean }
+        financial: { $ref: "#/components/schemas/ClientFinancialSummary" }
         orderSummary:
           type: object
           required: [totalOrders, retailOrders]

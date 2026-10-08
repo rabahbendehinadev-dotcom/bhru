@@ -5,7 +5,7 @@ import type { CustomerProfile as Profile } from './types';
 
 export type PanelPage = 'dashboard' | 'services' | 'orders' | 'wallet' | 'transactions' | 'announcements' | 'profile' | 'security';
 export const PANEL_PAGES: PanelPage[] = ['dashboard', 'services', 'orders', 'wallet', 'transactions', 'announcements', 'profile', 'security'];
-const TITLES: Record<PanelPage, string> = { dashboard: 'Dashboard', services: 'Services', orders: 'My orders', wallet: 'Wallet', transactions: 'Transactions', announcements: 'Announcements', profile: 'Profile', security: 'Security' };
+const TITLES: Record<PanelPage, string> = { dashboard: 'Dashboard', services: 'Services', orders: 'My orders', wallet: 'Wallet', transactions: 'Account Statement', announcements: 'Announcements', profile: 'Profile', security: 'Security' };
 export const panelTitle = (p: PanelPage): string => TITLES[p];
 
 const localPath = (v: unknown): string | null => (typeof v === 'string' && /^\/(?!\/)[^\s"'<>\\]*$/.test(v) ? v : null);
@@ -54,8 +54,8 @@ export const PANEL_STYLES_V2 = `
 .pn-tbl{font-size:13px}.pn-tbl th{font-size:12px;font-weight:600;padding:8px 10px}.pn-tbl td{padding:9px 10px;vertical-align:middle}.pn-tbl a{font-weight:600}
 .pn-grid{gap:10px;margin:0 0 14px}.pn-msg{font-size:13px;padding:9px 12px}
 .pd{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.pd>*{min-width:0}
-@media(min-width:700px) and (max-width:1023px){.pd{grid-template-columns:repeat(2,minmax(0,1fr))}.pd>*{grid-column:1/-1}.pd>.pd-bal,.pd>.pd-due{grid-column:auto}}
-@media(min-width:1024px){.pn[data-page=dashboard]{width:min(92vw,1920px)}.pd{grid-template-columns:minmax(0,32.64fr) minmax(0,35.36fr) minmax(0,32fr);gap:12px;align-items:stretch}.pd>.pd-bal{grid-column:1;grid-row:1}.pd>.pd-due{grid-column:2;grid-row:1}.pd>.pd-grp,.pd>.pd-rec{grid-column:1/3}.pd>.pd-ann{grid-column:3;grid-row:1/span 3;align-self:stretch;display:flex;flex-direction:column;min-height:0}.pd>.pd-ann .pd-anl{flex:1 1 auto;min-height:0;max-height:clamp(380px,calc(100vh - 280px),720px)}}
+@media(min-width:700px) and (max-width:1023px){.pd{grid-template-columns:repeat(2,minmax(0,1fr))}.pd>*{grid-column:1/-1}}
+@media(min-width:1024px){.pn[data-page=dashboard]{width:min(92vw,1920px)}.pd{grid-template-columns:minmax(0,32.64fr) minmax(0,35.36fr) minmax(0,32fr);gap:12px;align-items:stretch}.pd>.pd-bal{grid-column:1/3;grid-row:1}.pd>.pd-grp,.pd>.pd-rec{grid-column:1/3}.pd>.pd-ann{grid-column:3;grid-row:1/span 3;align-self:stretch;display:flex;flex-direction:column;min-height:0}.pd>.pd-ann .pd-anl{flex:1 1 auto;min-height:0;max-height:clamp(380px,calc(100vh - 280px),720px)}}
 .pd-bal,.pd-due{display:flex;min-height:132px;flex-direction:column;align-items:flex-start;justify-content:space-between}.pd-due{border-left:3px solid var(--line)}.pd-c3 .pd-c{padding:6px 28px}.pd-c3 .pd-c:first-child{padding-left:0}.pd-ann{min-height:260px}
 .pd-bal{gap:12px;border-left:3px solid var(--accent)}
 .pd-bv{font-size:28px;font-weight:700;line-height:1.2;margin:2px 0 10px}.pd-dv{font-size:22px;font-weight:600;color:var(--muted);margin-top:2px}.pd-br{min-width:120px}
@@ -131,15 +131,14 @@ export const PANEL_SCRIPT = String.raw`(() => {
         ZERO(f.availableBalance) ? h('div', { class: 'pn-k', text: 'Balance is empty. Funds are added by your reseller.' }) : null,
         h('div', { class: 'pd-acts' }, [h('a', { class: 'pn-btn pd-btn', href: BASE + '/wallet#add-funds', text: 'Add Funds' }), h('a', { class: 'pn-btn alt pd-btn', href: BASE + '/services', text: 'Place New Order' })])]),
       ]);
-      const due = h('div', { class: 'pn-card pd-main pd-due' }, [h('div', { class: 'pd-br' }, [h('div', { class: 'pn-k', text: 'Due / Credit' }), h('div', { class: 'pd-dv', text: f.formattedDue == null ? '-' : String(f.formattedDue) })])]);
-      const met = h('div', { class: 'pn-card pd-main pd-grp' }, [h('h2', { text: 'Financial summary' }), h('div', { class: 'pd-cols pd-c3' }, [cell('Total credits', f.formattedTotalCredits, '<path d="M12 5v14M5 12h14"/>'), cell('Locked balance', f.formattedLocked, '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'), cell('Total spent', f.formattedTotalSpent, '<path d="M4 18l5-6 4 3 7-9"/>')])]);
+      const met = h('div', { class: 'pn-card pd-main pd-grp' }, [h('h2', { text: 'Financial summary' }), h('div', { class: 'pd-cols pd-c3' }, [cell('Ledger credits', f.formattedLedgerCredits, '<path d="M12 5v14M5 12h14"/>'), cell('Ledger debits', f.formattedLedgerDebits, '<path d="M5 12h14"/>'), cell('Total spent', f.formattedTotalSpent, '<path d="M4 18l5-6 4 3 7-9"/>')]), h('p', { class: 'pn-k', text: 'Total spent: completed service orders only. Ledger totals include refunds and manual adjustments.' })]);
       const stats = h('div', { class: 'pn-card pd-main pd-grp' }, [h('h2', { text: 'Order status' }), h('div', { class: 'pd-cols pd-c5' }, [cell('Total', s.totalOrders, '<path d="M7 3h8l4 4v14H7z"/><path d="M14 3v5h5"/>', 'info'), cell('Completed', s.completed, '<circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>', 'ok'), cell('Processing', s.processing, '<path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/>', 'info'), cell('Pending', s.pending, '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>', 'warn'), cell('Rejected', s.rejected, '<circle cx="12" cy="12" r="8"/><path d="M9 9l6 6M15 9l-6 6"/>', 'bad')])]);
       const an = (d.announcements || []).slice(0, 8);
       const ann = h('div', { class: 'pn-card pd-ann' }, [h('div', { class: 'pd-head' }, [h('h2', { text: 'Announcements' }), h('a', { href: BASE + '/announcements', text: 'View all announcements' })]), an.length ? h('div', { class: 'pd-anl' }, an.map(annNode)) : h('p', { class: 'pn-k', text: 'No announcements right now.' })]);
       const rec = h('div', { class: 'pn-card pd-main pd-rec' }, [h('div', { class: 'pd-head' }, [h('h2', { text: 'Recent orders' }), h('a', { href: BASE + '/orders', text: 'View all orders' })]),
         rows.length === 0 ? h('div', { class: 'pd-empty' }, [h('span', { text: 'No orders yet.' }), h('a', { class: 'pn-btn pd-btn', href: BASE + '/services', text: 'Browse Services' })]) :
         table(['Order ID', 'Service', 'Amount', 'Status', 'Date', 'Action'], rows.map(o => h('tr', {}, [h('td', { text: o.reference }), h('td', { text: o.serviceName }), h('td', { text: o.amountFormatted }), h('td', {}, [tag(o.status)]), h('td', { text: fmtDate(o.createdAt) }), h('td', {}, [h('a', { href: BASE + '/orders?id=' + encodeURIComponent(o.id), text: 'View' })])])))]);
-      mount(h('div', { class: 'pd' }, [bal, due, met, stats, ann, rec]));
+      mount(h('div', { class: 'pd' }, [bal, met, stats, ann, rec]));
     },
 
     async announcements() {
@@ -189,12 +188,14 @@ export const PANEL_SCRIPT = String.raw`(() => {
     const d = await call('/panel/statement' + qs({ page, search: p.search, type: p.type, direction: p.direction }));
     const f = d.financial || {}, rows = d.data || [], cur = f.accountCurrency || f.currency || '-';
     document.querySelectorAll('[data-acct-currency]').forEach(n => { n.textContent = cur; });
-    const kids = [h('div', { class: 'pn-grid' }, [stat('Account Currency', cur), stat('Available', f.formattedAvailable), stat('Locked', f.formattedLocked), stat('Total credits', f.formattedTotalCredits), stat('Total debits', f.formattedTotalDebits), stat('Total spent', f.formattedTotalSpent), stat('Due', f.formattedDue)])];
+    const metrics = [stat('Account Currency', cur), stat('Available Balance', f.formattedAvailable), stat('Ledger Credits', f.formattedLedgerCredits), stat('Ledger Debits', f.formattedLedgerDebits), stat('Total Spent', f.formattedTotalSpent)];
+    if (!ZERO(f.lockedAmount)) metrics.push(stat('Locked Balance', f.formattedLocked));
+    const kids = [h('div', { class: 'pn-grid' }, metrics), h('p', { class: 'pn-k', text: 'Account statement: posted wallet movements, not external payment history. Total Spent includes completed service orders only; ledger totals include refunds and manual adjustments.' })];
     if (wallet && ZERO(f.availableBalance)) kids.push(msg('Your balance is zero. Contact your reseller to add funds; this website has no online payment.', 'warn'));
     kids.push(filterBar([input('search', 'Search statement', p.search), input('type', 'Entry type', p.type), select('direction', 'Direction', [['', 'Credit and debit'], ['credit', 'Credit'], ['debit', 'Debit']], p.direction)], v => nav(path, v), 'Filter'));
-    kids.push(rows.length === 0 ? msg('No statement entries found.') : h('div', { class: 'pn-card' }, [table(['Date', 'Type', 'Amount', 'Balance after', 'Details'], rows.map(r => h('tr', {}, [h('td', { text: fmtDate(r.createdAt) }), h('td', { text: r.type }),
+    kids.push(rows.length === 0 ? msg('No statement entries found.') : h('div', { class: 'pn-card' }, [table(['Date / time', 'Description', 'Credit / debit', 'Amount', 'Balance after', 'Reference / context'], rows.map(r => h('tr', {}, [h('td', { text: fmtDate(r.createdAt) }), h('td', { text: r.description || '-' }), h('td', { text: r.direction }),
       h('td', { class: r.direction === 'credit' ? 'pos' : 'neg', text: (r.direction === 'credit' ? '+' : '-') + r.formattedAmount }), h('td', { text: r.formattedBalanceAfter }),
-      h('td', { text: [r.description, r.method, r.transactionReference].filter(Boolean).join(' / ') || '-' })])))]));
+      h('td', {}, [h('span', { text: 'Posted · ' + r.type }), r.referenceType === 'service_order' && r.referenceId ? h('a', { style: 'display:block', href: BASE + '/orders?id=' + encodeURIComponent(r.referenceId), text: 'Order ' + r.referenceId }) : null, h('span', { style: 'display:block', text: [r.method, r.transactionReference].filter(Boolean).join(' / ') })])])))]));
     kids.push(pager(page, d.hasMore, n => nav(path, Object.assign({}, p, { page: n }))));
     mount(...kids);
   }

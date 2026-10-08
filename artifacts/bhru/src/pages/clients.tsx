@@ -43,7 +43,7 @@ export function ClientTable({ embedded }: { embedded?: boolean }) {
       ) : (
         <div className="scroll-thin overflow-x-auto">
           <table className="tbl">
-            <thead><tr><th>Client / Email</th><th>Code</th><th>Username</th><th>WhatsApp</th><th>Location</th><th>Status</th><th>Currency</th><th>Orders</th><th>Balance</th><th>Locked</th><th>Due</th><th>Joined</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Client / Email</th><th>Code</th><th>Username</th><th>WhatsApp</th><th>Location</th><th>Status</th><th>Currency</th><th>Orders</th><th>Available balance</th>{rows.some(c => BigInt(c.financial.lockedAmount) !== 0n) && <th>Locked balance</th>}<th>Joined</th><th>Actions</th></tr></thead>
             <tbody>{rows.map((c) => (
               <tr key={c.id} data-testid={`row-client-${c.id}`}>
                 <td className="min-w-[180px]"><Link href={`/m/clients/${c.id}`} className="font-semibold hover:text-[hsl(var(--brand))]" data-testid={`link-client-${c.id}`}>{clientName(c)}</Link><div className="text-[11px] text-muted-foreground">{c.email}</div></td>
@@ -53,7 +53,7 @@ export function ClientTable({ embedded }: { embedded?: boolean }) {
                 <td>{[c.city, c.countryCode].filter(Boolean).join(', ') || '-'}</td>
                 <td><span className={`badge ${c.enabled ? 'bg-ok/20' : 'bg-danger/20'}`}>{c.enabled ? 'Active' : 'Blocked'}</span></td>
                 <td>{c.effectiveCurrency || c.preferredCurrency || '-'}</td>
-                <td>{c.orderCount}</td><td>{c.availableBalance}</td><td data-testid={`text-locked-${c.id}`}>{(c as unknown as { lockedAmount?: string }).lockedAmount ?? '0'}</td><td>{c.due}</td><td className="whitespace-nowrap">{day(c.createdAt)}</td>
+                <td>{c.orderCount}</td><td>{c.availableBalance}</td>{rows.some(row => BigInt(row.financial.lockedAmount) !== 0n) && <td data-testid={`text-locked-${c.id}`}>{c.financial.formattedLocked}</td>}<td className="whitespace-nowrap">{day(c.createdAt)}</td>
                 <td><Link href={`/m/clients/${c.id}`} className="whitespace-nowrap font-medium text-[hsl(var(--brand))]">View / Manage</Link></td>
               </tr>))}</tbody>
           </table>

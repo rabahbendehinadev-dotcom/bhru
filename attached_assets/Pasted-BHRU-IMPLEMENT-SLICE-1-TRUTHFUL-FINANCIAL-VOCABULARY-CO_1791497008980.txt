@@ -1,0 +1,320 @@
+BHRU — IMPLEMENT SLICE 1
+TRUTHFUL FINANCIAL VOCABULARY + CONSISTENT REPORTING
+
+Use the approved design from:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+Implement ONLY Slice 1.
+
+Do NOT implement:
+- credit facility
+- funding requests
+- payment transactions
+- invoices
+- 2FA
+- new customer API
+- client groups/pricing
+- service-access policies
+
+==================================================
+1. REMOVE FAKE DUE / CREDIT
+==================================================
+
+Current BHRU shows Due/Credit as 0 even though no real debt/credit facility exists.
+
+Remove/hide Due/Credit from:
+
+- customer Dashboard
+- customer Wallet
+- reseller client Financial view
+- any summary card where it is currently shown as a fake zero
+
+Do not replace it with another fake metric.
+
+Future credit facility will reintroduce it when real accounting exists.
+
+==================================================
+2. LOCKED BALANCE
+==================================================
+
+Current BHRU has no real reservation/locked-funds lifecycle.
+
+If Locked Balance is always unused/zero:
+
+hide it from normal customer/reseller financial summaries.
+
+Do NOT delete underlying fields/schema if they are already part of the wallet model.
+
+Do NOT create reservation behavior in this slice.
+
+==================================================
+3. DEFINE TOTAL SPENT CORRECTLY
+==================================================
+
+Current Total Spent includes charges for orders that may still be pending/processing.
+
+Change reporting semantics:
+
+Total Spent =
+sum of service charges for COMPLETED service orders only.
+
+Rejected/refunded orders must not contribute to Total Spent.
+
+Pending/processing orders must not contribute to completed Total Spent.
+
+Do not mutate historical ledger rows.
+
+Use authoritative order + financial snapshot data.
+
+==================================================
+4. ADD NET SERVICE CHARGES
+==================================================
+
+Where useful in reseller Financial reporting, support:
+
+Net Service Charges
+
+Meaning:
+gross service-order debits
+minus exact service-order refunds.
+
+This is different from Total Spent.
+
+Do not show this metric everywhere unless it improves clarity.
+
+==================================================
+5. TOTAL CREDITS / TOTAL DEBITS
+==================================================
+
+Audit and normalize current summary labels.
+
+Do not imply:
+
+Total Credits = money deposited by customer
+
+if refunds/manual adjustments are included.
+
+Preferred labels should reflect actual meaning.
+
+Examples:
+
+Ledger Credits
+Ledger Debits
+
+or another precise wording based on current ledger taxonomy.
+
+Do not change ledger history.
+
+==================================================
+6. CUSTOMER TRANSACTIONS PAGE
+==================================================
+
+Current Transactions page is actually the wallet statement.
+
+Rename/reframe it clearly as:
+
+Transactions / Statement
+
+or:
+
+Account Statement
+
+The page should show immutable wallet ledger movements.
+
+Do not present it as external payment history.
+
+For each row show, where available:
+
+- date/time
+- description
+- credit/debit
+- amount
+- resulting balance
+- reference/order
+- status/context
+
+Do not expose internal staff notes.
+
+==================================================
+7. WALLET PAGE
+==================================================
+
+Customer Wallet page should truthfully show:
+
+- Available Balance
+- Account Currency
+- Ledger Credits
+- Ledger Debits
+- Total Spent (completed service spending)
+
+Only show Locked if there is actual non-zero/reservation usage.
+
+Do not show Due/Credit.
+
+==================================================
+8. CUSTOMER DASHBOARD
+==================================================
+
+Dashboard financial section should show only truthful metrics.
+
+Recommended:
+
+Available Balance
+Total Spent
+Ledger Credits
+Ledger Debits
+
+Order status remains separate.
+
+Do not show:
+- Due
+- Credit Limit
+- Used Credit
+- Available Credit
+- fake Locked Balance
+
+unless actually implemented.
+
+Keep the wide DHRU-inspired layout currently being worked on.
+
+Do NOT redesign Top Area or navigation.
+
+==================================================
+9. RESELLER CLIENT FINANCIAL TAB
+==================================================
+
+Show truthful financial summary:
+
+- Available Balance
+- Account Currency
+- Ledger Credits
+- Ledger Debits
+- Total Spent
+- Net Service Charges if useful
+
+Keep:
+- Add funds
+- Deduct
+- Adjustment workflow
+
+Do not show fake credit facility fields.
+
+==================================================
+10. CONSISTENT REPORTING
+==================================================
+
+Create/reuse one authoritative financial-summary calculation path.
+
+Avoid different formulas between:
+
+- customer Dashboard
+- customer Wallet
+- reseller Client Financial
+- client list summaries
+- API responses
+
+The same client should not have different Total Spent / Credits / Debits depending on page.
+
+==================================================
+11. FINANCIAL SEMANTIC DEFINITIONS
+==================================================
+
+Use these meanings consistently:
+
+Available Balance:
+spendable prepaid wallet balance.
+
+Ledger Credits:
+all positive posted wallet ledger movements.
+
+Ledger Debits:
+all negative posted wallet ledger movements.
+
+Total Spent:
+completed service-order spending only.
+
+Net Service Charges:
+service-order charges minus service-order refunds.
+
+Account Currency:
+immutable client account currency.
+
+==================================================
+12. DATA SAFETY
+==================================================
+
+Do NOT:
+- edit/delete historical ledger entries
+- modify existing wallet balances
+- convert currencies
+- modify account currency
+- modify completed/rejected order snapshots
+- change refund logic
+- change atomic debit behavior
+- change idempotency
+- change tenant isolation
+
+==================================================
+13. SCHEMA
+==================================================
+
+Prefer no schema change if existing data allows correct derivation.
+
+If a migration is truly required:
+- explain why first
+- use migration 025
+- additive only
+
+Do not create migration unnecessarily.
+
+==================================================
+14. TESTS
+==================================================
+
+Focused checks only:
+
+- pending order does not count in Total Spent
+- processing order does not count in Total Spent
+- completed order counts in Total Spent
+- rejected/refunded order does not count in Total Spent
+- ledger credits/debits match statement
+- same summary returned across customer/reseller views
+- account currency remains unchanged
+- existing wallet debit/refund tests remain valid
+
+Do not run broad browser suites.
+
+==================================================
+15. DOCUMENTATION
+==================================================
+
+Update:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+with the implemented Slice 1 status.
+
+==================================================
+IMPORTANT
+==================================================
+
+PREVIEW ONLY.
+
+Do not git commit.
+Do not git push.
+Do not deploy.
+Do not access VPS/Dokploy/production.
+
+Return:
+
+1. fake metrics removed
+2. final financial definitions
+3. Total Spent calculation
+4. Ledger Credits/Debits calculation
+5. customer Dashboard changes
+6. Wallet/Statement changes
+7. reseller Financial changes
+8. schema/migration status
+9. focused checks
+10. files changed

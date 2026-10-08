@@ -175,7 +175,30 @@ export const GetClientWalletParams = zod.object({
   "id": zod.coerce.string().uuid()
 })
 
-export const GetClientWalletResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+export const GetClientWalletResponse = zod.object({
+  "reportingVersion": zod.literal(2),
+  "availableBalance": zod.string().describe('Spendable prepaid wallet balance.'),
+  "lockedAmount": zod.string().describe('Preserved underlying field; show only when nonzero.'),
+  "totalSpent": zod.string().describe('Posted charges linked to completed service orders only.'),
+  "netServiceCharges": zod.string().describe('All service-order debits minus exact order refunds.'),
+  "ledgerCredits": zod.string().describe('All positive posted wallet movements.'),
+  "ledgerDebits": zod.string().describe('All negative posted wallet movements.'),
+  "totalCredits": zod.string().describe('Compatibility alias for ledgerCredits; not customer deposits.'),
+  "totalDebits": zod.string().describe('Compatibility alias for ledgerDebits.'),
+  "formattedAvailable": zod.string(),
+  "formattedLocked": zod.string(),
+  "formattedTotalSpent": zod.string(),
+  "formattedNetServiceCharges": zod.string(),
+  "formattedLedgerCredits": zod.string(),
+  "formattedLedgerDebits": zod.string(),
+  "formattedTotalCredits": zod.string(),
+  "formattedTotalDebits": zod.string(),
+  "formattedZero": zod.string(),
+  "currency": zod.string(),
+  "accountCurrency": zod.string().describe('Immutable client account currency.'),
+  "accountingCurrency": zod.string(),
+  "ledgerAvailable": zod.boolean()
+}).describe('Exact integer account-currency units (10^12); ledger totals include adjustments and refunds. Unsupported credit-facility figures are omitted.')
 
 
 export const MutateClientWalletParams = zod.object({
@@ -453,7 +476,30 @@ export const ListResellerClientsResponse = zod.object({
   "availableBalance": zod.string(),
   "lockedAmount": zod.string().optional(),
   "groupId": zod.string().uuid().nullish(),
-  "due": zod.string()
+  "financial": zod.object({
+  "reportingVersion": zod.literal(2),
+  "availableBalance": zod.string().describe('Spendable prepaid wallet balance.'),
+  "lockedAmount": zod.string().describe('Preserved underlying field; show only when nonzero.'),
+  "totalSpent": zod.string().describe('Posted charges linked to completed service orders only.'),
+  "netServiceCharges": zod.string().describe('All service-order debits minus exact order refunds.'),
+  "ledgerCredits": zod.string().describe('All positive posted wallet movements.'),
+  "ledgerDebits": zod.string().describe('All negative posted wallet movements.'),
+  "totalCredits": zod.string().describe('Compatibility alias for ledgerCredits; not customer deposits.'),
+  "totalDebits": zod.string().describe('Compatibility alias for ledgerDebits.'),
+  "formattedAvailable": zod.string(),
+  "formattedLocked": zod.string(),
+  "formattedTotalSpent": zod.string(),
+  "formattedNetServiceCharges": zod.string(),
+  "formattedLedgerCredits": zod.string(),
+  "formattedLedgerDebits": zod.string(),
+  "formattedTotalCredits": zod.string(),
+  "formattedTotalDebits": zod.string(),
+  "formattedZero": zod.string(),
+  "currency": zod.string(),
+  "accountCurrency": zod.string().describe('Immutable client account currency.'),
+  "accountingCurrency": zod.string(),
+  "ledgerAvailable": zod.boolean()
+}).describe('Exact integer account-currency units (10^12); ledger totals include adjustments and refunds. Unsupported credit-facility figures are omitted.')
 }))),
   "page": zod.number().int(),
   "hasMore": zod.boolean()
@@ -492,7 +538,30 @@ export const GetResellerClientResponse = zod.object({
   "availableBalance": zod.string(),
   "lockedAmount": zod.string().optional(),
   "groupId": zod.string().uuid().nullish(),
-  "due": zod.string()
+  "financial": zod.object({
+  "reportingVersion": zod.literal(2),
+  "availableBalance": zod.string().describe('Spendable prepaid wallet balance.'),
+  "lockedAmount": zod.string().describe('Preserved underlying field; show only when nonzero.'),
+  "totalSpent": zod.string().describe('Posted charges linked to completed service orders only.'),
+  "netServiceCharges": zod.string().describe('All service-order debits minus exact order refunds.'),
+  "ledgerCredits": zod.string().describe('All positive posted wallet movements.'),
+  "ledgerDebits": zod.string().describe('All negative posted wallet movements.'),
+  "totalCredits": zod.string().describe('Compatibility alias for ledgerCredits; not customer deposits.'),
+  "totalDebits": zod.string().describe('Compatibility alias for ledgerDebits.'),
+  "formattedAvailable": zod.string(),
+  "formattedLocked": zod.string(),
+  "formattedTotalSpent": zod.string(),
+  "formattedNetServiceCharges": zod.string(),
+  "formattedLedgerCredits": zod.string(),
+  "formattedLedgerDebits": zod.string(),
+  "formattedTotalCredits": zod.string(),
+  "formattedTotalDebits": zod.string(),
+  "formattedZero": zod.string(),
+  "currency": zod.string(),
+  "accountCurrency": zod.string().describe('Immutable client account currency.'),
+  "accountingCurrency": zod.string(),
+  "ledgerAvailable": zod.boolean()
+}).describe('Exact integer account-currency units (10^12); ledger totals include adjustments and refunds. Unsupported credit-facility figures are omitted.')
 })),
   "options": zod.object({
   "defaultCurrency": zod.string().nullable(),
@@ -510,12 +579,29 @@ export const GetResellerClientResponse = zod.object({
 }))
 }),
   "financial": zod.object({
-  "availableBalance": zod.string(),
-  "lockedAmount": zod.string(),
-  "due": zod.string(),
+  "reportingVersion": zod.literal(2),
+  "availableBalance": zod.string().describe('Spendable prepaid wallet balance.'),
+  "lockedAmount": zod.string().describe('Preserved underlying field; show only when nonzero.'),
+  "totalSpent": zod.string().describe('Posted charges linked to completed service orders only.'),
+  "netServiceCharges": zod.string().describe('All service-order debits minus exact order refunds.'),
+  "ledgerCredits": zod.string().describe('All positive posted wallet movements.'),
+  "ledgerDebits": zod.string().describe('All negative posted wallet movements.'),
+  "totalCredits": zod.string().describe('Compatibility alias for ledgerCredits; not customer deposits.'),
+  "totalDebits": zod.string().describe('Compatibility alias for ledgerDebits.'),
+  "formattedAvailable": zod.string(),
+  "formattedLocked": zod.string(),
+  "formattedTotalSpent": zod.string(),
+  "formattedNetServiceCharges": zod.string(),
+  "formattedLedgerCredits": zod.string(),
+  "formattedLedgerDebits": zod.string(),
+  "formattedTotalCredits": zod.string(),
+  "formattedTotalDebits": zod.string(),
   "formattedZero": zod.string(),
+  "currency": zod.string(),
+  "accountCurrency": zod.string().describe('Immutable client account currency.'),
+  "accountingCurrency": zod.string(),
   "ledgerAvailable": zod.boolean()
-}),
+}).describe('Exact integer account-currency units (10^12); ledger totals include adjustments and refunds. Unsupported credit-facility figures are omitted.'),
   "orderSummary": zod.object({
   "totalOrders": zod.number().int(),
   "retailOrders": zod.number().int()

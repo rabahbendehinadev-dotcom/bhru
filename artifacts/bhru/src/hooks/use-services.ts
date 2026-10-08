@@ -29,8 +29,8 @@ export interface OrderDto {
 }
 export interface OrderSummary { totalOrders: number; pending: number; processing: number; completed: number; rejected: number; byType?: Record<string, number> }
 export interface Financial {
-  availableBalance: string; lockedAmount: string; totalSpent: string; totalCredits: string; totalDebits: string; due: string; creditLimit?: string;
-  formattedAvailable: string; formattedLocked: string; formattedTotalSpent: string; formattedTotalCredits: string; formattedTotalDebits: string; formattedDue: string; currency: string;
+  availableBalance: string; lockedAmount: string; totalSpent: string; totalCredits: string; totalDebits: string; ledgerCredits: string; ledgerDebits: string; netServiceCharges: string; reportingVersion: number;
+  formattedAvailable: string; formattedLocked: string; formattedTotalSpent: string; formattedTotalCredits: string; formattedTotalDebits: string; formattedLedgerCredits: string; formattedLedgerDebits: string; formattedNetServiceCharges: string; currency: string; accountCurrency: string;
 }
 export interface LedgerEntry {
   id: string; type: string; direction: 'credit' | 'debit'; amountUsdUnits: string | null; amountAccountUnits: string; formattedAmount: string; formattedBalanceAfter: string; currency: string; description?: string | null;

@@ -50,21 +50,50 @@ export function accountPrice(usd:string|bigint,c:StoreCurrency) {
   return amount;
 }
 export async function financialSummary(sub:string,id:string,db:PoolClient) {
-  const wallet=await walletRow(sub,id,db), currency=await displayCurrency(sub,id,db);
-  const sums=(await db.query(`SELECT
-    coalesce(sum(amount_account_units) FILTER(WHERE direction='credit'),0)::text credits,
-    coalesce(sum(amount_account_units) FILTER(WHERE direction='debit'),0)::text debits,
-    coalesce(sum(CASE WHEN type='order_debit' THEN amount_account_units WHEN type='order_refund' THEN -amount_account_units ELSE 0 END),0)::text spent
-    FROM customer_wallet_ledger WHERE subscriber_id=$1 AND customer_id=$2`,[sub,id])).rows[0];
-  return {
+  const summaries=await financialSummaries(sub,[id],db);
+  const result=summaries.get(id);
+  if(!result)throw new HttpError(503,'Wallet is not initialized. Apply the wallet migration.');
+  return result;
+}
+/** One SQL snapshot for wallet, ledger totals and completed-order charges.
+ * Batch support lets client lists use exactly the same reporting path without N+1 queries.
+ * No ledger/balance writes, live service prices, FX or floating-point arithmetic.
+ */
+export async function financialSummaries(sub:string,ids:string[],db:PoolClient) {
+  const configured=await currencies(sub,db);
+  const rows=(await db.query(`SELECT w.*,
+    coalesce(l.credits,0)::text credits,coalesce(l.debits,0)::text debits,
+    coalesce(l.net_charges,0)::text net_charges,coalesce(o.spent,0)::text spent
+    FROM customer_wallets w
+    LEFT JOIN LATERAL (
+      SELECT sum(amount_account_units) FILTER(WHERE direction='credit') credits,
+        sum(amount_account_units) FILTER(WHERE direction='debit') debits,
+        sum(CASE WHEN type='order_debit' THEN amount_account_units WHEN type='order_refund' THEN -amount_account_units ELSE 0 END) net_charges
+      FROM customer_wallet_ledger WHERE subscriber_id=w.subscriber_id AND customer_id=w.customer_id
+    ) l ON true
+    LEFT JOIN LATERAL (
+      SELECT sum(d.amount_account_units) spent FROM service_orders s
+      JOIN customer_wallet_ledger d ON d.subscriber_id=s.subscriber_id AND d.customer_id=s.customer_id
+        AND d.id=s.wallet_debit_reference AND d.type='order_debit' AND d.direction='debit'
+      WHERE s.subscriber_id=w.subscriber_id AND s.customer_id=w.customer_id AND s.status='completed'
+    ) o ON true
+    WHERE w.subscriber_id=$1 AND w.customer_id=ANY($2::uuid[])`,[sub,ids])).rows;
+  return new Map(rows.map(wallet=>{
+    const currency=walletCurrency(configured,wallet.accounting_currency);
+    const sums=wallet;
+    return [String(wallet.customer_id),{
     availableBalance:String(wallet.available_balance),lockedAmount:String(wallet.locked_balance),
-    totalSpent:sums.spent,totalCredits:sums.credits,totalDebits:sums.debits,due:'0',creditLimit:'0',
+    reportingVersion:2,totalSpent:sums.spent,netServiceCharges:sums.net_charges,
+    ledgerCredits:sums.credits,ledgerDebits:sums.debits,totalCredits:sums.credits,totalDebits:sums.debits,
     formattedAvailable:money(wallet.available_balance,currency),formattedLocked:money(wallet.locked_balance,currency),
     formattedTotalSpent:money(sums.spent,currency),formattedTotalCredits:money(sums.credits,currency),
-    formattedTotalDebits:money(sums.debits,currency),formattedDue:money('0',currency),
+    formattedTotalDebits:money(sums.debits,currency),
+    formattedLedgerCredits:money(sums.credits,currency),formattedLedgerDebits:money(sums.debits,currency),
+    formattedNetServiceCharges:money(sums.net_charges,currency),
     formattedZero:money('0',currency),
     currency:currency.code,accountCurrency:currency.code,accountingCurrency:wallet.accounting_currency,ledgerAvailable:true,
-  };
+    }] as const;
+  }));
 }
 export async function audit(sub:string,id:string,action:string,actor:string|null,db:PoolClient) {
   await db.query('INSERT INTO public_customer_activity(id,subscriber_id,customer_id,action,actor_id) VALUES($1,$2,$3,$4,$5)',
@@ -100,11 +129,16 @@ export async function appendMovement(sub:string,id:string,m:Movement,db:PoolClie
 }
 export function ledgerView(row:Record<string,any>,internal=false) {
   const c=row.account_currency_snapshot as StoreCurrency;
+  // Older manual entries used the internal reason as a fallback description.
+  // Redact that fallback in the customer projection; never rewrite ledger history.
+  const manualLabels:Record<string,string>={admin_credit:'Reseller credit',admin_debit:'Reseller deduction',adjustment:'Wallet adjustment'};
+  const description=!internal&&manualLabels[row.type]&&row.description===String(row.internal_note??'').split('\n')[0]
+    ?manualLabels[row.type]:row.description;
   return {
     id:row.id,type:row.type,direction:row.direction,amountUsdUnits:row.amount_usd_units==null?null:String(row.amount_usd_units),
     amountAccountUnits:String(row.amount_account_units),
     formattedAmount:money(row.amount_account_units,c),formattedBalanceAfter:money(row.balance_after,c),currency:c.code,
-    description:row.description,referenceType:row.reference_type,referenceId:row.reference_id,
+    description,referenceType:row.reference_type,referenceId:row.reference_id,
     createdAt:row.created_at,method:row.method,transactionReference:row.transaction_reference,
     ...(internal?{internalNote:row.internal_note,createdByType:row.created_by_type,createdById:row.created_by_id}:{}),
   };
@@ -114,10 +148,18 @@ export const statementQuery=z.object({
   direction:z.enum(['credit','debit']).optional(),
   type:z.enum(['admin_credit','admin_debit','adjustment','order_debit','order_refund']).optional(),
 }).strict();
+// Customer search must use the same redacted description as the visible row,
+// not provide an oracle for legacy internal reasons copied into description.
+const publicLedgerDescription=`CASE
+  WHEN type IN ('admin_credit','admin_debit','adjustment')
+    AND description=split_part(coalesce(internal_note,''),chr(10),1)
+  THEN CASE type WHEN 'admin_credit' THEN 'Reseller credit'
+    WHEN 'admin_debit' THEN 'Reseller deduction' ELSE 'Wallet adjustment' END
+  ELSE description END`;
 export async function statement(sub:string,id:string,raw:unknown,db:PoolClient,internal=false) {
   const q=statementQuery.parse(raw), search=q.search?`%${q.search.replace(/[\\%_]/g,'\\$&')}%`:null;
   const rows=(await db.query(`SELECT * FROM customer_wallet_ledger WHERE subscriber_id=$1 AND customer_id=$2
-    AND ($3::text IS NULL OR description ILIKE $3 OR transaction_reference ILIKE $3 OR reference_id::text ILIKE $3)
+    AND ($3::text IS NULL OR (${internal?'description':publicLedgerDescription}) ILIKE $3 OR transaction_reference ILIKE $3 OR reference_id::text ILIKE $3)
     AND ($4::text IS NULL OR direction=$4) AND($5::text IS NULL OR type=$5)
     ORDER BY created_at DESC,id LIMIT 31 OFFSET $6`,[sub,id,search,q.direction??null,q.type??null,(q.page-1)*30])).rows;
   return {data:rows.slice(0,30).map(r=>ledgerView(r,internal)),page:q.page,hasMore:rows.length>30,financial:await financialSummary(sub,id,db)};

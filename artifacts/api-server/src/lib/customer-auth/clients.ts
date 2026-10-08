@@ -1,11 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { PoolClient } from '@workspace/db';
 import { HttpError } from '../auth';
-import { currencies } from '../commerce/currencies';
-import { formatCurrencyMinor, formatCurrencyPresentation, parseNumberFormat, type StoreCurrency } from '../commerce/currency-money';
+import { formatCurrencyPresentation, parseNumberFormat } from '../commerce/currency-money';
 import { customerProfile, type CustomerIdentity } from './types';
 import { CUSTOMER_PROFILE_SELECT, normalizePhone, profileEditInput, registrationOptions, validatePreferences } from './profile';
-import { financialSummary, money, walletCurrency } from '../client-finance/wallet';
+import { financialSummary, financialSummaries } from '../client-finance/wallet';
 import { orderSummary } from '../client-finance/orders';
 
 type ClientRow = CustomerIdentity & { enabled: boolean; orderCount: number };
@@ -20,16 +19,11 @@ export async function ownedClient(subscriber: string, id: string, db: PoolClient
   if (!row) throw new HttpError(404, 'Client not found.');
   return row;
 }
-function effectiveCurrency(row: CustomerIdentity, configured: StoreCurrency[]) {
-  return walletCurrency(configured,row.preferredCurrency);
-}
-function clientView(row: ClientRow, configured: StoreCurrency[]) {
-  const currency = effectiveCurrency(row,configured);
-  if(!currency)throw new HttpError(503,'No enabled client currency is configured.');
+function clientView(row: ClientRow, financial: Awaited<ReturnType<typeof financialSummary>>) {
   const wallet=row as ClientRow & {walletAvailable:string;walletLocked:string;groupId:string|null};
   return {...customerProfile(row),id:row.id,enabled:row.enabled,orderCount:row.orderCount,
-    groupId:wallet.groupId,effectiveCurrency:currency.code,availableBalance:money(wallet.walletAvailable,currency),
-    lockedAmount:money(wallet.walletLocked,currency),due:money('0',currency)};
+    groupId:wallet.groupId,effectiveCurrency:financial.accountCurrency,availableBalance:financial.formattedAvailable,
+    lockedAmount:financial.formattedLocked,financial};
 }
 export async function listClients(subscriber: string, query: {page:number;search?:string;status?:string}, db: PoolClient) {
   const search = query.search ? `%${query.search.replace(/[\\%_]/g,'\\$&')}%` : null;
@@ -46,8 +40,13 @@ export async function listClients(subscriber: string, query: {page:number;search
       AND ($3::boolean IS NULL OR c.enabled=$3)
     ORDER BY c.created_at DESC,c.id LIMIT $4 OFFSET $5`,
     [subscriber,search,query.status ? query.status==='active' : null,CLIENT_PAGE_SIZE+1,(query.page-1)*CLIENT_PAGE_SIZE,phoneSearch])).rows as ClientRow[];
-  const configured = await currencies(subscriber,db);
-  return {data:rows.slice(0,CLIENT_PAGE_SIZE).map(row => clientView(row,configured)),page:query.page,hasMore:rows.length>CLIENT_PAGE_SIZE};
+  const visible=rows.slice(0,CLIENT_PAGE_SIZE);
+  const summaries=await financialSummaries(subscriber,visible.map(row=>row.id),db);
+  return {data:visible.map(row => {
+    const financial=summaries.get(row.id);
+    if(!financial)throw new HttpError(503,'Wallet is not initialized.');
+    return clientView(row,financial);
+  }),page:query.page,hasMore:rows.length>CLIENT_PAGE_SIZE};
 }
 export function historicalClientOrder(row: Record<string, any>) {
   const snapshot = row.currency_snapshot, c = snapshot?.currency ?? snapshot ?? {};
@@ -61,7 +60,7 @@ export function historicalClientOrder(row: Record<string, any>) {
   };
 }
 export async function clientDetail(subscriber: string, id: string, db: PoolClient) {
-  const row = await ownedClient(subscriber,id,db), configured = await currencies(subscriber,db);
+  const row = await ownedClient(subscriber,id,db), financial = await financialSummary(subscriber,id,db);
   const orders = (await db.query(`SELECT id,reference,status,created_at,total_minor::text,currency,currency_snapshot
     FROM store_orders WHERE subscriber_id=$1 AND customer_id=$2 ORDER BY created_at DESC,id LIMIT 30`,[subscriber,id])).rows;
   const activity = (await db.query(`SELECT id,action,created_at AS "createdAt" FROM public_customer_activity
@@ -69,8 +68,8 @@ export async function clientDetail(subscriber: string, id: string, db: PoolClien
   const notes = (await db.query(`SELECT id,body,created_at AS "createdAt" FROM reseller_client_notes
     WHERE subscriber_id=$1 AND customer_id=$2 ORDER BY created_at DESC,id LIMIT 50`,[subscriber,id])).rows;
   return {
-    client:clientView(row,configured),options:await registrationOptions(subscriber,db),
-    financial:await financialSummary(subscriber,id,db),
+    client:clientView(row,financial),options:await registrationOptions(subscriber,db),
+    financial,
     orderSummary:{totalOrders:row.orderCount,retailOrders:row.orderCount-(await orderSummary(subscriber,db,id)).totalOrders,
       serviceOrders:await orderSummary(subscriber,db,id)},
     orders:orders.map(historicalClientOrder),activity,notes,

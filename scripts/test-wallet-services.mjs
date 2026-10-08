@@ -19,6 +19,36 @@ export async function testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,
     send(url+'/orders',{serviceId,expectedPriceUsdUnits:priceUsdUnits,idempotencyKey:key,inputs,currency},cookie);
   const service=(name,serviceType,priceUsd='10.00',active=true,groupId=null,requirements=[])=>
     send('/api/manual-services',{name,serviceType,priceUsd,active,groupId,displayOrder:0,requirements,description:'Manual fulfillment',estimatedTime:'1 business day'});
+  const reporting=async()=>{
+    const ownerSummary=(await req(client+'/wallet',{cookie:ownerCookieA})).json;
+    const dashboard=(await req(url,{cookie:customer})).json.financial;
+    const stmt=(await req(url+'/statement',{cookie:customer})).json;
+    const detail=(await req(client,{cookie:ownerCookieA})).json;
+    const list=(await req('/api/clients?search='+encodeURIComponent(newClient.email),{cookie:ownerCookieA})).json.data.find(r=>r.id===newClient.id);
+    for(const summary of [dashboard,stmt.financial,detail.financial,detail.client.financial,list.financial])
+      assert.deepEqual(summary,ownerSummary);
+    assert.equal(list.availableBalance,ownerSummary.formattedAvailable);
+    assert.equal(ownerSummary.reportingVersion,2);
+    for(const field of ['due','formattedDue','creditLimit','usedCredit','availableCredit'])
+      assert.ok(!(field in ownerSummary),field+' must not fabricate unsupported credit accounting');
+    assert.equal(ownerSummary.accountCurrency,'USD');
+    let credits=0n,debits=0n,page=1;
+    while(true){
+      const statement=(await req(url+'/statement?page='+page,{cookie:customer})).json;
+      for(const entry of statement.data){
+        assert.ok(!('internalNote' in entry)&&!('createdById' in entry));
+        if(entry.direction==='credit')credits+=BigInt(entry.amountAccountUnits);
+        else debits+=BigInt(entry.amountAccountUnits);
+      }
+      if(!statement.hasMore)break;
+      page++;
+    }
+    assert.equal(ownerSummary.ledgerCredits,credits.toString());
+    assert.equal(ownerSummary.ledgerDebits,debits.toString());
+    assert.equal(ownerSummary.totalCredits,ownerSummary.ledgerCredits);
+    assert.equal(ownerSummary.totalDebits,ownerSummary.ledgerDebits);
+    return ownerSummary;
+  };
   let group,svc;
   await check('migration 021 backfills existing accounts; new registrations initialize zero with no artificial ledger entry',async()=>{
     const accounts=(await pool.query(`SELECT a.id,w.available_balance::text b,w.locked_balance::text l
@@ -103,6 +133,9 @@ export async function testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,
     assert.ok((await req('/api/service-orders?customerId='+newClient.id,{cookie:ownerCookieA})).json.data.some(r=>r.id===firstOrder.id));
     assert.ok((await req(url+'/orders',{cookie:customer})).json.data.some(r=>r.id===firstOrder.id));
     assert.equal((await req(url+'/orders/'+firstOrder.id,{cookie:customer})).json.id,firstOrder.id);
+    const summary=await reporting();
+    assert.equal(summary.totalSpent,'0','pending charges are not completed spending');
+    assert.equal(summary.netServiceCharges,'12340000000000');
   });
   await check('concurrent orders cannot double-spend the same 37.66 balance',async()=>{
     const server=(await req('/api/manual-services?serviceType=server',{cookie:ownerCookieA})).json.data[0];
@@ -125,6 +158,9 @@ export async function testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,
     assert.equal((await send('/api/service-orders/'+firstOrder.id,{status:'rejected',reason:'Too late'},ownerCookieA,'PUT')).status,409);
     const proc=await send('/api/service-orders/'+won.id,{status:'processing'},ownerCookieA,'PUT');
     assert.equal(proc.status,200,proc.text);
+    const processingSummary=await reporting();
+    assert.equal(processingSummary.totalSpent,'12340000000000','only completed original order contributes');
+    assert.equal(processingSummary.netServiceCharges,'42340000000000','processing charges remain net service charges');
     const denied=await send('/api/service-orders/'+won.id,{status:'processing'},ownerCookieB,'PUT');
     assert.equal(denied.status,404);
     const rejected=await send('/api/service-orders/'+won.id,{status:'rejected',reason:'Cannot fulfill'},ownerCookieA,'PUT');
@@ -133,6 +169,10 @@ export async function testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,
     assert.equal((await send('/api/service-orders/'+won.id,{status:'rejected',reason:'Cannot fulfill'},ownerCookieA,'PUT')).status,200);
     assert.equal(await scalar('SELECT count(*)::int value FROM customer_wallet_ledger WHERE reference_id=$1 AND type=$2',[won.id,'order_refund']),'1');
     assert.equal((await req(client+'/wallet',{cookie:ownerCookieA})).json.totalSpent,'12340000000000');
+    const summary=await reporting();
+    assert.equal(summary.totalSpent,'12340000000000','rejected/refunded order contributes no completed spending');
+    assert.equal(summary.netServiceCharges,'12340000000000');
+    assert.equal(summary.ledgerCredits,'80000000000000','credits include the exact 30 refund, not deposits only');
   });
   await check('DB rejects direct wallet mutation and ledger edits even when owner API is bypassed',async()=>{
     await assert.rejects(pool.query('UPDATE customer_wallets SET available_balance=0 WHERE subscriber_id=$1 AND customer_id=$2',[sidA,newClient.id]),/Wallet balances change only/);

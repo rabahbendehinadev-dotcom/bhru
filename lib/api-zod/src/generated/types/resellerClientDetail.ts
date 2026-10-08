@@ -5,18 +5,18 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ClientFinancialSummary } from './clientFinancialSummary';
 import type { ClientOrderSnapshot } from './clientOrderSnapshot';
 import type { CustomerRegistrationOptions } from './customerRegistrationOptions';
 import type { ResellerClient } from './resellerClient';
 import type { ResellerClientDetailActivityItem } from './resellerClientDetailActivityItem';
-import type { ResellerClientDetailFinancial } from './resellerClientDetailFinancial';
 import type { ResellerClientDetailNotesItem } from './resellerClientDetailNotesItem';
 import type { ResellerClientDetailOrderSummary } from './resellerClientDetailOrderSummary';
 
 export interface ResellerClientDetail {
   client: ResellerClient;
   options: CustomerRegistrationOptions;
-  financial: ResellerClientDetailFinancial;
+  financial: ClientFinancialSummary;
   orderSummary: ResellerClientDetailOrderSummary;
   orders: ClientOrderSnapshot[];
   activity: ResellerClientDetailActivityItem[];

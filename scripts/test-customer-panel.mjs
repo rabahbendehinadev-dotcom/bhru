@@ -21,7 +21,10 @@ export async function testCustomerPanel({req,pool,check,sidA,sidB,ownerCookieA,o
     const source=await readFile(new URL('../artifacts/api-server/src/lib/customer-auth/panel-ui.ts',import.meta.url),'utf8');
     const script=source.split('export const PANEL_SCRIPT = String.raw`')[1].split('`;')[0];
     new Script(script);
-    assert.match(source,/Place New Order/);assert.match(source,/Total credits \/ Added funds/i);
+    assert.match(source,/Place New Order/);assert.match(source,/Ledger credits/i);
+    assert.match(source,/Ledger debits/i);assert.match(source,/Account Statement/);
+    assert.ok(!source.includes('Due / Credit')&&!source.includes('formattedDue'));
+    assert.match(source,/if \(!ZERO\(f\.lockedAmount\)\)/);
   });
   await check('custom-host panel routes and post-login destination stay on verified host; unknown/foreign hosts do not resolve',async()=>{
     const host='shop-a.example.com';

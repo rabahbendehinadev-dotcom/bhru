@@ -24,6 +24,7 @@ import type {
   AdminCredentialsInput,
   AdminSummary,
   AuthEntry,
+  ClientFinancialSummary,
   ClientGroupAssignment,
   CommerceAccess,
   CommerceAsset,
@@ -905,9 +906,9 @@ export const getGetClientWalletUrl = (id: string,) => {
   return `/api/clients/${id}/wallet`
 }
 
-export const getClientWallet = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<FoundationResponse> => {
+export const getClientWallet = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ClientFinancialSummary> => {
 
-  return customFetch<FoundationResponse>(getGetClientWalletUrl(id),
+  return customFetch<ClientFinancialSummary>(getGetClientWalletUrl(id),
   {
     ...options,
     method: 'GET'
