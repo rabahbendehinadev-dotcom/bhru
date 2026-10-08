@@ -1,0 +1,91 @@
+BHRU — SMALL CUSTOMER DASHBOARD POLISH ONLY
+
+The current dashboard structure is now good.
+
+Do NOT redesign it again.
+
+Make ONLY these three small visual adjustments.
+
+==================================================
+1. ANNOUNCEMENTS HEIGHT
+==================================================
+
+The Announcements panel should NOT keep a large fixed empty height when there are only a few announcements.
+
+Use natural/auto height.
+
+If announcements become numerous, use:
+
+- max-height
+- internal vertical scroll
+
+Do not force a tall empty box.
+
+Keep the current right-column placement.
+
+==================================================
+2. BALANCE HIERARCHY
+==================================================
+
+Keep Available Balance as the main financial focus.
+
+Make Due / Credit slightly more visually secondary.
+
+Do NOT remove it.
+
+Do NOT enlarge Available Balance typography.
+
+Use hierarchy through:
+- spacing
+- muted label/value treatment
+- subtle separator
+
+Available Balance should clearly remain the first thing the customer notices.
+
+==================================================
+3. DESKTOP CONTENT WIDTH
+==================================================
+
+Slightly increase the authenticated customer dashboard maximum width on large desktop screens.
+
+Target approximately:
+
+1280px–1320px max-width
+
+Keep responsive behavior intact.
+
+Do not stretch content edge-to-edge.
+
+The goal is only to reduce excessive unused side space on wide screens.
+
+==================================================
+IMPORTANT
+==================================================
+
+Do NOT change:
+
+- Top Area
+- partner logo strip
+- promo tickers
+- authenticated navigation
+- typography scale
+- card structure
+- financial logic
+- order logic
+- announcements data
+- routes
+- mobile behavior
+
+Do not add new cards or new features.
+
+PREVIEW ONLY.
+
+Do not git commit.
+Do not git push.
+Do not deploy.
+
+Return:
+1. announcements sizing change
+2. balance hierarchy adjustment
+3. final desktop max-width
+4. files changed

@@ -17,6 +17,8 @@ product experience without removing the public marketing website, and explicitly
 corrected the visual brief to require compact production-SaaS proportions.
 The user further rejected fragmented equal-card analytics styling in favor of
 a grouped financial summary and order-status panel.
+The user confirmed the grouped Dashboard structure is good and requested polish
+only, not another redesign.
 
 **How to apply:** Preserve the separate customer identity, existing sessions,
 account-currency finances and reseller-origin navigation when extending the panel.
