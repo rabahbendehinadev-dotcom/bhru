@@ -1,0 +1,864 @@
+BHRU — PROFESSIONAL CLIENT PANEL + WALLET / CREDIT SYSTEM FOUNDATION
+
+This is a continuation of the completed Public Customer Onboarding + Reseller Client Management implementation.
+
+DO NOT start over.
+DO NOT delete or rewrite the existing customer onboarding implementation.
+DO NOT push or deploy.
+
+The customer/client side is the most important part of BHRU.
+
+We now need to evolve it into a professional server-panel client experience inspired by DHRU's business model, but using a cleaner modern architecture.
+
+==================================================
+BUSINESS MODEL
+==================================================
+
+A BHRU reseller operates a server/panel.
+
+Public customer flow must become:
+
+REGISTER
+→ LOGIN
+→ VIEW SERVICES
+→ CHECK BALANCE
+→ RESELLER FUNDS CUSTOMER
+→ CUSTOMER PLACES ORDER
+→ BALANCE IS DEDUCTED
+→ ORDER IS PROCESSED
+→ IF REFUNDABLE FAILURE/REJECTION OCCURS, CREDIT IS RESTORED
+→ ALL MONEY MOVEMENTS ARE AUDITABLE
+
+For server-type services, the customer must NOT be able to purchase without sufficient wallet balance.
+
+This applies conceptually to:
+- IMEI services
+- Server services
+- File services
+- Remote services
+- future API-imported services
+
+Retail / E-Commerce guest checkout must remain separate unless explicitly changed later.
+
+==================================================
+REFERENCE FROM DHRU DATABASE
+==================================================
+
+DHRU uses a canonical user/client account as the center of the system.
+
+Its user model contains concepts such as:
+- credit_left
+- credit_used
+- credit_inprocess
+- sell_credit_limit
+- client_group
+- default_currency
+- status
+- reseller ownership
+
+DHRU also keeps financial history separately through:
+- user statement / CR / DR entries
+- transactions
+- invoices
+
+Orders reference the same user/client identity.
+
+Use this business concept as reference.
+
+DO NOT copy DHRU's legacy schema literally.
+
+BHRU must implement a cleaner PostgreSQL architecture.
+
+==================================================
+1. CANONICAL CLIENT
+==================================================
+
+The existing public customer account remains the canonical reseller client.
+
+Do NOT create another client identity.
+
+Each client belongs to exactly one subscriber/reseller.
+
+Existing Public Customer Auth Phase 1 and onboarding data must remain compatible.
+
+Core identity must include:
+
+- id
+- subscriber_id
+- client_code
+- username
+- email
+- password hash
+- first_name
+- last_name
+- WhatsApp/mobile
+- status
+- preferred language
+- preferred currency
+- created_at
+- last_login_at
+
+Profile/billing fields from the current onboarding work must remain.
+
+==================================================
+2. PROFESSIONAL CLIENT DASHBOARD
+==================================================
+
+Build/prepare the customer-facing account area as a real client panel.
+
+Customer dashboard should show:
+
+- Available Balance
+- Pending / Locked Balance
+- Total Spent
+- Total Orders
+- Recent Orders
+- Account Status
+- Preferred Currency
+- Quick link to Services
+- Quick link to Wallet / Statement
+- Quick link to Orders
+- Profile
+
+Use BHRU design.
+Do not copy DHRU styling.
+
+The client panel must feel like a professional server/unlock platform, not a simple e-commerce account page.
+
+==================================================
+3. CUSTOMER WALLET
+==================================================
+
+Implement a real tenant-scoped customer wallet.
+
+DO NOT rely only on a mutable balance column.
+
+Preferred architecture:
+
+customer_wallets
+- customer_id
+- subscriber_id
+- available_balance
+- locked_balance
+- currency / accounting basis if required
+- updated_at
+
+AND a separate immutable ledger:
+
+customer_wallet_ledger
+- id
+- subscriber_id
+- customer_id
+- type
+- direction
+- amount
+- currency
+- balance_after
+- reference_type
+- reference_id
+- description
+- internal_note
+- created_by_type
+- created_by_id
+- created_at
+
+Possible ledger event types:
+
+- admin_credit
+- admin_debit
+- order_debit
+- order_refund
+- payment_credit
+- transfer_in
+- transfer_out
+- adjustment
+- correction
+
+Do not allow silent balance modifications outside the wallet service.
+
+Every financial mutation must create a ledger record.
+
+==================================================
+4. STRICT MONEY RULES
+==================================================
+
+Use safe monetary handling.
+
+Do NOT use JavaScript floating point for financial calculations.
+
+Follow BHRU's existing integer/minor-unit or exact-decimal monetary architecture.
+
+All wallet mutations must be atomic database transactions.
+
+Critical rule:
+
+Customer balance must NEVER accidentally become negative.
+
+For a normal customer:
+
+available_balance >= order_price
+
+must be checked and deducted atomically.
+
+Avoid race conditions where two simultaneous orders can spend the same balance.
+
+Use:
+- transaction
+- row lock / appropriate PostgreSQL locking
+or equivalent safe concurrency control
+
+according to the existing DB architecture.
+
+==================================================
+5. RESELLER ADDS FUNDS
+==================================================
+
+Inside:
+
+/m/clients/{customerId}
+
+add a professional Financial action:
+
+ADD FUNDS
+
+Reseller enters:
+
+- Amount
+- Currency / accounting context
+- Payment/reference method
+- Transaction reference — optional
+- Internal note — optional
+- Customer-visible note — optional
+
+On confirmation:
+
+- increase customer available balance
+- create immutable ledger entry
+- create reseller audit event
+- show updated balance immediately
+
+Never allow frontend-only balance updates.
+
+Server must derive subscriber ownership from authenticated reseller session.
+
+==================================================
+6. RESELLER DEDUCTS / ADJUSTS FUNDS
+==================================================
+
+Support controlled reseller actions:
+
+- Add Funds
+- Deduct Funds
+- Adjustment
+
+All actions require:
+
+- server authorization
+- amount validation
+- reason/note
+- immutable ledger record
+- audit trail
+
+Prevent accidental negative balance unless a future Credit Limit feature explicitly permits it.
+
+Use confirmation UI for destructive deductions.
+
+==================================================
+7. CUSTOMER STATEMENT
+==================================================
+
+Add customer-facing:
+
+Wallet / Statement
+
+Customer can see:
+
+- Date
+- Type
+- Description
+- Credit
+- Debit
+- Balance After
+- Reference
+- Status if applicable
+
+Customer must only see their own records.
+
+Reseller Client Detail → Financial should show a richer version including:
+
+- admin/internal note
+- created by
+- reference type
+- reference ID
+
+==================================================
+8. SERVICES CATALOG
+==================================================
+
+Prepare the customer-facing Services area as the primary purchasing interface.
+
+The logged-in customer should be able to browse services available from their reseller.
+
+Use existing BHRU service architecture.
+
+Do NOT implement external provider API import in this task unless already required by current code.
+
+Each service card/row should ultimately support:
+
+- Service Name
+- Service Group
+- Service Type
+- Price
+- Currency
+- Estimated Time
+- Availability
+- Requirements / input fields
+- Order button
+
+Types may include existing BHRU families such as:
+
+- IMEI
+- Server
+- File
+- Remote
+
+Only use types that actually exist in BHRU.
+
+==================================================
+9. BALANCE BEFORE ORDER
+==================================================
+
+For balance-based services:
+
+Before allowing Place Order:
+
+- customer must be authenticated
+- customer must be Active
+- service must be enabled
+- service must belong/be available to current reseller
+- final server-calculated price must be known
+- customer available balance must be sufficient
+
+Do not trust price sent by browser.
+
+If balance is insufficient:
+
+return a clear safe error:
+
+INSUFFICIENT_BALANCE
+
+UI should show:
+
+Your balance: X
+Order total: Y
+Amount missing: Z
+
+and prevent order submission.
+
+==================================================
+10. ATOMIC ORDER PURCHASE
+==================================================
+
+Order creation and wallet deduction must be one atomic business operation.
+
+Preferred behavior:
+
+BEGIN TRANSACTION
+
+1. Resolve tenant/client from authenticated session.
+2. Resolve service and server-calculated selling price.
+3. Lock/read customer wallet safely.
+4. Verify sufficient funds.
+5. Create order.
+6. Deduct wallet balance.
+7. Create ledger order_debit entry referencing order ID.
+8. Commit.
+
+If any step fails:
+ROLLBACK everything.
+
+Never allow:
+- order without debit
+- debit without order
+
+==================================================
+11. ORDER REFUND
+==================================================
+
+Design refund handling.
+
+When an order reaches a genuinely refundable terminal state, according to BHRU order rules:
+
+- refund exactly the charged amount
+- create order_refund ledger entry
+- reference original order
+- prevent double refund
+- update available balance atomically
+
+Do NOT automatically refund every failure status blindly.
+
+Inspect current order status architecture first.
+
+Define explicit refundable states.
+
+Refund operation must be idempotent.
+
+==================================================
+12. PENDING / LOCKED BALANCE
+==================================================
+
+Inspect how BHRU order processing works.
+
+If orders require funds to remain reserved while processing:
+
+support locked_balance.
+
+Possible model:
+
+Order placement:
+Available → Locked
+
+Successful completion:
+Locked → Spent
+
+Rejected/refunded:
+Locked → Available
+
+If this model does not match existing BHRU order lifecycle, explain and use a safer equivalent.
+
+Do not overcomplicate if current service execution is immediate.
+
+==================================================
+13. TOTAL SPENT
+==================================================
+
+Do not maintain total_spent as an unsafe manually edited value.
+
+Prefer deriving it from completed/order-debit ledger events or safe order aggregates.
+
+If caching is needed later, keep ledger as source of truth.
+
+==================================================
+14. CLIENT DETAIL — FINANCIAL
+==================================================
+
+Upgrade reseller client detail Financial tab.
+
+Show:
+
+- Available Balance
+- Locked Balance
+- Total Spent
+- Total Credits
+- Total Debits
+- Due / Credit Limit if implemented
+- Recent Transactions
+
+Actions:
+
+- Add Funds
+- Deduct Funds
+- Adjustment
+
+Show full statement with pagination/search/filter.
+
+==================================================
+15. CLIENT LIST
+==================================================
+
+Clients/Suppliers list should prominently show:
+
+- Client Code / Username
+- Name
+- Email
+- WhatsApp
+- Status
+- Registration Date
+- Available Balance
+- Locked Balance
+- Total Orders
+- Preferred Currency
+- Actions
+
+Financial numbers must be real wallet values.
+
+Do not show fake values after wallet exists.
+
+==================================================
+16. CLIENT GROUP FOUNDATION
+==================================================
+
+DHRU uses client groups for pricing/access rules.
+
+Prepare a clean BHRU client-group foundation, but do not build a huge pricing engine yet.
+
+A client may optionally belong to one reseller-defined Client Group.
+
+Future uses:
+
+- different service prices
+- discounts
+- allowed services
+- minimum deposit
+- maximum deposit
+- credit limit
+- API access
+
+For this phase:
+
+- define safe architecture
+- allow optional client_group_id
+- reseller can assign/remove group if simple
+- do not implement full service-group pricing unless existing architecture supports it cleanly
+
+Report recommended future pricing-group design.
+
+==================================================
+17. CREDIT LIMIT / DUE
+==================================================
+
+Normal default:
+
+Credit Limit = 0
+No negative balance.
+
+Do not allow normal customers to order on credit.
+
+Future optional reseller feature may allow approved clients to have credit limit.
+
+Prepare architecture but do not enable by default.
+
+If implemented now:
+
+effective spending power =
+available balance + approved credit limit
+
+but only if reseller explicitly enables it for that client/group.
+
+Otherwise:
+NO NEGATIVE BALANCE.
+
+==================================================
+18. INVOICES
+==================================================
+
+Inspect existing BHRU invoice architecture.
+
+DHRU connects invoices directly to clients.
+
+If BHRU already has real invoices:
+link them to canonical customer.
+
+If not:
+do not invent a large invoice system in this task.
+
+Create clear service boundaries for a future Invoice phase.
+
+==================================================
+19. TRANSACTION / PAYMENT REFERENCES
+==================================================
+
+Wallet credit created by reseller must preserve provenance.
+
+Examples:
+
+Cash
+BaridiMob
+Bank
+USDT
+Manual adjustment
+Future automatic payment gateway
+
+Store a reference/method, but do not build unrelated payment gateways now.
+
+Later automatic gateways must credit the same wallet service, not a separate balance system.
+
+==================================================
+20. SECURITY
+==================================================
+
+Critical requirements:
+
+- tenant isolation everywhere
+- reseller can fund only own customers
+- customer sees only own wallet
+- no subscriber_id trusted from browser
+- no customer ID cross-tenant access
+- no arbitrary wallet balance patch endpoint
+- no negative amount tricks
+- no double refunds
+- no replayed financial mutation
+- no price supplied by browser
+- no order using another subscriber's service
+- no owner/admin/customer auth boundary leakage
+
+Financial actions must create audit events.
+
+==================================================
+21. IDEMPOTENCY
+==================================================
+
+Financial/order mutations must be safe from double submission.
+
+Examples:
+
+- double-click Place Order
+- browser retry
+- network retry
+- duplicate admin Add Funds submission
+- repeated refund action
+
+Use idempotency keys or existing BHRU equivalent for high-risk mutations.
+
+==================================================
+22. CUSTOMER BLOCKING
+==================================================
+
+Blocked customer:
+
+- cannot login
+- cannot order
+- cannot call authenticated customer APIs
+- existing sessions are invalid/rejected
+
+Reseller may still:
+- inspect history
+- view wallet
+- make authorized financial corrections if business rules allow
+
+==================================================
+23. ACTIVITY / AUDIT
+==================================================
+
+Record important client events:
+
+- registration
+- login
+- failed login where safe
+- block
+- unblock
+- funds added
+- funds deducted
+- wallet adjustment
+- order placed
+- refund
+- profile changes
+
+Reseller should see appropriate customer activity.
+
+Do not expose security secrets.
+
+==================================================
+24. EXISTING CUSTOMER COMPATIBILITY
+==================================================
+
+Existing Phase 1 and onboarding customers must be preserved.
+
+For existing customers with no wallet:
+
+create/initialize wallet safely with:
+
+available_balance = 0
+locked_balance = 0
+
+No customer loses password/session/profile.
+
+No artificial transaction should imply that funds existed previously.
+
+==================================================
+25. CURRENT 54-FILE FEATURE WORK
+==================================================
+
+IMPORTANT:
+
+There is an existing unpushed implementation for:
+
+Public Customer Onboarding + Reseller Client Management.
+
+Review that implementation first.
+
+Do NOT reimplement it from scratch.
+
+Perform a gap analysis against this new wallet/client-panel architecture.
+
+Reuse:
+- canonical public customer identity
+- onboarding fields
+- client code
+- WhatsApp
+- reseller client list
+- client detail
+- status/blocking
+- order association
+- tenant security
+
+Extend only what is necessary.
+
+Avoid duplicate migrations and duplicate models.
+
+==================================================
+26. DATABASE MIGRATION
+==================================================
+
+Migration 019:
+Public Customer Auth
+
+Migration 020:
+Public Customer Onboarding
+
+Inspect current repository state before selecting next migration number.
+
+Add an additive migration for wallet/ledger/client-group fields only if required.
+
+Do not modify old migrations already intended for production.
+
+Migration must be:
+- additive
+- production safe
+- startup-migration compatible
+- safe for existing customers
+
+==================================================
+27. CUSTOMER UI PRIORITY
+==================================================
+
+The client-facing UI is a high-priority product area.
+
+It should feel professional and clear.
+
+Suggested customer navigation:
+
+Dashboard
+Services
+My Orders
+Wallet / Statement
+Profile
+Support
+
+If current navigation already has equivalents, reuse them.
+
+Dashboard priority:
+
+Balance
+Orders
+Services
+
+The primary CTA for a customer with balance should be:
+Browse Services / Place Order
+
+For zero balance:
+display clear:
+Balance: 0
+Contact reseller / Add Funds information
+
+Do not make the public customer panel look like the reseller admin dashboard.
+
+==================================================
+28. RESELLER UI PRIORITY
+==================================================
+
+Reseller customer management should feel like a serious server business system.
+
+Clients/Suppliers:
+→ client list
+
+Click client:
+→ Overview
+→ Financial
+→ Profile
+→ Orders
+→ Activity
+→ Notes
+
+Financial actions must be easy but safe.
+
+==================================================
+29. DO NOT TOUCH
+==================================================
+
+Do NOT modify:
+
+- Platform Admin auth
+- Subscriber owner auth
+- custom-domain infrastructure
+- Traefik
+- DNS verification
+- currency conversion architecture
+- unrelated CMS
+- provider API import
+- unrelated e-commerce modules
+
+Do not deploy.
+Do not push.
+
+==================================================
+30. FOCUSED TESTING
+==================================================
+
+Run focused tests only.
+
+Must cover:
+
+- new customer wallet initialized to zero
+- existing Phase 1 customer wallet initialization
+- reseller adds funds
+- cross-tenant funding rejected
+- wallet ledger entry created
+- duplicate Add Funds protected
+- insufficient balance rejects order
+- sufficient balance creates order + debit atomically
+- concurrent double spend prevented
+- failed transaction rolls back order + debit
+- refund restores exact amount
+- duplicate refund prevented
+- blocked customer cannot order
+- customer sees only own statement
+- reseller sees own customer financials only
+- guest checkout remains unchanged
+- email/username login still works
+- existing customer passwords remain valid
+
+Also:
+- backend TypeScript
+- backend build
+- affected frontend build/typecheck
+
+Do not run broad E2E/browser suites.
+
+==================================================
+FINAL REPORT
+==================================================
+
+Return:
+
+1. Gap analysis of current 54-file onboarding/client implementation.
+2. Final canonical client architecture.
+3. Wallet model.
+4. Ledger model.
+5. Migration created.
+6. Exact monetary storage strategy.
+7. How Add Funds works.
+8. How Deduct/Adjustment works.
+9. How order debit works atomically.
+10. How insufficient balance is handled.
+11. How refunds work.
+12. Whether locked balance is used.
+13. Client dashboard sections.
+14. Reseller client Financial UI.
+15. Client list financial columns.
+16. Statement behavior.
+17. Client Group foundation.
+18. Credit-limit behavior.
+19. Invoice integration status.
+20. Existing customer migration behavior.
+21. Tenant/security protections.
+22. Idempotency strategy.
+23. Files changed.
+24. Focused tests and results.
+25. Existing unrelated errors.
+26. Required environment variables.
+27. Remaining limitations.
+28. Recommended next phase.
+
+DO NOT PUSH.
+DO NOT DEPLOY.
