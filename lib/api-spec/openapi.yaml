@@ -11,6 +11,76 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /payment-reviews:
+    get:
+      operationId: listPaymentReviews
+      tags: [Payments]
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1}}
+      responses:
+        "200":
+          description: Read-only tenant-scoped review queue including unassociated authentic receipts
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PaymentReviewList"}
+  /admin/payment-monitoring:
+    get:
+      operationId: getAdminPaymentMonitoring
+      tags: [Payments]
+      responses:
+        "200":
+          description: Aggregate-only operational monitoring; no reseller secrets or customer data
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PaymentMonitoringList"}
+  /funding-requests/{id}/reconciliation:
+    get:
+      operationId: getFundingReconciliation
+      tags: [Payments]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Read-only tenant-scoped payment and ledger diagnostics
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PaymentReconciliation"}
+  /public/customer/{slug}/panel/funding/initiate:
+    post:
+      operationId: initiateCustomerPayment
+      tags: [Payments]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/FundingCreateInput"}
+      responses:
+        "202":
+          description: Durable initiation accepted; not proof of payment or wallet credit
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FundingView"}
+  /payments/webhooks/{code}/{binding}:
+    post:
+      operationId: receiveProviderWebhook
+      tags: [Payments]
+      description: Raw bytes authenticated exclusively by a trusted installed provider verifier. No browser/session confirmation.
+      parameters:
+        - {name: code, in: path, required: true, schema: {type: string}}
+        - {name: binding, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: {type: string, format: binary}
+      responses:
+        "202":
+          description: Authenticated evidence durably queued; does not imply settlement
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookAcknowledgement"}
   /admin/payment-gateways:
     get:
       operationId: listAdminPaymentGateways
@@ -86,6 +156,9 @@ paths:
     get:
       operationId: listResellerFundingRequests
       tags: [Payments]
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1}}
+        - {name: filter, in: query, schema: {type: string, enum: [ALL, PENDING, PAID, FAILED, EXPIRED, REVIEW_REQUIRED]}}
       responses:
         "200":
           description: Own tenant funding and payment history
@@ -1320,6 +1393,8 @@ components:
       type: object
       required: [code, displayName, description, supportedCurrencies, supportedMethods, automaticConfirmationSupported, webhookSupported, requiredCredentials, configurationFields, integrationStatus, version, feesSupported, globalEnabled, resellerAvailable, operational, enabled, instructions, currencyRules, configuredCredentialFields, validationStatus]
       properties:
+        capabilities: {$ref: "#/components/schemas/PaymentCapabilities"}
+        callbackPath: {type: [string, "null"]}
         code: {type: string}
         displayName: {type: string}
         description: {type: string}
@@ -1380,8 +1455,14 @@ components:
       allOf:
         - {$ref: "#/components/schemas/FundingQuote"}
         - type: object
-          required: [id, gatewayCode, gatewayName, paymentMethod, customerName, status, createdAt, updatedAt, expiresAt, payments]
+          required: [id, gatewayCode, gatewayName, paymentMethod, customerName, status, createdAt, updatedAt, expiresAt, payments, paidAt, creditedWalletAmount, reviewRequired, reviewReasons, settlementStatus, processing]
           properties:
+            paidAt: {type: [string, "null"], format: date-time}
+            creditedWalletAmount: {type: [string, "null"]}
+            reviewRequired: {type: boolean}
+            reviewReasons: {type: array, items: {type: string}}
+            settlementStatus: {type: string, enum: [NONE, VERIFIED, SETTLED, REVIEW_REQUIRED, FAILED]}
+            processing: {$ref: "#/components/schemas/FundingProcessing"}
             id: {type: string, format: uuid}
             gatewayCode: {type: string}
             gatewayName: {type: string}
@@ -1398,6 +1479,77 @@ components:
       properties:
         data: {type: array, items: {$ref: "#/components/schemas/FundingView"}}
         hasMore: {type: boolean}
+    PaymentCapabilities:
+      type: object
+      required: [createPayment, idempotentCreation, statusLookup, webhookVerification, cancelPayment, refundPayment]
+      properties:
+        createPayment: {type: boolean}
+        idempotentCreation: {type: boolean}
+        statusLookup: {type: boolean}
+        webhookVerification: {type: boolean}
+        cancelPayment: {type: boolean}
+        refundPayment: {type: boolean}
+    PaymentReview:
+      type: object
+      required: [id, fundingId, gatewayCode, category, createdAt, providerReference, amountMinor, currency]
+      properties:
+        id: {type: string, format: uuid}
+        fundingId: {type: [string, "null"], format: uuid}
+        gatewayCode: {type: string}
+        category: {type: string}
+        createdAt: {type: string, format: date-time}
+        providerReference: {type: [string, "null"]}
+        amountMinor: {type: [string, "null"]}
+        currency: {type: [string, "null"]}
+    PaymentReviewList:
+      type: object
+      required: [data, hasMore]
+      properties:
+        data: {type: array, items: {$ref: "#/components/schemas/PaymentReview"}}
+        hasMore: {type: boolean}
+    FundingProcessing:
+      type: [object, "null"]
+      required: [state, paymentUrl, paymentAddress, instructions, expiresAt]
+      properties:
+        state: {type: string, enum: [READY, PROCESSING, REVIEW_REQUIRED, FAILED]}
+        paymentUrl: {type: [string, "null"]}
+        paymentAddress: {type: [string, "null"]}
+        instructions: {type: string}
+        expiresAt: {type: [string, "null"], format: date-time}
+    PaymentMonitoring:
+      type: object
+      required: [gatewayCode, gatewayName, integrationStatus, globalEnabled, configuredResellers, pending, verifiedUnsettled, failedProcessing, reviewRequired]
+      properties:
+        gatewayCode: {type: string}
+        gatewayName: {type: string}
+        integrationStatus: {type: string}
+        globalEnabled: {type: boolean}
+        configuredResellers: {type: integer}
+        pending: {type: integer}
+        verifiedUnsettled: {type: integer}
+        failedProcessing: {type: integer}
+        reviewRequired: {type: integer}
+    PaymentMonitoringList:
+      type: object
+      required: [data]
+      properties:
+        data: {type: array, items: {$ref: "#/components/schemas/PaymentMonitoring"}}
+    PaymentReconciliation:
+      type: object
+      required: [fundingId, consistent, issues, readOnly]
+      properties:
+        fundingId: {type: string, format: uuid}
+        consistent: {type: boolean}
+        issues: {type: array, items: {type: string}}
+        readOnly: {type: boolean}
+    WebhookAcknowledgement:
+      type: object
+      required: [received, authenticated, queued, duplicate]
+      properties:
+        received: {type: boolean}
+        authenticated: {type: boolean}
+        queued: {type: boolean}
+        duplicate: {type: boolean}
     CustomerSecurityAction:
       type: object
       additionalProperties: false

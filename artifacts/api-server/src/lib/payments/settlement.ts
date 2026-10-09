@@ -3,7 +3,7 @@ import {transaction} from '../platform';
 import {HttpError} from '../auth';
 import {appendMovement,hashRequest,lockClient} from '../client-finance/wallet';
 import {activityContext} from '../customer-auth/activity';
-import {fundingRow} from './funding';
+import {fundingRow,fundingDeadline} from './funding';
 import {assertVerified,type VerifiedPayment} from './verification';
 /** Durable verified receipt FIRST. Allocation failures never erase proof of
  * actual received money. A fresh verified callback safely retries allocation.
@@ -49,13 +49,13 @@ export async function settleVerifiedPayment(proof:VerifiedPayment,paymentId:stri
   assertVerified(proof);if(proof.data.status!=='PAID')throw new HttpError(409,'Only verified received payments can fund a wallet.');
   return transaction(async db=>{
     const first=await fundingRow(proof.tenant,proof.data.fundingId,db);
-    await lockClient(proof.tenant,first.customer_id,db);const f=await fundingRow(proof.tenant,first.id,db,first.customer_id,true);
+    await lockClient(proof.tenant,first.customer_id,db,true);const f=await fundingRow(proof.tenant,first.id,db,first.customer_id,true);
     const p=(await db.query('SELECT * FROM payment_transactions WHERE subscriber_id=$1 AND customer_id=$2 AND funding_request_id=$3 AND id=$4 FOR UPDATE',
       [proof.tenant,f.customer_id,f.id,paymentId])).rows[0];
     if(!p||p.gateway_code!==proof.code||p.provider_reference!==proof.data.providerReference||p.merchant_scope!==proof.data.merchantScope
       ||String(p.amount_minor)!==proof.data.amountMinor||p.currency!==proof.data.currency)throw new HttpError(404,'Verified payment not found.');
     if(p.status==='SETTLED')return {paymentId:p.id,ledgerId:p.wallet_ledger_id,alreadySettled:true};
-    if(p.status!=='VERIFIED'||!['CREATED','PENDING_PAYMENT'].includes(f.status)||new Date(p.provider_occurred_at)>new Date(f.expires_at))
+    if(p.status!=='VERIFIED'||!['CREATED','PENDING_PAYMENT'].includes(f.status)||new Date(p.provider_occurred_at)>await fundingDeadline(f,db))
       throw new HttpError(409,'Verified receipt requires review; automatic allocation is unavailable.');
     await activityContext(db,proof.tenant,f.customer_id,{type:'system',id:null});
     const entry=await appendMovement(proof.tenant,f.customer_id,{

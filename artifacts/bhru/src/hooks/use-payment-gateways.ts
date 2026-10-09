@@ -5,6 +5,9 @@ import {
   useListResellerPaymentGateways, useConfigureResellerPaymentGateway, useValidateResellerPaymentGateway, getListResellerPaymentGatewaysQueryKey,
   useListResellerFundingRequests, getListResellerFundingRequestsQueryKey,
   useGetResellerFundingRequest, getGetResellerFundingRequestQueryKey,
+  useListPaymentReviews, getListPaymentReviewsQueryKey,
+  useGetAdminPaymentMonitoring, getGetAdminPaymentMonitoringQueryKey,
+  useGetFundingReconciliation, getGetFundingReconciliationQueryKey,
 } from '@workspace/api-client-react';
 import { useWorkspacePage } from '@/components/subscriber/workspace/WorkspacePageContext';
 import { subReq } from '@/hooks/use-commerce';
@@ -40,11 +43,30 @@ export function useResellerGateways() {
   return { query, configure, validate };
 }
 
-export function useFundingHistory() {
+export type FundingFilter = 'ALL' | 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED' | 'REVIEW_REQUIRED';
+
+export function useAdminPaymentMonitoring() {
+  const { session } = useStore();
+  return useGetAdminPaymentMonitoring({ request: adminReq, query: {
+    queryKey: [...getGetAdminPaymentMonitoringQueryKey(), session.role, session.name],
+    enabled: session.role === 'admin', staleTime: FRESH, refetchOnMount: true, refetchOnWindowFocus: true, retry: false,
+  } });
+}
+
+export function useFundingHistory(page = 1, filter: FundingFilter = 'ALL') {
   const { session } = useStore(), { active } = useWorkspacePage();
-  return useListResellerFundingRequests({ request: subReq(), query: {
-    queryKey: [...getListResellerFundingRequestsQueryKey(), session.role, session.subscriberId],
+  const params = { page, filter };
+  return useListResellerFundingRequests(params, { request: subReq(), query: {
+    queryKey: [...getListResellerFundingRequestsQueryKey(params), session.role, session.subscriberId],
     enabled: session.role === 'subscriber' && active, staleTime: FRESH, refetchOnMount: true, refetchOnWindowFocus: true, retry: false,
+  } });
+}
+
+export function useFundingReconciliation(id: string | null) {
+  const { session } = useStore(), { active } = useWorkspacePage();
+  return useGetFundingReconciliation(id ?? '', { request: subReq(), query: {
+    queryKey: [...getGetFundingReconciliationQueryKey(id ?? ''), session.role, session.subscriberId],
+    enabled: !!id && session.role === 'subscriber' && active, staleTime: FRESH, refetchOnMount: true, refetchOnWindowFocus: true, retry: false,
   } });
 }
 
@@ -53,5 +75,14 @@ export function useFundingDetail(id: string | null) {
   return useGetResellerFundingRequest(id ?? '', { request: subReq(), query: {
     queryKey: [...getGetResellerFundingRequestQueryKey(id ?? ''), session.role, session.subscriberId],
     enabled: !!id && session.role === 'subscriber' && active, staleTime: FRESH, refetchOnMount: true, refetchOnWindowFocus: true, retry: false,
+  } });
+}
+
+export function usePaymentReviews(page = 1) {
+  const { session } = useStore(), { active } = useWorkspacePage();
+  const params = { page };
+  return useListPaymentReviews(params, { request: subReq(), query: {
+    queryKey: [...getListPaymentReviewsQueryKey(params), session.role, session.subscriberId],
+    enabled: session.role === 'subscriber' && active, staleTime: FRESH, refetchOnMount: true, refetchOnWindowFocus: true, retry: false,
   } });
 }

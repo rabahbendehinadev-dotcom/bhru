@@ -11,12 +11,37 @@ export function paymentTestPlugin(){
       let source=await readFile(path,'utf8');
       const anchor="  planned('paypal','PayPal'),";
       assert.ok(source.includes(anchor));
-      source=`import {createHmac,timingSafeEqual} from 'node:crypto';\n`+source.replace(anchor,`  {
+      source=`import {createHmac,timingSafeEqual} from 'node:crypto';
+export const testProviderPayments=new Map(),testProviderCalls=new Map(),testProviderModes=new Map();
+export const testPaymentCapabilities={createPayment:true,idempotentCreation:true,statusLookup:true,webhookVerification:true,cancelPayment:false,refundPayment:false};
+\n`+source.replace(anchor,`  {
         code:'fixture_payments',displayName:'Ephemeral Test Adapter',description:'Isolated focused-test fixture only.',
         integrationStatus:'AVAILABLE',version:'test-only',supportedCurrencies:['USD','DZD','EUR'],supportedMethods:['card'],
         feesSupported:true,automaticConfirmationSupported:true,webhookSupported:true,configurationFields:[],configurationSchema:GATEWAY_CONFIGURATION_SCHEMA,
         requiredCredentials:[{key:'secret',label:'Test secret',secret:true,required:true},{key:'merchant',label:'Test merchant',secret:false,required:true}],
         adapter:{
+          capabilities:testPaymentCapabilities,checkoutHosts:['payments.example.invalid'],metadataKeys:['note'],
+          async validateConfiguration(c){return !!c.secret&&c.secret.length>20&&!!c.merchant;},
+          async createPayment(input,c){
+            testProviderCalls.set(input.fundingId,(testProviderCalls.get(input.fundingId)||0)+1);
+            if(!testProviderPayments.has(input.fundingId))testProviderPayments.set(input.fundingId,{
+              providerReference:'fixture-obligation-'+input.fundingId,merchantScope:c.merchant,amountMinor:input.amountMinor,currency:input.currency,
+              expiresAt:input.expiresAt,paymentUrl:'https://payments.example.invalid/'+input.fundingId,paymentAddress:null,instructions:'Test only',
+              metadata:{note:'isolated fixture'},fundingId:input.fundingId,paid:false,occurredAt:new Date().toISOString()});
+            if(testProviderModes.get(input.fundingId)==='timeout-once'){testProviderModes.delete(input.fundingId);throw Error('PROVIDER_TIMEOUT');}
+            const {fundingId,paid,occurredAt,...result}=testProviderPayments.get(input.fundingId);return result;
+          },
+          async getPaymentStatus(input,c){
+            const p=testProviderPayments.get(input.fundingId);if(!p)return {state:'NOT_FOUND'};
+            const {fundingId,paid,occurredAt,...payment}=p;
+            return {state:'FOUND',payment,event:{fundingId,providerReference:p.providerReference,eventId:'lookup-'+fundingId+'-'+(paid?'paid':'pending'),
+              merchantScope:c.merchant,amountMinor:p.amountMinor,currency:p.currency,status:paid?'PAID':'PENDING',occurredAt}};
+          },
+          async verifyWebhook(raw,headers,c){
+            const expected=createHmac('sha256',c.secret).update(raw).digest(),supplied=Buffer.from(headers['x-test-signature']||'','hex');
+            if(expected.length!==supplied.length||!timingSafeEqual(expected,supplied))throw Error('Test signature rejected');
+          },
+          async normalizeWebhookEvent(raw){return JSON.parse(raw.toString('utf8'));},
           async merchantScope(c){return c.merchant;},
           async validateCredentials(c){return !!c.secret&&c.secret.length>20&&!!c.merchant;},
           async verifyCallback(raw,headers,c){

@@ -12,6 +12,7 @@ import { customerAnnouncements } from '../lib/customer-auth/announcements';
 import {customerSecurity,changePassword,revokeSession} from '../lib/customer-auth/security';
 import {listFunding,fundingRow,fundingView,createFunding,cancelFunding} from '../lib/payments/funding';
 import {eligibleGateways,quoteFunding} from '../lib/payments/quote';
+import {initiateFunding} from '../lib/payments/initiation';
 const router=Router({mergeParams:true}),uuid=z.string().uuid();
 router.use(json({limit:'64kb'}));
 router.use((req,_res,next)=>{
@@ -36,6 +37,9 @@ router.get('/funding',async(req,res)=>{
 });
 router.post('/funding',async(req,res)=>{
   const {sub,id}=identity(req);res.status(201).json(await transaction(db=>createFunding(sub,id,req.body,db)));
+});
+router.post('/funding/initiate',async(req,res)=>{
+  const {sub,id}=identity(req);res.status(202).json(await initiateFunding(sub,id,req.body));
 });
 router.get('/funding/:id',async(req,res)=>{
   const {sub,id}=identity(req),requestId=uuid.parse(req.params.id);

@@ -1,0 +1,884 @@
+BHRU — SLICE 5B
+PRODUCTION-GRADE PAYMENT INTEGRATION INFRASTRUCTURE
+PAYMENT INITIATION + WEBHOOK SECURITY + RETRIES + EXPIRY
++ RECONCILIATION + ADMIN MONITORING
+
+IMPLEMENTATION MODE: REPLIT PREVIEW ONLY
+
+========================================================
+PROJECT CONTEXT
+========================================================
+
+BHRU is a multi-tenant SaaS platform inspired by
+DHRU Fusion.
+
+The Platform Admin owns the trusted Payment Gateway
+catalog and controls which gateways are available.
+
+Each Reseller chooses from those gateways and enters
+their own API credentials.
+
+Customers use Wallet → Add Funds to pay through
+the Reseller's configured gateway.
+
+COMPLETED FOUNDATIONS:
+
+Slice 1:
+Truthful financial summaries.
+
+Slice 2:
+Immutable ledger attribution and reconciliation.
+
+Slice 3:
+Structured client Activity audit.
+
+Slice 4:
+Customer security, sessions and login history.
+
+Slice 5A:
+Payment Gateway Foundation.
+
+Latest migration:
+028_payment_gateway_foundation.sql
+
+Existing payment architecture includes:
+
+- Trusted gateway registry
+- Platform Admin gateway management
+- Reseller gateway configuration
+- AES-256-GCM credential encryption
+- Customer funding quotations
+- Funding requests
+- Verified payment receipts
+- Payment transaction records
+- Central settlement kernel
+- Immutable wallet ledger
+- Atomic financial posting
+- Tenant-scoped idempotency
+- Client Activity integration
+
+IMPORTANT:
+
+No real gateway adapter is operational yet.
+
+PayPal, Cryptomus and USDT Portal currently have
+NOT_IMPLEMENTED status.
+
+Do not pretend these integrations work.
+
+========================================================
+PRIMARY OBJECTIVE
+========================================================
+
+Implement the missing provider-independent infrastructure
+required for real automatic payment gateways.
+
+The result must be a reusable payment engine.
+
+Future provider adapters should only need to implement
+their provider-specific API, credentials, authentication,
+payment initiation and verification rules.
+
+Do not redesign existing wallet accounting.
+
+Do not duplicate the settlement kernel.
+
+Do not modify completed financial migrations.
+
+========================================================
+PHASE 1 — ARCHITECTURE INSPECTION
+========================================================
+
+Inspect existing payment modules:
+
+src/lib/payments/
+
+Especially:
+
+registry.ts
+credentials.ts
+catalog.ts
+decimal.ts
+quote.ts
+funding.ts
+verification.ts
+settlement.ts
+
+Inspect:
+
+src/routes/payments.ts
+
+And:
+
+028_payment_gateway_foundation.sql
+
+Inspect existing:
+
+- Funding request lifecycle
+- Payment receipt lifecycle
+- Payment settlement transaction
+- Ledger credit integration
+- Activity integration
+- Reseller configuration
+- Platform Admin gateway catalog
+- Customer Add Funds page
+
+Reuse everything already implemented correctly.
+
+Do not create duplicate payment services or tables.
+
+========================================================
+PHASE 2 — PAYMENT ADAPTER CONTRACT
+========================================================
+
+Implement a strongly typed provider adapter interface.
+
+Each adapter should support, where applicable:
+
+validateConfiguration()
+createPayment()
+getPaymentStatus()
+verifyWebhook()
+normalizeWebhookEvent()
+
+Optional capabilities:
+
+cancelPayment()
+refundPayment()
+getSupportedCurrencies()
+
+Each adapter must declare its capabilities explicitly.
+
+Never assume every gateway supports every operation.
+
+The adapter contract must support:
+
+- provider payment identifier
+- provider merchant/account identifier
+- payment URL when available
+- payment address when applicable
+- expected payment amount
+- payment currency
+- expiry timestamp
+- provider-specific opaque metadata
+
+Provider-specific metadata must be validated,
+bounded and safely stored.
+
+Do not expose secrets or internal provider data
+to the customer.
+
+========================================================
+PHASE 3 — PAYMENT INITIATION SERVICE
+========================================================
+
+Build a reusable payment initiation service.
+
+Workflow:
+
+1. Authenticate customer.
+2. Resolve tenant from trusted existing context.
+3. Verify customer account eligibility.
+4. Verify selected gateway is globally enabled.
+5. Verify gateway adapter is implemented.
+6. Verify Reseller enabled the gateway.
+7. Verify valid configuration exists.
+8. Verify amount and currency eligibility.
+9. Generate authoritative server-side quotation.
+10. Freeze commercial/FX/fee snapshot.
+11. Create funding request.
+12. Invoke provider adapter.
+13. Persist provider payment identity.
+14. Return safe payment instructions or payment URL.
+
+IMPORTANT:
+
+Never trust frontend-calculated amounts.
+
+Never allow the customer to supply an arbitrary
+wallet credit amount after quotation.
+
+The server must recalculate and validate everything.
+
+========================================================
+PHASE 4 — INITIATION IDEMPOTENCY
+========================================================
+
+Prevent duplicate provider payment creation.
+
+Use a customer/tenant-scoped idempotency key.
+
+Repeated initiation with the same key must return
+the existing safe payment result.
+
+Do not create another funding request or another
+provider payment for an identical accepted request.
+
+Handle concurrency correctly.
+
+Do not hold a PostgreSQL transaction open across
+slow external provider HTTP calls.
+
+Use an explicit initiation state/lease mechanism
+where needed.
+
+If provider creation succeeds but database persistence
+fails, provide a safe recovery path.
+
+Do not silently create orphaned payment obligations.
+
+========================================================
+PHASE 5 — PAYMENT STATUS LIFECYCLE
+========================================================
+
+Implement strict state transitions.
+
+Funding request:
+
+CREATED
+PENDING_PAYMENT
+PAID
+FAILED
+EXPIRED
+CANCELLED
+
+Payment processing may additionally require
+internal intermediate states.
+
+Do not overload customer-visible states with
+technical processing details.
+
+Only verified settlement may mark funding PAID.
+
+Reject impossible transitions.
+
+Examples:
+
+PAID → PENDING_PAYMENT
+must be rejected.
+
+PAID → EXPIRED
+must be rejected.
+
+CANCELLED → PAID
+must not automatically credit without an
+explicit documented recovery policy.
+
+========================================================
+PHASE 6 — WEBHOOK ROUTING
+========================================================
+
+Prepare a secure provider-specific callback router.
+
+Suggested conceptual route:
+
+/api/payments/webhooks/:gatewayCode
+
+Use the project's existing API routing conventions.
+
+Do not invent provider-specific webhook protocols.
+
+Each installed adapter must explicitly implement
+its own authentication verification.
+
+Requirements:
+
+- raw request body access where required
+- provider-specific signature verification
+- constant-time comparison where applicable
+- strict request size limits
+- timestamp validation where supported
+- replay protection
+- trusted merchant/configuration resolution
+- tenant isolation
+- bounded payload handling
+- safe logging
+
+A gateway without an implemented verifier
+must never be able to settle a payment.
+
+Unknown gateway callbacks must fail closed.
+
+Never trust:
+
+payment_success=true
+
+or customer browser redirects.
+
+========================================================
+PHASE 7 — VERIFIED EVENT NORMALIZATION
+========================================================
+
+Normalize authentic provider events into a
+strict internal verified-payment structure.
+
+Include:
+
+- gateway identity
+- merchant/configuration identity
+- provider transaction identity
+- funding request identity
+- actual paid amount
+- actual payment currency
+- verification timestamp
+- verification method
+- bounded provider event reference
+
+Only trusted adapters can create verified events.
+
+Never accept a public JSON body claiming
+to be an already verified receipt.
+
+========================================================
+PHASE 8 — AMOUNT AND CURRENCY VERIFICATION
+========================================================
+
+Use exact decimal/minor-unit arithmetic.
+
+Compare:
+
+Expected payment amount
+Actual provider-confirmed amount
+
+Expected currency
+Actual provider-confirmed currency
+
+Expected merchant
+Actual provider-confirmed merchant
+
+Expected funding request
+Actual provider-confirmed reference
+
+Do not credit on mismatches.
+
+Partial payments must not be silently treated
+as full payments.
+
+Overpayments must not silently increase wallet credit.
+
+Record discrepancies for manual review.
+
+Do not automatically refund or reallocate them.
+
+========================================================
+PHASE 9 — DURABLE WEBHOOK PROCESSING
+========================================================
+
+Persist authenticated callback events durably.
+
+Separate:
+
+Webhook received
+Webhook authenticated
+Payment verified
+Payment settled
+
+Do not conflate these stages.
+
+A successful HTTP response to a provider must
+not imply that the wallet was credited unless
+settlement actually succeeded.
+
+Support safe retry processing for verified
+but unsettled payment receipts.
+
+Retries must preserve exact original snapshots.
+
+========================================================
+PHASE 10 — SETTLEMENT INTEGRATION
+========================================================
+
+Reuse the existing Slice 5A settlement kernel.
+
+Do not implement another wallet credit path.
+
+Verified payment settlement must atomically:
+
+- lock funding request
+- validate expected state
+- lock customer wallet
+- validate account currency
+- validate verified receipt
+- credit exact frozen wallet amount
+- insert immutable ledger entry
+- mark payment SETTLED
+- mark funding request PAID
+- record Activity event
+
+Preserve:
+
+- no double credit
+- tenant isolation
+- exact account currency
+- immutable ledger
+- reconciliation consistency
+- transaction rollback
+
+========================================================
+PHASE 11 — BACKGROUND RETRY PROCESSING
+========================================================
+
+Implement a bounded retry mechanism for:
+
+- provider initiation recovery
+- authenticated callback processing
+- verified but unsettled receipts
+- transient provider status checks
+
+Use database-backed retry state where appropriate.
+
+Support:
+
+- retry count
+- next retry time
+- last safe error category
+- maximum attempts
+- manual review after exhaustion
+
+Do not require Redis or a new external service
+unless the existing architecture already needs it.
+
+Do not create infinite retry loops.
+
+========================================================
+PHASE 12 — SAFE WORKER EXECUTION
+========================================================
+
+BHRU may run multiple application replicas
+under Dokploy/Docker Swarm.
+
+Background processing must therefore be safe
+under concurrent workers.
+
+Use PostgreSQL locking/leases where appropriate.
+
+Examples:
+
+FOR UPDATE SKIP LOCKED
+
+or equivalent safe mechanisms.
+
+Prevent two replicas from processing the same
+payment obligation simultaneously.
+
+Workers must be bounded and restart-safe.
+
+Do not introduce a second independent payment
+settlement authority.
+
+========================================================
+PHASE 13 — PAYMENT EXPIRY
+========================================================
+
+Implement expiry handling for unpaid requests.
+
+Requirements:
+
+- expiry based on trusted server time
+- no wallet credit for an unverified payment
+- PAID requests never expire retroactively
+- idempotent expiry processing
+- safe handling of late provider notifications
+
+IMPORTANT:
+
+A provider-confirmed late payment must not be
+silently discarded or silently credited against
+an expired/cancelled request.
+
+Record it for explicit review according to
+the documented recovery policy.
+
+========================================================
+PHASE 14 — PAYMENT RECONCILIATION
+========================================================
+
+Extend financial diagnostics with payment-specific
+reconciliation.
+
+For each funding request, compare:
+
+- funding request status
+- verified payment receipt
+- payment settlement status
+- wallet ledger posting
+- credited amount/currency
+
+Detect:
+
+- verified but unsettled payments
+- paid funding without ledger credit
+- duplicate provider references
+- amount/currency mismatch
+- expired request with late payment
+- orphaned provider payment identity
+- inconsistent settlement state
+
+Diagnostics must be read-only by default.
+
+Never automatically modify balances to make
+reconciliation pass.
+
+========================================================
+PHASE 15 — PLATFORM ADMIN MONITORING
+========================================================
+
+Extend existing private Platform Admin
+Payment Gateways management.
+
+Add an operational overview showing:
+
+- gateway code/name
+- integration status
+- global availability
+- configured Reseller count
+- pending payment count
+- verified unsettled count
+- failed processing count
+- review-required count
+
+Platform Admin must not see raw Reseller API keys.
+
+Avoid exposing sensitive customer information
+unnecessarily across tenants.
+
+Use aggregate counts where appropriate.
+
+========================================================
+PHASE 16 — RESELLER PAYMENT MONITORING
+========================================================
+
+Extend existing Reseller Funding Requests page.
+
+Display:
+
+- funding reference
+- customer
+- gateway
+- account currency
+- expected wallet credit
+- payment currency
+- expected payment amount
+- payment status
+- settlement status
+- created date
+- expiry
+- provider reference when safe
+- review-required state
+
+Provide useful filters:
+
+All
+Pending
+Paid
+Failed
+Expired
+Review Required
+
+Keep the interface compact and professional.
+
+========================================================
+PHASE 17 — CUSTOMER PAYMENT STATUS
+========================================================
+
+Extend Wallet → Add Funds / Funding History.
+
+Customer should see:
+
+- gateway
+- requested wallet credit
+- expected payable amount
+- payment currency
+- payment instructions when available
+- payment status
+- expiry
+- completed date
+- credited wallet amount
+
+Never display internal webhook errors.
+
+Never show a successful payment until
+authoritative settlement has completed.
+
+========================================================
+PHASE 18 — MANUAL REVIEW
+========================================================
+
+Prepare a safe review workflow for exceptional
+payment situations.
+
+Examples:
+
+- amount mismatch
+- wrong currency
+- duplicate provider transaction
+- late payment
+- verified receipt without settlement
+- exhausted retry attempts
+
+Reseller may inspect tenant-scoped issues.
+
+Do not allow Reseller to forge a verified payment.
+
+Do not provide a button that directly marks
+a payment successful without trusted verification.
+
+Manual wallet adjustments remain a separate,
+already audited financial workflow.
+
+========================================================
+PHASE 19 — ACTIVITY AND AUDIT
+========================================================
+
+Extend the existing client Activity system
+with controlled payment events.
+
+Examples:
+
+funding_request_created
+payment_initiated
+payment_verified
+payment_settled
+payment_failed
+payment_expired
+payment_review_required
+
+Use stable event keys and validated references.
+
+Do not log:
+
+API keys
+provider secrets
+raw webhook payloads
+customer cookies
+session tokens
+
+========================================================
+PHASE 20 — SECURITY
+========================================================
+
+Preserve all existing:
+
+- customer authentication
+- reseller authentication
+- Platform Admin authentication
+- CSRF protection
+- tenant isolation
+- custom-domain routing
+- encrypted credentials
+- immutable account currency
+- wallet accounting
+- financial audit
+
+Do not weaken any existing protection.
+
+Gateway credentials must be decrypted only
+inside trusted server-side adapter execution.
+
+Never return decrypted credentials to frontend.
+
+========================================================
+PHASE 21 — MIGRATION
+========================================================
+
+Latest migration:
+
+028_payment_gateway_foundation.sql
+
+If schema additions are required, create:
+
+029_payment_processing_infrastructure.sql
+
+Additive migration only.
+
+Do not modify migrations 019–028.
+
+Do not rewrite historical financial records.
+
+Do not modify existing customer account currencies.
+
+Preserve existing funding/payment records.
+
+========================================================
+PHASE 22 — PROVIDER INTEGRATION BOUNDARY
+========================================================
+
+IMPORTANT:
+
+Do not implement fake PayPal, Cryptomus
+or USDT Portal APIs.
+
+Do not invent:
+
+- provider endpoints
+- webhook signatures
+- authentication headers
+- payment response fields
+- provider transaction statuses
+
+If authentic provider documentation is unavailable,
+leave the corresponding adapter NOT_IMPLEMENTED.
+
+Implement the generic infrastructure only.
+
+Do not expose a generic mock gateway as a
+production payment method.
+
+========================================================
+PHASE 23 — AUTOMATED TESTING
+========================================================
+
+Run focused tests using disposable databases
+and controlled local test adapters.
+
+Test adapters must be strictly test-only.
+
+They must never be enabled through the
+Platform Admin production UI.
+
+Required cases:
+
+1. Gateway disabled globally
+2. Gateway disabled by Reseller
+3. Missing credentials
+4. Invalid credentials
+5. Cross-tenant gateway access
+6. Correct quotation
+7. Currency mismatch
+8. Amount mismatch
+9. Duplicate initiation request
+10. Concurrent initiation request
+11. Provider timeout
+12. Provider initiation recovery
+13. Unknown webhook provider
+14. Invalid webhook authentication
+15. Duplicate authenticated webhook
+16. Out-of-order webhook
+17. Forged payment success
+18. Verified receipt without settlement
+19. Settlement retry
+20. Concurrent settlement attempts
+21. No double wallet credit
+22. Late payment after expiry
+23. Payment after cancellation
+24. Worker restart recovery
+25. Multi-replica processing safety
+26. Review-required state
+27. Customer payment history isolation
+28. Reseller payment history isolation
+29. Platform Admin permissions
+30. Existing wallet/order/security compatibility
+
+Run TypeScript/build checks.
+
+Do not run broad browser/E2E suites.
+
+========================================================
+PHASE 24 — DOCUMENTATION
+========================================================
+
+Update:
+
+docs/BHRU_PAYMENT_GATEWAY_ARCHITECTURE.md
+
+Document:
+
+- Adapter interface
+- Payment initiation lifecycle
+- Webhook verification boundary
+- Verified receipt model
+- Retry worker behavior
+- Expiry handling
+- Reconciliation
+- Manual review
+- Tenant isolation
+- Settlement invariants
+
+Create an additional implementation report if useful:
+
+docs/BHRU_PAYMENT_PROCESSING_IMPLEMENTATION.md
+
+========================================================
+PHASE 25 — DELIVERY
+========================================================
+
+Implement all provider-independent components
+that can be safely completed.
+
+Do not stop merely because USDT Portal
+documentation is unavailable.
+
+Continue implementing the shared infrastructure.
+
+Do not invent provider behavior.
+
+If a component requires provider-specific facts,
+document the missing requirement and continue
+with independent components.
+
+Do not ask for manual browser testing during
+this task.
+
+The user is currently on a mobile phone.
+
+Manual UI and real-payment testing will be
+performed later on a computer.
+
+========================================================
+STRICT EXECUTION RULES
+========================================================
+
+REPLIT PREVIEW ONLY.
+
+DO NOT git commit.
+DO NOT git push.
+DO NOT deploy.
+DO NOT access VPS.
+DO NOT access Dokploy.
+DO NOT access production databases.
+
+Do not change unrelated modules.
+
+Do not modify Replit memory or internal notes.
+
+Avoid unnecessary browser automation.
+
+Use focused tests only.
+
+Do not perform expensive full regression suites.
+
+Do not claim any real gateway is operational
+unless a genuine provider integration exists.
+
+========================================================
+FINAL REPORT
+========================================================
+
+Return a concise structured report:
+
+1. Existing architecture reused
+2. Adapter contract
+3. Payment initiation
+4. Idempotency/recovery
+5. Webhook infrastructure
+6. Verified event processing
+7. Retry worker
+8. Expiry processing
+9. Payment reconciliation
+10. Platform Admin monitoring
+11. Reseller monitoring
+12. Customer payment status
+13. Manual review handling
+14. Security and tenant isolation
+15. Migration status
+16. Focused test results
+17. Files changed
+18. Deferred manual tests
+19. Missing provider-specific information
+20. Remaining work before first real gateway
+
+Confirm:
+
+No real payment was processed.
+No production changes.
+No commit/push/deployment.

@@ -73,12 +73,17 @@ import type {
   ListCustomerServiceOrdersParams,
   ListCustomerServicesParams,
   ListManualServicesParams,
+  ListPaymentReviewsParams,
   ListResellerClientActivityParams,
   ListResellerClientsParams,
+  ListResellerFundingRequestsParams,
   ListServiceOrdersParams,
   ManualServiceInput,
   NewDomainInput,
   PanelAccess,
+  PaymentMonitoringList,
+  PaymentReconciliation,
+  PaymentReviewList,
   PlanInput,
   PlatformState,
   PreviewCurrentPublicWebsite200,
@@ -102,7 +107,8 @@ import type {
   SubscriptionAction,
   Success,
   UploadPublicWebsiteAsset201,
-  WalletMutationInput
+  WalletMutationInput,
+  WebhookAcknowledgement
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -131,6 +137,397 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getListPaymentReviewsUrl = (params?: ListPaymentReviewsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/payment-reviews?${stringifiedParams}` : `/api/payment-reviews`
+}
+
+export const listPaymentReviews = async (params?: ListPaymentReviewsParams, options?: Parameters<typeof customFetch>[1]): Promise<PaymentReviewList> => {
+
+  return customFetch<PaymentReviewList>(getListPaymentReviewsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPaymentReviewsQueryKey = (params?: ListPaymentReviewsParams,) => {
+    return [
+    `/api/payment-reviews`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPaymentReviewsQueryOptions = <TData = Awaited<ReturnType<typeof listPaymentReviews>>, TError = ErrorType<unknown>>(params?: ListPaymentReviewsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPaymentReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPaymentReviewsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPaymentReviews>>> = ({ signal }) => listPaymentReviews(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPaymentReviews>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPaymentReviewsQueryResult = NonNullable<Awaited<ReturnType<typeof listPaymentReviews>>>
+export type ListPaymentReviewsQueryError = ErrorType<unknown>
+
+
+
+export function useListPaymentReviews<TData = Awaited<ReturnType<typeof listPaymentReviews>>, TError = ErrorType<unknown>>(
+ params?: ListPaymentReviewsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPaymentReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPaymentReviewsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminPaymentMonitoringUrl = () => {
+
+
+
+
+  return `/api/admin/payment-monitoring`
+}
+
+export const getAdminPaymentMonitoring = async ( options?: Parameters<typeof customFetch>[1]): Promise<PaymentMonitoringList> => {
+
+  return customFetch<PaymentMonitoringList>(getGetAdminPaymentMonitoringUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminPaymentMonitoringQueryKey = () => {
+    return [
+    `/api/admin/payment-monitoring`
+    ] as const;
+    }
+
+
+export const getGetAdminPaymentMonitoringQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPaymentMonitoring>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPaymentMonitoring>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPaymentMonitoringQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPaymentMonitoring>>> = ({ signal }) => getAdminPaymentMonitoring({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPaymentMonitoring>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminPaymentMonitoringQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPaymentMonitoring>>>
+export type GetAdminPaymentMonitoringQueryError = ErrorType<unknown>
+
+
+
+export function useGetAdminPaymentMonitoring<TData = Awaited<ReturnType<typeof getAdminPaymentMonitoring>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPaymentMonitoring>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminPaymentMonitoringQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetFundingReconciliationUrl = (id: string,) => {
+
+
+
+
+  return `/api/funding-requests/${id}/reconciliation`
+}
+
+export const getFundingReconciliation = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<PaymentReconciliation> => {
+
+  return customFetch<PaymentReconciliation>(getGetFundingReconciliationUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFundingReconciliationQueryKey = (id: string,) => {
+    return [
+    `/api/funding-requests/${id}/reconciliation`
+    ] as const;
+    }
+
+
+export const getGetFundingReconciliationQueryOptions = <TData = Awaited<ReturnType<typeof getFundingReconciliation>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFundingReconciliation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFundingReconciliationQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFundingReconciliation>>> = ({ signal }) => getFundingReconciliation(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFundingReconciliation>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFundingReconciliationQueryResult = NonNullable<Awaited<ReturnType<typeof getFundingReconciliation>>>
+export type GetFundingReconciliationQueryError = ErrorType<unknown>
+
+
+
+export function useGetFundingReconciliation<TData = Awaited<ReturnType<typeof getFundingReconciliation>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFundingReconciliation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFundingReconciliationQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getInitiateCustomerPaymentUrl = (slug: string,) => {
+
+
+
+
+  return `/api/public/customer/${slug}/panel/funding/initiate`
+}
+
+export const initiateCustomerPayment = async (slug: string,
+    fundingCreateInput: FundingCreateInput, options?: Parameters<typeof customFetch>[1]): Promise<FundingView> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<FundingView>(getInitiateCustomerPaymentUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(fundingCreateInput)
+  }
+);}
+
+
+
+
+
+export const getInitiateCustomerPaymentMutationKey = () => ['initiateCustomerPayment'] as const;
+
+export const getInitiateCustomerPaymentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof initiateCustomerPayment>>, TError,InitiateCustomerPaymentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof initiateCustomerPayment>>, TError,InitiateCustomerPaymentMutationVariables, TContext> => {
+
+const mutationKey = getInitiateCustomerPaymentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof initiateCustomerPayment>>, InitiateCustomerPaymentMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  initiateCustomerPayment(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type InitiateCustomerPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof initiateCustomerPayment>>>
+    export type InitiateCustomerPaymentMutationBody = BodyType<FundingCreateInput>
+    export type InitiateCustomerPaymentMutationError = ErrorType<unknown>
+    export type InitiateCustomerPaymentMutationVariables = {slug: string;data: BodyType<FundingCreateInput>}
+
+    export const useInitiateCustomerPayment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof initiateCustomerPayment>>, TError,InitiateCustomerPaymentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof initiateCustomerPayment>>,
+        TError,
+        InitiateCustomerPaymentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getInitiateCustomerPaymentMutationOptions(options));
+    }
+
+export const getReceiveProviderWebhookUrl = (code: string,
+    binding: string,) => {
+
+
+
+
+  return `/api/payments/webhooks/${code}/${binding}`
+}
+
+/**
+ * Raw bytes authenticated exclusively by a trusted installed provider verifier. No browser/session confirmation.
+ */
+export const receiveProviderWebhook = async (code: string,
+    binding: string,
+    receiveProviderWebhookBody: Blob, options?: Parameters<typeof customFetch>[1]): Promise<WebhookAcknowledgement> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<WebhookAcknowledgement>(getReceiveProviderWebhookUrl(code,binding),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream', ...getHeaders(options?.headers) },
+    body: receiveProviderWebhookBody
+  }
+);}
+
+
+
+
+
+export const getReceiveProviderWebhookMutationKey = () => ['receiveProviderWebhook'] as const;
+
+export const getReceiveProviderWebhookMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveProviderWebhook>>, TError,ReceiveProviderWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveProviderWebhook>>, TError,ReceiveProviderWebhookMutationVariables, TContext> => {
+
+const mutationKey = getReceiveProviderWebhookMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveProviderWebhook>>, ReceiveProviderWebhookMutationVariables> = (props) => {
+          const {code,binding,data} = props ?? {};
+
+          return  receiveProviderWebhook(code,binding,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReceiveProviderWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveProviderWebhook>>>
+    export type ReceiveProviderWebhookMutationBody = BodyType<Blob>
+    export type ReceiveProviderWebhookMutationError = ErrorType<unknown>
+    export type ReceiveProviderWebhookMutationVariables = {code: string;binding: string;data: BodyType<Blob>}
+
+    export const useReceiveProviderWebhook = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveProviderWebhook>>, TError,ReceiveProviderWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof receiveProviderWebhook>>,
+        TError,
+        ReceiveProviderWebhookMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReceiveProviderWebhookMutationOptions(options));
+    }
 
 export const getListAdminPaymentGatewaysUrl = () => {
 
@@ -523,17 +920,24 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getValidateResellerPaymentGatewayMutationOptions(options));
     }
 
-export const getListResellerFundingRequestsUrl = () => {
+export const getListResellerFundingRequestsUrl = (params?: ListResellerFundingRequestsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/funding-requests`
+  return stringifiedParams.length > 0 ? `/api/funding-requests?${stringifiedParams}` : `/api/funding-requests`
 }
 
-export const listResellerFundingRequests = async ( options?: Parameters<typeof customFetch>[1]): Promise<FundingList> => {
+export const listResellerFundingRequests = async (params?: ListResellerFundingRequestsParams, options?: Parameters<typeof customFetch>[1]): Promise<FundingList> => {
 
-  return customFetch<FundingList>(getListResellerFundingRequestsUrl(),
+  return customFetch<FundingList>(getListResellerFundingRequestsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -546,23 +950,23 @@ export const listResellerFundingRequests = async ( options?: Parameters<typeof c
 
 
 
-export const getListResellerFundingRequestsQueryKey = () => {
+export const getListResellerFundingRequestsQueryKey = (params?: ListResellerFundingRequestsParams,) => {
     return [
-    `/api/funding-requests`
+    `/api/funding-requests`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListResellerFundingRequestsQueryOptions = <TData = Awaited<ReturnType<typeof listResellerFundingRequests>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listResellerFundingRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListResellerFundingRequestsQueryOptions = <TData = Awaited<ReturnType<typeof listResellerFundingRequests>>, TError = ErrorType<unknown>>(params?: ListResellerFundingRequestsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listResellerFundingRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListResellerFundingRequestsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListResellerFundingRequestsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listResellerFundingRequests>>> = ({ signal }) => listResellerFundingRequests({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listResellerFundingRequests>>> = ({ signal }) => listResellerFundingRequests(params, { signal, ...requestOptions });
 
 
 
@@ -577,11 +981,11 @@ export type ListResellerFundingRequestsQueryError = ErrorType<unknown>
 
 
 export function useListResellerFundingRequests<TData = Awaited<ReturnType<typeof listResellerFundingRequests>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listResellerFundingRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListResellerFundingRequestsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listResellerFundingRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListResellerFundingRequestsQueryOptions(options)
+  const queryOptions = getListResellerFundingRequestsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

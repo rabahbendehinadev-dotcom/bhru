@@ -43,17 +43,45 @@ export const PAYMENT_SCRIPT = String.raw`(() => {
     const s = sel(), g = gws.find(x => x.code === s.code), c = form.elements.currency; clear(c);
     ((g && g.supportedCurrencies) || []).forEach(v => c.appendChild(el('option', v)));
   };
-  const LBL = { VERIFIED: 'Received - awaiting wallet allocation', SETTLED: 'Wallet credited', FAILED: 'Failed' };
-  const history = async () => {
-    const ul = $('fx-hist'), more = $('fx-more'); clear(ul);
+  const LBL = { CREATED: 'Created', PENDING_PAYMENT: 'Awaiting payment', PAID: 'Paid', FAILED: 'Failed', EXPIRED: 'Expired', CANCELLED: 'Cancelled' };
+  const when = v => v ? new Date(v).toLocaleString() : '';
+  const safeUrl = u => { try { const x = new URL(u); return x.protocol === 'https:' ? x.href : null; } catch (_) { return null; } };
+  const live = f => f.status === 'CREATED' || f.status === 'PENDING_PAYMENT';
+  const detail = (f, box) => {
+    const p = f.processing, now = Date.now();
+    const exp = (p && p.expiresAt) || f.expiresAt, expired = exp && new Date(exp).getTime() <= now;
+    const line = t => box.appendChild(el('p', t));
+    if (f.status === 'PAID' && f.settlementStatus === 'SETTLED') { if (f.paidAt) line('Paid ' + when(f.paidAt)); if (f.creditedWalletAmount) line('Wallet credited: ' + f.creditedWalletAmount); return; }
+    if (f.status === 'PAID') line('Payment received. Your wallet will be updated once confirmed.');
+    if (f.reviewRequired || (p && p.state === 'REVIEW_REQUIRED')) line('Review required. Please contact your reseller.');
+    if (f.status === 'FAILED' || (p && p.state === 'FAILED')) line('This payment could not be completed.');
+    if (!live(f) || expired || !p || p.state === 'FAILED' || p.state === 'REVIEW_REQUIRED') { if (live(f) && expired) line('This payment has expired.'); return; }
+    if (p.state === 'PROCESSING') line('Processing your payment.');
+    if (p.instructions) line(p.instructions);
+    const u = p.paymentUrl && safeUrl(p.paymentUrl);
+    if (u) { const a = el('a', 'Open payment page'); a.href = u; a.rel = 'noopener noreferrer'; a.target = '_blank'; a.className = 'pn-btn alt'; box.appendChild(a); }
+    if (p.paymentAddress) line('Payment address: ' + p.paymentAddress);
+    if (exp) line('Pay before ' + when(exp));
+  };
+  let timer = null, polls = 0;
+  const schedule = d => {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (!(d.data || []).some(live) || polls >= 20) return;
+    timer = setTimeout(() => { timer = null; if (document.hidden) { schedule(d); return; } polls++; history(true); }, 15000);
+  };
+  const history = async quiet => {
+    const ul = $('fx-hist'), more = $('fx-more'); if (!quiet) { polls = 0; clear(ul); }
     try {
       const d = await call('/panel/funding?page=' + page);
+      clear(ul);
       if (!(d.data || []).length) ul.appendChild(el('li', 'No funding requests yet.'));
-      (d.data || []).forEach(f => { const li = document.createElement('li'); li.appendChild(el('span', f.createdAt ? new Date(f.createdAt).toLocaleString() : '-')); li.appendChild(el('span', f.gatewayName + ' - ' + (LBL[f.status] || f.status))); li.appendChild(el('span', 'Credit ' + f.formattedCredit + ' / Payable ' + f.formattedPayable)); ul.appendChild(li); });
+      (d.data || []).forEach(f => { const li = document.createElement('li'); li.appendChild(el('span', f.createdAt ? new Date(f.createdAt).toLocaleString() : '-')); li.appendChild(el('span', f.gatewayName + ' - ' + (LBL[f.status] || f.status))); li.appendChild(el('span', 'Quoted payable ' + f.formattedPayable + ' / Credit ' + f.formattedCredit)); const box = document.createElement('div'); box.style.flexBasis = '100%'; detail(f, box); li.appendChild(box); ul.appendChild(li); });
       $('fx-prev').disabled = page <= 1; $('fx-next').disabled = !d.hasMore; more.hidden = page <= 1 && !d.hasMore;
       $('fx-page').textContent = 'Page ' + page + (d.hasMore ? '' : ' (last)');
-    } catch (err) { if (!err.silent) ul.appendChild(el('li', err.message)); }
+      schedule(d);
+    } catch (err) { if (!quiet && !err.silent) ul.appendChild(el('li', err.message)); }
   };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !timer && polls < 20 && $('fx-hist').children.length) { polls++; history(true); } });
   const showQuote = q => { const dl = $('fx-quote'); clear(dl); [['Estimated Wallet Credit', q.formattedCredit], ['Base amount', q.formattedBase], ['Fees', q.formattedFee], ['Total Payable', q.formattedPayable]].forEach(r => { const d = document.createElement('div'); d.appendChild(el('dt', r[0])); d.appendChild(el('dd', r[1])); dl.appendChild(d); }); };
   const init = async () => {
     try { const d = await call('/panel/funding/gateways'); gws = d.data || []; } catch (err) { if (err.silent) return; gws = []; }
@@ -65,8 +93,8 @@ export const PAYMENT_SCRIPT = String.raw`(() => {
     }
     history();
   };
-  form.addEventListener('input', resetQuote);
-  form.addEventListener('change', ev => { if (ev.target.name === 'method') fillCurrencies(); resetQuote(); });
+  form.addEventListener('input', () => { if (!busy) resetQuote(); });
+  form.addEventListener('change', ev => { if (busy) return; if (ev.target.name === 'method') fillCurrencies(); resetQuote(); });
   $('fx-prev').addEventListener('click', () => { if (page > 1) { page--; history(); } });
   $('fx-next').addEventListener('click', () => { page++; history(); });
   $('fx-getq').addEventListener('click', async () => {
@@ -76,10 +104,10 @@ export const PAYMENT_SCRIPT = String.raw`(() => {
   });
   form.addEventListener('submit', async ev => {
     ev.preventDefault(); if (busy || !quote || !key) return;
-    busy = true; $('fx-submit').disabled = true; $('fx-fields').disabled = true; const payload = Object.assign(body(), { idempotencyKey: key }); const mine = seq;
-    try { await call('/panel/funding', 'POST', payload); msg('Funding request created. This is not a payment and no wallet credit has been made.', false); page = 1; history(); }
-    catch (err) { if (!err.silent) msg(err.message, true); }
-    finally { busy = false; $('fx-fields').disabled = false; if (mine === seq) { if (!$('fx-msg').hidden && $('fx-msg').classList.contains('err')) $('fx-submit').disabled = false; else resetQuote(); } }
+    busy = true; $('fx-submit').disabled = true; $('fx-getq').disabled = true; $('fx-fields').disabled = true; const payload = Object.assign(body(), { idempotencyKey: key }); const mine = seq;
+    try { const f = await call('/panel/funding/initiate', 'POST', payload); msg('Funding request accepted for ' + f.formattedPayable + ' (quoted and fixed). This is not paid yet; no wallet credit has been made until payment is confirmed.', false); page = 1; history(); }
+    catch (err) { if (!err.silent) msg((err.message || 'Request failed') + ' If unsure whether it was received, press Create again: it will not be duplicated.', true); }
+    finally { busy = false; $('fx-fields').disabled = false; $('fx-getq').disabled = false; if (mine === seq && quote && key) $('fx-submit').disabled = false; }
   });
   init();
 })();`;

@@ -14,6 +14,7 @@ import {testWalletServices} from './test-wallet-services.mjs';
 import {testLedgerAttribution} from './test-ledger-attribution.mjs';
 import {testClientActivity} from './test-client-activity.mjs';
 import {testPaymentFoundation,paymentTestPlugin} from './test-payment-foundation.mjs';
+import {testPaymentProcessing} from './test-payment-processing.mjs';
 import {testCustomerSecurity} from './test-customer-security.mjs';
 
 const root=resolve(import.meta.dirname,'..'),temp=await mkdtemp(join(tmpdir(),'bhru-finance-'));
@@ -45,6 +46,8 @@ try{
       export {verifyGatewayCallback} from '${root}/artifacts/api-server/src/lib/payments/verification.ts';
       export {recordVerifiedPayment,settleVerifiedPayment,processGatewayCallback} from '${root}/artifacts/api-server/src/lib/payments/settlement.ts';
       export {decryptCredentials} from '${root}/artifacts/api-server/src/lib/payments/credentials.ts';
+      export {runPaymentWorkerOnce,claimPaymentJob,expireFundingRequests} from '${root}/artifacts/api-server/src/lib/payments/worker.ts';
+      export {testProviderPayments,testProviderCalls,testProviderModes,testPaymentCapabilities} from '${root}/artifacts/api-server/src/lib/payments/registry.ts';
       export {PAYMENT_SCRIPT,paymentScriptHash} from '${root}/artifacts/api-server/src/lib/customer-auth/payment-ui.ts';`,
       resolveDir:root,sourcefile:'financial-test-entry.ts',loader:'ts'},
     outfile:bundle,bundle:true,platform:'node',format:'esm',logLevel:'silent',
@@ -61,7 +64,7 @@ try{
   const db=await pool.connect();
   try{
     for(const name of (await readdir(join(root,'lib/db/src/migrations'))).filter(n=>/^\d+_.+\.sql$/.test(n)).sort()){
-    if(name.startsWith('025_')||name.startsWith('026_')||name.startsWith('027_')||name.startsWith('028_'))continue; // Explicit additive cutovers below.
+    if(['025_','026_','027_','028_','029_'].some(prefix=>name.startsWith(prefix)))continue; // Explicit additive cutovers below.
       await db.query('BEGIN');
       if(name.startsWith('004_'))await db.query("SELECT set_config('bhru.private_admin_segment',$1,true)",['private-test-entry']);
       await db.query(await readFile(join(root,'lib/db/src/migrations',name),'utf8'));
@@ -166,6 +169,24 @@ try{
     await pool.query(await readFile(join(root,'lib/db/src/migrations/028_payment_gateway_foundation.sql'),'utf8'));
     assert.deepEqual(await snapshot(),before);
   });
+  await check('migration 029 preserves existing financial/auth history and existing funding/payment evidence',async()=>{
+    const f=randomUUID(),p=randomUUID();
+    await pool.query("INSERT INTO reseller_payment_gateways(subscriber_id,gateway_code) VALUES($1,'paypal')",[sidA]);
+    await pool.query(`INSERT INTO payment_funding_requests(id,subscriber_id,customer_id,gateway_code,gateway_name_snapshot,payment_method,
+      account_currency,payment_currency,requested_credit_units,payment_base_minor,fee_minor,expected_payment_minor,snapshot,idempotency_key,request_hash)
+      VALUES($1,$2,$3,'paypal','Migration fixture','not-operational','USD','USD',1000000000000,100,0,100,$4,$5,$6)`,
+      [f,sidA,newClient.id,{account:{code:'USD'},payment:{code:'USD'},merchantScope:'migration-fixture',accountRate:'1000000',paymentRate:'1000000',
+        rounding:'CEILING_TO_PAYMENT_MINOR',mode:'SAME_CURRENCY',feeBps:0,fixedFeeMinor:'0',configurationRevision:1},randomUUID(),'a'.repeat(64)]);
+    await pool.query(`INSERT INTO payment_transactions(id,subscriber_id,customer_id,funding_request_id,gateway_code,merchant_scope,provider_reference,
+      status,amount_minor,currency,provider_occurred_at,verification_metadata) VALUES($1,$2,$3,$4,'paypal','migration-fixture','fixture-only','VERIFIED',100,'USD',now(),$5)`,
+      [p,sidA,newClient.id,f,{verification_method:'trusted_adapter',adapter_version:'migration-fixture',payload_digest:'b'.repeat(64)}]);
+    const tables=['public_customer_accounts','customer_wallets','customer_wallet_ledger','service_orders','public_customer_sessions',
+      'client_activity_events','payment_funding_requests','payment_transactions','payment_gateway_events'];
+    const snapshots=()=>Promise.all(tables.map(async t=>(await pool.query(`SELECT md5(coalesce(string_agg(to_jsonb(r)::text,',' ORDER BY to_jsonb(r)::text),'')) digest FROM ${t} r`)).rows[0].digest));
+    const before=await snapshots();
+    await pool.query(await readFile(join(root,'lib/db/src/migrations/029_payment_processing_infrastructure.sql'),'utf8'));
+    assert.deepEqual(await snapshots(),before);
+  });
   if(!process.argv.includes('--payments-only')){
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testLedgerAttribution({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
@@ -223,6 +244,7 @@ try{
   });
   }
   await testPaymentFoundation({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
+  await testPaymentProcessing({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
   console.log(`\n${checks} focused finance SQL/HTTP groups passed. No existing database, browser, VPS or deployment used.`);
 }finally{
   if(server)await new Promise(r=>server.close(r));

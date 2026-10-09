@@ -10,8 +10,12 @@ import type { GatewayField } from './gatewayField';
 import type { GatewayViewConfigurationSchema } from './gatewayViewConfigurationSchema';
 import type { GatewayViewIntegrationStatus } from './gatewayViewIntegrationStatus';
 import type { GatewayViewValidationStatus } from './gatewayViewValidationStatus';
+import type { PaymentCapabilities } from './paymentCapabilities';
 
 export interface GatewayView {
+  capabilities?: PaymentCapabilities;
+  /** @nullable */
+  callbackPath?: string | null;
   code: string;
   displayName: string;
   description: string;

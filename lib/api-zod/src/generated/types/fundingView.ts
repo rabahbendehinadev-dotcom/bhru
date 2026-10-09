@@ -6,10 +6,20 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { FundingPayment } from './fundingPayment';
+import type { FundingProcessing } from './fundingProcessing';
 import type { FundingQuote } from './fundingQuote';
+import type { FundingViewSettlementStatus } from './fundingViewSettlementStatus';
 import type { FundingViewStatus } from './fundingViewStatus';
 
 export type FundingView = FundingQuote & ({
+  /** @nullable */
+  paidAt: Date | null;
+  /** @nullable */
+  creditedWalletAmount: string | null;
+  reviewRequired: boolean;
+  reviewReasons: string[];
+  settlementStatus: FundingViewSettlementStatus;
+  processing: FundingProcessing | null;
   id: string;
   gatewayCode: string;
   gatewayName: string;

@@ -244,8 +244,12 @@ E2E, broad full-regression suite or production test is required.
 5. Add provider-specific end-to-end sandbox tests and credential rotation.
 6. Explicitly approve any new crypto currency/rate model; do not assume USDT=USD.
 
-No operational adapters, customer payment redirect, polling worker, chargebacks,
-payment refunds, real notifications or key-rotation service are included now.
+That list describes the completed **Slice 5A only**. Slice 5B adds the
+provider-independent initiation, authenticated callback, leased processing,
+expiry, read-only reconciliation and monitoring infrastructure documented in
+[BHRU_PAYMENT_PROCESSING_IMPLEMENTATION.md](./BHRU_PAYMENT_PROCESSING_IMPLEMENTATION.md).
+PayPal, Cryptomus and USDT Portal remain NOT_IMPLEMENTED. Chargebacks,
+payment refunds, real notifications and key rotation remain deferred.
 Retail checkout, service-order refund rules, immutable client account currency,
 Platform Admin authentication/private path, public storefront, media and tenant
 isolation are unchanged. This documentation does not authorize deployment.

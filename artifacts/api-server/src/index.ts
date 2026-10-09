@@ -1,3 +1,4 @@
+import {startPaymentWorker} from './lib/payments/worker';
 import app from "./app";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
@@ -36,6 +37,8 @@ try {
   await pool.query("SELECT requested_credit_units FROM payment_funding_requests LIMIT 0");
   await pool.query("SELECT verification_metadata FROM payment_transactions LIMIT 0");
   await pool.query("SELECT payment_transaction_id FROM customer_wallet_ledger LIMIT 0");
+  await pool.query("SELECT lease_token FROM payment_processing_jobs LIMIT 0");
+  await pool.query("SELECT creation_started_at FROM payment_initiations LIMIT 0");
   await pool.query("SELECT price_account_units,account_currency_snapshot FROM service_orders LIMIT 0");
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
   await pool.query("SELECT subscriber_id,client_code,username,last_login_at FROM public_customer_accounts LIMIT 0");
@@ -64,6 +67,7 @@ try {
   process.exit(1);
 }
 await initializePublicMedia();
+const stopPaymentWorker=startPaymentWorker();
 const server = app.listen(port, "0.0.0.0", (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
@@ -74,6 +78,7 @@ const server = app.listen(port, "0.0.0.0", (err) => {
   startDomainController();
 });
 for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => {
+  stopPaymentWorker();
   server.close(() => { pool.end().then(() => process.exit(0)); });
   setTimeout(() => process.exit(1), 10000).unref();
 });

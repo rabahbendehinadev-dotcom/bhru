@@ -13,6 +13,7 @@ export const CLIENT_ACTIVITY_TYPES = {
   service_order_charged:'FINANCIAL',service_order_refunded:'FINANCIAL',
   funding_request_created:'FINANCIAL',funding_request_cancelled:'FINANCIAL',payment_pending:'FINANCIAL',
   payment_confirmed:'FINANCIAL',payment_failed:'FINANCIAL',wallet_funded_from_payment:'FINANCIAL',
+  payment_initiated:'FINANCIAL',payment_expired:'FINANCIAL',payment_review_required:'FINANCIAL',
   service_order_created:'ORDER',service_order_processing:'ORDER',service_order_completed:'ORDER',service_order_rejected:'ORDER',
   customer_logged_out:'SECURITY',
   login_success:'SECURITY',login_failed:'SECURITY',login_locked:'SECURITY',

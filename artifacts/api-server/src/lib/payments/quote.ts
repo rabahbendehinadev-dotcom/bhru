@@ -28,7 +28,7 @@ export async function eligibleGateways(tenant:string,id:string,db:PoolClient){
     if(!rules.length)return [];
     const view=gatewayView(d.code,c,{...c,currency_rules:rules});
     // Customer projection never publishes credential field state.
-    return [{...view,configuredCredentialFields:[],requiredCredentials:[],configurationFields:[]}];
+    return [{...view,callbackPath:null,configuredCredentialFields:[],requiredCredentials:[],configurationFields:[]}];
   })};
 }
 export async function quoteFunding(tenant:string,id:string,raw:unknown,db:PoolClient){

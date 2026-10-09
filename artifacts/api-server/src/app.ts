@@ -14,6 +14,7 @@ import { tryCommerceDocument, commerceNavigation } from "./lib/commerce/navigati
 import { customDomainGateway } from "./lib/domains/gateway";
 import { customerPublicContext } from "./lib/customer-auth/context";
 import customerAuthRouter from "./routes/customer-auth";
+import {paymentWebhookRouter} from "./routes/payment-webhooks";
 
 const app: Express = express();
 app.disable("x-powered-by");
@@ -28,7 +29,7 @@ app.use(
         return {
           id: req.id,
           method: req.method,
-          url: req.url?.split("?")[0],
+          url: req.url?.split("?")[0]?.replace(/(\/payments\/webhooks\/[^/]+)\/[^/]+/, '$1/[binding]'),
         };
       },
       res(res) {
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 // Public documents deliberately finish before session/account middleware.
 // Customer realm also finishes before owner/admin session middleware; verified
 // custom-host customer routes are handled here, not by changing the host firewall.
+app.use(paymentWebhookRouter);
 app.use(customerPublicContext, customerAuthRouter);
 app.use(customDomainGateway);
 // The 204 response means "existing application namespace", never public data.

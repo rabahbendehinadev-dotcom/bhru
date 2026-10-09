@@ -1,4 +1,5 @@
 import {HttpError} from '../auth';
+import type {PaymentOperations} from './contract';
 export interface GatewayField {key:string;label:string;secret:boolean;required:boolean}
 /** Common configuration contract, combined with each trusted definition's
  * credential whitelist, currency/method capabilities and fee policy. */
@@ -23,7 +24,7 @@ export interface VerifiedCallback {
  * verifyCallback MUST authenticate the raw callback, merchant and provider transaction.
  * A browser redirect is not a callback. Slice 5A registers no adapters.
  */
-export interface GatewayAdapter {
+export interface GatewayAdapter extends Partial<PaymentOperations> {
   merchantScope(credentials:Readonly<Record<string,string>>):Promise<string>;
   verifyCallback(raw:Buffer,headers:Readonly<Record<string,string>>,credentials:Readonly<Record<string,string>>):Promise<VerifiedCallback>;
   validateCredentials(credentials:Readonly<Record<string,string>>):Promise<boolean>;

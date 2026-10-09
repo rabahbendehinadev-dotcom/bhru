@@ -4,6 +4,8 @@ import {HttpError} from '../auth';
 import {gateway,gatewayDefinitions,implemented,operational} from './registry';
 import {credentialStorageReady,encryptCredentials,decryptCredentials} from './credentials';
 import {fundingUnits} from './decimal';
+import {transaction} from '../platform';
+import {providerCall} from './contract';
 export const configInput=z.object({
   enabled:z.boolean(),instructions:z.string().trim().max(1000),
   currencyRules:z.array(z.object({currency:z.string().regex(/^[A-Z]{3}$/),minimum:z.string(),maximum:z.string(),
@@ -19,6 +21,8 @@ export function gatewayView(code:string,p:Record<string,any>,c?:Record<string,an
   return {...d,globalEnabled:p.global_enabled,resellerAvailable:p.reseller_available,
     operational:implemented(definition)&&p.global_enabled&&p.reseller_available,
     enabled:c?.enabled??false,instructions:c?.instructions??'',currencyRules:c?.currency_rules??[],
+    capabilities:definition.adapter?.capabilities??{createPayment:false,idempotentCreation:false,statusLookup:false,webhookVerification:false,cancelPayment:false,refundPayment:false},
+    callbackPath:c?.callback_binding?`/api/payments/webhooks/${code}/${c.callback_binding}`:null,
     configuredCredentialFields:c?.credential_fields??[],
     validationStatus:!implemented(definition)?'NOT_IMPLEMENTED':c?.validation_status??'NOT_CONFIGURED'};
 }
@@ -53,7 +57,8 @@ export async function configureGateway(tenant:string,code:string,raw:unknown,db:
       throw new HttpError(400,'Credential fields do not match the installed adapter.');
     const outstanding=(await db.query(`SELECT 1 FROM payment_funding_requests f WHERE subscriber_id=$1 AND gateway_code=$2
       AND (status IN ('CREATED','PENDING_PAYMENT') OR EXISTS(SELECT 1 FROM payment_transactions t WHERE t.funding_request_id=f.id AND t.status='VERIFIED')) LIMIT 1`,[tenant,code])).rowCount;
-    if(outstanding)throw new HttpError(409,'Resolve outstanding funding before replacing credentials.');
+    const unsettledJobs=(await db.query("SELECT 1 FROM payment_processing_jobs WHERE subscriber_id=$1 AND gateway_code=$2 AND state IN ('READY','LEASED','REVIEW') LIMIT 1",[tenant,code])).rowCount;
+    if(outstanding||unsettledJobs)throw new HttpError(409,'Resolve outstanding funding and processing review before replacing credentials.');
     const merged={...decryptCredentials(tenant,code,encrypted),...input.credentials};
     if(d.requiredCredentials.some(f=>f.required&&!merged[f.key]))throw new HttpError(400,'Required credential fields are missing.');
     encrypted=encryptCredentials(tenant,code,merged);fields=Object.keys(merged);
@@ -70,13 +75,24 @@ export async function configureGateway(tenant:string,code:string,raw:unknown,db:
       implemented(d)?'NOT_VALIDATED':'NOT_IMPLEMENTED',!!replaceCredentials])).rows[0];
   return gatewayView(code,p,row);
 }
-export async function validateGateway(tenant:string,code:string,db:PoolClient){
-  const d=operational(gateway(code)),p=await policy(code,db,true);
-  if(!p.global_enabled||!p.reseller_available)throw new HttpError(409,'Gateway is unavailable.');
-  const row=(await db.query('SELECT * FROM reseller_payment_gateways WHERE subscriber_id=$1 AND gateway_code=$2 FOR UPDATE',[tenant,code])).rows[0];
-  if(!row)throw new HttpError(404,'Gateway configuration not found.');
-  let valid=false;try{valid=await d.adapter!.validateCredentials(decryptCredentials(tenant,code,row.credentials_encrypted));}
+export async function validateGateway(tenant:string,code:string){
+  const d=operational(gateway(code));
+  const row=await transaction(async db=>{
+    const p=await policy(code,db);
+    if(!p.global_enabled||!p.reseller_available)throw new HttpError(409,'Gateway is unavailable.');
+    const c=(await db.query('SELECT * FROM reseller_payment_gateways WHERE subscriber_id=$1 AND gateway_code=$2',[tenant,code])).rows[0];
+    if(!c)throw new HttpError(404,'Gateway configuration not found.');return c;
+  });
+  let valid=false;try{
+    const credentials=decryptCredentials(tenant,code,row.credentials_encrypted);
+    valid=await providerCall(signal=>d.adapter!.validateConfiguration?d.adapter!.validateConfiguration(credentials,signal):d.adapter!.validateCredentials(credentials));
+  }
   catch{throw new HttpError(502,'Provider validation could not complete.');}
-  const updated=(await db.query("UPDATE reseller_payment_gateways SET validation_status=$3,updated_at=now() WHERE subscriber_id=$1 AND gateway_code=$2 RETURNING *",[tenant,code,valid?'VALID':'INVALID'])).rows[0];
-  return gatewayView(code,p,updated);
+  return transaction(async db=>{
+    const p=await policy(code,db,true);
+    if(!p.global_enabled||!p.reseller_available)throw new HttpError(409,'Gateway is unavailable.');
+    const updated=(await db.query("UPDATE reseller_payment_gateways SET validation_status=$3,updated_at=now() WHERE subscriber_id=$1 AND gateway_code=$2 AND revision=$4 RETURNING *",[tenant,code,valid?'VALID':'INVALID',row.revision])).rows[0];
+    if(!updated)throw new HttpError(409,'Configuration changed during validation. Validate the current credentials.');
+    return gatewayView(code,p,updated);
+  });
 }

@@ -24,6 +24,15 @@ export type FundingCreateInput = FundingIntent & {
   idempotencyKey: string;
 };
 
+export interface PaymentCapabilities {
+  createPayment: boolean;
+  idempotentCreation: boolean;
+  statusLookup: boolean;
+  webhookVerification: boolean;
+  cancelPayment: boolean;
+  refundPayment: boolean;
+}
+
 export interface GatewayField {
   key: string;
   label: string;
@@ -66,6 +75,9 @@ export const GatewayViewValidationStatus = {
 export type GatewayViewConfigurationSchema = { [key: string]: unknown };
 
 export interface GatewayView {
+  capabilities?: PaymentCapabilities;
+  /** @nullable */
+  callbackPath?: string | null;
   code: string;
   displayName: string;
   description: string;
@@ -140,6 +152,17 @@ export interface FundingPayment {
   settledAt: string | null;
 }
 
+export type FundingViewSettlementStatus = typeof FundingViewSettlementStatus[keyof typeof FundingViewSettlementStatus];
+
+
+export const FundingViewSettlementStatus = {
+  NONE: 'NONE',
+  VERIFIED: 'VERIFIED',
+  SETTLED: 'SETTLED',
+  REVIEW_REQUIRED: 'REVIEW_REQUIRED',
+  FAILED: 'FAILED',
+} as const;
+
 export type FundingViewStatus = typeof FundingViewStatus[keyof typeof FundingViewStatus];
 
 
@@ -152,7 +175,39 @@ export const FundingViewStatus = {
   CANCELLED: 'CANCELLED',
 } as const;
 
+export type FundingProcessingState = typeof FundingProcessingState[keyof typeof FundingProcessingState];
+
+
+export const FundingProcessingState = {
+  READY: 'READY',
+  PROCESSING: 'PROCESSING',
+  REVIEW_REQUIRED: 'REVIEW_REQUIRED',
+  FAILED: 'FAILED',
+} as const;
+
+/**
+ * @nullable
+ */
+export type FundingProcessing = {
+  state: FundingProcessingState;
+  /** @nullable */
+  paymentUrl: string | null;
+  /** @nullable */
+  paymentAddress: string | null;
+  instructions: string;
+  /** @nullable */
+  expiresAt: string | null;
+} | null;
+
 export type FundingView = FundingQuote & ({
+  /** @nullable */
+  paidAt: string | null;
+  /** @nullable */
+  creditedWalletAmount: string | null;
+  reviewRequired: boolean;
+  reviewReasons: string[];
+  settlementStatus: FundingViewSettlementStatus;
+  processing: FundingProcessing | null;
   id: string;
   gatewayCode: string;
   gatewayName: string;
@@ -169,6 +224,56 @@ export type FundingView = FundingQuote & ({
 export interface FundingList {
   data: FundingView[];
   hasMore: boolean;
+}
+
+export interface PaymentReview {
+  id: string;
+  /** @nullable */
+  fundingId: string | null;
+  gatewayCode: string;
+  category: string;
+  createdAt: string;
+  /** @nullable */
+  providerReference: string | null;
+  /** @nullable */
+  amountMinor: string | null;
+  /** @nullable */
+  currency: string | null;
+}
+
+export interface PaymentReviewList {
+  data: PaymentReview[];
+  hasMore: boolean;
+}
+
+export interface PaymentMonitoring {
+  gatewayCode: string;
+  gatewayName: string;
+  integrationStatus: string;
+  globalEnabled: boolean;
+  configuredResellers: number;
+  pending: number;
+  verifiedUnsettled: number;
+  failedProcessing: number;
+  reviewRequired: number;
+}
+
+export interface PaymentMonitoringList {
+  data: PaymentMonitoring[];
+}
+
+export interface PaymentReconciliation {
+  fundingId: string;
+  consistent: boolean;
+  issues: string[];
+  readOnly: boolean;
+}
+
+export interface WebhookAcknowledgement {
+  received: boolean;
+  authenticated: boolean;
+  queued: boolean;
+  duplicate: boolean;
 }
 
 export interface CustomerSecurityAction { [key: string]: unknown }
@@ -1602,6 +1707,33 @@ export const FoundationServiceTypeParameter = {
   server: 'server',
   file: 'file',
   remote: 'remote',
+} as const;
+
+export type ListPaymentReviewsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+};
+
+export type ListResellerFundingRequestsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+filter?: ListResellerFundingRequestsFilter;
+};
+
+export type ListResellerFundingRequestsFilter = typeof ListResellerFundingRequestsFilter[keyof typeof ListResellerFundingRequestsFilter];
+
+
+export const ListResellerFundingRequestsFilter = {
+  ALL: 'ALL',
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  FAILED: 'FAILED',
+  EXPIRED: 'EXPIRED',
+  REVIEW_REQUIRED: 'REVIEW_REQUIRED',
 } as const;
 
 export type ListManualServicesParams = {
