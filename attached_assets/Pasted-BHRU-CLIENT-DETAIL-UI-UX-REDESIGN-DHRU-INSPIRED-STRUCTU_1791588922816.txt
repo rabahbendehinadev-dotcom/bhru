@@ -1,0 +1,148 @@
+BHRU — CLIENT DETAIL UI/UX REDESIGN
+DHRU-INSPIRED STRUCTURE, MODERN BHRU DESIGN
+REPLIT PREVIEW ONLY — STRICTLY PRESENTATIONAL
+
+OBJECTIVE
+Redesign ONLY the Reseller → Clients → Client Detail experience to follow the classic DHRU Fusion client-detail information architecture, but with a modern, clean, compact BHRU appearance.
+
+REFERENCE
+The user has supplied screenshots showing:
+1. Current BHRU Client Detail: horizontal tabs, two large Overview cards, light gray canvas, orange BHRU accent.
+2. DHRU Fusion Client Detail: a client identity sidebar with vertical navigation, and a spacious main content column with Personal Info, Credit Info and Quick Actions.
+
+Use those screenshots as visual/structural references if available in the Replit conversation. If unavailable, follow the exact specification below. Do not require the user to re-upload screenshots.
+
+SCOPE
+Only Reseller Client Detail and the components/styles directly necessary for it.
+Do not redesign global BHRU navigation, Dashboard, Clients listing, Platform Admin, Customer Panel, Settings, payment pages or Retail.
+
+ARCHITECTURE AUDIT FIRST
+Inspect existing Client Detail page, route, API hooks, subviews, loading/error states, wallet action handlers, permissions, localization and responsive styling.
+Preserve existing components and behavior where possible. Reuse all existing data and endpoints. No new data layer or duplicate financial logic.
+
+LAYOUT
+Inside the existing BHRU app shell:
+- Preserve top bar, global left sidebar, breadcrumbs/tabs and BHRU branding.
+- Replace the horizontal Client Detail subnavigation with a vertical client-specific sidebar on desktop.
+- Main content sits to its right, with a generous but compact readable width.
+- Use a restrained modern aesthetic: white/light surfaces, subtle borders, modest corner radius, compact rows, crisp typography, orange active accents, excellent alignment, no excessive cards or empty space.
+- Do not literally copy DHRU logos, assets or styling. Modernize its information hierarchy.
+
+CLIENT IDENTITY SIDEBAR
+Top: avatar/initials, client name, client code, active/blocked status, optionally email.
+Below: vertical links in this order:
+Overview
+Financial
+Profile
+Orders
+Pricing
+Service Access
+Activity
+Security
+Notes
+Only show routes/tabs that actually exist. Do not fabricate screens.
+Keep all existing route URLs, deep-link behavior, permissions and state.
+Show active item clearly in orange.
+Support long names, narrow widths, keyboard focus and screen readers.
+Do not repeat or conflict with the global navigation.
+
+OVERVIEW MAIN CONTENT
+Section 1: Personal Info
+Display existing reliable data only:
+Full name, email, client code, username, WhatsApp/phone when available, country/location, registration date, last login, group, account status.
+Use compact labeled rows or a clean two-column definition layout. Missing values should show an unobtrusive dash; never invent KYC or contact fields.
+
+Section 2: Credit Info
+Make Available Balance the most prominent number with its exact immutable Account Currency.
+Place existing authorized Add Funds and Deduct Funds controls beside or below the balance, reusing existing actions, confirmation, validation, CSRF, tenant authorization, wallet ledger and activity.
+If these actions are not implemented or not available to the current actor, do not create fake buttons. Instead provide a link to the existing Financial action or omit.
+Below balance show accurate:
+Ledger Credits
+Ledger Debits
+Total Spent (completed service-order charges only)
+Do not invent Locked Amount, Credit Limit, Due Balance, Unpaid Balance, Total Receipts or Proforma values.
+Do not use DHRU's legacy financial terminology as if it applies to BHRU.
+Use the existing authoritative finance summary; no calculations in the browser.
+Respect currency formatting and avoid redundant USD labels.
+
+Section 3: Quick Actions
+Only real, currently authorized and functional actions or links:
+Manage Wallet / Financial
+View Orders
+Pricing
+Service Access
+Activity
+Security
+Profile
+Optionally Block/Unblock client using the existing working flow.
+Do not add password-reset-by-email or temporary-password controls unless operational and authorized.
+Do not invent invoice or login-as-client functionality.
+
+SUBVIEWS
+Keep Financial, Profile, Orders, Pricing, Service Access, Activity, Security and Notes functionally unchanged.
+Render the currently selected subview inside the new right-hand content region.
+Retain forms, mutations, filters, pagination, tables, confirmation dialogs, toasts, error boundaries and audit effects.
+Do not duplicate forms or refetch unnecessarily.
+Client group/pricing/service access from Slices 6A and 6B must continue to work.
+
+RESPONSIVE
+Desktop >= 1100px: vertical identity/navigation sidebar and main content side by side.
+Tablet: narrower sidebar or compact navigation without overflow.
+Mobile: identity header followed by a horizontally scrollable accessible subnavigation or a compact selector; main content stacks naturally.
+No nested horizontal overflow for main page.
+Financial amounts, actions and long emails must wrap or truncate appropriately.
+Sticky sidebar is optional only if it does not overlap the app header or navigation.
+
+VISUAL DETAILS
+Use existing BHRU design tokens/components.
+Orange active indicator and primary action styling.
+Thin dividers, balanced spacing, no large unnecessary card shadows.
+Clear status colors with accessible contrast.
+Prefer CSS grid/flex and existing icon library.
+Keep both light/dark theme behavior if currently supported.
+No external UI library unless already installed.
+
+DATA AND SECURITY
+NO database migrations.
+NO SQL schema changes.
+NO API changes unless an existing read endpoint is demonstrably broken and requires a minimal compatibility fix; report any such deviation.
+NO wallet/ledger/FX/pricing/access/security/payment logic changes.
+NO new impersonation functionality.
+NO mock data or fake success messages.
+NO browser-side financial arithmetic.
+Never expose cross-tenant data.
+
+VALIDATION
+Run focused frontend TypeScript/typecheck and build.
+Run any narrow existing Client Detail component tests where practical.
+Check route mappings and import consistency.
+Avoid broad browser/E2E/full-regression suites and costly automated browsing.
+The user will perform manual visual tests later; do not ask for them now.
+
+STRICT OPERATING BOUNDARIES
+Replit Preview only.
+Do NOT git commit.
+Do NOT git push.
+Do NOT deploy.
+Do NOT access VPS, Dokploy or production database.
+Do NOT modify migration history.
+Do NOT change Replit memory/internal notes.
+Do NOT redesign unrelated screens.
+
+FINAL REPORT
+Explain:
+1. Existing Client Detail structure found
+2. New desktop layout
+3. Mobile/tablet behavior
+4. Identity sidebar and navigation
+5. Personal Info fields
+6. Credit Info and exact financial labels
+7. Quick Actions and authorization
+8. Existing subviews preserved
+9. Files changed
+10. TypeScript/build/test results
+11. Any limitations
+12. Deferred manual checks
+
+Explicitly confirm no commit, push, deployment, VPS/Dokploy or production changes.
+Stop after completing this UI slice.
