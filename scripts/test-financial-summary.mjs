@@ -17,6 +17,7 @@ import {testPaymentFoundation,paymentTestPlugin} from './test-payment-foundation
 import {testPaymentProcessing} from './test-payment-processing.mjs';
 import {testCustomerSecurity} from './test-customer-security.mjs';
 import {testClientGroupsPricing} from './test-client-groups-pricing.mjs';
+import {testClientServiceAccess} from './test-client-service-access.mjs';
 
 const root=resolve(import.meta.dirname,'..'),temp=await mkdtemp(join(tmpdir(),'bhru-finance-'));
 let started=false,pool,server,checks=0,requestId=0;
@@ -65,7 +66,7 @@ try{
   const db=await pool.connect();
   try{
     for(const name of (await readdir(join(root,'lib/db/src/migrations'))).filter(n=>/^\d+_.+\.sql$/.test(n)).sort()){
-    if(['025_','026_','027_','028_','029_','030_'].some(prefix=>name.startsWith(prefix)))continue; // Explicit additive cutovers below.
+    if(['025_','026_','027_','028_','029_','030_','031_'].some(prefix=>name.startsWith(prefix)))continue; // Explicit additive cutovers below.
       await db.query('BEGIN');
       if(name.startsWith('004_'))await db.query("SELECT set_config('bhru.private_admin_segment',$1,true)",['private-test-entry']);
       await db.query(await readFile(join(root,'lib/db/src/migrations',name),'utf8'));
@@ -205,7 +206,18 @@ try{
     assert.equal((await pool.query('SELECT count(*)::int n FROM public_customer_accounts WHERE client_group_id IS NULL')).rows[0].n,0);
     assert.equal((await pool.query('SELECT count(*)::int n FROM service_orders WHERE pricing_snapshot IS NOT NULL')).rows[0].n,0);
   });
-  if(!process.argv.includes('--payments-only')&&!process.argv.includes('--pricing-only')){
+  await check('migration 031 preserves every existing customer/group/pricing/financial/auth/payment row and creates no access policies',async()=>{
+    const tables=['public_customer_accounts','reseller_client_groups','client_group_service_prices','customer_service_prices','manual_services','manual_service_groups',
+      'service_orders','customer_wallets','customer_wallet_ledger','client_activity_events','public_customer_sessions','customer_login_history',
+      'reseller_payment_gateways','payment_funding_requests','payment_transactions','payment_gateway_events','payment_initiations','payment_processing_jobs'];
+    const snapshot=()=>Promise.all(tables.map(async t=>(await pool.query(`SELECT md5(coalesce(string_agg(to_jsonb(r)::text,',' ORDER BY to_jsonb(r)::text),'')) digest FROM ${t} r`)).rows[0].digest));
+    const before=await snapshot(),db=await pool.connect();
+    try{await db.query('BEGIN');await db.query(await readFile(join(root,'lib/db/src/migrations/031_client_service_access.sql'),'utf8'));await db.query('COMMIT');}catch(e){await db.query('ROLLBACK');throw e;}finally{db.release();}
+    assert.deepEqual(await snapshot(),before);
+    for(const t of ['client_group_service_access','customer_service_access','client_group_category_access','customer_category_access','client_service_access_events'])
+      assert.equal((await pool.query(`SELECT count(*)::int n FROM ${t}`)).rows[0].n,0);
+  });
+  if(!process.argv.includes('--payments-only')&&!process.argv.includes('--pricing-only')&&!process.argv.includes('--access-only')){
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testLedgerAttribution({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testClientActivity({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
@@ -261,7 +273,11 @@ try{
     }
   });
   }
-  if(process.argv.includes('--pricing-only'))await testClientGroupsPricing({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
+  if(process.argv.includes('--access-only')){
+    await testClientGroupsPricing({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
+    await testClientServiceAccess({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
+  }
+  else if(process.argv.includes('--pricing-only'))await testClientGroupsPricing({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   else{
     await testPaymentFoundation({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
     await testPaymentProcessing({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});

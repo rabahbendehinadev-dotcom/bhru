@@ -6,6 +6,7 @@ import { lockClient, walletRow, displayCurrency, money, accountPrice, hashReques
 import { activityContext } from '../customer-auth/activity';
 import { serviceRow, serviceView, validateServiceInputs } from './catalog';
 import {pricingLock,effectivePrice} from './pricing';
+import {requireCustomerServiceAccess} from './access';
 
 export const orderQuery=z.object({
   page:z.coerce.number().int().min(1).max(100000).default(1),search:z.string().trim().max(100).optional(),
@@ -59,6 +60,7 @@ export const quoteInput=z.object({serviceId:z.string().uuid(),currency:z.string(
 export async function quoteService(sub:string,customer:string,raw:unknown,db:PoolClient) {
   await pricingLock(sub,db);
   const q=quoteInput.parse(raw),service=await serviceRow(sub,q.serviceId,db,true);
+  await requireCustomerServiceAccess(sub,customer,service.id,db);
   const currency=await displayCurrency(sub,customer,db,q.currency),wallet=await walletRow(sub,customer,db);
   const price=await effectivePrice(sub,customer,service,db,currency),amount=price.amount,balance=BigInt(wallet.available_balance),missing=amount>balance?amount-balance:0n;
   return {service:serviceView(service,currency,price.view),priceUsdUnits:price.view.priceUsdUnits,priceAccountUnits:amount.toString(),formattedTotal:money(amount,currency),
@@ -84,6 +86,7 @@ export async function purchaseService(sub:string,customer:string,raw:unknown,db:
     return orderView(await orderRow(sub,existing.id,db,customer));
   }
   const service=await serviceRow(sub,input.serviceId,db,true,true);
+  await requireCustomerServiceAccess(sub,customer,service.id,db);
   const values=validateServiceInputs(service.requirements,input.inputs),currency=await displayCurrency(sub,customer,db,input.currency);
   const price=await effectivePrice(sub,customer,service,db,currency),amount=price.amount;
   if(BigInt(input.expectedPriceUsdUnits)!==BigInt(price.view.priceUsdUnits))throw new HttpError(409,'PRICE_CHANGED: refresh the server quote before ordering.');

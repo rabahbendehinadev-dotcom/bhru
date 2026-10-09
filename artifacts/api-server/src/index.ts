@@ -51,6 +51,7 @@ try {
   await pool.query("SELECT id FROM manual_services LIMIT 0");
   await pool.query("SELECT id,is_default,is_active FROM reseller_client_groups LIMIT 0");
   await pool.query("SELECT id FROM customer_service_prices LIMIT 0");
+  await pool.query("SELECT id FROM customer_service_access LIMIT 0");
   await pool.query("SELECT id,wallet_debit_reference FROM service_orders LIMIT 0");
   await pool.query("SELECT hostname,check_generation,dns_checked_at FROM subscriber_custom_domains LIMIT 0");
   await pool.query("SELECT subscriber_id,logo_strip_settings,announcement_ticker_settings FROM public_site_presentation LIMIT 0");

@@ -1788,6 +1788,169 @@ export const UpdateResellerClientBody = zod.object({
 export const UpdateResellerClientResponse = zod.unknown()
 
 
+export const ListGroupServiceAccessParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+
+export const listGroupServiceAccessQuerySearchMax = 100;
+
+
+
+export const ListGroupServiceAccessQueryParams = zod.object({
+  "targetType": zod.enum(['SERVICE', 'CATEGORY']).optional(),
+  "page": zod.coerce.number().int().min(1).optional(),
+  "search": zod.coerce.string().max(listGroupServiceAccessQuerySearchMax).optional(),
+  "categoryId": zod.coerce.string().uuid().optional(),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']).optional()
+})
+
+export const ListGroupServiceAccessResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "categoryId": zod.string().uuid().nullable(),
+  "categoryName": zod.string().nullable(),
+  "serviceType": zod.string().nullable(),
+  "globallyAvailable": zod.boolean(),
+  "policy": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "effect": zod.enum(['ALLOW', 'DENY'])
+}),zod.null()]),
+  "groupPolicy": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "effect": zod.enum(['ALLOW', 'DENY'])
+}),zod.null()]),
+  "hasPricingRule": zod.boolean(),
+  "effective": zod.object({
+  "allowed": zod.boolean(),
+  "reasonCode": zod.string(),
+  "source": zod.string(),
+  "matchedPolicyId": zod.string().uuid().nullable()
+})
+})),
+  "page": zod.number().int(),
+  "hasMore": zod.boolean(),
+  "currentGroup": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "active": zod.boolean()
+}),zod.null()]),
+  "categories": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "enabled": zod.boolean()
+}))
+})
+
+
+export const UpdateGroupServiceAccessParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateGroupServiceAccessBodyTargetIdsMax = 50;
+
+
+
+export const UpdateGroupServiceAccessBody = zod.object({
+  "targetType": zod.enum(['SERVICE', 'CATEGORY']),
+  "targetIds": zod.array(zod.string().uuid()).min(1).max(updateGroupServiceAccessBodyTargetIdsMax),
+  "effect": zod.enum(['INHERIT', 'ALLOW', 'DENY'])
+})
+
+export const UpdateGroupServiceAccessResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+export const ListCustomerServiceAccessParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+
+export const listCustomerServiceAccessQuerySearchMax = 100;
+
+
+
+export const ListCustomerServiceAccessQueryParams = zod.object({
+  "targetType": zod.enum(['SERVICE', 'CATEGORY']).optional(),
+  "page": zod.coerce.number().int().min(1).optional(),
+  "search": zod.coerce.string().max(listCustomerServiceAccessQuerySearchMax).optional(),
+  "categoryId": zod.coerce.string().uuid().optional(),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']).optional()
+})
+
+export const ListCustomerServiceAccessResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "categoryId": zod.string().uuid().nullable(),
+  "categoryName": zod.string().nullable(),
+  "serviceType": zod.string().nullable(),
+  "globallyAvailable": zod.boolean(),
+  "policy": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "effect": zod.enum(['ALLOW', 'DENY'])
+}),zod.null()]),
+  "groupPolicy": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "effect": zod.enum(['ALLOW', 'DENY'])
+}),zod.null()]),
+  "hasPricingRule": zod.boolean(),
+  "effective": zod.object({
+  "allowed": zod.boolean(),
+  "reasonCode": zod.string(),
+  "source": zod.string(),
+  "matchedPolicyId": zod.string().uuid().nullable()
+})
+})),
+  "page": zod.number().int(),
+  "hasMore": zod.boolean(),
+  "currentGroup": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "active": zod.boolean()
+}),zod.null()]),
+  "categories": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "enabled": zod.boolean()
+}))
+})
+
+
+export const UpdateCustomerServiceAccessParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateCustomerServiceAccessBodyTargetIdsMax = 50;
+
+
+
+export const UpdateCustomerServiceAccessBody = zod.object({
+  "targetType": zod.enum(['SERVICE', 'CATEGORY']),
+  "targetIds": zod.array(zod.string().uuid()).min(1).max(updateCustomerServiceAccessBodyTargetIdsMax),
+  "effect": zod.enum(['INHERIT', 'ALLOW', 'DENY'])
+})
+
+export const UpdateCustomerServiceAccessResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+export const PreviewCustomerServiceAccessParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "serviceId": zod.coerce.string().uuid()
+})
+
+export const PreviewCustomerServiceAccessResponse = zod.object({
+  "allowed": zod.boolean(),
+  "reasonCode": zod.string(),
+  "source": zod.string(),
+  "matchedPolicyId": zod.string().uuid().nullable()
+})
+
+
 export const GetResellerClientSecurityParams = zod.object({
   "id": zod.coerce.string().uuid()
 })

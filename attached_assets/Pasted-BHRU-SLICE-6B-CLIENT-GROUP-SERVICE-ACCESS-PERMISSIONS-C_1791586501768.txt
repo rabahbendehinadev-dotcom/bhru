@@ -1,0 +1,1029 @@
+BHRU — SLICE 6B
+CLIENT & GROUP SERVICE ACCESS PERMISSIONS
+COMPLETE IMPLEMENTATION — REPLIT PREVIEW ONLY
+
+========================================================
+PROJECT CONTEXT
+========================================================
+
+BHRU is a multi-tenant SaaS platform inspired by
+DHRU Fusion.
+
+Three separate account realms exist:
+
+1. Platform Admin
+2. Reseller / Subscriber
+3. Public Customer / Client
+
+Canonical customer identity:
+
+public_customer_accounts
+
+Do not create another customer identity table.
+
+Existing implemented foundations:
+
+- Customer authentication and registration
+- Tenant-scoped customer accounts
+- Immutable customer Account Currency
+- Manual IMEI / Server / File / Remote services
+- Service categories/groups
+- Service-order lifecycle
+- Atomic wallet debit and exact rejection refund
+- Immutable financial ledger
+- Client Activity audit
+- Customer Security
+- Payment Gateway infrastructure
+- Slice 6A customer groups and custom pricing
+
+Slice 6A introduced:
+
+- Customer groups
+- Default customer groups
+- Group assignments
+- Group-specific pricing
+- Customer-specific pricing overrides
+- Server-authoritative effective-price calculation
+- Historical order pricing snapshots
+
+Latest reported migration:
+
+030_client_groups_pricing.sql
+
+Verify actual repository migration history before
+creating the next migration.
+
+========================================================
+PRIMARY OBJECTIVE
+========================================================
+
+Implement a complete, secure, tenant-scoped
+service-access control system.
+
+A Reseller must be able to control which
+services are available to:
+
+1. All customers
+2. A specific customer group
+3. One individual customer
+
+Access control must apply to:
+
+- Customer service catalog
+- Service category navigation
+- Service search
+- Service details
+- Service quotations
+- Order confirmation
+- Order placement
+- Direct API requests
+
+The backend must be authoritative.
+
+Hiding a service in the frontend is NOT
+sufficient security.
+
+========================================================
+PHASE 1 — ARCHITECTURE AUDIT
+========================================================
+
+Before implementing anything, inspect:
+
+- Existing service catalog schema
+- Existing service categories/groups
+- Existing service enabled/disabled flags
+- Existing reseller service ownership
+- Existing customer group schema from Slice 6A
+- Existing customer group assignments
+- Existing service pricing engine
+- Existing customer catalog endpoints
+- Existing service quotation endpoints
+- Existing order placement transaction
+- Existing wallet charging logic
+- Existing activity/audit architecture
+- Existing authentication and authorization
+
+Identify all customer-facing service entry points.
+
+Document the current availability rules.
+
+Do not create a competing service catalog
+or duplicate customer-group system.
+
+Reuse the existing authoritative service
+and customer identity models.
+
+========================================================
+PHASE 2 — ACCESS POLICY DESIGN
+========================================================
+
+Implement a clear three-level access model:
+
+LEVEL 1:
+GLOBAL SERVICE AVAILABILITY
+
+LEVEL 2:
+CUSTOMER GROUP ACCESS POLICY
+
+LEVEL 3:
+INDIVIDUAL CUSTOMER ACCESS OVERRIDE
+
+A service must first be globally available
+under the existing reseller catalog rules.
+
+Group/customer permissions must NEVER
+override a globally disabled service.
+
+The same applies to disabled service categories.
+
+========================================================
+PHASE 3 — ACCESS PRECEDENCE
+========================================================
+
+Implement deterministic access precedence.
+
+First evaluate hard global restrictions:
+
+- Service exists
+- Service belongs to the tenant's
+  authorized catalog
+- Service is globally enabled
+- Parent category/group is enabled
+- Existing service eligibility requirements pass
+
+If any hard restriction fails:
+
+ACCESS DENIED.
+
+No group or customer rule can override it.
+
+Otherwise apply:
+
+1. Individual customer explicit DENY
+2. Individual customer explicit ALLOW
+3. Active customer group explicit DENY
+4. Active customer group explicit ALLOW
+5. Existing default service availability
+
+Individual customer rules override
+group-level rules.
+
+The order above expresses this clearly.
+
+Important:
+
+An explicit customer ALLOW can override
+a group DENY, but cannot override a
+globally disabled service or category.
+
+Do not let group/customer policies
+bypass existing platform-wide restrictions.
+
+========================================================
+PHASE 4 — DEFAULT BEHAVIOR
+========================================================
+
+Backward compatibility is critical.
+
+If no group/customer access rule exists:
+
+Use the existing service availability behavior.
+
+Do NOT suddenly hide existing services
+from existing customers.
+
+Do NOT introduce an implicit deny-all
+policy during migration.
+
+Existing resellers must retain their
+current service visibility by default.
+
+The default behavior should be:
+
+INHERIT_EXISTING_AVAILABILITY
+
+========================================================
+PHASE 5 — POLICY MODEL
+========================================================
+
+Implement tenant-scoped service-access policies.
+
+Suggested policy fields:
+
+id
+subscriber_id
+subject_type
+subject_id
+service_id
+access_effect
+created_at
+updated_at
+
+Subject types:
+
+CUSTOMER_GROUP
+CUSTOMER
+
+Access effects:
+
+ALLOW
+DENY
+
+No stored rule means INHERIT.
+
+Use the actual existing customer-group,
+customer and service identifiers.
+
+Do not blindly assume column types.
+
+Enforce unique policies for:
+
+tenant + subject + service
+
+Enforce valid subject ownership.
+
+A foreign-tenant customer, group or service
+must never be accepted.
+
+Use foreign keys and database constraints
+where practical.
+
+If the schema requires separate policy
+tables for strong referential integrity,
+prefer that over an unsafe polymorphic design.
+
+========================================================
+PHASE 6 — CATEGORY-LEVEL POLICIES
+========================================================
+
+Support category-level access rules if
+compatible with the existing category model.
+
+A Reseller should be able to:
+
+- Allow a category for a group
+- Deny a category for a group
+- Allow a category for one customer
+- Deny a category for one customer
+- Inherit existing availability
+
+Category rules affect services contained
+in that category.
+
+However:
+
+An explicit service-level policy should
+be able to override a configurable
+category-level policy.
+
+Example:
+
+VIP group:
+Category IMEI Checks = DENY
+
+Specific service:
+Premium IMEI Check = ALLOW
+
+Result:
+Only Premium IMEI Check is available
+from that category, provided the category
+is globally enabled.
+
+Important distinction:
+
+A globally disabled category is a
+hard restriction and cannot be overridden.
+
+A configurable category access DENY is
+a soft policy and may be overridden by
+a more specific service ALLOW.
+
+========================================================
+PHASE 7 — POLICY RESOLUTION
+========================================================
+
+Build ONE authoritative server-side
+access-policy resolver.
+
+Suggested interface:
+
+resolveCustomerServiceAccess({
+  subscriberId,
+  customerId,
+  serviceId
+})
+
+Return a controlled result:
+
+allowed
+reasonCode
+source
+matchedPolicyId
+
+Example reason codes:
+
+ALLOWED_BY_DEFAULT
+ALLOWED_BY_CUSTOMER
+ALLOWED_BY_GROUP
+DENIED_GLOBAL_SERVICE
+DENIED_GLOBAL_CATEGORY
+DENIED_BY_CUSTOMER
+DENIED_BY_GROUP
+DENIED_BY_CATEGORY_POLICY
+DENIED_NOT_FOUND
+DENIED_INACTIVE_GROUP
+DENIED_EXISTING_ELIGIBILITY
+
+Use stable reason codes.
+
+Do not expose sensitive internal
+tenant configuration to customers.
+
+The resolver must not rely on client-
+submitted group IDs or access flags.
+
+========================================================
+PHASE 8 — POLICY SPECIFICITY
+========================================================
+
+Use the following rule specificity
+within the same subject:
+
+1. Service-specific policy
+2. Category-specific policy
+3. Inherit existing availability
+
+Subject precedence:
+
+1. Individual customer
+2. Active customer group
+3. Existing default behavior
+
+Examples:
+
+A customer service-level ALLOW overrides
+their own category-level DENY.
+
+A customer category-level DENY overrides
+a group service-level ALLOW.
+
+A customer explicit rule overrides a
+group rule, subject to global restrictions.
+
+Document this exact behavior.
+
+Avoid contradictory precedence between
+different endpoints.
+
+========================================================
+PHASE 9 — INACTIVE CUSTOMER GROUPS
+========================================================
+
+Slice 6A allows existing customers
+to remain assigned to inactive groups.
+
+Preserve that behavior.
+
+An inactive group must not grant
+new service permissions.
+
+Recommended behavior:
+
+- Existing group membership remains stored.
+- Inactive group access policies are ignored.
+- Individual customer policies remain valid.
+- Existing global service availability applies
+  when no individual rule exists.
+
+Do not automatically move customers
+to another group.
+
+Do not modify historical group assignments.
+
+========================================================
+PHASE 10 — RESELLER GROUP ACCESS UI
+========================================================
+
+Extend the existing Client Groups interface.
+
+Add an Access / Service Permissions section.
+
+A Reseller selects a customer group.
+
+Display:
+
+- Service category
+- Service name
+- Service type
+- Global availability
+- Group access policy
+- Effective group access
+- Pricing rule indicator when relevant
+
+Available controls:
+
+INHERIT
+ALLOW
+DENY
+
+Provide:
+
+- Search
+- Category filtering
+- Service filtering
+- Clear status indicators
+- Save feedback
+- Loading/error states
+
+Use compact professional styling.
+
+Do not redesign the existing dashboard.
+
+========================================================
+PHASE 11 — CUSTOMER-SPECIFIC ACCESS UI
+========================================================
+
+Extend:
+
+Reseller → Clients → Client Detail
+
+Add:
+
+Service Access
+
+The Reseller must be able to:
+
+- View customer group
+- View inherited group permissions
+- View individual overrides
+- Allow a service
+- Deny a service
+- Reset a rule to INHERIT
+- Preview effective access
+
+Clearly distinguish:
+
+GLOBAL DISABLED
+GROUP ALLOWED
+GROUP DENIED
+CUSTOMER ALLOWED
+CUSTOMER DENIED
+INHERITED
+
+Do not confuse pricing permissions
+with service-access permissions.
+
+========================================================
+PHASE 12 — CATEGORY MANAGEMENT
+========================================================
+
+Reuse the existing category hierarchy.
+
+Do not create duplicate categories.
+
+If categories have multiple levels,
+apply existing parent/child relationships
+consistently.
+
+A globally disabled ancestor category
+must deny all descendant services.
+
+Do not silently change existing
+category enabled flags.
+
+========================================================
+PHASE 13 — CUSTOMER CATALOG FILTERING
+========================================================
+
+Integrate access rules into the existing
+authenticated customer service catalog.
+
+A customer must only receive services
+they are allowed to access.
+
+Apply to:
+
+- Service list
+- Service search
+- Category listings
+- Service details
+- Service selection
+- Order forms
+
+Do not return forbidden services and
+merely hide them in JavaScript.
+
+Do not expose service metadata,
+prices or internal configuration
+for forbidden services.
+
+Preserve current pagination,
+sorting and search behavior.
+
+Apply authorization before pagination
+so page counts and cursors do not
+leak forbidden results.
+
+========================================================
+PHASE 14 — CATEGORY VISIBILITY
+========================================================
+
+A category should appear in the
+customer catalog only when it contains
+at least one accessible service,
+unless existing product behavior
+explicitly requires otherwise.
+
+Do not expose empty forbidden categories.
+
+A category that is globally disabled
+must never appear.
+
+Handle nested categories consistently.
+
+========================================================
+PHASE 15 — SERVICE DETAILS SECURITY
+========================================================
+
+Direct service-detail endpoints must
+enforce access.
+
+If a customer requests a forbidden
+service ID directly:
+
+Return a controlled denial.
+
+Prefer non-enumerating behavior such as
+404 when appropriate.
+
+Do not leak:
+
+- Other customer access policies
+- Hidden service pricing
+- Internal service configuration
+- Foreign-tenant identifiers
+
+========================================================
+PHASE 16 — QUOTATION SECURITY
+========================================================
+
+Before generating a service quote:
+
+1. Resolve authenticated customer.
+2. Resolve authoritative tenant.
+3. Resolve current customer group.
+4. Resolve global service availability.
+5. Resolve customer/group access policy.
+6. Reject if access is denied.
+7. Calculate effective price using Slice 6A.
+8. Apply approved FX once.
+9. Return controlled quotation.
+
+Never calculate a quotation for a
+forbidden service.
+
+Do not change the pricing precedence
+from Slice 6A.
+
+========================================================
+PHASE 17 — ORDER PLACEMENT SECURITY
+========================================================
+
+Critical:
+
+Order placement must re-check access
+on the server.
+
+Do not trust:
+
+- Frontend service visibility
+- Old quotations
+- Browser access flags
+- Submitted customer group IDs
+- Submitted policy IDs
+- Client-side price values
+
+Before charging:
+
+1. Authenticate customer.
+2. Resolve tenant/customer.
+3. Resolve authoritative service.
+4. Verify global availability.
+5. Resolve current access policies.
+6. Reject forbidden service.
+7. Calculate effective Slice 6A price.
+8. Validate quotation freshness.
+9. Validate wallet balance.
+10. Atomically create order and debit wallet.
+11. Preserve ledger and activity behavior.
+
+A denied order must not create:
+
+- Service order
+- Wallet debit
+- Ledger transaction
+- Financial Activity event
+
+Do not alter existing successful
+order-processing behavior.
+
+========================================================
+PHASE 18 — CONCURRENCY / TOCTOU
+========================================================
+
+Handle the race between:
+
+- Reseller changing access policy
+- Customer placing an order
+
+A request must not pass authorization
+using a stale policy and then commit
+after the policy was revoked.
+
+Define a coherent transaction boundary.
+
+Recommended:
+
+Use the same PostgreSQL transaction
+for final authorization and order charge.
+
+Use appropriate row locking,
+policy versioning or serialization.
+
+Do not rely on an authorization check
+performed only before the transaction.
+
+Ensure changes to group membership,
+group activation, service availability,
+category availability and policies
+cannot produce inconsistent access.
+
+Avoid unnecessary global locks.
+
+Preserve existing wallet/order locking
+and idempotency.
+
+========================================================
+PHASE 19 — EXISTING ORDERS
+========================================================
+
+Changing access permissions affects
+future orders only.
+
+Do not:
+
+- Delete old orders
+- Rewrite old order prices
+- Automatically refund historical orders
+- Change order statuses
+- Cancel existing processing orders
+- Rewrite ledger entries
+
+A previously accepted order remains
+historically valid.
+
+Existing order history remains visible
+to the customer even when the service
+is no longer available for new orders.
+
+========================================================
+PHASE 20 — PRICING INTEGRATION
+========================================================
+
+Access permissions and pricing are
+separate concerns.
+
+Access determines:
+
+CAN THIS CUSTOMER ORDER THE SERVICE?
+
+Pricing determines:
+
+HOW MUCH DOES THE SERVICE COST?
+
+Only calculate and expose effective
+customer pricing after access is allowed.
+
+Do not modify:
+
+- Group pricing precedence
+- Customer-specific pricing overrides
+- Immutable Account Currency
+- FX snapshots
+- Wallet debit/refund logic
+
+========================================================
+PHASE 21 — AUDIT TRAIL
+========================================================
+
+Record immutable audit events for:
+
+- Group service policy created
+- Group service policy updated
+- Group service policy removed
+- Customer service policy created
+- Customer service policy updated
+- Customer service policy removed
+- Category access policy changes
+
+Use verified Reseller actor identity.
+
+Record:
+
+tenant
+actor
+target subject
+target service/category
+previous effect
+new effect
+timestamp
+
+Do not fabricate customer actors.
+
+Use the existing tenant-level audit
+system when possible.
+
+Use Client Activity for individual
+customer policy changes when supported
+by its controlled event taxonomy.
+
+Do not expose private internal audit
+notes to public customers.
+
+========================================================
+PHASE 22 — TENANT ISOLATION
+========================================================
+
+Strictly enforce tenant ownership.
+
+Reject:
+
+- Cross-tenant group policy
+- Cross-tenant customer policy
+- Cross-tenant service reference
+- Cross-tenant category reference
+- Cross-tenant access preview
+- Cross-tenant policy modification
+- Cross-tenant direct service access
+
+Customer ID alone is not authorization.
+
+Subscriber ownership must be verified
+on every relevant mutation and lookup.
+
+Do not trust browser-provided subscriber IDs.
+
+========================================================
+PHASE 23 — BULK MANAGEMENT
+========================================================
+
+Provide safe bulk policy management
+if practical within existing UI.
+
+Examples:
+
+- Allow selected services for a group
+- Deny selected services for a group
+- Reset selected services to INHERIT
+
+Requirements:
+
+- Strict tenant validation
+- Atomic batch writes
+- Bounded batch size
+- No partial silent success
+- Audit trail for each affected policy
+- Clear error messages
+
+Do not build a complex permission-template
+system in this slice.
+
+========================================================
+PHASE 24 — MIGRATION
+========================================================
+
+Inspect the actual migration history.
+
+If 030 is the latest migration, create:
+
+031_client_service_access.sql
+
+Otherwise use the next sequential number.
+
+Migration must be additive.
+
+Do not modify migrations 019–030.
+
+Preserve all existing:
+
+- Customers
+- Customer groups
+- Group assignments
+- Pricing rules
+- Service catalog
+- Orders
+- Wallets
+- Ledger
+- Activity
+- Security sessions
+- Payment gateway records
+
+No mass policy creation is necessary
+if absence of a policy means INHERIT.
+
+Apply migration only to the independently
+identity-verified Replit development database.
+
+========================================================
+PHASE 25 — OPENAPI / TYPES
+========================================================
+
+Update the existing API contracts.
+
+Implement endpoints consistent with
+the current route architecture for:
+
+- Group service policies
+- Group category policies
+- Customer service policies
+- Customer category policies
+- Effective access preview
+- Policy removal/reset
+- Safe bulk updates when implemented
+
+Regenerate typed API clients
+and Zod contracts.
+
+Avoid duplicate endpoint families.
+
+========================================================
+PHASE 26 — FOCUSED TECHNICAL TESTS
+========================================================
+
+Use disposable PostgreSQL databases.
+
+Cover at least:
+
+1. No-policy backward compatibility
+2. Default inherited availability
+3. Global service disabled
+4. Global category disabled
+5. Group service ALLOW
+6. Group service DENY
+7. Customer service ALLOW
+8. Customer service DENY
+9. Customer overrides group
+10. Service policy overrides category policy
+11. Customer category overrides group service
+12. Inactive group behavior
+13. Existing customers unaffected by migration
+14. New customer default group behavior
+15. Catalog filtering
+16. Search filtering
+17. Pagination after authorization
+18. Service detail denial
+19. Hidden service price non-disclosure
+20. Quote denial
+21. Direct order API denial
+22. Denied order creates no debit
+23. Denied order creates no ledger entry
+24. Policy change after quote
+25. Policy/order concurrency
+26. Group reassignment/order concurrency
+27. Service disable/order concurrency
+28. Existing order history visibility
+29. Slice 6A pricing compatibility
+30. FX/account currency unchanged
+31. Refund behavior unchanged
+32. Tenant isolation
+33. Foreign-tenant policy injection
+34. Customer self-escalation denied
+35. Audit event correctness
+36. Bulk update atomicity, if implemented
+37. Payment infrastructure unchanged
+38. Retail checkout unchanged
+39. Existing security sessions unchanged
+
+Run focused API/frontend TypeScript checks.
+
+Run API/frontend builds.
+
+Do NOT run expensive full browser/E2E
+or broad regression suites.
+
+========================================================
+PHASE 27 — DOCUMENTATION
+========================================================
+
+Create:
+
+docs/BHRU_CLIENT_SERVICE_ACCESS.md
+
+Document:
+
+- Existing availability hierarchy
+- Group/customer access precedence
+- Category/service specificity
+- Default INHERIT behavior
+- Inactive group behavior
+- Catalog filtering
+- Quote/order authorization
+- Concurrency policy
+- Tenant isolation
+- Audit events
+- Migration
+- Deferred manual testing
+
+========================================================
+PHASE 28 — USER IS ON MOBILE
+========================================================
+
+The user is currently on a phone.
+
+Do not request:
+
+- Desktop testing
+- Manual browser walkthroughs
+- Screenshot collection
+- Git operations
+- VPS operations
+- Dokploy operations
+
+Complete safe independent implementation
+and focused technical validation.
+
+Manual UI testing will be performed later.
+
+========================================================
+STRICT EXECUTION RULES
+========================================================
+
+REPLIT PREVIEW ONLY.
+
+DO NOT git commit.
+DO NOT git push.
+DO NOT deploy.
+
+DO NOT access VPS.
+DO NOT access Dokploy.
+DO NOT access production databases.
+
+Do not change Payment Gateway infrastructure.
+
+Do not modify Retail checkout.
+
+Do not redesign unrelated interfaces.
+
+Do not alter Slice 6A pricing rules.
+
+Do not modify unrelated authentication code.
+
+Do not modify Replit memory/internal notes.
+
+Do not run broad browser/E2E suites.
+
+Use existing conventions and architecture.
+
+Avoid unnecessary dependencies.
+
+If a specific requirement conflicts with
+the existing architecture, implement the
+safest compatible solution and clearly
+document the deviation.
+
+========================================================
+FINAL REPORT
+========================================================
+
+Return a detailed report covering:
+
+1. Existing service availability architecture
+2. Access policy data model
+3. Global/group/customer precedence
+4. Category/service specificity
+5. Inactive group behavior
+6. Reseller group permissions UI
+7. Individual customer permissions UI
+8. Customer catalog filtering
+9. Category/search visibility
+10. Service details protection
+11. Quote authorization
+12. Order placement authorization
+13. Concurrency protection
+14. Pricing compatibility
+15. Historical order preservation
+16. Audit trail
+17. Tenant isolation
+18. Migration applied
+19. Focused test results
+20. Files changed
+21. Deferred manual tests
+22. Any limitations or remaining work
+
+Explicitly confirm:
+
+- No Git commit
+- No Git push
+- No deployment
+- No VPS/Dokploy access
+- No production database changes

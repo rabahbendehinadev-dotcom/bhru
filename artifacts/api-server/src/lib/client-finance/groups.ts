@@ -58,6 +58,8 @@ export async function deleteGroup(sub:string,id:string,actor:string,db:PoolClien
   throw new HttpError(409,'Referenced/default groups cannot be deleted; deactivate instead.');
  if(!(await db.query("SELECT 1 FROM client_group_admin_events WHERE subscriber_id=$1 AND group_id=$2 AND action='created'",[sub,id])).rowCount)
   throw new HttpError(409,'Legacy group history is not reconstructible; deactivate instead of deleting.');
+ if((await db.query('SELECT 1 FROM client_service_access_events WHERE subscriber_id=$1 AND group_id=$2 LIMIT 1',[sub,id])).rowCount)
+  throw new HttpError(409,'Group access history is referenced; deactivate instead of deleting.');
  await groupAudit(sub,id,actor,'deleted',db);
  await db.query('DELETE FROM reseller_client_groups WHERE subscriber_id=$1 AND id=$2',[sub,id]);return {ok:true};
 }

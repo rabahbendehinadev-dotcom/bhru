@@ -6,3 +6,4 @@ export { GetCommerceResourceParams, GetPublicCommerceCatalogParams } from "./gen
 export { GetClientStatementParams, GetCustomerStatementParams, ListCustomerServiceOrdersParams, ListCustomerServicesParams } from "./generated/api";
 export { ListResellerClientActivityParams } from "./generated/api";
 export { ListGroupServicePricingParams, ListCustomerServicePricingParams } from "./generated/api";
+export { ListGroupServiceAccessParams,ListCustomerServiceAccessParams } from "./generated/api";

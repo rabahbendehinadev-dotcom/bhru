@@ -413,6 +413,94 @@ export interface FoundationGroupInput {
   name: string;
 }
 
+export interface ServiceAccessSaved {
+  ok: boolean;
+}
+
+export type ServiceAccessInputTargetType = typeof ServiceAccessInputTargetType[keyof typeof ServiceAccessInputTargetType];
+
+
+export const ServiceAccessInputTargetType = {
+  SERVICE: 'SERVICE',
+  CATEGORY: 'CATEGORY',
+} as const;
+
+export type ServiceAccessInputEffect = typeof ServiceAccessInputEffect[keyof typeof ServiceAccessInputEffect];
+
+
+export const ServiceAccessInputEffect = {
+  INHERIT: 'INHERIT',
+  ALLOW: 'ALLOW',
+  DENY: 'DENY',
+} as const;
+
+export interface ServiceAccessInput {
+  targetType: ServiceAccessInputTargetType;
+  /**
+     * @minItems 1
+     * @maxItems 50
+     */
+  targetIds: string[];
+  effect: ServiceAccessInputEffect;
+}
+
+export interface EffectiveServiceAccess {
+  allowed: boolean;
+  reasonCode: string;
+  source: string;
+  /** @nullable */
+  matchedPolicyId: string | null;
+}
+
+export type ServiceAccessPolicyEffect = typeof ServiceAccessPolicyEffect[keyof typeof ServiceAccessPolicyEffect];
+
+
+export const ServiceAccessPolicyEffect = {
+  ALLOW: 'ALLOW',
+  DENY: 'DENY',
+} as const;
+
+export interface ServiceAccessPolicy {
+  id: string;
+  effect: ServiceAccessPolicyEffect;
+}
+
+export interface ServiceAccessRow {
+  id: string;
+  name: string;
+  /** @nullable */
+  categoryId: string | null;
+  /** @nullable */
+  categoryName: string | null;
+  /** @nullable */
+  serviceType: string | null;
+  globallyAvailable: boolean;
+  policy: ServiceAccessPolicy | null;
+  groupPolicy: ServiceAccessPolicy | null;
+  hasPricingRule: boolean;
+  effective: EffectiveServiceAccess;
+}
+
+export type ServiceAccessListCurrentGroup = {
+  id: string;
+  name: string;
+  active: boolean;
+} | null;
+
+export type ServiceAccessListCategoriesItem = {
+  id: string;
+  name: string;
+  enabled: boolean;
+};
+
+export interface ServiceAccessList {
+  data: ServiceAccessRow[];
+  page: number;
+  hasMore: boolean;
+  currentGroup: ServiceAccessListCurrentGroup;
+  categories: ServiceAccessListCategoriesItem[];
+}
+
 export interface ClientGroupAssignment {
   groupId: string;
 }
@@ -2051,6 +2139,70 @@ export type ListResellerClientsStatus = typeof ListResellerClientsStatus[keyof t
 export const ListResellerClientsStatus = {
   active: 'active',
   blocked: 'blocked',
+} as const;
+
+export type ListGroupServiceAccessParams = {
+targetType?: ListGroupServiceAccessTargetType;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @maxLength 100
+ */
+search?: string;
+categoryId?: string;
+serviceType?: ListGroupServiceAccessServiceType;
+};
+
+export type ListGroupServiceAccessTargetType = typeof ListGroupServiceAccessTargetType[keyof typeof ListGroupServiceAccessTargetType];
+
+
+export const ListGroupServiceAccessTargetType = {
+  SERVICE: 'SERVICE',
+  CATEGORY: 'CATEGORY',
+} as const;
+
+export type ListGroupServiceAccessServiceType = typeof ListGroupServiceAccessServiceType[keyof typeof ListGroupServiceAccessServiceType];
+
+
+export const ListGroupServiceAccessServiceType = {
+  imei: 'imei',
+  server: 'server',
+  file: 'file',
+  remote: 'remote',
+} as const;
+
+export type ListCustomerServiceAccessParams = {
+targetType?: ListCustomerServiceAccessTargetType;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @maxLength 100
+ */
+search?: string;
+categoryId?: string;
+serviceType?: ListCustomerServiceAccessServiceType;
+};
+
+export type ListCustomerServiceAccessTargetType = typeof ListCustomerServiceAccessTargetType[keyof typeof ListCustomerServiceAccessTargetType];
+
+
+export const ListCustomerServiceAccessTargetType = {
+  SERVICE: 'SERVICE',
+  CATEGORY: 'CATEGORY',
+} as const;
+
+export type ListCustomerServiceAccessServiceType = typeof ListCustomerServiceAccessServiceType[keyof typeof ListCustomerServiceAccessServiceType];
+
+
+export const ListCustomerServiceAccessServiceType = {
+  imei: 'imei',
+  server: 'server',
+  file: 'file',
+  remote: 'remote',
 } as const;
 
 export type ListResellerClientActivityParams = {

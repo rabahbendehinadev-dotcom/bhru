@@ -54,6 +54,7 @@ import type {
   CustomerSecurityResult,
   CustomerSecurityView,
   CustomerSessionView,
+  EffectiveServiceAccess,
   EffectiveServicePrice,
   EmptyInput,
   EmptyPaymentAction,
@@ -75,9 +76,11 @@ import type {
   GetPublicCommerceCatalogParams,
   GetPublicSiteDocumentParams,
   HealthStatus,
+  ListCustomerServiceAccessParams,
   ListCustomerServiceOrdersParams,
   ListCustomerServicePricingParams,
   ListCustomerServicesParams,
+  ListGroupServiceAccessParams,
   ListGroupServicePricingParams,
   ListManualServicesParams,
   ListPaymentReviewsParams,
@@ -105,6 +108,9 @@ import type {
   ResellerClientProfileInput,
   ResellerClientStatusInput,
   ResolveAuthEntryParams,
+  ServiceAccessInput,
+  ServiceAccessList,
+  ServiceAccessSaved,
   ServiceGroupAvailability,
   ServiceOrderTransition,
   ServicePricingInput,
@@ -4534,6 +4540,414 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getUpdateResellerClientMutationOptions(options));
     }
+
+export const getListGroupServiceAccessUrl = (id: string,
+    params?: ListGroupServiceAccessParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/client-groups/${id}/access?${stringifiedParams}` : `/api/client-groups/${id}/access`
+}
+
+export const listGroupServiceAccess = async (id: string,
+    params?: ListGroupServiceAccessParams, options?: Parameters<typeof customFetch>[1]): Promise<ServiceAccessList> => {
+
+  return customFetch<ServiceAccessList>(getListGroupServiceAccessUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListGroupServiceAccessQueryKey = (id: string,
+    params?: ListGroupServiceAccessParams,) => {
+    return [
+    `/api/client-groups/${id}/access`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListGroupServiceAccessQueryOptions = <TData = Awaited<ReturnType<typeof listGroupServiceAccess>>, TError = ErrorType<unknown>>(id: string,
+    params?: ListGroupServiceAccessParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGroupServiceAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListGroupServiceAccessQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listGroupServiceAccess>>> = ({ signal }) => listGroupServiceAccess(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGroupServiceAccess>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListGroupServiceAccessQueryResult = NonNullable<Awaited<ReturnType<typeof listGroupServiceAccess>>>
+export type ListGroupServiceAccessQueryError = ErrorType<unknown>
+
+
+
+export function useListGroupServiceAccess<TData = Awaited<ReturnType<typeof listGroupServiceAccess>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: ListGroupServiceAccessParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGroupServiceAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListGroupServiceAccessQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateGroupServiceAccessUrl = (id: string,) => {
+
+
+
+
+  return `/api/client-groups/${id}/access`
+}
+
+export const updateGroupServiceAccess = async (id: string,
+    serviceAccessInput: ServiceAccessInput, options?: Parameters<typeof customFetch>[1]): Promise<ServiceAccessSaved> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServiceAccessSaved>(getUpdateGroupServiceAccessUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serviceAccessInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateGroupServiceAccessMutationKey = () => ['updateGroupServiceAccess'] as const;
+
+export const getUpdateGroupServiceAccessMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGroupServiceAccess>>, TError,UpdateGroupServiceAccessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateGroupServiceAccess>>, TError,UpdateGroupServiceAccessMutationVariables, TContext> => {
+
+const mutationKey = getUpdateGroupServiceAccessMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateGroupServiceAccess>>, UpdateGroupServiceAccessMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateGroupServiceAccess(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateGroupServiceAccessMutationResult = NonNullable<Awaited<ReturnType<typeof updateGroupServiceAccess>>>
+    export type UpdateGroupServiceAccessMutationBody = BodyType<ServiceAccessInput>
+    export type UpdateGroupServiceAccessMutationError = ErrorType<unknown>
+    export type UpdateGroupServiceAccessMutationVariables = {id: string;data: BodyType<ServiceAccessInput>}
+
+    export const useUpdateGroupServiceAccess = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGroupServiceAccess>>, TError,UpdateGroupServiceAccessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateGroupServiceAccess>>,
+        TError,
+        UpdateGroupServiceAccessMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateGroupServiceAccessMutationOptions(options));
+    }
+
+export const getListCustomerServiceAccessUrl = (id: string,
+    params?: ListCustomerServiceAccessParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/clients/${id}/access?${stringifiedParams}` : `/api/clients/${id}/access`
+}
+
+export const listCustomerServiceAccess = async (id: string,
+    params?: ListCustomerServiceAccessParams, options?: Parameters<typeof customFetch>[1]): Promise<ServiceAccessList> => {
+
+  return customFetch<ServiceAccessList>(getListCustomerServiceAccessUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCustomerServiceAccessQueryKey = (id: string,
+    params?: ListCustomerServiceAccessParams,) => {
+    return [
+    `/api/clients/${id}/access`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListCustomerServiceAccessQueryOptions = <TData = Awaited<ReturnType<typeof listCustomerServiceAccess>>, TError = ErrorType<unknown>>(id: string,
+    params?: ListCustomerServiceAccessParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCustomerServiceAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCustomerServiceAccessQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCustomerServiceAccess>>> = ({ signal }) => listCustomerServiceAccess(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCustomerServiceAccess>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCustomerServiceAccessQueryResult = NonNullable<Awaited<ReturnType<typeof listCustomerServiceAccess>>>
+export type ListCustomerServiceAccessQueryError = ErrorType<unknown>
+
+
+
+export function useListCustomerServiceAccess<TData = Awaited<ReturnType<typeof listCustomerServiceAccess>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: ListCustomerServiceAccessParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCustomerServiceAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCustomerServiceAccessQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateCustomerServiceAccessUrl = (id: string,) => {
+
+
+
+
+  return `/api/clients/${id}/access`
+}
+
+export const updateCustomerServiceAccess = async (id: string,
+    serviceAccessInput: ServiceAccessInput, options?: Parameters<typeof customFetch>[1]): Promise<ServiceAccessSaved> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServiceAccessSaved>(getUpdateCustomerServiceAccessUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serviceAccessInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateCustomerServiceAccessMutationKey = () => ['updateCustomerServiceAccess'] as const;
+
+export const getUpdateCustomerServiceAccessMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomerServiceAccess>>, TError,UpdateCustomerServiceAccessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCustomerServiceAccess>>, TError,UpdateCustomerServiceAccessMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCustomerServiceAccessMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCustomerServiceAccess>>, UpdateCustomerServiceAccessMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCustomerServiceAccess(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCustomerServiceAccessMutationResult = NonNullable<Awaited<ReturnType<typeof updateCustomerServiceAccess>>>
+    export type UpdateCustomerServiceAccessMutationBody = BodyType<ServiceAccessInput>
+    export type UpdateCustomerServiceAccessMutationError = ErrorType<unknown>
+    export type UpdateCustomerServiceAccessMutationVariables = {id: string;data: BodyType<ServiceAccessInput>}
+
+    export const useUpdateCustomerServiceAccess = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomerServiceAccess>>, TError,UpdateCustomerServiceAccessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCustomerServiceAccess>>,
+        TError,
+        UpdateCustomerServiceAccessMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCustomerServiceAccessMutationOptions(options));
+    }
+
+export const getPreviewCustomerServiceAccessUrl = (id: string,
+    serviceId: string,) => {
+
+
+
+
+  return `/api/clients/${id}/access/${serviceId}`
+}
+
+export const previewCustomerServiceAccess = async (id: string,
+    serviceId: string, options?: Parameters<typeof customFetch>[1]): Promise<EffectiveServiceAccess> => {
+
+  return customFetch<EffectiveServiceAccess>(getPreviewCustomerServiceAccessUrl(id,serviceId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getPreviewCustomerServiceAccessQueryKey = (id: string,
+    serviceId: string,) => {
+    return [
+    `/api/clients/${id}/access/${serviceId}`
+    ] as const;
+    }
+
+
+export const getPreviewCustomerServiceAccessQueryOptions = <TData = Awaited<ReturnType<typeof previewCustomerServiceAccess>>, TError = ErrorType<unknown>>(id: string,
+    serviceId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof previewCustomerServiceAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPreviewCustomerServiceAccessQueryKey(id,serviceId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof previewCustomerServiceAccess>>> = ({ signal }) => previewCustomerServiceAccess(id,serviceId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined && serviceId !== null && serviceId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof previewCustomerServiceAccess>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type PreviewCustomerServiceAccessQueryResult = NonNullable<Awaited<ReturnType<typeof previewCustomerServiceAccess>>>
+export type PreviewCustomerServiceAccessQueryError = ErrorType<unknown>
+
+
+
+export function usePreviewCustomerServiceAccess<TData = Awaited<ReturnType<typeof previewCustomerServiceAccess>>, TError = ErrorType<unknown>>(
+ id: string,
+    serviceId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof previewCustomerServiceAccess>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getPreviewCustomerServiceAccessQueryOptions(id,serviceId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetResellerClientSecurityUrl = (id: string,) => {
 

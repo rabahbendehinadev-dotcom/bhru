@@ -9,11 +9,12 @@ import { ClientSecurityPanel } from './client-security';
 import { errText } from '@/hooks/use-commerce';
 import { FinancialPanel, ClientOrdersPanel, ClientGroupAssign } from '@/pages/client-finance';
 import { PricingTable } from '@/pages/pricing-table';
+import { ServiceAccessTable } from '@/pages/service-access-table';
 import { useCustomerPricing, usePricePreview } from '@/hooks/use-pricing';
 import { clientName } from '@/pages/clients';
 import type { ResellerClientDetail, ResellerClientProfileInput } from '@workspace/api-client-react';
 
-const TABS = ['Overview', 'Financial', 'Profile', 'Orders', 'Pricing', 'Activity', 'Security', 'Notes'] as const;
+const TABS = ['Overview', 'Financial', 'Profile', 'Orders', 'Pricing', 'Service Access', 'Activity', 'Security', 'Notes'] as const;
 type Tab = typeof TABS[number];
 const when = (s?: string | null) => { if (!s) return '-'; const d = new Date(s); return Number.isNaN(+d) ? '-' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); };
 
@@ -144,6 +145,7 @@ export default function ClientDetailPage({ id }: { id: string }) {
         {tab === 'Financial' && <FinancialPanel id={id} d={d} />}
         {tab === 'Profile' && <><ProfileForm id={id} d={d} /><ClientGroupAssign id={id} d={d} /></>}
         {tab === 'Pricing' && <div data-testid="client-pricing-panel"><Card className="mb-3 p-3.5"><h2 className="mb-1 text-[13px] font-semibold">Group</h2><dl><Row k="Current group" v={(c as unknown as { groupName?: string | null }).groupName} /><Row k="Group state" v={(c as unknown as { groupId?: string | null }).groupId ? ((c as unknown as { groupActive?: boolean | null }).groupActive === false ? 'Inactive' : 'Active') : null} /></dl></Card><ClientGroupAssign id={id} d={d} /><h2 className="mb-1.5 mt-3 text-[13px] font-semibold">Customer-specific pricing</h2><PricingTable scope="customer" id={id} /><PricePreview id={id} /></div>}
+        {tab === 'Service Access' && <ServiceAccessTable key={id} scope="customer" id={id} />}
         {tab === 'Orders' && <ClientOrdersPanel id={id} d={d} />}
         {tab === 'Activity' && <ClientActivityPanel key={id} id={id} legacy={d.activity} />}
         {tab === 'Security' && <ClientSecurityPanel key={id} id={id} />}

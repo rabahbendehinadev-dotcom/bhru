@@ -6,6 +6,7 @@ import { useClientGroups } from '@/hooks/use-services';
 import { useGroupAdmin } from '@/hooks/use-pricing';
 import { errText } from '@/hooks/use-commerce';
 import { PricingTable } from '@/pages/pricing-table';
+import { ServiceAccessTable } from '@/pages/service-access-table';
 
 type G = { id: string; name: string; description: string; active: boolean; isDefault: boolean; sortOrder: number; customerCount: number; pricingRuleCount: number };
 
@@ -18,6 +19,7 @@ export default function ClientGroupsManager() {
   const [edit, setEdit] = useState<G | 'new' | null>(null);
   const [f, setF] = useState({ name: '', description: '', active: true, sortOrder: '0' });
   const [pricing, setPricing] = useState<string | null>(null);
+  const [access, setAccess] = useState<string | null>(null);
   const [del, setDel] = useState<G | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
   const [formErr, setFormErr] = useState('');
@@ -54,6 +56,7 @@ export default function ClientGroupsManager() {
               <td>{g.customerCount}</td><td>{g.pricingRuleCount}</td>
               <td><div className="flex flex-wrap gap-1">
                 <Btn sm onClick={() => setPricing(pricing === g.id ? null : g.id)} data-testid={`button-group-pricing-${g.id}`}>Pricing</Btn>
+                <Btn sm onClick={() => setAccess(access === g.id ? null : g.id)} data-testid={`button-group-access-${g.id}`}>Access</Btn>
                 <Btn sm onClick={() => open(g)} data-testid={`button-group-edit-${g.id}`}>Edit</Btn>
                 {!g.isDefault && <Btn sm disabled={a.update.isPending} onClick={() => void run(a.update.mutateAsync({ id: g.id, data: { name: g.name, description: g.description, sortOrder: g.sortOrder, active: !g.active } }), g.active ? 'Group deactivated.' : 'Group activated.')} data-testid={`button-group-toggle-${g.id}`}>{g.active ? 'Deactivate' : 'Activate'}</Btn>}
                 {!g.isDefault && <Btn sm disabled={!g.active || a.makeDefault.isPending} title={g.active ? undefined : 'Only active groups can be default'} onClick={() => void run(a.makeDefault.mutateAsync({ id: g.id, data: {} }), 'Default group changed. Existing clients keep their groups.')} data-testid={`button-group-default-${g.id}`}>Make default</Btn>}
@@ -61,6 +64,7 @@ export default function ClientGroupsManager() {
               </div></td></tr>)}</tbody></table></div>}
       </Card>
       {pg && <div className="mt-3"><h2 className="mb-1.5 text-[14px] font-semibold">Pricing: {pg.name}</h2><PricingTable key={pg.id} scope="group" id={pg.id} /></div>}
+      {rows?.find((g) => g.id === access) && <div className="mt-3"><h2 className="mb-1.5 text-[14px] font-semibold">Access / Service Permissions: {rows.find((g) => g.id === access)?.name}</h2><ServiceAccessTable key={access} scope="group" id={access!} /></div>}
       {edit && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3" role="dialog" aria-modal="true"><Card className="w-full max-w-md space-y-3 p-4">
         <h2 className="text-[15px] font-semibold">{edit === 'new' ? 'New group' : 'Edit group'}</h2>
         <Field label="Name"><input className="input" maxLength={100} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} data-testid="input-group-name" /></Field>

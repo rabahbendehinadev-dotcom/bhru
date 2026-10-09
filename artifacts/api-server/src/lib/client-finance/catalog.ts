@@ -68,16 +68,19 @@ export async function listServices(sub:string,raw:unknown,db:PoolClient,customer
   await pricingLock(sub,db);
   const q=catalogQuery.parse(raw),search=q.search?`%${q.search.replace(/[\\%_]/g,'\\$&')}%`:null;
   const rows=(await db.query(`SELECT s.*,g.name group_name FROM manual_services s LEFT JOIN manual_service_groups g ON g.subscriber_id=s.subscriber_id AND g.id=s.group_id
+    ${customer?'CROSS JOIN LATERAL resolve_client_service_access($1,$7,NULL,s.id) access':''}
     WHERE s.subscriber_id=$1 AND($2::text IS NULL OR s.name ILIKE $2 OR s.description ILIKE $2)
     AND($3::text IS NULL OR s.service_type=$3) AND($4::uuid IS NULL OR s.group_id=$4)
     AND($5::boolean IS NULL OR s.active=$5)
-    ${customer?'AND (g.id IS NULL OR g.enabled)':''}
+    ${customer?'AND (g.id IS NULL OR g.enabled) AND access.allowed':''}
     ORDER BY s.display_order,s.name,s.id LIMIT 31 OFFSET $6`,
-    [sub,search,q.serviceType??null,q.groupId??null,customer?true:q.status?q.status==='active':null,(q.page-1)*30])).rows;
+    [sub,search,q.serviceType??null,q.groupId??null,customer?true:q.status?q.status==='active':null,(q.page-1)*30,...(customer?[customer]:[])])).rows;
   const options=await registrationOptions(sub,db),currency=customer?await displayCurrency(sub,customer,db,q.currency):undefined;
   const data=[];for(const r of rows.slice(0,30))data.push(serviceView(r,currency,customer?(await effectivePrice(sub,customer,r,db,currency)).view:undefined));
   return {data,page:q.page,hasMore:rows.length>30,
-    groups:(await db.query(`SELECT id,name,enabled FROM manual_service_groups WHERE subscriber_id=$1 ${customer?'AND enabled':''} ORDER BY name`,[sub])).rows,
+    groups:(await db.query(`SELECT g.id,g.name,g.enabled FROM manual_service_groups g WHERE g.subscriber_id=$1
+      ${customer?`AND g.enabled AND EXISTS(SELECT 1 FROM manual_services s CROSS JOIN LATERAL resolve_client_service_access($1,$2,NULL,s.id) a
+       WHERE s.subscriber_id=$1 AND s.group_id=g.id AND a.allowed)`:''} ORDER BY g.name`,customer?[sub,customer]:[sub])).rows,
     currencies:customer?[{code:currency!.code,name:currency!.name}]:options.currencies,defaultCurrency:currency?.code??options.defaultCurrency};
 }
 export function validateServiceInputs(requirements:z.infer<typeof field>[],raw:Record<string,string>) {

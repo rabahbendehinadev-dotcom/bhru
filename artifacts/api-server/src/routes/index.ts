@@ -9,6 +9,7 @@ import domainsRouter from "./domains";
 import clientsRouter from "./clients";
 import clientFinanceRouter from "./client-finance";
 import clientPricingRouter from "./client-pricing";
+import clientAccessRouter from "./client-access";
 import paymentsRouter from "./payments";
 
 const router: IRouter = Router();
@@ -23,6 +24,7 @@ router.use(domainsRouter);
 router.use(clientsRouter);
 router.use(clientFinanceRouter);
 router.use(clientPricingRouter);
+router.use(clientAccessRouter);
 router.use(paymentsRouter);
 
 export default router;

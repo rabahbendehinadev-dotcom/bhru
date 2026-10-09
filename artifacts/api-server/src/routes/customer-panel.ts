@@ -6,6 +6,7 @@ import { customerContext, customerCsrf } from '../lib/customer-auth/service';
 import { financialSummary, statement, lockClient } from '../lib/client-finance/wallet';
 import { listServices, serviceRow, serviceView } from '../lib/client-finance/catalog';
 import {effectivePrice} from '../lib/client-finance/pricing';
+import {requireCustomerServiceAccess} from '../lib/client-finance/access';
 import { displayCurrency } from '../lib/client-finance/wallet';
 import { listOrders, orderRow, orderView, orderSummary, quoteService, purchaseService, InsufficientBalance } from '../lib/client-finance/orders';
 import { effectiveCustomerProfile } from '../lib/customer-auth/profile';
@@ -67,7 +68,9 @@ router.get('/services',async(req,res)=>{const {sub,id}=identity(req);res.json(aw
 router.get('/services/:id',async(req,res)=>{
   const {sub,id}=identity(req),service=uuid.parse(req.params.id);
   res.json(await transaction(async db=>{
-    const row=await serviceRow(sub,service,db,true),currency=await displayCurrency(sub,id,db,req.query.currency?z.string().regex(/^[A-Z]{3}$/).parse(req.query.currency):undefined);
+    const row=await serviceRow(sub,service,db,true);
+    await requireCustomerServiceAccess(sub,id,service,db);
+    const currency=await displayCurrency(sub,id,db,req.query.currency?z.string().regex(/^[A-Z]{3}$/).parse(req.query.currency):undefined);
     return serviceView(row,currency,(await effectivePrice(sub,id,row,db,currency)).view);
   }));
 });
