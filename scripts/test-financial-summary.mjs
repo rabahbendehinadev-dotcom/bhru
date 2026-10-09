@@ -1,7 +1,7 @@
-// Slice 1 only: SQL/HTTP finance checks in a disposable Unix-socket PostgreSQL
+// Focused foundation slices: SQL/HTTP checks in a disposable Unix-socket PostgreSQL
 // cluster. Never reads or connects to an operator's DATABASE_URL.
 import assert from 'node:assert/strict';
-import {randomUUID,createHash} from 'node:crypto';
+import {randomUUID,createHash,createHmac} from 'node:crypto';
 import {mkdtemp,readFile,readdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
@@ -13,6 +13,7 @@ import {build} from '../artifacts/api-server/node_modules/esbuild/lib/main.js';
 import {testWalletServices} from './test-wallet-services.mjs';
 import {testLedgerAttribution} from './test-ledger-attribution.mjs';
 import {testClientActivity} from './test-client-activity.mjs';
+import {testCustomerSecurity} from './test-customer-security.mjs';
 
 const root=resolve(import.meta.dirname,'..'),temp=await mkdtemp(join(tmpdir(),'bhru-finance-'));
 let started=false,pool,server,checks=0,requestId=0;
@@ -38,7 +39,8 @@ try{
       export {hashPassword} from '${root}/lib/db/src/security.ts';
       export {createSession} from '${root}/artifacts/api-server/src/lib/auth.ts';
       export {ledgerView} from '${root}/artifacts/api-server/src/lib/client-finance/wallet.ts';
-      export {PANEL_SCRIPT,PANEL_SCRIPT_HASH} from '${root}/artifacts/api-server/src/lib/customer-auth/panel-ui.ts';`,
+      export {PANEL_SCRIPT,PANEL_SCRIPT_HASH} from '${root}/artifacts/api-server/src/lib/customer-auth/panel-ui.ts';
+      export {issueResetToken,securityAccount} from '${root}/artifacts/api-server/src/lib/customer-auth/security.ts';`,
       resolveDir:root,sourcefile:'financial-test-entry.ts',loader:'ts'},
     outfile:bundle,bundle:true,platform:'node',format:'esm',logLevel:'silent',
     plugins:[{name:'test-only-registration-challenge',setup(builder){
@@ -54,7 +56,7 @@ try{
   const db=await pool.connect();
   try{
     for(const name of (await readdir(join(root,'lib/db/src/migrations'))).filter(n=>/^\d+_.+\.sql$/.test(n)).sort()){
-      if(name.startsWith('025_')||name.startsWith('026_'))continue; // Explicit additive cutovers below.
+    if(name.startsWith('025_')||name.startsWith('026_')||name.startsWith('027_'))continue; // Explicit additive cutovers below.
       await db.query('BEGIN');
       if(name.startsWith('004_'))await db.query("SELECT set_config('bhru.private_admin_segment',$1,true)",['private-test-entry']);
       await db.query(await readFile(join(root,'lib/db/src/migrations',name),'utf8'));
@@ -115,11 +117,13 @@ try{
   server=api.app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
   const port=server.address().port;
   // This is an isolated ephemeral HTTP test server, not a managed app workflow.
-  const req=(path,{method='GET',body,cookie='',host='bhru.net'}={})=>new Promise((ok,fail)=>{
+  const req=(path,{method='GET',body,cookie='',host='bhru.net',headers={}}={})=>new Promise((ok,fail)=>{
     const payload=body===undefined?null:JSON.stringify(body);
     const r=httpRequest({hostname:'127.0.0.1',port,path,method,headers:{
       Host:host,Cookie:cookie,'X-Forwarded-For':`192.0.2.${++requestId%250+1}`,
+      'User-Agent':'BHRU focused HTTP test Chrome/120.0',
       ...(payload?{'Content-Type':'application/json','Content-Length':Buffer.byteLength(payload),'X-BHRU-Customer-Request':'1','X-BHRU-Request':'1'}:{}),
+      ...headers,
     }},res=>{
       let text='';res.setEncoding('utf8');res.on('data',s=>text+=s);res.on('end',()=>{
         let json;try{json=JSON.parse(text);}catch{}
@@ -135,9 +139,25 @@ try{
     assert.deepEqual((await pool.query('SELECT * FROM customer_wallet_ledger ORDER BY id')).rows,ledger);
     assert.deepEqual((await pool.query('SELECT * FROM customer_wallets ORDER BY customer_id')).rows,wallets);
   });
+  await check('migration 027 preserves existing credentials and valid sessions without inventing login history',async()=>{
+    const token='a'.repeat(64),hash=createHash('sha256').update(token).digest('hex');
+    await pool.query(`INSERT INTO public_customer_sessions(token_hash,subscriber_id,customer_id,expires_at)
+      VALUES($1,$2,$3,now()+interval '7 days')`,[hash,sidA,newClient.id]);
+    const before=(await pool.query('SELECT token_hash,subscriber_id,customer_id,created_at,expires_at FROM public_customer_sessions ORDER BY token_hash')).rows;
+    const accounts=(await pool.query('SELECT * FROM public_customer_accounts ORDER BY id')).rows;
+    await pool.query(await readFile(join(root,'lib/db/src/migrations/027_customer_security_sessions.sql'),'utf8'));
+    assert.deepEqual((await pool.query('SELECT token_hash,subscriber_id,customer_id,created_at,expires_at FROM public_customer_sessions ORDER BY token_hash')).rows,before);
+    assert.deepEqual((await pool.query('SELECT * FROM public_customer_accounts ORDER BY id')).rows,accounts);
+    assert.equal((await pool.query('SELECT count(*)::int n FROM customer_login_history')).rows[0].n,0);
+    const mac=createHmac('sha256',process.env.SESSION_SECRET).update(`public-customer:${sidA}:${token}`).digest('hex');
+    const legacy=await req('/api/public/customer/site-a/panel/security',{cookie:`bhru_customer_site-a=${token}.${mac}`});
+    assert.equal(legacy.status,200,legacy.text);assert.equal(legacy.json.sessions.length,1);assert.equal(legacy.json.sessions[0].current,true);
+    assert.equal(legacy.json.sessions[0].device,'Unknown device (legacy session)');
+  });
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testLedgerAttribution({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testClientActivity({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
+  await testCustomerSecurity({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient,issueResetToken:api.issueResetToken,securityAccount:api.securityAccount});
   await check('customer projections redact legacy internal reasons without changing immutable entries',async()=>{
     const original=(await pool.query("SELECT * FROM customer_wallet_ledger WHERE customer_id=$1 AND type='admin_credit' LIMIT 1",[newClient.id])).rows[0];
     const legacy={...original,reason:null,description:'Private staff reason',internal_note:'Private staff reason\nPrivate staff details'};

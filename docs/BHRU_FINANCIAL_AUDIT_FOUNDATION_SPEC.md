@@ -2,7 +2,29 @@
 ## Financial semantics and client activity/audit baseline
 
 Date: 2026-10-08  
-Status: **design approved; Slices 1–3 implemented in Replit Preview only. Remaining slices are not implemented; future migrations require separate approval.**
+Status: **design approved; Slices 1–4 implemented in Replit Preview only. Remaining slices are not implemented; future migrations require separate approval.**
+
+### Implemented Slice 4 — customer security
+
+See [Customer security](BHRU_CUSTOMER_SECURITY.md) for the current session/login
+history models, compatibility, reset delivery limitation, password policy,
+temporary lockout policy, transaction/idempotency rules, activity mapping,
+customer/reseller permissions, proxy assumptions and privacy/retention boundary.
+
+Additive migration `027_customer_security_sessions.sql` extends existing sessions
+without invalidating them, and creates dedicated prospective login history,
+temporary security state and hashed single-use reset grants. Migrations 019–026
+and pre-existing credentials/financial history remain untouched.
+
+The customer Security page and reseller Security tab are real. Password changes
+keep the current session and revoke others; reset completion revokes all sessions.
+Forgot/reset pages do not fake delivery: no existing mail sender exists, no email
+is sent, and no raw reset grant is returned publicly. The secure lifecycle/reset
+endpoint/UI are implemented; operational recovery delivery awaits separate approval.
+
+Slice 3's `customer_logged_out` is retained as the logout event rather than
+duplicating/renaming historical records. New security events augment the closed
+registry and use verified customer/owner or truthful System attribution.
 
 ### Implemented Slice 3 — general client activity/audit baseline
 

@@ -5,11 +5,24 @@ import {
   getListResellerClientsQueryKey, getGetResellerClientQueryKey,
   useListResellerClientActivity, getListResellerClientActivityQueryKey, type ListResellerClientActivityParams,
   type ListResellerClientsParams,
+  useGetResellerClientSecurity,useForceLogoutResellerClient,getGetResellerClientSecurityQueryKey,
 } from '@workspace/api-client-react';
 import { useWorkspacePage } from '@/components/subscriber/workspace/WorkspacePageContext';
 import { subReq } from '@/hooks/use-commerce';
 
 const FRESH = 30000;
+export function useClientSecurity(id:string){
+  const {session}=useStore(),{active}=useWorkspacePage(),qc=useQueryClient();
+  const query=useGetResellerClientSecurity(id,{request:subReq(),query:{
+    queryKey:[...getGetResellerClientSecurityQueryKey(id),session.role,session.subscriberId],
+    enabled:session.role==='subscriber'&&active,staleTime:FRESH,refetchOnMount:true,refetchOnWindowFocus:true,retry:false,
+  }});
+  const force=useForceLogoutResellerClient({request:subReq(),mutation:{onSuccess:()=>Promise.all([
+    qc.invalidateQueries({queryKey:getGetResellerClientSecurityQueryKey(id)}),
+    qc.invalidateQueries({queryKey:[`/api/clients/${id}/activity`]}),
+  ])}});
+  return {query,force};
+}
 
 export function useClientActivity(id:string,params:ListResellerClientActivityParams) {
   const {session}=useStore();
@@ -55,6 +68,7 @@ export function useClientMutations(id: string) {
     qc.invalidateQueries({ queryKey: getGetResellerClientQueryKey(id) }),
     qc.invalidateQueries({ queryKey: getListResellerClientsQueryKey() }),
     qc.invalidateQueries({ queryKey: [`/api/clients/${id}/activity`] }),
+    qc.invalidateQueries({ queryKey: getGetResellerClientSecurityQueryKey(id) }),
   ]);
   const opts = { request: subReq(), mutation: { onSuccess: refresh } };
   const update = useUpdateResellerClient(opts);

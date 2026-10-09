@@ -235,6 +235,133 @@ paths:
             schema: { $ref: "#/components/schemas/ResellerClientProfileInput" }
       responses:
         "200": { description: Profile saved }
+  /clients/{id}/security:
+    get:
+      operationId: getResellerClientSecurity
+      tags: [Clients]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Safe client security metadata
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CustomerSecurityView"}
+  /clients/{id}/security/force-logout:
+    post:
+      operationId: forceLogoutResellerClient
+      tags: [Clients]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CustomerSecurityAction"}
+      responses:
+        "200":
+          description: Scoped logout outcome
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CustomerSecurityResult"}
+  /public/customer/{slug}/panel/security:
+    get:
+      operationId: getCustomerSecurity
+      tags: [PublicCustomer]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Own security metadata
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CustomerSecurityView"}
+  /public/customer/{slug}/panel/security/password:
+    post:
+      operationId: changeCustomerPassword
+      tags: [PublicCustomer]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CustomerPasswordChangeInput"}
+      responses:
+        "200":
+          description: Password changed; current session retained
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CustomerSecurityResult"}
+  /public/customer/{slug}/panel/security/sessions/{session}/revoke:
+    post:
+      operationId: revokeCustomerSession
+      tags: [PublicCustomer]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+        - {name: session, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CustomerSecurityAction"}
+      responses:
+        "200":
+          description: Owned non-current session revoked
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CustomerSecurityResult"}
+  /public/customer/{slug}/panel/security/sessions/revoke-others:
+    post:
+      operationId: revokeOtherCustomerSessions
+      tags: [PublicCustomer]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CustomerSecurityAction"}
+      responses:
+        "200":
+          description: Other sessions revoked
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CustomerSecurityResult"}
+  /public/customer/{slug}/forgot-password:
+    post:
+      operationId: requestCustomerPasswordReset
+      tags: [PublicCustomer]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CustomerRecoveryInput"}
+      responses:
+        "200":
+          description: Non-enumerating truthful recovery status
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CustomerRecoveryStatus"}
+  /public/customer/{slug}/reset-password:
+    post:
+      operationId: resetCustomerPassword
+      tags: [PublicCustomer]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CustomerPasswordResetInput"}
+      responses:
+        "200":
+          description: Single-use reset completed; sessions revoked
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CustomerSecurityResult"}
   /clients/{id}/activity:
     parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
     get:
@@ -962,6 +1089,81 @@ components:
     FoundationSearch: {in: query, name: search, schema: {type: string, maxLength: 100}}
     FoundationServiceType: {in: query, name: serviceType, schema: {type: string, enum: [imei, server, file, remote]}}
   schemas:
+    CustomerSecurityAction:
+      type: object
+      additionalProperties: false
+    CustomerSecurityResult:
+      type: object
+      required: [ok]
+      properties:
+        ok: {type: boolean}
+        affected: {type: integer}
+    CustomerPasswordChangeInput:
+      type: object
+      required: [currentPassword, newPassword, confirmPassword]
+      additionalProperties: false
+      properties:
+        currentPassword: {type: string, minLength: 1, maxLength: 128}
+        newPassword: {type: string, minLength: 8, maxLength: 128}
+        confirmPassword: {type: string, minLength: 8, maxLength: 128}
+    CustomerPasswordResetInput:
+      type: object
+      required: [token, newPassword, confirmPassword]
+      additionalProperties: false
+      properties:
+        token: {type: string, pattern: "^[a-f0-9]{64}$"}
+        newPassword: {type: string, minLength: 8, maxLength: 128}
+        confirmPassword: {type: string, minLength: 8, maxLength: 128}
+    CustomerRecoveryInput:
+      type: object
+      required: [identifier]
+      additionalProperties: false
+      properties:
+        identifier: {type: string, minLength: 1, maxLength: 254}
+    CustomerRecoveryStatus:
+      type: object
+      required: [message, deliveryAvailable]
+      properties:
+        message: {type: string}
+        deliveryAvailable: {type: boolean}
+    CustomerSecurityView:
+      type: object
+      required: [enabled, lastLoginAt, lastLoginIp, lastLoginSource, passwordChangedAt, lockedUntil, activeSessionCount, sessions, history]
+      properties:
+        enabled: {type: boolean}
+        lastLoginAt: {type: [string, "null"], format: date-time}
+        lastLoginIp: {type: [string, "null"]}
+        lastLoginSource: {type: [string, "null"], enum: [history, legacy, null]}
+        passwordChangedAt: {type: [string, "null"], format: date-time}
+        lockedUntil: {type: [string, "null"], format: date-time}
+        activeSessionCount: {type: integer}
+        sessions:
+          type: array
+          items: {$ref: "#/components/schemas/CustomerSecuritySession"}
+        history:
+          type: array
+          items: {$ref: "#/components/schemas/CustomerLoginAttempt"}
+    CustomerSecuritySession:
+      type: object
+      required: [id, current, device, ipAddress, createdAt, lastSeenAt, expiresAt, status]
+      properties:
+        id: {type: string, format: uuid}
+        current: {type: boolean}
+        device: {type: string}
+        ipAddress: {type: [string, "null"]}
+        createdAt: {type: string, format: date-time}
+        lastSeenAt: {type: [string, "null"], format: date-time}
+        expiresAt: {type: string, format: date-time}
+        status: {type: string, enum: [active]}
+    CustomerLoginAttempt:
+      type: object
+      required: [id, createdAt, result, ipAddress, device]
+      properties:
+        id: {type: string, format: uuid}
+        createdAt: {type: string, format: date-time}
+        result: {type: string, enum: [success, failed, locked, blocked]}
+        ipAddress: {type: [string, "null"]}
+        device: {type: string}
     FoundationResponse:
       type: object
       description: Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.
@@ -1095,7 +1297,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         eventCategory: { type: string, enum: [ACCOUNT, PROFILE, FINANCIAL, ORDER, SECURITY] }
-        eventType: { type: string, enum: [account_created,account_blocked,account_unblocked,profile_updated,client_note_added,wallet_funds_added,wallet_deducted,wallet_adjusted,service_order_charged,service_order_refunded,service_order_created,service_order_processing,service_order_completed,service_order_rejected,customer_logged_out] }
+        eventType: { type: string, enum: [account_created,account_blocked,account_unblocked,profile_updated,client_note_added,wallet_funds_added,wallet_deducted,wallet_adjusted,service_order_charged,service_order_refunded,service_order_created,service_order_processing,service_order_completed,service_order_rejected,customer_logged_out,login_success,login_failed,login_locked,password_changed,password_reset_requested,password_reset_completed,session_revoked,all_other_sessions_revoked,reseller_force_logout] }
         summary: { type: string }
         actorType: { type: string, enum: [customer, subscriber_owner, system] }
         actorId: { type: ["string","null"], format: uuid }

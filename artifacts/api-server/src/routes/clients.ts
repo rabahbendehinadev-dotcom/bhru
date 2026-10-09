@@ -4,6 +4,7 @@ import { subscriberContext } from '../lib/commerce/data';
 import { transaction } from '../lib/platform';
 import { listClients, clientDetail, updateClientProfile, changeClientStatus, addClientNote } from '../lib/customer-auth/clients';
 import { listActivity } from '../lib/customer-auth/activity';
+import {securityView,forceLogout} from '../lib/customer-auth/security';
 
 const router=Router();
 const uuid=z.string().uuid();
@@ -22,6 +23,15 @@ router.get('/clients/:id',async(req,res)=>{
 router.get('/clients/:id/activity',async(req,res)=>{
   const owner=subscriberContext(req),id=uuid.parse(req.params.id);
   res.json(await transaction(db=>listActivity(owner.subscriber_id,id,req.query,db)));
+});
+router.get('/clients/:id/security',async(req,res)=>{
+  const owner=subscriberContext(req),id=uuid.parse(req.params.id);
+  res.json(await transaction(db=>securityView(owner.subscriber_id,id,db)));
+});
+router.post('/clients/:id/security/force-logout',async(req,res)=>{
+  const owner=subscriberContext(req),id=uuid.parse(req.params.id);
+  z.object({}).strict().parse(req.body);
+  res.json(await transaction(db=>forceLogout(owner.subscriber_id,id,owner.id,db)));
 });
 router.patch('/clients/:id',async(req,res)=>{
   const owner=subscriberContext(req),id=uuid.parse(req.params.id);

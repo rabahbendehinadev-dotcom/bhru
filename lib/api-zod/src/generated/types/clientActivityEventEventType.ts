@@ -25,4 +25,13 @@ export const ClientActivityEventEventType = {
   service_order_completed: 'service_order_completed',
   service_order_rejected: 'service_order_rejected',
   customer_logged_out: 'customer_logged_out',
+  login_success: 'login_success',
+  login_failed: 'login_failed',
+  login_locked: 'login_locked',
+  password_changed: 'password_changed',
+  password_reset_requested: 'password_reset_requested',
+  password_reset_completed: 'password_reset_completed',
+  session_revoked: 'session_revoked',
+  all_other_sessions_revoked: 'all_other_sessions_revoked',
+  reseller_force_logout: 'reseller_force_logout',
 } as const;

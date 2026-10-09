@@ -1,15 +1,15 @@
 import { randomUUID, randomBytes } from 'node:crypto';
-import { hashPassword, verifyPassword, dummyHash } from '@workspace/db/security';
+import { hashPassword } from '@workspace/db/security';
 import { RegisterPublicCustomerBody, LoginPublicCustomerBody, LogoutPublicCustomerBody } from '@workspace/api-zod';
 import type { Request } from 'express';
 import { HttpError, rateLimit } from '../auth';
 import { transaction } from '../platform';
 import { customerLinks } from './links';
-import { createCustomerSession } from './session';
 import { type CustomerContext, type CustomerIdentity } from './types';
 import { CUSTOMER_PROFILE_SELECT, normalizePhone, USERNAME, validatePreferences, effectiveCustomerProfile } from './profile';
 import { consumeRegistrationChallenge } from './challenge';
 import { activityContext } from './activity';
+import { secureLogin } from './security-login';
 
 export function customerContext(req: Request): CustomerContext {
   if (!req.customerPublic) throw new HttpError(404, 'Public website not found.');
@@ -95,25 +95,7 @@ export async function registerCustomer(req: Request) {
   };
 }
 export async function loginCustomer(req: Request) {
-  const { tenant, sessionHash } = customerContext(req);
-  customerCsrf(req);
-  await rateLimit(`public-customer:login:${req.ip}`, 60);
-  const input = loginInput(req.body);
-  await rateLimit(`public-customer:login:${tenant.id}:${input.email}`, 10);
-  return transaction(async db => {
-    const row = (await db.query(`SELECT ${CUSTOMER_PROFILE_SELECT},c.password_hash,c.enabled
-      FROM public_customer_accounts c WHERE c.subscriber_id=$1 AND
-        (c.email=$2 OR lower(c.username)=$2 OR lower(c.client_code)=$2) FOR UPDATE OF c`, [tenant.id, input.email])).rows[0] as (CustomerIdentity & { password_hash: string; enabled: boolean }) | undefined;
-    const valid = await verifyPassword(input.password, row?.password_hash || dummyHash);
-    if (!row || !valid || !row.enabled) throw new HttpError(401, 'Invalid email or password.');
-    const token = await createCustomerSession(db, tenant, row, sessionHash);
-    const changed = await db.query(`UPDATE public_customer_accounts SET last_login_at=now()
-      WHERE subscriber_id=$1 AND id=$2 RETURNING last_login_at AS "lastLoginAt"`,[tenant.id,row.id]);
-    row.lastLoginAt = changed.rows[0]?.lastLoginAt ?? row.lastLoginAt;
-    await db.query(`INSERT INTO public_customer_activity(id,subscriber_id,customer_id,action) VALUES($1,$2,$3,'login')`,
-      [randomUUID(),tenant.id,row.id]);
-    return { token, customer: await effectiveCustomerProfile(row,db), next: customerLinks(tenant.slug, tenant.customRoot).accountHref };
-  });
+  return secureLogin(req);
 }
 export async function logoutCustomer(req: Request) {
   const { tenant, sessionHash } = customerContext(req);

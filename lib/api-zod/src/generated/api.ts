@@ -702,6 +702,182 @@ export const UpdateResellerClientBody = zod.object({
 export const UpdateResellerClientResponse = zod.unknown()
 
 
+export const GetResellerClientSecurityParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetResellerClientSecurityResponse = zod.object({
+  "enabled": zod.boolean(),
+  "lastLoginAt": zod.coerce.date().nullable(),
+  "lastLoginIp": zod.string().nullable(),
+  "lastLoginSource": zod.union([zod.literal('history'),zod.literal('legacy'),zod.literal(null)]).nullable(),
+  "passwordChangedAt": zod.coerce.date().nullable(),
+  "lockedUntil": zod.coerce.date().nullable(),
+  "activeSessionCount": zod.number().int(),
+  "sessions": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "current": zod.boolean(),
+  "device": zod.string(),
+  "ipAddress": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "lastSeenAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date(),
+  "status": zod.enum(['active'])
+})),
+  "history": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "createdAt": zod.coerce.date(),
+  "result": zod.enum(['success', 'failed', 'locked', 'blocked']),
+  "ipAddress": zod.string().nullable(),
+  "device": zod.string()
+}))
+})
+
+
+export const ForceLogoutResellerClientParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const ForceLogoutResellerClientBody = zod.object({
+
+})
+
+export const ForceLogoutResellerClientResponse = zod.object({
+  "ok": zod.boolean(),
+  "affected": zod.number().int().optional()
+})
+
+
+export const GetCustomerSecurityParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const GetCustomerSecurityResponse = zod.object({
+  "enabled": zod.boolean(),
+  "lastLoginAt": zod.coerce.date().nullable(),
+  "lastLoginIp": zod.string().nullable(),
+  "lastLoginSource": zod.union([zod.literal('history'),zod.literal('legacy'),zod.literal(null)]).nullable(),
+  "passwordChangedAt": zod.coerce.date().nullable(),
+  "lockedUntil": zod.coerce.date().nullable(),
+  "activeSessionCount": zod.number().int(),
+  "sessions": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "current": zod.boolean(),
+  "device": zod.string(),
+  "ipAddress": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "lastSeenAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date(),
+  "status": zod.enum(['active'])
+})),
+  "history": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "createdAt": zod.coerce.date(),
+  "result": zod.enum(['success', 'failed', 'locked', 'blocked']),
+  "ipAddress": zod.string().nullable(),
+  "device": zod.string()
+}))
+})
+
+
+export const ChangeCustomerPasswordParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const changeCustomerPasswordBodyCurrentPasswordMax = 128;
+
+export const changeCustomerPasswordBodyNewPasswordMin = 8;
+export const changeCustomerPasswordBodyNewPasswordMax = 128;
+
+export const changeCustomerPasswordBodyConfirmPasswordMin = 8;
+export const changeCustomerPasswordBodyConfirmPasswordMax = 128;
+
+
+
+export const ChangeCustomerPasswordBody = zod.object({
+  "currentPassword": zod.string().min(1).max(changeCustomerPasswordBodyCurrentPasswordMax),
+  "newPassword": zod.string().min(changeCustomerPasswordBodyNewPasswordMin).max(changeCustomerPasswordBodyNewPasswordMax),
+  "confirmPassword": zod.string().min(changeCustomerPasswordBodyConfirmPasswordMin).max(changeCustomerPasswordBodyConfirmPasswordMax)
+})
+
+export const ChangeCustomerPasswordResponse = zod.object({
+  "ok": zod.boolean(),
+  "affected": zod.number().int().optional()
+})
+
+
+export const RevokeCustomerSessionParams = zod.object({
+  "slug": zod.coerce.string(),
+  "session": zod.coerce.string().uuid()
+})
+
+export const RevokeCustomerSessionBody = zod.object({
+
+})
+
+export const RevokeCustomerSessionResponse = zod.object({
+  "ok": zod.boolean(),
+  "affected": zod.number().int().optional()
+})
+
+
+export const RevokeOtherCustomerSessionsParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const RevokeOtherCustomerSessionsBody = zod.object({
+
+})
+
+export const RevokeOtherCustomerSessionsResponse = zod.object({
+  "ok": zod.boolean(),
+  "affected": zod.number().int().optional()
+})
+
+
+export const RequestCustomerPasswordResetParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const requestCustomerPasswordResetBodyIdentifierMax = 254;
+
+
+
+export const RequestCustomerPasswordResetBody = zod.object({
+  "identifier": zod.string().min(1).max(requestCustomerPasswordResetBodyIdentifierMax)
+})
+
+export const RequestCustomerPasswordResetResponse = zod.object({
+  "message": zod.string(),
+  "deliveryAvailable": zod.boolean()
+})
+
+
+export const ResetCustomerPasswordParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const resetCustomerPasswordBodyTokenRegExp = new RegExp('^[a-f0-9]{64}$');
+export const resetCustomerPasswordBodyNewPasswordMin = 8;
+export const resetCustomerPasswordBodyNewPasswordMax = 128;
+
+export const resetCustomerPasswordBodyConfirmPasswordMin = 8;
+export const resetCustomerPasswordBodyConfirmPasswordMax = 128;
+
+
+
+export const ResetCustomerPasswordBody = zod.object({
+  "token": zod.string().regex(resetCustomerPasswordBodyTokenRegExp),
+  "newPassword": zod.string().min(resetCustomerPasswordBodyNewPasswordMin).max(resetCustomerPasswordBodyNewPasswordMax),
+  "confirmPassword": zod.string().min(resetCustomerPasswordBodyConfirmPasswordMin).max(resetCustomerPasswordBodyConfirmPasswordMax)
+})
+
+export const ResetCustomerPasswordResponse = zod.object({
+  "ok": zod.boolean(),
+  "affected": zod.number().int().optional()
+})
+
+
 export const ListResellerClientActivityParams = zod.object({
   "id": zod.coerce.string().uuid()
 })
@@ -719,7 +895,7 @@ export const ListResellerClientActivityResponse = zod.object({
   "data": zod.array(zod.object({
   "id": zod.string().uuid(),
   "eventCategory": zod.enum(['ACCOUNT', 'PROFILE', 'FINANCIAL', 'ORDER', 'SECURITY']),
-  "eventType": zod.enum(['account_created', 'account_blocked', 'account_unblocked', 'profile_updated', 'client_note_added', 'wallet_funds_added', 'wallet_deducted', 'wallet_adjusted', 'service_order_charged', 'service_order_refunded', 'service_order_created', 'service_order_processing', 'service_order_completed', 'service_order_rejected', 'customer_logged_out']),
+  "eventType": zod.enum(['account_created', 'account_blocked', 'account_unblocked', 'profile_updated', 'client_note_added', 'wallet_funds_added', 'wallet_deducted', 'wallet_adjusted', 'service_order_charged', 'service_order_refunded', 'service_order_created', 'service_order_processing', 'service_order_completed', 'service_order_rejected', 'customer_logged_out', 'login_success', 'login_failed', 'login_locked', 'password_changed', 'password_reset_requested', 'password_reset_completed', 'session_revoked', 'all_other_sessions_revoked', 'reseller_force_logout']),
   "summary": zod.string(),
   "actorType": zod.enum(['customer', 'subscriber_owner', 'system']),
   "actorId": zod.string().uuid().nullable(),

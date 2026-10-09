@@ -10,14 +10,14 @@ import type { CustomerDB, CustomerTenant } from './types';
 import { loadCustomerSession } from './session';
 
 const SLUG = '[a-z0-9]+(?:-[a-z0-9]+)*';
-const CUSTOMER_API = new RegExp(`^/api/public/customer/(${SLUG})/(login|register|logout|session|options|challenge|panel(?:/(?:services|orders|statement|quote|announcements)(?:/[a-f0-9-]{36})?)?)$`);
+const CUSTOMER_API = new RegExp(`^/api/public/customer/(${SLUG})/(login|register|logout|forgot-password|reset-password|session|options|challenge|panel(?:/(?:services|orders|statement|quote|announcements)(?:/[a-f0-9-]{36})?|/security(?:/password|/sessions/(?:revoke-others|[a-f0-9-]{36}/revoke))?)?)$`);
 const CUSTOMER_COMMERCE_API = new RegExp(`^/api/public/commerce/(${SLUG})/orders$`);
-const SLUG_PAGE = new RegExp(`^/(${SLUG})(?:/(customer/(?:login|register|account|dashboard|services|orders|wallet|transactions|announcements|profile|security)|product/${SLUG}|cart|checkout|confirmation))?$`);
-const ROOT_PAGE = new RegExp(`^/(?:customer/(?:login|register|account|dashboard|services|orders|wallet|transactions|announcements|profile|security)|product/${SLUG}|cart|checkout|confirmation)?$`);
-export type CustomerPageMode='login'|'register'|'account'|'dashboard'|'services'|'orders'|'wallet'|'transactions'|'announcements'|'profile'|'security';
+const SLUG_PAGE = new RegExp(`^/(${SLUG})(?:/(customer/(?:login|register|forgot-password|reset-password|account|dashboard|services|orders|wallet|transactions|announcements|profile|security)|product/${SLUG}|cart|checkout|confirmation))?$`);
+const ROOT_PAGE = new RegExp(`^/(?:customer/(?:login|register|forgot-password|reset-password|account|dashboard|services|orders|wallet|transactions|announcements|profile|security)|product/${SLUG}|cart|checkout|confirmation)?$`);
+export type CustomerPageMode='login'|'register'|'forgot-password'|'reset-password'|'account'|'dashboard'|'services'|'orders'|'wallet'|'transactions'|'announcements'|'profile'|'security';
 export function customerPageMode(path: unknown): CustomerPageMode | null {
   if (typeof path !== 'string') return null;
-  const mode = /\/customer\/(login|register|account|dashboard|services|orders|wallet|transactions|announcements|profile|security)$/.exec(path)?.[1] as CustomerPageMode | undefined;
+  const mode = /\/customer\/(login|register|forgot-password|reset-password|account|dashboard|services|orders|wallet|transactions|announcements|profile|security)$/.exec(path)?.[1] as CustomerPageMode | undefined;
   return mode && path.endsWith(`/customer/${mode}`) ? mode : null;
 }
 export function isCustomerApi(path: string): boolean { return CUSTOMER_API.exec(path)?.[0] === path; }

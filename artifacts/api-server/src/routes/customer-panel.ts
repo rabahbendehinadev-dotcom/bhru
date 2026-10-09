@@ -9,6 +9,7 @@ import { displayCurrency } from '../lib/client-finance/wallet';
 import { listOrders, orderRow, orderView, orderSummary, quoteService, purchaseService, InsufficientBalance } from '../lib/client-finance/orders';
 import { effectiveCustomerProfile } from '../lib/customer-auth/profile';
 import { customerAnnouncements } from '../lib/customer-auth/announcements';
+import {customerSecurity,changePassword,revokeSession} from '../lib/customer-auth/security';
 const router=Router({mergeParams:true}),uuid=z.string().uuid();
 router.use(json({limit:'64kb'}));
 router.use((req,_res,next)=>{
@@ -50,4 +51,8 @@ router.post('/orders',async(req,res)=>{
   }
 });
 router.get('/statement',async(req,res)=>{const {sub,id}=identity(req);res.json(await transaction(db=>statement(sub,id,req.query,db)));});
+router.get('/security',async(req,res)=>res.json(await customerSecurity(req)));
+router.post('/security/password',async(req,res)=>res.json(await changePassword(req)));
+router.post('/security/sessions/revoke-others',async(req,res)=>res.json(await revokeSession(req)));
+router.post('/security/sessions/:session/revoke',async(req,res)=>res.json(await revokeSession(req,z.string().uuid().parse(req.params.session))));
 export default router;

@@ -9,6 +9,7 @@ import { z } from '@workspace/api-zod';
 import { registrationOptions, effectiveCustomerProfile } from '../lib/customer-auth/profile';
 import { issueRegistrationChallenge } from '../lib/customer-auth/challenge';
 import customerPanelRouter from './customer-panel';
+import {forgotPassword,resetPassword} from '../lib/customer-auth/security';
 
 const router = Router();
 router.use('/api/public/customer', (_req, res, next) => {
@@ -40,6 +41,8 @@ router.post('/api/public/customer/:slug/logout', json({ limit: '8kb' }), async (
   res.clearCookie(customerCookieName(tenant.slug), options);
   res.json(result);
 });
+router.post('/api/public/customer/:slug/forgot-password',json({limit:'8kb'}),async(req,res)=>res.json(await forgotPassword(req)));
+router.post('/api/public/customer/:slug/reset-password',json({limit:'8kb'}),async(req,res)=>res.json(await resetPassword(req)));
 router.get('/api/public/customer/:slug/session', async(req, res) => {
   const { customer } = customerContext(req);
   res.json({ customer: customer ? await effectiveCustomerProfile(customer,pool) : null });
@@ -61,9 +64,9 @@ router.use(async(req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Vary', 'Host, Cookie');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  const authPage=mode==='login'||mode==='register';
+  const authPage=mode==='login'||mode==='register'||mode==='forgot-password'||mode==='reset-password';
   if (!authPage && !customer) { res.redirect(303, links.loginHref); return; }
-  if (authPage && customer) { res.redirect(303, links.accountHref); return; }
+  if ((mode==='login'||mode==='register') && customer) { res.redirect(303, links.accountHref); return; }
   res.setHeader('Content-Security-Policy', `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https: data:; script-src ${CUSTOMER_DOCUMENT_SCRIPT_HASHES.map(hash => `'sha256-${hash}'`).join(' ')}; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'`);
   res.type('html').send(renderCustomerDocument(withCustomerAccess(tenant.model, links), mode, customer ? await effectiveCustomerProfile(customer,pool) : undefined));
 });

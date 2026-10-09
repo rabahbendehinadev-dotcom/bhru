@@ -27,6 +27,10 @@ try {
   await pool.query("SELECT operation_source,posting_sequence,reason FROM customer_wallet_ledger LIMIT 0");
   await pool.query("SELECT opening_account_units FROM customer_wallet_baselines LIMIT 0");
   await pool.query("SELECT event_type,actor_type FROM client_activity_events LIMIT 0");
+  await pool.query("SELECT session_public_id,revoked_at FROM public_customer_sessions LIMIT 0");
+  await pool.query("SELECT result FROM customer_login_history LIMIT 0");
+  await pool.query("SELECT token_hash FROM customer_password_resets LIMIT 0");
+  await pool.query("SELECT locked_until FROM customer_security_state LIMIT 0");
   await pool.query("SELECT price_account_units,account_currency_snapshot FROM service_orders LIMIT 0");
   await pool.query("SELECT subscriber_id FROM subscriber_public_sites LIMIT 0");
   await pool.query("SELECT subscriber_id,client_code,username,last_login_at FROM public_customer_accounts LIMIT 0");

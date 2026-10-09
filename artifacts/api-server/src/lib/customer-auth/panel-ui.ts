@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { escapeHTML as e } from '../public-site/safety';
 import type { PublicSiteModel } from '../public-site/model';
 import type { CustomerProfile as Profile } from './types';
+import { renderSecurityMain } from './security-ui';
 
 export type PanelPage = 'dashboard' | 'services' | 'orders' | 'wallet' | 'transactions' | 'announcements' | 'profile' | 'security';
 export const PANEL_PAGES: PanelPage[] = ['dashboard', 'services', 'orders', 'wallet', 'transactions', 'announcements', 'profile', 'security'];
@@ -315,7 +316,7 @@ export function renderPanelMain(m: PublicSiteModel, page: PanelPage, customer?: 
   const href = (p: PanelPage) => `${base}/${p}`;
   const greeting = page === 'dashboard' ? `<h1>Welcome back${customer?.firstName ? ', ' + e(customer.firstName) : ''}</h1>` : `<h1>${e(TITLES[page])}</h1><p class="pn-sub">${e(m.siteName)}</p>`;
   const addFunds = page === 'wallet' ? `<section class="pn-card accent" id="add-funds" tabindex="-1" style="margin:0 0 18px"><h2>Add Funds</h2><p>Account Currency: <strong data-acct-currency>${e(customer?.effectiveCurrency ?? customer?.preferredCurrency ?? '')}</strong>. Your account currency is fixed and cannot be changed.</p><p>Funds are added by your reseller. Contact ${e(m.siteName)} through their listed channels, tell them your client code${customer?.clientCode ? ' (' + e(customer.clientCode) + ')' : ''} and the amount, and the credit will appear in your wallet once confirmed. There is no online payment on this website.</p></section>` : '';
-  const security = page === 'security' ? `<div class="pn-card"><h2>Account security</h2><dl class="ca-dl"><div><dt>Email</dt><dd>${e(customer?.email ?? '')}</dd></div>${customer?.clientCode ? `<div><dt>Client code</dt><dd>${e(customer.clientCode)}</dd></div>` : ''}<div><dt>Account Currency</dt><dd>${e(customer?.effectiveCurrency ?? customer?.preferredCurrency ?? '-')} (immutable)</dd></div></dl><p>Your email, client code and account currency are fixed identity details and cannot be changed from this panel.</p><p>Sign out when using a shared or public device. Never share your password or order details. Your session is kept by a secure cookie and ends when you log out. To change your password or details, contact your reseller.</p><button type="button" class="pn-btn alt" data-customer-logout data-endpoint="${e(api + '/logout')}" data-home="${e(localPath(ca?.homeHref) ?? '/')}">Logout</button></div>` : '';
+  const security = page === 'security' ? renderSecurityMain(api, localPath(ca?.homeHref) ?? '/', customer) : '';
   const content = page === 'security' ? security : page === 'profile'
     ? `<div class="pn-card">${profileDetails(customer ?? { firstName: '', lastName: '', email: '' })}<p class="pn-sub">Profile details are managed by your reseller. Contact them to change anything.</p></div>`
     : `<div id="pn-out" aria-live="polite"><div class="pn-skel"></div></div><noscript><p class="pn-msg">JavaScript is required to load this page.</p></noscript>`;

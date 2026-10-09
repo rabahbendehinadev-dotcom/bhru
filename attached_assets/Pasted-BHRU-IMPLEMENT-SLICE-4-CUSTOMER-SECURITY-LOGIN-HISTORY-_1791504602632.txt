@@ -1,0 +1,570 @@
+BHRU — IMPLEMENT SLICE 4
+CUSTOMER SECURITY + LOGIN HISTORY + PASSWORD CHANGE + SESSION MANAGEMENT
+
+Use the approved architecture from:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+Slices 1, 2 and 3 are complete.
+
+Implement ONLY Slice 4.
+
+Do NOT implement:
+- 2FA yet unless explicitly requested below as foundation-only
+- funding requests/payments
+- invoices
+- credit facility
+- client groups/pricing
+- service access policies
+- customer API
+- notification preferences
+
+==================================================
+1. CORE OBJECTIVE
+==================================================
+
+Upgrade the public customer account Security area into a real account-security module.
+
+We need:
+
+- password change
+- secure password recovery/reset flow
+- login history
+- active session management
+- revoke one session
+- revoke all other sessions
+- last login information
+- failed-login tracking / lockout foundation
+- security activity integration
+
+Keep all existing tenant/customer isolation.
+
+==================================================
+2. CURRENT SECURITY AUDIT
+==================================================
+
+Inspect current customer authentication/session implementation first.
+
+Identify:
+
+- session table/model
+- cookie/session lifecycle
+- login endpoint
+- logout endpoint
+- password hash algorithm
+- session rotation
+- session expiry
+- existing reset/recovery logic if any
+- existing failed-login handling
+- whether last login / IP is already persisted
+- whether current session can be identified safely
+
+Do not create duplicate session infrastructure.
+
+==================================================
+3. PASSWORD CHANGE
+==================================================
+
+Add authenticated password-change flow.
+
+Require:
+
+- current password
+- new password
+- confirm new password
+
+Server-side requirements:
+
+- verify current password
+- enforce reasonable password policy
+- reject reuse if current hash verifies same password
+- hash using existing secure BHRU password hashing approach
+- update password atomically
+- record password-changed security event
+- revoke other active sessions after successful change
+- keep current session valid if safe, or rotate it
+
+Do not expose password values in logs/activity.
+
+==================================================
+4. PASSWORD RECOVERY / RESET
+==================================================
+
+Implement secure customer password recovery.
+
+Flow:
+
+Forgot Password
+→ customer submits email / username / client code as supported
+→ server resolves tenant + customer safely
+→ issue single-use expiring reset token
+→ send/use reset flow through existing email infrastructure if available
+
+If actual email delivery infrastructure is not yet available:
+implement secure token lifecycle and reset endpoint/UI,
+but do NOT fake email sending.
+
+Return a truthful UI state.
+
+Reset token requirements:
+
+- cryptographically random
+- store only hashed token
+- single-use
+- expires
+- tenant/customer scoped
+- invalidated after password reset
+- previous reset tokens invalidated when new one is issued
+
+Do not expose whether an account exists through public response wording.
+
+==================================================
+5. LOGIN HISTORY
+==================================================
+
+Create real login-history records for customer authentication.
+
+Capture on successful login:
+
+- customer
+- subscriber/tenant
+- timestamp
+- IP address
+- user agent
+- result/status
+- session reference if safe
+- optional device/browser summary if derived safely
+
+Do not store raw cookies or session secrets.
+
+Also record failed login attempts where safe.
+
+==================================================
+6. FAILED LOGIN / LOCKOUT
+==================================================
+
+Implement safe rate/attempt protection at account level.
+
+Requirements:
+
+- failed attempt counter/window
+- temporary lockout after repeated failures
+- reset failure state after successful login
+- security event for lockout where appropriate
+
+Choose sensible thresholds and document them.
+
+Do not permanently block the account due to password failures.
+
+Account Blocked by reseller remains a separate concept.
+
+==================================================
+7. ACTIVE SESSION MANAGEMENT
+==================================================
+
+Customer Security page should show active sessions.
+
+For each session display:
+
+- current session indicator
+- device/browser summary
+- IP address
+- created/login time
+- last activity if available
+- expiry
+- status
+
+Do not expose raw session IDs.
+
+Use safe opaque identifiers for revoke actions.
+
+==================================================
+8. REVOKE SESSION
+==================================================
+
+Allow customer to revoke an individual session.
+
+Rules:
+
+- can revoke only own sessions
+- tenant scoped
+- idempotent
+- activity event recorded
+
+Current session revoke behavior:
+either:
+A. allow and immediately logout
+or
+B. prevent revoking current session and offer Logout instead
+
+Choose the safer/simple option and document it.
+
+==================================================
+9. REVOKE ALL OTHER SESSIONS
+==================================================
+
+Add:
+
+"Sign out all other sessions"
+
+Keep current session alive.
+
+Record one security event.
+
+Must be transactionally safe.
+
+==================================================
+10. RESELLER SECURITY VIEW
+==================================================
+
+On reseller Client Detail, add/upgrade Security information.
+
+Show:
+
+- last successful login
+- last login IP
+- recent login history
+- active session count
+- account blocked state
+- failed-login lockout state if active
+
+Optional reseller actions:
+- revoke all customer sessions
+- force logout
+
+Do NOT allow reseller to view passwords or reset tokens.
+
+If adding reseller password reset action:
+prefer issuing/reset workflow, not setting arbitrary plaintext password.
+
+==================================================
+11. ACTIVITY INTEGRATION
+==================================================
+
+Use Slice 3 client_activity_events.
+
+Record at least:
+
+SECURITY:
+- login_success
+- login_failed
+- login_locked
+- logout
+- password_changed
+- password_reset_requested
+- password_reset_completed
+- session_revoked
+- all_other_sessions_revoked
+- reseller_force_logout
+
+Do not create duplicate activity events for same action retry.
+
+==================================================
+12. LOGIN HISTORY VS ACTIVITY
+==================================================
+
+Keep them conceptually separate:
+
+Login History
+= structured authentication attempts/sessions
+
+Activity
+= business/security audit timeline
+
+Activity may reference login/session records.
+
+Do not use Activity as the only login-history storage.
+
+==================================================
+13. SESSION MODEL
+==================================================
+
+Reuse existing public_customer_sessions if possible.
+
+Evaluate whether it needs additive fields such as:
+
+- created_at
+- last_seen_at
+- expires_at
+- revoked_at
+- ip_address
+- user_agent
+- device_label
+- session_public_id
+- auth_method
+
+Do not expose internal primary/session token values.
+
+==================================================
+14. SESSION ROTATION
+==================================================
+
+Preserve or improve current session rotation.
+
+Rotate session after:
+
+- successful login
+- password reset
+- password change if appropriate
+
+Prevent session fixation.
+
+==================================================
+15. BLOCKED ACCOUNT BEHAVIOR
+==================================================
+
+Preserve existing block semantics.
+
+Blocked customer:
+
+- cannot login
+- existing sessions are revoked
+- login attempt should not disclose sensitive reason unless intended
+- reseller can see block reason
+
+Do not mix temporary failed-login lockout with reseller account block.
+
+==================================================
+16. LAST LOGIN
+==================================================
+
+Expose correct:
+
+- last successful login timestamp
+- last login IP
+
+Do not derive from Activity if a dedicated login-history record is authoritative.
+
+==================================================
+17. SECURITY PAGE UI
+==================================================
+
+Customer Security page should become useful.
+
+Sections:
+
+A. Password
+- Change Password
+
+B. Active Sessions
+- Current device
+- Other sessions
+- Revoke
+- Sign out all other sessions
+
+C. Recent Login Activity
+- date/time
+- IP
+- device/browser
+- success/failure where appropriate
+
+D. Account Security
+- last password change
+- lockout state if active
+
+Do not overload with advanced controls yet.
+
+==================================================
+18. RESSELLER CLIENT DETAIL SECURITY TAB
+==================================================
+
+If current Client Detail lacks a dedicated Security tab, add one only if justified by current tab architecture.
+
+Recommended content:
+
+- Last login
+- Last login IP
+- Active sessions
+- Recent auth history
+- Temporary login lockout
+- Force logout all sessions
+
+Keep UI compact.
+
+==================================================
+19. PRIVACY
+==================================================
+
+Customer may see their own login/session data.
+
+Reseller may see security metadata for their own client.
+
+Do not expose:
+- raw session tokens
+- cookie contents
+- password hashes
+- reset token hashes
+- internal secret material
+
+==================================================
+20. IP / PROXY HANDLING
+==================================================
+
+Use the existing trusted request/IP extraction logic.
+
+Do not blindly trust arbitrary X-Forwarded-For.
+
+Preserve custom-domain / proxy security model.
+
+==================================================
+21. PASSWORD POLICY
+==================================================
+
+Use practical server-side policy.
+
+Example:
+- minimum 8 characters
+- allow passphrases
+- no arbitrary maximum below secure hashing limits
+- no forced complexity theater unless current app already requires it
+
+Do not store password history unless actually implementing reuse prevention beyond current password.
+
+==================================================
+22. RESET TOKEN STORAGE
+==================================================
+
+If schema required:
+
+Store:
+- token hash
+- customer
+- subscriber
+- created_at
+- expires_at
+- used_at
+
+Never store raw token.
+
+Index expiry/customer appropriately.
+
+==================================================
+23. MIGRATION
+==================================================
+
+Latest migration:
+
+026_client_activity_audit.sql
+
+If schema required:
+create additive migration:
+
+027_customer_security_sessions.sql
+
+Do NOT modify migrations 019–026.
+
+Preserve existing sessions and customer credentials where possible.
+
+No destructive rewrite.
+
+==================================================
+24. EXISTING SESSION COMPATIBILITY
+==================================================
+
+Important:
+
+Do not invalidate every existing customer session unnecessarily just because new metadata fields are added.
+
+Migration should preserve current valid sessions unless security requires otherwise.
+
+Document any unavoidable invalidation.
+
+==================================================
+25. RATE LIMIT / ABUSE
+==================================================
+
+Add focused protection to:
+
+- login
+- forgot password
+- reset password
+
+Reuse existing rate-limit infrastructure if present.
+
+Do not invent a second unrelated limiter system.
+
+==================================================
+26. TESTS
+==================================================
+
+Focused tests only.
+
+Must cover:
+
+- successful login creates login-history record
+- failed login recorded safely
+- repeated failures trigger temporary lockout
+- successful login clears failure state
+- blocked account still denied independently
+- password change requires correct old password
+- password change rejects wrong old password
+- password change revokes other sessions
+- password reset token single-use
+- expired reset token rejected
+- reset response does not reveal account existence
+- session list only returns own sessions
+- individual session revoke works
+- cross-customer revoke denied
+- cross-tenant access denied
+- sign out all other sessions preserves current session
+- reseller force logout scoped correctly
+- raw session/reset secrets never returned
+- corresponding Activity events emitted once
+
+Do not run broad browser/E2E suite.
+
+==================================================
+27. DOCUMENTATION
+==================================================
+
+Update:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+and, if useful, create:
+
+docs/BHRU_CUSTOMER_SECURITY.md
+
+Document:
+
+- session model
+- login history model
+- reset-token lifecycle
+- lockout policy
+- password policy
+- activity-event mapping
+- reseller/customer permissions
+
+==================================================
+28. FILE HYGIENE
+==================================================
+
+Do not modify project memory/internal note files.
+
+Do not spend credits updating Replit metadata.
+
+Application/source/docs/tests only.
+
+==================================================
+PREVIEW ONLY
+==================================================
+
+Do not git commit.
+Do not git push.
+Do not deploy.
+Do not access VPS/Dokploy/production.
+
+Return:
+
+1. existing auth/session architecture found
+2. password change behavior
+3. password reset behavior
+4. login history model
+5. failed-login lockout behavior
+6. session management behavior
+7. reseller security controls
+8. Activity integration
+9. migration status
+10. compatibility behavior
+11. focused checks
+12. files changed

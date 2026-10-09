@@ -5,12 +5,13 @@ import { Btn, Card, ConfirmDialog, Field } from '@/components/bhru/ui';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import { useClientDetail, useClientMutations } from '@/hooks/use-clients';
 import { ClientActivityPanel } from './client-activity';
+import { ClientSecurityPanel } from './client-security';
 import { errText } from '@/hooks/use-commerce';
 import { FinancialPanel, ClientOrdersPanel, ClientGroupAssign } from '@/pages/client-finance';
 import { clientName } from '@/pages/clients';
 import type { ResellerClientDetail, ResellerClientProfileInput } from '@workspace/api-client-react';
 
-const TABS = ['Overview', 'Financial', 'Profile', 'Orders', 'Activity', 'Notes'] as const;
+const TABS = ['Overview', 'Financial', 'Profile', 'Orders', 'Activity', 'Security', 'Notes'] as const;
 type Tab = typeof TABS[number];
 const when = (s?: string | null) => { if (!s) return '-'; const d = new Date(s); return Number.isNaN(+d) ? '-' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); };
 
@@ -126,6 +127,7 @@ export default function ClientDetailPage({ id }: { id: string }) {
         {tab === 'Profile' && <><ProfileForm id={id} d={d} /><ClientGroupAssign id={id} d={d} /></>}
         {tab === 'Orders' && <ClientOrdersPanel id={id} d={d} />}
         {tab === 'Activity' && <ClientActivityPanel key={id} id={id} legacy={d.activity} />}
+        {tab === 'Security' && <ClientSecurityPanel key={id} id={id} />}
         {tab === 'Notes' && <Notes id={id} d={d} />}
       </div>
       <ConfirmDialog open={confirm} title="Block this client?" body="They will no longer be able to log in to your public website." confirmLabel="Block client" danger onConfirm={toggle} onClose={() => setConfirm(false)} />

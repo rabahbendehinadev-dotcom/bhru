@@ -5,6 +5,126 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface CustomerSecurityAction { [key: string]: unknown }
+
+export interface CustomerSecurityResult {
+  ok: boolean;
+  affected?: number;
+}
+
+export interface CustomerPasswordChangeInput {
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  currentPassword: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  newPassword: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  confirmPassword: string;
+}
+
+export interface CustomerPasswordResetInput {
+  /** @pattern ^[a-f0-9]{64}$ */
+  token: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  newPassword: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  confirmPassword: string;
+}
+
+export interface CustomerRecoveryInput {
+  /**
+     * @minLength 1
+     * @maxLength 254
+     */
+  identifier: string;
+}
+
+export interface CustomerRecoveryStatus {
+  message: string;
+  deliveryAvailable: boolean;
+}
+
+/**
+ * @nullable
+ */
+export type CustomerSecurityViewLastLoginSource = typeof CustomerSecurityViewLastLoginSource[keyof typeof CustomerSecurityViewLastLoginSource] | null;
+
+
+export const CustomerSecurityViewLastLoginSource = {
+  history: 'history',
+  legacy: 'legacy',
+} as const;
+
+export type CustomerSecuritySessionStatus = typeof CustomerSecuritySessionStatus[keyof typeof CustomerSecuritySessionStatus];
+
+
+export const CustomerSecuritySessionStatus = {
+  active: 'active',
+} as const;
+
+export interface CustomerSecuritySession {
+  id: string;
+  current: boolean;
+  device: string;
+  /** @nullable */
+  ipAddress: string | null;
+  createdAt: string;
+  /** @nullable */
+  lastSeenAt: string | null;
+  expiresAt: string;
+  status: CustomerSecuritySessionStatus;
+}
+
+export type CustomerLoginAttemptResult = typeof CustomerLoginAttemptResult[keyof typeof CustomerLoginAttemptResult];
+
+
+export const CustomerLoginAttemptResult = {
+  success: 'success',
+  failed: 'failed',
+  locked: 'locked',
+  blocked: 'blocked',
+} as const;
+
+export interface CustomerLoginAttempt {
+  id: string;
+  createdAt: string;
+  result: CustomerLoginAttemptResult;
+  /** @nullable */
+  ipAddress: string | null;
+  device: string;
+}
+
+export interface CustomerSecurityView {
+  enabled: boolean;
+  /** @nullable */
+  lastLoginAt: string | null;
+  /** @nullable */
+  lastLoginIp: string | null;
+  /** @nullable */
+  lastLoginSource: CustomerSecurityViewLastLoginSource;
+  /** @nullable */
+  passwordChangedAt: string | null;
+  /** @nullable */
+  lockedUntil: string | null;
+  activeSessionCount: number;
+  sessions: CustomerSecuritySession[];
+  history: CustomerLoginAttempt[];
+}
+
 /**
  * Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.
  */
@@ -334,6 +454,15 @@ export const ClientActivityEventEventType = {
   service_order_completed: 'service_order_completed',
   service_order_rejected: 'service_order_rejected',
   customer_logged_out: 'customer_logged_out',
+  login_success: 'login_success',
+  login_failed: 'login_failed',
+  login_locked: 'login_locked',
+  password_changed: 'password_changed',
+  password_reset_requested: 'password_reset_requested',
+  password_reset_completed: 'password_reset_completed',
+  session_revoked: 'session_revoked',
+  all_other_sessions_revoked: 'all_other_sessions_revoked',
+  reseller_force_logout: 'reseller_force_logout',
 } as const;
 
 export type ClientActivityEventActorType = typeof ClientActivityEventActorType[keyof typeof ClientActivityEventActorType];

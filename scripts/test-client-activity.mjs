@@ -152,7 +152,7 @@ export async function testClientActivity({req,pool,check,sidA,sidB,ownerCookieA,
   await check('centralized logout records customer event once without storing cookie/session identifiers',async()=>{
     const body={},out=()=>req(base+'/logout',{method:'POST',cookie,body});
     assert.equal((await out()).status,200);assert.equal((await out()).status,200);
-    const data=(await events('SECURITY')).json.data;
+    const data=(await events('SECURITY')).json.data.filter(e=>e.eventType==='customer_logged_out');
     assert.equal(data.length,1);assert.equal(data[0].eventType,'customer_logged_out');
     assert.equal(data[0].actorId,id);assert.equal(data[0].actorType,'customer');
     assert.ok(!JSON.stringify(data).includes(cookie));

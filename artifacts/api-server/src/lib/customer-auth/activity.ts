@@ -13,6 +13,9 @@ export const CLIENT_ACTIVITY_TYPES = {
   service_order_charged:'FINANCIAL',service_order_refunded:'FINANCIAL',
   service_order_created:'ORDER',service_order_processing:'ORDER',service_order_completed:'ORDER',service_order_rejected:'ORDER',
   customer_logged_out:'SECURITY',
+  login_success:'SECURITY',login_failed:'SECURITY',login_locked:'SECURITY',
+  password_changed:'SECURITY',password_reset_requested:'SECURITY',password_reset_completed:'SECURITY',
+  session_revoked:'SECURITY',all_other_sessions_revoked:'SECURITY',reseller_force_logout:'SECURITY',
 } as const;
 export const activityQuery = z.object({
   category:z.enum(['ACCOUNT','PROFILE','FINANCIAL','ORDER','SECURITY']).optional(),
