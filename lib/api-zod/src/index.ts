@@ -5,3 +5,4 @@ export { z } from "zod";
 export { GetCommerceResourceParams, GetPublicCommerceCatalogParams } from "./generated/api";
 export { GetClientStatementParams, GetCustomerStatementParams, ListCustomerServiceOrdersParams, ListCustomerServicesParams } from "./generated/api";
 export { ListResellerClientActivityParams } from "./generated/api";
+export { ListGroupServicePricingParams, ListCustomerServicePricingParams } from "./generated/api";

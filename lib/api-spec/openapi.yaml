@@ -313,12 +313,70 @@ paths:
     get:
       operationId: listClientGroups
       responses:
-        '200': {description: Tenant client groups, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+        '200': {description: Tenant client groups with counts, content: {application/json: {schema: {$ref: '#/components/schemas/ClientGroupList'}}}}
     post:
       operationId: createClientGroup
-      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationGroupInput'}}}}
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ClientGroupInput'}}}}
       responses:
-        '201': {description: Created group, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+        '201': {description: Created group, content: {application/json: {schema: {$ref: '#/components/schemas/ClientGroup'}}}}
+  /client-groups/{id}:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    patch:
+      operationId: updateClientGroup
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ClientGroupInput'}}}}
+      responses:
+        '200': {description: Updated group, content: {application/json: {schema: {$ref: '#/components/schemas/ClientGroup'}}}}
+    delete:
+      operationId: deleteUnusedClientGroup
+      responses:
+        '200': {description: Deleted unused nondefault group, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /client-groups/{id}/default:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
+    post:
+      operationId: selectDefaultClientGroup
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/EmptyInput'}}}}
+      responses:
+        '200': {description: New active default without reassigning customers, content: {application/json: {schema: {$ref: '#/components/schemas/ClientGroup'}}}}
+  /client-groups/{id}/pricing:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}, {in: query, name: search, schema: {type: string}}, {in: query, name: page, schema: {type: integer, minimum: 1}}]
+    get:
+      operationId: listGroupServicePricing
+      responses:
+        '200': {description: Standard and effective USD prices and rules, content: {application/json: {schema: {$ref: '#/components/schemas/ServicePricingList'}}}}
+  /client-groups/{id}/pricing/{serviceId}:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}, {in: path, name: serviceId, required: true, schema: {type: string, format: uuid}}]
+    put:
+      operationId: saveGroupServicePricing
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ServicePricingInput'}}}}
+      responses:
+        '200': {description: Saved or inherited pricing rule, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    delete:
+      operationId: removeGroupServicePricing
+      responses:
+        '200': {description: Rule removed, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /clients/{id}/pricing:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}, {in: query, name: search, schema: {type: string}}, {in: query, name: page, schema: {type: integer, minimum: 1}}]
+    get:
+      operationId: listCustomerServicePricing
+      responses:
+        '200': {description: Customer overrides and effective USD prices, content: {application/json: {schema: {$ref: '#/components/schemas/ServicePricingList'}}}}
+  /clients/{id}/pricing/{serviceId}:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}, {in: path, name: serviceId, required: true, schema: {type: string, format: uuid}}]
+    put:
+      operationId: saveCustomerServicePricing
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ServicePricingInput'}}}}
+      responses:
+        '200': {description: Saved or inherited customer rule, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+    delete:
+      operationId: removeCustomerServicePricing
+      responses:
+        '200': {description: Removed customer rule, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
+  /clients/{id}/price-preview/{serviceId}:
+    parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}, {in: path, name: serviceId, required: true, schema: {type: string, format: uuid}}]
+    get:
+      operationId: previewCustomerServicePrice
+      responses:
+        '200': {description: Authoritative customer price and provenance, content: {application/json: {schema: {$ref: '#/components/schemas/EffectiveServicePrice'}}}}
   /clients/{id}/group:
     parameters: [{in: path, name: id, required: true, schema: {type: string, format: uuid}}]
     put:
@@ -459,6 +517,7 @@ paths:
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
         - { name: search, in: query, schema: { type: string, maxLength: 100 } }
         - { name: status, in: query, schema: { type: string, enum: [active, blocked] } }
+        - { name: groupId, in: query, schema: { type: string, format: uuid } }
       responses:
         "200":
           description: Canonical registered clients, including clients with no orders
@@ -1646,7 +1705,87 @@ components:
       required: [groupId]
       additionalProperties: false
       properties:
+        groupId: {type: string, format: uuid}
+    ClientGroupInput:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        description: {type: string, maxLength: 1000}
+        active: {type: boolean}
+        sortOrder: {type: integer, minimum: 0, maximum: 100000}
+    EmptyInput:
+      type: object
+      additionalProperties: false
+    ClientGroup:
+      type: object
+      required: [id, name, description, active, isDefault, sortOrder, customerCount, pricingRuleCount]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        description: {type: string}
+        active: {type: boolean}
+        isDefault: {type: boolean}
+        sortOrder: {type: integer}
+        customerCount: {type: integer}
+        pricingRuleCount: {type: integer}
+    ClientGroupList:
+      type: object
+      required: [data]
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/ClientGroup'}}
+    ServicePricingInput:
+      type: object
+      required: [method]
+      additionalProperties: false
+      properties:
+        method: {type: string, enum: [INHERIT_DEFAULT, FIXED_PRICE, PERCENT_DISCOUNT, PERCENT_MARKUP]}
+        value: {type: string, description: Fixed USD amount or percentage with at most two percentage decimals}
+    ServicePricingRule:
+      type: object
+      required: [id, method, value]
+      properties:
+        id: {type: string, format: uuid}
+        method: {type: string, enum: [FIXED_PRICE, PERCENT_DISCOUNT, PERCENT_MARKUP]}
+        value: {type: string}
+    ServicePricingRow:
+      type: object
+      required: [serviceId, serviceName, serviceType, active, standardPriceUsd, effectivePriceUsd, rule]
+      properties:
+        serviceId: {type: string, format: uuid}
+        serviceName: {type: string}
+        serviceType: {type: string}
+        active: {type: boolean}
+        standardPriceUsd: {type: string}
+        effectivePriceUsd: {type: string}
+        rule: {oneOf: [{$ref: '#/components/schemas/ServicePricingRule'}, {type: 'null'}]}
+    ServicePricingList:
+      type: object
+      required: [data, page, hasMore]
+      properties:
+        data: {type: array, items: {$ref: '#/components/schemas/ServicePricingRow'}}
+        page: {type: integer}
+        hasMore: {type: boolean}
+    EffectiveServicePrice:
+      type: object
+      required: [serviceId, standardPriceUsd, effectivePriceUsd, source, groupId, groupName, groupActive, ruleId, method, value, currency, rate, priceUsdUnits, priceAccountUnits, formattedTotal]
+      properties:
+        serviceId: {type: string, format: uuid}
+        standardPriceUsd: {type: string}
+        effectivePriceUsd: {type: string}
+        source: {type: string, enum: [CUSTOMER, GROUP, STANDARD]}
         groupId: {type: [string, 'null'], format: uuid}
+        groupName: {type: [string, 'null']}
+        groupActive: {type: [boolean, 'null']}
+        ruleId: {type: [string, 'null'], format: uuid}
+        method: {type: [string, 'null']}
+        value: {type: [string, 'null']}
+        currency: {type: string}
+        rate: {type: string}
+        priceUsdUnits: {type: string}
+        priceAccountUnits: {type: string}
+        formattedTotal: {type: string}
     ServiceRequirement:
       type: object
       required: [key, label, type, required]
@@ -1751,6 +1890,8 @@ components:
             availableBalance: { type: string }
             lockedAmount: {type: string}
             groupId: {type: [string, 'null'], format: uuid}
+            groupName: {type: [string, 'null']}
+            groupActive: {type: [boolean, 'null']}
             financial: { $ref: "#/components/schemas/ClientFinancialSummary" }
     ClientActivityEvent:
       type: object
@@ -1758,7 +1899,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         eventCategory: { type: string, enum: [ACCOUNT, PROFILE, FINANCIAL, ORDER, SECURITY] }
-        eventType: { type: string, enum: [account_created,account_blocked,account_unblocked,profile_updated,client_note_added,wallet_funds_added,wallet_deducted,wallet_adjusted,service_order_charged,service_order_refunded,service_order_created,service_order_processing,service_order_completed,service_order_rejected,customer_logged_out,login_success,login_failed,login_locked,password_changed,password_reset_requested,password_reset_completed,session_revoked,all_other_sessions_revoked,reseller_force_logout,funding_request_created,funding_request_cancelled,payment_pending,payment_confirmed,payment_failed,wallet_funded_from_payment] }
+        eventType: { type: string, enum: [account_created,account_blocked,account_unblocked,profile_updated,client_note_added,wallet_funds_added,wallet_deducted,wallet_adjusted,service_order_charged,service_order_refunded,service_order_created,service_order_processing,service_order_completed,service_order_rejected,customer_logged_out,login_success,login_failed,login_locked,password_changed,password_reset_requested,password_reset_completed,session_revoked,all_other_sessions_revoked,reseller_force_logout,funding_request_created,funding_request_cancelled,payment_pending,payment_confirmed,payment_failed,wallet_funded_from_payment,customer_group_assigned,customer_group_changed,customer_pricing_override_changed] }
         summary: { type: string }
         actorType: { type: string, enum: [customer, subscriber_owner, system] }
         actorId: { type: ["string","null"], format: uuid }

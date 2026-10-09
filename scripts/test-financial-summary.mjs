@@ -16,6 +16,7 @@ import {testClientActivity} from './test-client-activity.mjs';
 import {testPaymentFoundation,paymentTestPlugin} from './test-payment-foundation.mjs';
 import {testPaymentProcessing} from './test-payment-processing.mjs';
 import {testCustomerSecurity} from './test-customer-security.mjs';
+import {testClientGroupsPricing} from './test-client-groups-pricing.mjs';
 
 const root=resolve(import.meta.dirname,'..'),temp=await mkdtemp(join(tmpdir(),'bhru-finance-'));
 let started=false,pool,server,checks=0,requestId=0;
@@ -64,7 +65,7 @@ try{
   const db=await pool.connect();
   try{
     for(const name of (await readdir(join(root,'lib/db/src/migrations'))).filter(n=>/^\d+_.+\.sql$/.test(n)).sort()){
-    if(['025_','026_','027_','028_','029_'].some(prefix=>name.startsWith(prefix)))continue; // Explicit additive cutovers below.
+    if(['025_','026_','027_','028_','029_','030_'].some(prefix=>name.startsWith(prefix)))continue; // Explicit additive cutovers below.
       await db.query('BEGIN');
       if(name.startsWith('004_'))await db.query("SELECT set_config('bhru.private_admin_segment',$1,true)",['private-test-entry']);
       await db.query(await readFile(join(root,'lib/db/src/migrations',name),'utf8'));
@@ -187,7 +188,24 @@ try{
     await pool.query(await readFile(join(root,'lib/db/src/migrations/029_payment_processing_infrastructure.sql'),'utf8'));
     assert.deepEqual(await snapshots(),before);
   });
-  if(!process.argv.includes('--payments-only')){
+  await check('migration 030 preserves money, orders, sessions, payments and activity; only unassigned clients join tenant defaults',async()=>{
+    const legacy=randomUUID();
+    await pool.query('INSERT INTO reseller_client_groups(id,subscriber_id,name) VALUES($1,$2,$3)',[legacy,sidA,'Existing membership']);
+    await pool.query("INSERT INTO reseller_client_groups(id,subscriber_id,name) VALUES('00000000-0000-4000-8000-000000000001',$1,'Deterministic default')",[sidA]);
+    await pool.query('UPDATE public_customer_accounts SET client_group_id=$1 WHERE id=$2',[legacy,newClient.id]);
+    const tables=['public_customer_accounts','customer_wallets','customer_wallet_ledger','service_orders','public_customer_sessions','client_activity_events',
+      'payment_funding_requests','payment_transactions','payment_gateway_events','payment_initiations','payment_processing_jobs'];
+    const snap=()=>Promise.all(tables.map(async t=>(await pool.query(`SELECT md5(coalesce(string_agg((to_jsonb(r)-'client_group_id'-'pricing_snapshot'-'pricing_group_id')::text,',' ORDER BY (to_jsonb(r)-'client_group_id'-'pricing_snapshot'-'pricing_group_id')::text),'')) digest FROM ${t} r`)).rows[0].digest));
+    const before=await snap();
+    const db=await pool.connect();
+    try{await db.query('BEGIN');await db.query(await readFile(join(root,'lib/db/src/migrations/030_client_groups_pricing.sql'),'utf8'));await db.query('COMMIT');}catch(e){await db.query('ROLLBACK');throw e;}finally{db.release();}
+    assert.deepEqual(await snap(),before);
+    assert.equal((await pool.query('SELECT client_group_id FROM public_customer_accounts WHERE id=$1',[newClient.id])).rows[0].client_group_id,legacy);
+    assert.equal((await pool.query('SELECT id FROM reseller_client_groups WHERE subscriber_id=$1 AND is_default',[sidA])).rows[0].id,'00000000-0000-4000-8000-000000000001');
+    assert.equal((await pool.query('SELECT count(*)::int n FROM public_customer_accounts WHERE client_group_id IS NULL')).rows[0].n,0);
+    assert.equal((await pool.query('SELECT count(*)::int n FROM service_orders WHERE pricing_snapshot IS NOT NULL')).rows[0].n,0);
+  });
+  if(!process.argv.includes('--payments-only')&&!process.argv.includes('--pricing-only')){
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testLedgerAttribution({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testClientActivity({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
@@ -243,8 +261,11 @@ try{
     }
   });
   }
-  await testPaymentFoundation({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
-  await testPaymentProcessing({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
+  if(process.argv.includes('--pricing-only'))await testClientGroupsPricing({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
+  else{
+    await testPaymentFoundation({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
+    await testPaymentProcessing({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
+  }
   console.log(`\n${checks} focused finance SQL/HTTP groups passed. No existing database, browser, VPS or deployment used.`);
 }finally{
   if(server)await new Promise(r=>server.close(r));

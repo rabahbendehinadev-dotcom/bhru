@@ -8,10 +8,12 @@ import { ClientActivityPanel } from './client-activity';
 import { ClientSecurityPanel } from './client-security';
 import { errText } from '@/hooks/use-commerce';
 import { FinancialPanel, ClientOrdersPanel, ClientGroupAssign } from '@/pages/client-finance';
+import { PricingTable } from '@/pages/pricing-table';
+import { useCustomerPricing, usePricePreview } from '@/hooks/use-pricing';
 import { clientName } from '@/pages/clients';
 import type { ResellerClientDetail, ResellerClientProfileInput } from '@workspace/api-client-react';
 
-const TABS = ['Overview', 'Financial', 'Profile', 'Orders', 'Activity', 'Security', 'Notes'] as const;
+const TABS = ['Overview', 'Financial', 'Profile', 'Orders', 'Pricing', 'Activity', 'Security', 'Notes'] as const;
 type Tab = typeof TABS[number];
 const when = (s?: string | null) => { if (!s) return '-'; const d = new Date(s); return Number.isNaN(+d) ? '-' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); };
 
@@ -69,6 +71,22 @@ function ProfileForm({ id, d }: { id: string; d: ResellerClientDetail }) {
   );
 }
 
+function PricePreview({ id }: { id: string }) {
+  const list = useCustomerPricing(id, {});
+  const svc = ((list.data as { data?: { serviceId: string; serviceName: string }[] } | undefined)?.data) ?? [];
+  const [sid, setSid] = useState('');
+  const p = usePricePreview(id, sid);
+  const x = p.data;
+  return (
+    <Card className="mt-3 space-y-2 p-3.5" data-testid="price-preview"><h2 className="text-[13px] font-semibold">Server price preview</h2>
+      <select className="input w-auto min-w-[220px]" value={sid} onChange={(e) => setSid(e.target.value)} aria-label="Preview service" data-testid="select-preview-service"><option value="">Select a service</option>{svc.map((r) => <option key={r.serviceId} value={r.serviceId}>{r.serviceName}</option>)}</select>
+      {sid && p.isLoading && <div className="h-16 animate-pulse rounded bg-white/5" aria-busy="true" />}
+      {sid && p.isError && <p role="alert" className="text-[12px] text-danger">{errText(p.error)} <Btn sm onClick={() => void p.refetch()}>Retry</Btn></p>}
+      {sid && x && <dl><Row k="Source" v={x.source} /><Row k="Group" v={x.groupName ? `${x.groupName}${x.groupActive === false ? ' (inactive)' : ''}` : null} /><Row k="Rule" v={x.method ? `${x.method} ${x.value ?? ''}` : null} /><Row k="Standard (USD)" v={x.standardPriceUsd} /><Row k="Effective (USD)" v={x.effectivePriceUsd} /><Row k="Rate" v={`${x.rate} ${x.currency}`} /><Row k="Customer pays" v={x.formattedTotal} /></dl>}
+    </Card>
+  );
+}
+
 function Notes({ id, d }: { id: string; d: ResellerClientDetail }) {
   const { note } = useClientMutations(id);
   const [body, setBody] = useState('');
@@ -121,10 +139,11 @@ export default function ClientDetailPage({ id }: { id: string }) {
             <Row k="Name" v={clientName(c)} /><Row k="Email" v={c.email} /><Row k="Client code" v={c.clientCode} /><Row k="Username" v={c.username} /><Row k="WhatsApp" v={c.whatsappPhone} />
             <Row k="Location" v={[c.city, c.state, c.countryCode].filter(Boolean).join(', ')} /><Row k="Registered" v={when(c.createdAt)} /><Row k="Last login" v={when(c.lastLoginAt)} /></dl></Card>
           <Card className="p-3.5"><h2 className="mb-1 text-[13px] font-semibold">Summary</h2><dl>
-            <Row k="Status" v={c.enabled ? 'Active' : 'Blocked'} /><Row k="Total orders" v={d.orderSummary.totalOrders} /><Row k="Retail orders" v={d.orderSummary.retailOrders} />
+            <Row k="Status" v={c.enabled ? 'Active' : 'Blocked'} /><Row k="Group" v={(c as unknown as { groupName?: string | null }).groupName} /><Row k="Total orders" v={d.orderSummary.totalOrders} /><Row k="Retail orders" v={d.orderSummary.retailOrders} />
             <Row k="Available balance" v={fmt(d, 'formattedAvailable', 'availableBalance')} /><Row k="Account currency" v={d.client.effectiveCurrency} /><Row k="Total spent" v={fmt(d, 'formattedTotalSpent', 'totalSpent')} /><Row k="Ledger credits" v={fmt(d, 'formattedLedgerCredits', 'ledgerCredits')} /><Row k="Ledger debits" v={fmt(d, 'formattedLedgerDebits', 'ledgerDebits')} />{BigInt(d.financial.lockedAmount) !== 0n && <Row k="Locked balance" v={fmt(d, 'formattedLocked', 'lockedAmount')} />}</dl></Card></div>}
         {tab === 'Financial' && <FinancialPanel id={id} d={d} />}
         {tab === 'Profile' && <><ProfileForm id={id} d={d} /><ClientGroupAssign id={id} d={d} /></>}
+        {tab === 'Pricing' && <div data-testid="client-pricing-panel"><Card className="mb-3 p-3.5"><h2 className="mb-1 text-[13px] font-semibold">Group</h2><dl><Row k="Current group" v={(c as unknown as { groupName?: string | null }).groupName} /><Row k="Group state" v={(c as unknown as { groupId?: string | null }).groupId ? ((c as unknown as { groupActive?: boolean | null }).groupActive === false ? 'Inactive' : 'Active') : null} /></dl></Card><ClientGroupAssign id={id} d={d} /><h2 className="mb-1.5 mt-3 text-[13px] font-semibold">Customer-specific pricing</h2><PricingTable scope="customer" id={id} /><PricePreview id={id} /></div>}
         {tab === 'Orders' && <ClientOrdersPanel id={id} d={d} />}
         {tab === 'Activity' && <ClientActivityPanel key={id} id={id} legacy={d.activity} />}
         {tab === 'Security' && <ClientSecurityPanel key={id} id={id} />}

@@ -40,4 +40,7 @@ export const ClientActivityEventEventType = {
   payment_confirmed: 'payment_confirmed',
   payment_failed: 'payment_failed',
   wallet_funded_from_payment: 'wallet_funded_from_payment',
+  customer_group_assigned: 'customer_group_assigned',
+  customer_group_changed: 'customer_group_changed',
+  customer_pricing_override_changed: 'customer_pricing_override_changed',
 } as const;

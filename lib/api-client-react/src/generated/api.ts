@@ -27,7 +27,10 @@ import type {
   AuthEntry,
   ClientActivityPage,
   ClientFinancialSummary,
+  ClientGroup,
   ClientGroupAssignment,
+  ClientGroupInput,
+  ClientGroupList,
   ClientReconciliation,
   CommerceAccess,
   CommerceAsset,
@@ -51,6 +54,8 @@ import type {
   CustomerSecurityResult,
   CustomerSecurityView,
   CustomerSessionView,
+  EffectiveServicePrice,
+  EmptyInput,
   EmptyPaymentAction,
   FoundationGroupInput,
   FoundationResponse,
@@ -71,7 +76,9 @@ import type {
   GetPublicSiteDocumentParams,
   HealthStatus,
   ListCustomerServiceOrdersParams,
+  ListCustomerServicePricingParams,
   ListCustomerServicesParams,
+  ListGroupServicePricingParams,
   ListManualServicesParams,
   ListPaymentReviewsParams,
   ListResellerClientActivityParams,
@@ -100,6 +107,8 @@ import type {
   ResolveAuthEntryParams,
   ServiceGroupAvailability,
   ServiceOrderTransition,
+  ServicePricingInput,
+  ServicePricingList,
   ServicePurchaseInput,
   ServiceQuoteInput,
   Subscriber,
@@ -2096,9 +2105,9 @@ export const getListClientGroupsUrl = () => {
   return `/api/client-groups`
 }
 
-export const listClientGroups = async ( options?: Parameters<typeof customFetch>[1]): Promise<FoundationResponse> => {
+export const listClientGroups = async ( options?: Parameters<typeof customFetch>[1]): Promise<ClientGroupList> => {
 
-  return customFetch<FoundationResponse>(getListClientGroupsUrl(),
+  return customFetch<ClientGroupList>(getListClientGroupsUrl(),
   {
     ...options,
     method: 'GET'
@@ -2167,7 +2176,7 @@ export const getCreateClientGroupUrl = () => {
   return `/api/client-groups`
 }
 
-export const createClientGroup = async (foundationGroupInput: FoundationGroupInput, options?: Parameters<typeof customFetch>[1]): Promise<FoundationResponse> => {
+export const createClientGroup = async (clientGroupInput: ClientGroupInput, options?: Parameters<typeof customFetch>[1]): Promise<ClientGroup> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -2183,12 +2192,12 @@ export const createClientGroup = async (foundationGroupInput: FoundationGroupInp
     }
     return headers;
   };
-return customFetch<FoundationResponse>(getCreateClientGroupUrl(),
+return customFetch<ClientGroup>(getCreateClientGroupUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(foundationGroupInput)
+    body: JSON.stringify(clientGroupInput)
   }
 );}
 
@@ -2226,9 +2235,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateClientGroupMutationResult = NonNullable<Awaited<ReturnType<typeof createClientGroup>>>
-    export type CreateClientGroupMutationBody = BodyType<FoundationGroupInput>
+    export type CreateClientGroupMutationBody = BodyType<ClientGroupInput>
     export type CreateClientGroupMutationError = ErrorType<unknown>
-    export type CreateClientGroupMutationVariables = {data: BodyType<FoundationGroupInput>}
+    export type CreateClientGroupMutationVariables = {data: BodyType<ClientGroupInput>}
 
     export const useCreateClientGroup = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createClientGroup>>, TError,CreateClientGroupMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -2240,6 +2249,792 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getCreateClientGroupMutationOptions(options));
     }
+
+export const getUpdateClientGroupUrl = (id: string,) => {
+
+
+
+
+  return `/api/client-groups/${id}`
+}
+
+export const updateClientGroup = async (id: string,
+    clientGroupInput: ClientGroupInput, options?: Parameters<typeof customFetch>[1]): Promise<ClientGroup> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ClientGroup>(getUpdateClientGroupUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientGroupInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateClientGroupMutationKey = () => ['updateClientGroup'] as const;
+
+export const getUpdateClientGroupMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateClientGroup>>, TError,UpdateClientGroupMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateClientGroup>>, TError,UpdateClientGroupMutationVariables, TContext> => {
+
+const mutationKey = getUpdateClientGroupMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateClientGroup>>, UpdateClientGroupMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateClientGroup(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateClientGroupMutationResult = NonNullable<Awaited<ReturnType<typeof updateClientGroup>>>
+    export type UpdateClientGroupMutationBody = BodyType<ClientGroupInput>
+    export type UpdateClientGroupMutationError = ErrorType<unknown>
+    export type UpdateClientGroupMutationVariables = {id: string;data: BodyType<ClientGroupInput>}
+
+    export const useUpdateClientGroup = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateClientGroup>>, TError,UpdateClientGroupMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateClientGroup>>,
+        TError,
+        UpdateClientGroupMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateClientGroupMutationOptions(options));
+    }
+
+export const getDeleteUnusedClientGroupUrl = (id: string,) => {
+
+
+
+
+  return `/api/client-groups/${id}`
+}
+
+export const deleteUnusedClientGroup = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<FoundationResponse> => {
+
+  return customFetch<FoundationResponse>(getDeleteUnusedClientGroupUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteUnusedClientGroupMutationKey = () => ['deleteUnusedClientGroup'] as const;
+
+export const getDeleteUnusedClientGroupMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUnusedClientGroup>>, TError,DeleteUnusedClientGroupMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUnusedClientGroup>>, TError,DeleteUnusedClientGroupMutationVariables, TContext> => {
+
+const mutationKey = getDeleteUnusedClientGroupMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUnusedClientGroup>>, DeleteUnusedClientGroupMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteUnusedClientGroup(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUnusedClientGroupMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUnusedClientGroup>>>
+
+    export type DeleteUnusedClientGroupMutationError = ErrorType<unknown>
+    export type DeleteUnusedClientGroupMutationVariables = {id: string}
+
+    export const useDeleteUnusedClientGroup = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUnusedClientGroup>>, TError,DeleteUnusedClientGroupMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUnusedClientGroup>>,
+        TError,
+        DeleteUnusedClientGroupMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteUnusedClientGroupMutationOptions(options));
+    }
+
+export const getSelectDefaultClientGroupUrl = (id: string,) => {
+
+
+
+
+  return `/api/client-groups/${id}/default`
+}
+
+export const selectDefaultClientGroup = async (id: string,
+    emptyInput: EmptyInput, options?: Parameters<typeof customFetch>[1]): Promise<ClientGroup> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ClientGroup>(getSelectDefaultClientGroupUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emptyInput)
+  }
+);}
+
+
+
+
+
+export const getSelectDefaultClientGroupMutationKey = () => ['selectDefaultClientGroup'] as const;
+
+export const getSelectDefaultClientGroupMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof selectDefaultClientGroup>>, TError,SelectDefaultClientGroupMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof selectDefaultClientGroup>>, TError,SelectDefaultClientGroupMutationVariables, TContext> => {
+
+const mutationKey = getSelectDefaultClientGroupMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof selectDefaultClientGroup>>, SelectDefaultClientGroupMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  selectDefaultClientGroup(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SelectDefaultClientGroupMutationResult = NonNullable<Awaited<ReturnType<typeof selectDefaultClientGroup>>>
+    export type SelectDefaultClientGroupMutationBody = BodyType<EmptyInput>
+    export type SelectDefaultClientGroupMutationError = ErrorType<unknown>
+    export type SelectDefaultClientGroupMutationVariables = {id: string;data: BodyType<EmptyInput>}
+
+    export const useSelectDefaultClientGroup = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof selectDefaultClientGroup>>, TError,SelectDefaultClientGroupMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof selectDefaultClientGroup>>,
+        TError,
+        SelectDefaultClientGroupMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSelectDefaultClientGroupMutationOptions(options));
+    }
+
+export const getListGroupServicePricingUrl = (id: string,
+    params?: ListGroupServicePricingParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/client-groups/${id}/pricing?${stringifiedParams}` : `/api/client-groups/${id}/pricing`
+}
+
+export const listGroupServicePricing = async (id: string,
+    params?: ListGroupServicePricingParams, options?: Parameters<typeof customFetch>[1]): Promise<ServicePricingList> => {
+
+  return customFetch<ServicePricingList>(getListGroupServicePricingUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListGroupServicePricingQueryKey = (id: string,
+    params?: ListGroupServicePricingParams,) => {
+    return [
+    `/api/client-groups/${id}/pricing`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListGroupServicePricingQueryOptions = <TData = Awaited<ReturnType<typeof listGroupServicePricing>>, TError = ErrorType<unknown>>(id: string,
+    params?: ListGroupServicePricingParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGroupServicePricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListGroupServicePricingQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listGroupServicePricing>>> = ({ signal }) => listGroupServicePricing(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGroupServicePricing>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListGroupServicePricingQueryResult = NonNullable<Awaited<ReturnType<typeof listGroupServicePricing>>>
+export type ListGroupServicePricingQueryError = ErrorType<unknown>
+
+
+
+export function useListGroupServicePricing<TData = Awaited<ReturnType<typeof listGroupServicePricing>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: ListGroupServicePricingParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGroupServicePricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListGroupServicePricingQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveGroupServicePricingUrl = (id: string,
+    serviceId: string,) => {
+
+
+
+
+  return `/api/client-groups/${id}/pricing/${serviceId}`
+}
+
+export const saveGroupServicePricing = async (id: string,
+    serviceId: string,
+    servicePricingInput: ServicePricingInput, options?: Parameters<typeof customFetch>[1]): Promise<FoundationResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<FoundationResponse>(getSaveGroupServicePricingUrl(id,serviceId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(servicePricingInput)
+  }
+);}
+
+
+
+
+
+export const getSaveGroupServicePricingMutationKey = () => ['saveGroupServicePricing'] as const;
+
+export const getSaveGroupServicePricingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveGroupServicePricing>>, TError,SaveGroupServicePricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveGroupServicePricing>>, TError,SaveGroupServicePricingMutationVariables, TContext> => {
+
+const mutationKey = getSaveGroupServicePricingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveGroupServicePricing>>, SaveGroupServicePricingMutationVariables> = (props) => {
+          const {id,serviceId,data} = props ?? {};
+
+          return  saveGroupServicePricing(id,serviceId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveGroupServicePricingMutationResult = NonNullable<Awaited<ReturnType<typeof saveGroupServicePricing>>>
+    export type SaveGroupServicePricingMutationBody = BodyType<ServicePricingInput>
+    export type SaveGroupServicePricingMutationError = ErrorType<unknown>
+    export type SaveGroupServicePricingMutationVariables = {id: string;serviceId: string;data: BodyType<ServicePricingInput>}
+
+    export const useSaveGroupServicePricing = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveGroupServicePricing>>, TError,SaveGroupServicePricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveGroupServicePricing>>,
+        TError,
+        SaveGroupServicePricingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveGroupServicePricingMutationOptions(options));
+    }
+
+export const getRemoveGroupServicePricingUrl = (id: string,
+    serviceId: string,) => {
+
+
+
+
+  return `/api/client-groups/${id}/pricing/${serviceId}`
+}
+
+export const removeGroupServicePricing = async (id: string,
+    serviceId: string, options?: Parameters<typeof customFetch>[1]): Promise<FoundationResponse> => {
+
+  return customFetch<FoundationResponse>(getRemoveGroupServicePricingUrl(id,serviceId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRemoveGroupServicePricingMutationKey = () => ['removeGroupServicePricing'] as const;
+
+export const getRemoveGroupServicePricingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeGroupServicePricing>>, TError,RemoveGroupServicePricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeGroupServicePricing>>, TError,RemoveGroupServicePricingMutationVariables, TContext> => {
+
+const mutationKey = getRemoveGroupServicePricingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeGroupServicePricing>>, RemoveGroupServicePricingMutationVariables> = (props) => {
+          const {id,serviceId} = props ?? {};
+
+          return  removeGroupServicePricing(id,serviceId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveGroupServicePricingMutationResult = NonNullable<Awaited<ReturnType<typeof removeGroupServicePricing>>>
+
+    export type RemoveGroupServicePricingMutationError = ErrorType<unknown>
+    export type RemoveGroupServicePricingMutationVariables = {id: string;serviceId: string}
+
+    export const useRemoveGroupServicePricing = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeGroupServicePricing>>, TError,RemoveGroupServicePricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeGroupServicePricing>>,
+        TError,
+        RemoveGroupServicePricingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRemoveGroupServicePricingMutationOptions(options));
+    }
+
+export const getListCustomerServicePricingUrl = (id: string,
+    params?: ListCustomerServicePricingParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/clients/${id}/pricing?${stringifiedParams}` : `/api/clients/${id}/pricing`
+}
+
+export const listCustomerServicePricing = async (id: string,
+    params?: ListCustomerServicePricingParams, options?: Parameters<typeof customFetch>[1]): Promise<ServicePricingList> => {
+
+  return customFetch<ServicePricingList>(getListCustomerServicePricingUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCustomerServicePricingQueryKey = (id: string,
+    params?: ListCustomerServicePricingParams,) => {
+    return [
+    `/api/clients/${id}/pricing`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListCustomerServicePricingQueryOptions = <TData = Awaited<ReturnType<typeof listCustomerServicePricing>>, TError = ErrorType<unknown>>(id: string,
+    params?: ListCustomerServicePricingParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCustomerServicePricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCustomerServicePricingQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCustomerServicePricing>>> = ({ signal }) => listCustomerServicePricing(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCustomerServicePricing>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCustomerServicePricingQueryResult = NonNullable<Awaited<ReturnType<typeof listCustomerServicePricing>>>
+export type ListCustomerServicePricingQueryError = ErrorType<unknown>
+
+
+
+export function useListCustomerServicePricing<TData = Awaited<ReturnType<typeof listCustomerServicePricing>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: ListCustomerServicePricingParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCustomerServicePricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCustomerServicePricingQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveCustomerServicePricingUrl = (id: string,
+    serviceId: string,) => {
+
+
+
+
+  return `/api/clients/${id}/pricing/${serviceId}`
+}
+
+export const saveCustomerServicePricing = async (id: string,
+    serviceId: string,
+    servicePricingInput: ServicePricingInput, options?: Parameters<typeof customFetch>[1]): Promise<FoundationResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<FoundationResponse>(getSaveCustomerServicePricingUrl(id,serviceId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(servicePricingInput)
+  }
+);}
+
+
+
+
+
+export const getSaveCustomerServicePricingMutationKey = () => ['saveCustomerServicePricing'] as const;
+
+export const getSaveCustomerServicePricingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCustomerServicePricing>>, TError,SaveCustomerServicePricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveCustomerServicePricing>>, TError,SaveCustomerServicePricingMutationVariables, TContext> => {
+
+const mutationKey = getSaveCustomerServicePricingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveCustomerServicePricing>>, SaveCustomerServicePricingMutationVariables> = (props) => {
+          const {id,serviceId,data} = props ?? {};
+
+          return  saveCustomerServicePricing(id,serviceId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveCustomerServicePricingMutationResult = NonNullable<Awaited<ReturnType<typeof saveCustomerServicePricing>>>
+    export type SaveCustomerServicePricingMutationBody = BodyType<ServicePricingInput>
+    export type SaveCustomerServicePricingMutationError = ErrorType<unknown>
+    export type SaveCustomerServicePricingMutationVariables = {id: string;serviceId: string;data: BodyType<ServicePricingInput>}
+
+    export const useSaveCustomerServicePricing = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCustomerServicePricing>>, TError,SaveCustomerServicePricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveCustomerServicePricing>>,
+        TError,
+        SaveCustomerServicePricingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveCustomerServicePricingMutationOptions(options));
+    }
+
+export const getRemoveCustomerServicePricingUrl = (id: string,
+    serviceId: string,) => {
+
+
+
+
+  return `/api/clients/${id}/pricing/${serviceId}`
+}
+
+export const removeCustomerServicePricing = async (id: string,
+    serviceId: string, options?: Parameters<typeof customFetch>[1]): Promise<FoundationResponse> => {
+
+  return customFetch<FoundationResponse>(getRemoveCustomerServicePricingUrl(id,serviceId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRemoveCustomerServicePricingMutationKey = () => ['removeCustomerServicePricing'] as const;
+
+export const getRemoveCustomerServicePricingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCustomerServicePricing>>, TError,RemoveCustomerServicePricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeCustomerServicePricing>>, TError,RemoveCustomerServicePricingMutationVariables, TContext> => {
+
+const mutationKey = getRemoveCustomerServicePricingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeCustomerServicePricing>>, RemoveCustomerServicePricingMutationVariables> = (props) => {
+          const {id,serviceId} = props ?? {};
+
+          return  removeCustomerServicePricing(id,serviceId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveCustomerServicePricingMutationResult = NonNullable<Awaited<ReturnType<typeof removeCustomerServicePricing>>>
+
+    export type RemoveCustomerServicePricingMutationError = ErrorType<unknown>
+    export type RemoveCustomerServicePricingMutationVariables = {id: string;serviceId: string}
+
+    export const useRemoveCustomerServicePricing = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCustomerServicePricing>>, TError,RemoveCustomerServicePricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeCustomerServicePricing>>,
+        TError,
+        RemoveCustomerServicePricingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRemoveCustomerServicePricingMutationOptions(options));
+    }
+
+export const getPreviewCustomerServicePriceUrl = (id: string,
+    serviceId: string,) => {
+
+
+
+
+  return `/api/clients/${id}/price-preview/${serviceId}`
+}
+
+export const previewCustomerServicePrice = async (id: string,
+    serviceId: string, options?: Parameters<typeof customFetch>[1]): Promise<EffectiveServicePrice> => {
+
+  return customFetch<EffectiveServicePrice>(getPreviewCustomerServicePriceUrl(id,serviceId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getPreviewCustomerServicePriceQueryKey = (id: string,
+    serviceId: string,) => {
+    return [
+    `/api/clients/${id}/price-preview/${serviceId}`
+    ] as const;
+    }
+
+
+export const getPreviewCustomerServicePriceQueryOptions = <TData = Awaited<ReturnType<typeof previewCustomerServicePrice>>, TError = ErrorType<unknown>>(id: string,
+    serviceId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof previewCustomerServicePrice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPreviewCustomerServicePriceQueryKey(id,serviceId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof previewCustomerServicePrice>>> = ({ signal }) => previewCustomerServicePrice(id,serviceId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined && serviceId !== null && serviceId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof previewCustomerServicePrice>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type PreviewCustomerServicePriceQueryResult = NonNullable<Awaited<ReturnType<typeof previewCustomerServicePrice>>>
+export type PreviewCustomerServicePriceQueryError = ErrorType<unknown>
+
+
+
+export function usePreviewCustomerServicePrice<TData = Awaited<ReturnType<typeof previewCustomerServicePrice>>, TError = ErrorType<unknown>>(
+ id: string,
+    serviceId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof previewCustomerServicePrice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getPreviewCustomerServicePriceQueryOptions(id,serviceId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getAssignClientGroupUrl = (id: string,) => {
 

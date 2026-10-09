@@ -63,12 +63,13 @@ export function useServiceGroups() {
 export function useClientGroups() {
   const g = useGate();
   const q = useListClientGroups({ request: subReq(), query: { queryKey: [...getListClientGroupsQueryKey(), ...g.scope], enabled: g.on, ...opts } });
-  return { ...q, rows: ((q.data as { data?: Group[] } | undefined)?.data) };
+  return { ...q, rows: q.data?.data };
 }
 
 export function useServiceMutations() {
   const qc = useQueryClient();
-  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: getListManualServicesQueryKey() }), qc.invalidateQueries({ queryKey: getListServiceGroupsQueryKey() })]);
+  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: getListManualServicesQueryKey() }), qc.invalidateQueries({ queryKey: getListServiceGroupsQueryKey() }),
+    qc.invalidateQueries({predicate:q=>typeof q.queryKey[0]==='string'&&(q.queryKey[0] as string).startsWith('/api/client')})]);
   const o = { request: subReq(), mutation: { onSuccess: refresh } };
   return { create: useCreateManualService(o), update: useUpdateManualService(o), createGroup: useCreateServiceGroup(o), updateGroup: useUpdateServiceGroupAvailability(o) };
 }

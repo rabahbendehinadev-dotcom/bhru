@@ -9,6 +9,7 @@ import { money } from '../client-finance/wallet';
 export const CLIENT_ACTIVITY_TYPES = {
   account_created:'ACCOUNT',account_blocked:'ACCOUNT',account_unblocked:'ACCOUNT',
   profile_updated:'PROFILE',client_note_added:'PROFILE',
+  customer_group_assigned:'PROFILE',customer_group_changed:'PROFILE',customer_pricing_override_changed:'PROFILE',
   wallet_funds_added:'FINANCIAL',wallet_deducted:'FINANCIAL',wallet_adjusted:'FINANCIAL',
   service_order_charged:'FINANCIAL',service_order_refunded:'FINANCIAL',
   funding_request_created:'FINANCIAL',funding_request_cancelled:'FINANCIAL',payment_pending:'FINANCIAL',

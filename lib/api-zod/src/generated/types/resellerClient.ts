@@ -16,5 +16,9 @@ export type ResellerClient = PublicCustomerProfile & ({
   lockedAmount?: string;
   /** @nullable */
   groupId?: string | null;
+  /** @nullable */
+  groupName?: string | null;
+  /** @nullable */
+  groupActive?: boolean | null;
   financial: ClientFinancialSummary;
 });

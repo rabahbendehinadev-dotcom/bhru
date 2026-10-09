@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ClientGroupAssignment {
-  groupId: string;
-}
+export type ListGroupServicePricingParams = {
+search?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+};

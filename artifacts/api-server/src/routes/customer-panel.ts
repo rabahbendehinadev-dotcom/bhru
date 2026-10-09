@@ -5,6 +5,7 @@ import { transaction } from '../lib/platform';
 import { customerContext, customerCsrf } from '../lib/customer-auth/service';
 import { financialSummary, statement, lockClient } from '../lib/client-finance/wallet';
 import { listServices, serviceRow, serviceView } from '../lib/client-finance/catalog';
+import {effectivePrice} from '../lib/client-finance/pricing';
 import { displayCurrency } from '../lib/client-finance/wallet';
 import { listOrders, orderRow, orderView, orderSummary, quoteService, purchaseService, InsufficientBalance } from '../lib/client-finance/orders';
 import { effectiveCustomerProfile } from '../lib/customer-auth/profile';
@@ -65,7 +66,10 @@ router.get('/announcements',async(req,res)=>{
 router.get('/services',async(req,res)=>{const {sub,id}=identity(req);res.json(await transaction(db=>listServices(sub,req.query,db,id)));});
 router.get('/services/:id',async(req,res)=>{
   const {sub,id}=identity(req),service=uuid.parse(req.params.id);
-  res.json(await transaction(async db=>serviceView(await serviceRow(sub,service,db,true),await displayCurrency(sub,id,db,req.query.currency?z.string().regex(/^[A-Z]{3}$/).parse(req.query.currency):undefined))));
+  res.json(await transaction(async db=>{
+    const row=await serviceRow(sub,service,db,true),currency=await displayCurrency(sub,id,db,req.query.currency?z.string().regex(/^[A-Z]{3}$/).parse(req.query.currency):undefined);
+    return serviceView(row,currency,(await effectivePrice(sub,id,row,db,currency)).view);
+  }));
 });
 router.post('/quote',async(req,res)=>{const {sub,id}=identity(req);res.json(await transaction(db=>quoteService(sub,id,req.body,db)));});
 router.get('/orders',async(req,res)=>{const {sub,id}=identity(req);res.json(await transaction(db=>listOrders(sub,req.query,db,id)));});

@@ -1,0 +1,804 @@
+BHRU — SLICE 6A
+CLIENT GROUPS + CUSTOM SERVICE PRICING
+COMPLETE IMPLEMENTATION — REPLIT PREVIEW ONLY
+
+========================================================
+PROJECT CONTEXT
+========================================================
+
+BHRU is a multi-tenant SaaS platform inspired by
+DHRU Fusion.
+
+The platform has three distinct account realms:
+
+1. Platform Admin
+2. Reseller / Subscriber
+3. Public Customer / Client
+
+The canonical customer identity is:
+
+public_customer_accounts
+
+Do NOT create another customer identity table.
+
+Existing foundations:
+
+- Customer registration and authentication
+- Immutable customer Account Currency
+- Reseller-controlled currencies
+- Manual IMEI / Server / File / Remote services
+- Service groups
+- Service-order lifecycle
+- Atomic wallet debits and exact refunds
+- Immutable wallet ledger
+- Financial reconciliation
+- Client Activity audit
+- Customer security
+- Payment gateway infrastructure
+
+Payment Gateway integration is currently paused.
+
+Do NOT modify payment infrastructure in this slice.
+
+Latest expected migration:
+
+029_payment_processing_infrastructure.sql
+
+Verify the actual latest migration before proceeding.
+
+========================================================
+PRIMARY OBJECTIVE
+========================================================
+
+Implement a complete tenant-scoped customer
+grouping and service pricing system.
+
+A Reseller must be able to:
+
+1. Create customer groups.
+2. Edit customer groups.
+3. Activate/deactivate groups.
+4. Assign customers to groups.
+5. Define default pricing rules.
+6. Define group-specific pricing rules.
+7. Define customer-specific service prices.
+8. Preview the effective price for a customer.
+9. Preserve historical order prices.
+10. Manage everything from the existing
+    Reseller dashboard.
+
+Customers must automatically receive the
+correct effective service price.
+
+No customer may choose their own group or
+override their service price.
+
+========================================================
+PHASE 1 — CURRENT ARCHITECTURE AUDIT
+========================================================
+
+Inspect existing:
+
+- public_customer_accounts
+- customer registration
+- reseller Clients module
+- reseller service catalog
+- service groups
+- service pricing
+- customer service catalog
+- service quotation
+- service-order creation
+- wallet charging
+- currency conversion
+- order snapshots
+- Activity audit
+
+Identify the existing authoritative service
+pricing function.
+
+Reuse the existing pricing architecture.
+
+Do not introduce a second competing pricing
+engine.
+
+Check whether customer groups or pricing
+overrides already exist.
+
+If so, extend them rather than duplicating them.
+
+========================================================
+PHASE 2 — CUSTOMER GROUP MODEL
+========================================================
+
+Implement customer groups.
+
+Suggested fields:
+
+id
+subscriber_id
+name
+description
+is_active
+is_default
+sort_order
+created_at
+updated_at
+
+Every group belongs to exactly one Reseller.
+
+Group names must be unique within the same tenant.
+
+Different Resellers may use identical names.
+
+Examples:
+
+Normal
+VIP
+Wholesale
+Premium
+
+Do not hardcode these names as mandatory groups.
+
+========================================================
+PHASE 3 — DEFAULT GROUP
+========================================================
+
+Each Reseller should have one default group.
+
+Requirements:
+
+- New customers automatically join the default group.
+- Existing customers without a group are handled safely.
+- Reseller can choose another default group.
+- Exactly one active default group per tenant.
+- Default group cannot be deleted or disabled
+  without selecting a replacement.
+- Changing the default group must not silently
+  reassign existing customers.
+
+Do not make assumptions about historical customers.
+
+If a migration/backfill is required, use a
+documented, deterministic and tenant-safe policy.
+
+========================================================
+PHASE 4 — CUSTOMER GROUP ASSIGNMENT
+========================================================
+
+Add group assignment to:
+
+Reseller → Clients
+
+And:
+
+Reseller → Client Detail
+
+Allow:
+
+- Assign one customer to a group.
+- Change customer group.
+- Filter customers by group.
+- Display current group.
+- Show group in customer Overview.
+
+Only authorized Reseller users may modify it.
+
+Customers cannot assign themselves.
+
+Changing a group affects future quotations
+and future orders only.
+
+Existing orders remain unchanged.
+
+========================================================
+PHASE 5 — GROUP MANAGEMENT UI
+========================================================
+
+Add a professional Client Groups section
+inside the existing Reseller dashboard.
+
+Recommended location:
+
+Clients → Groups
+
+or the nearest consistent navigation location.
+
+Features:
+
+- Group list
+- Create group
+- Edit group
+- Activate/deactivate
+- Select default group
+- Customer count
+- Pricing rule count
+- Search/filter
+
+Use compact professional styling.
+
+Do not redesign unrelated navigation.
+
+========================================================
+PHASE 6 — PRICING RULE MODEL
+========================================================
+
+Implement group pricing rules.
+
+A pricing rule must belong to:
+
+subscriber_id
+customer_group_id
+
+and target an authoritative service.
+
+Support pricing methods:
+
+1. INHERIT_DEFAULT
+2. FIXED_PRICE
+3. PERCENT_DISCOUNT
+4. PERCENT_MARKUP
+
+Avoid redundant stored rules for inheritance
+where possible.
+
+Rules must be deterministic and validated.
+
+Do not allow negative final service prices.
+
+Do not allow unbounded or invalid percentages.
+
+========================================================
+PHASE 7 — CUSTOMER-SPECIFIC PRICING
+========================================================
+
+Support a direct price override for one customer.
+
+Suggested model:
+
+subscriber_id
+customer_id
+service_id
+pricing_method
+pricing_value
+created_at
+updated_at
+
+Customer-specific pricing takes precedence
+over group pricing.
+
+Only the customer's Reseller can configure it.
+
+Customer cannot edit their own price.
+
+Use strict tenant/customer/service validation.
+
+========================================================
+PHASE 8 — PRICE PRECEDENCE
+========================================================
+
+Implement one authoritative pricing precedence:
+
+1. Customer-specific service rule
+2. Customer group service rule
+3. Standard Reseller service price
+
+Examples:
+
+Standard service price:
+10.00 USD
+
+VIP group:
+10% discount
+
+Customer-specific:
+8.00 USD
+
+Effective price:
+8.00 USD
+
+If no customer override exists:
+
+Effective price:
+9.00 USD
+
+If no group rule exists:
+
+Effective price:
+10.00 USD
+
+Do not apply group and customer rules
+cumulatively unless explicitly specified.
+
+========================================================
+PHASE 9 — PRICING CURRENCY
+========================================================
+
+Preserve the existing immutable Account Currency.
+
+The service catalog currently uses a base
+pricing currency.
+
+Audit the actual authoritative base-currency
+and FX implementation before changing anything.
+
+Pricing rules must have unambiguous units.
+
+Recommended:
+
+- Fixed-price rules use the authoritative
+  service pricing currency.
+
+- Percentage rules operate on the authoritative
+  standard service price before FX conversion.
+
+- Convert the final effective service price
+  once into the customer's Account Currency.
+
+Use the existing reseller-approved FX rates.
+
+Never convert wallet balances.
+
+Never perform double FX conversion.
+
+Never use JavaScript floating-point arithmetic
+for financial calculations.
+
+Use exact decimal/minor-unit arithmetic.
+
+========================================================
+PHASE 10 — PRICE SNAPSHOTS
+========================================================
+
+At order placement, freeze:
+
+- Standard service price
+- Effective service price
+- Pricing rule source
+- Customer group at ordering time
+- Customer-specific override identifier
+  when applicable
+- FX rate snapshot
+- Final charged Account Currency amount
+
+Only add snapshot fields where necessary.
+
+Do not rewrite old order snapshots.
+
+Never recalculate historical orders using
+current group membership or current prices.
+
+========================================================
+PHASE 11 — SERVICE CATALOG INTEGRATION
+========================================================
+
+The authenticated customer service catalog
+must display the effective customer price.
+
+Apply the same effective price in:
+
+- service list
+- service details
+- order quotation
+- order confirmation
+- order placement
+
+Do not show standard prices to VIP customers
+when their effective price is different.
+
+Do not expose other customers' pricing rules.
+
+========================================================
+PHASE 12 — ORDER PLACEMENT INTEGRATION
+========================================================
+
+The backend must independently calculate
+the effective service price.
+
+Never trust frontend-submitted prices.
+
+Order placement must:
+
+1. Resolve authenticated customer.
+2. Resolve tenant.
+3. Resolve current group.
+4. Resolve customer-specific pricing rule.
+5. Resolve group pricing rule.
+6. Calculate effective price.
+7. Apply existing FX conversion once.
+8. Freeze price snapshot.
+9. Validate wallet balance.
+10. Atomically create order and debit wallet.
+11. Insert immutable ledger entry.
+12. Record Activity event.
+
+Preserve existing idempotency and locking.
+
+========================================================
+PHASE 13 — PRICING CONSISTENCY
+========================================================
+
+Use one shared pricing engine.
+
+The same customer/service must receive the
+same price across:
+
+- customer catalog
+- customer quote
+- customer order placement
+- reseller effective-price preview
+
+Do not maintain separate pricing formulas
+in frontend and backend.
+
+All authoritative calculations belong
+on the server.
+
+========================================================
+PHASE 14 — RESELLER PRICE PREVIEW
+========================================================
+
+Add a useful price preview tool.
+
+Reseller selects:
+
+Customer
+Service
+
+System displays:
+
+Standard price
+Customer group
+Applied pricing rule
+Effective base price
+Account Currency
+FX rate when applicable
+Final customer price
+
+The preview must call the authoritative
+backend pricing engine.
+
+It must not independently recalculate prices
+in the browser.
+
+========================================================
+PHASE 15 — PRICING MANAGEMENT UI
+========================================================
+
+Add group pricing management.
+
+Reseller can:
+
+- Select a customer group.
+- Browse/search services.
+- See standard service price.
+- Set pricing method.
+- Set fixed price or percentage.
+- Save or remove rule.
+- View effective group price.
+
+Support individual customer pricing from
+Client Detail where appropriate.
+
+Do not require opening each service
+individually if existing UI supports a
+compact editable table.
+
+Avoid an oversized enterprise UI.
+
+========================================================
+PHASE 16 — SERVICE AVAILABILITY
+========================================================
+
+IMPORTANT:
+
+This Slice implements PRICING, not
+service-access permissions.
+
+Existing service group availability rules
+must remain authoritative.
+
+A pricing rule must never make a disabled
+service available.
+
+Do not implement per-group or per-customer
+service visibility policies yet.
+
+Those belong to Slice 6B.
+
+========================================================
+PHASE 17 — INACTIVE GROUPS
+========================================================
+
+Define deterministic behavior for inactive groups.
+
+Recommended:
+
+- Existing customers retain their historical
+  group assignment.
+- Inactive groups cannot be assigned to
+  new customers.
+- Existing customers in inactive groups
+  fall back to standard service pricing
+  unless an explicit customer override exists.
+- Reseller UI clearly shows inactive status.
+
+Do not silently change existing group IDs.
+
+Document this behavior.
+
+========================================================
+PHASE 18 — DELETION SAFETY
+========================================================
+
+Do not hard-delete groups that are referenced
+by customers or historical pricing snapshots.
+
+Prefer safe deactivation.
+
+Allow deleting an unused group only if it
+cannot break historical references.
+
+Do not cascade-delete customer accounts,
+orders, wallet records or ledger entries.
+
+========================================================
+PHASE 19 — ACTIVITY / AUDIT
+========================================================
+
+Extend the existing Activity system with
+controlled events where appropriate:
+
+customer_group_assigned
+customer_group_changed
+customer_pricing_override_changed
+
+For group administration, use an appropriate
+tenant-level audit mechanism if one exists.
+
+Do not fabricate a customer actor for
+Reseller actions.
+
+Use the verified subscriber_owner actor
+where supported.
+
+Never duplicate financial ledger entries
+for pricing configuration changes.
+
+========================================================
+PHASE 20 — TENANT ISOLATION
+========================================================
+
+Critical:
+
+Every group, pricing rule, customer assignment
+and effective-price lookup must be scoped
+to the authenticated Reseller.
+
+Reject:
+
+- Cross-tenant group assignment
+- Cross-tenant service pricing
+- Cross-tenant customer override
+- Cross-tenant price preview
+- Cross-tenant order price manipulation
+
+Customer IDs alone are not sufficient
+authorization.
+
+========================================================
+PHASE 21 — CONCURRENCY
+========================================================
+
+Handle concurrent:
+
+- Group reassignment
+- Pricing rule changes
+- Order placement
+
+Define a clear pricing consistency boundary.
+
+An accepted order must use one coherent
+pricing snapshot.
+
+Do not allow mixed rule versions or
+partial configuration states.
+
+Preserve wallet transaction isolation.
+
+========================================================
+PHASE 22 — MIGRATION
+========================================================
+
+Inspect the actual migration history first.
+
+If migration 029 is the latest:
+
+Create:
+
+030_client_groups_pricing.sql
+
+If a different latest migration exists,
+use the next sequential migration number.
+
+Additive changes only.
+
+Do not modify historical migrations.
+
+Preserve:
+
+- customers
+- wallets
+- ledger
+- orders
+- currencies
+- security sessions
+- payment data
+- activity records
+
+Apply only to the identity-verified
+Replit development database.
+
+========================================================
+PHASE 23 — OPENAPI / GENERATED CLIENTS
+========================================================
+
+Update the existing typed API contracts.
+
+Support:
+
+- List groups
+- Create group
+- Update group
+- Change default group
+- Assign customer group
+- Group pricing CRUD
+- Customer pricing CRUD
+- Effective price preview
+
+Use existing API conventions.
+
+Regenerate relevant client/types.
+
+Do not expose internal database structures
+directly.
+
+========================================================
+PHASE 24 — FOCUSED TESTS
+========================================================
+
+Use disposable PostgreSQL test databases.
+
+Required cases:
+
+1. Default group creation
+2. New customer default assignment
+3. Existing customer migration compatibility
+4. Exactly one default group
+5. Group assignment
+6. Cross-tenant assignment denied
+7. Inactive group handling
+8. Standard price fallback
+9. Fixed group price
+10. Group percentage discount
+11. Group percentage markup
+12. Customer fixed override
+13. Customer override precedence
+14. Invalid/negative price rejected
+15. Correct Account Currency conversion
+16. No double FX
+17. Catalog effective price
+18. Quote effective price
+19. Order charged effective price
+20. Order snapshot correctness
+21. Group change after order
+22. Price change after order
+23. Exact rejection refund
+24. Insufficient wallet balance
+25. Concurrent pricing change/order
+26. Order idempotency
+27. Service disabled despite pricing rule
+28. Tenant isolation
+29. Pricing audit events
+30. Existing wallet/payment/security compatibility
+
+Run focused TypeScript/build checks.
+
+Do not run broad browser/E2E suites.
+
+========================================================
+PHASE 25 — DOCUMENTATION
+========================================================
+
+Create:
+
+docs/BHRU_CLIENT_GROUPS_PRICING.md
+
+Document:
+
+- Group model
+- Default group policy
+- Price precedence
+- Pricing rule types
+- Currency calculation
+- FX behavior
+- Order snapshots
+- Inactive group behavior
+- Tenant isolation
+- Activity integration
+- Migration
+- Deferred Slice 6B service access policies
+
+========================================================
+PHASE 26 — USER IS ON MOBILE
+========================================================
+
+The user is currently using a phone.
+
+Do not request manual UI testing.
+
+Implement all safe, independent work
+without stopping for browser confirmation.
+
+Use focused automated technical checks.
+
+Manual testing will happen later
+when the user returns to a computer.
+
+========================================================
+STRICT RULES
+========================================================
+
+REPLIT PREVIEW ONLY.
+
+DO NOT git commit.
+DO NOT git push.
+DO NOT deploy.
+DO NOT access VPS.
+DO NOT access Dokploy.
+DO NOT access production databases.
+
+Do not modify unrelated modules.
+
+Do not change Payment Gateway infrastructure.
+
+Do not change Retail checkout.
+
+Do not modify Replit memory/internal notes.
+
+Do not run expensive full browser suites.
+
+Preserve existing authentication,
+financial accounting and tenant isolation.
+
+========================================================
+FINAL REPORT
+========================================================
+
+Return:
+
+1. Existing pricing architecture found
+2. Customer group model
+3. Default group behavior
+4. Group assignment
+5. Pricing rule types
+6. Customer-specific overrides
+7. Effective-price precedence
+8. Currency/FX calculations
+9. Catalog/quote/order integration
+10. Historical order snapshot behavior
+11. Reseller management UI
+12. Price preview
+13. Activity integration
+14. Migration status
+15. Focused test results
+16. Files changed
+17. Deferred manual tests
+18. Remaining work for Slice 6B
+
+Confirm explicitly:
+
+- No Git commit
+- No Git push
+- No deployment
+- No VPS/Dokploy access
+- No production database changes

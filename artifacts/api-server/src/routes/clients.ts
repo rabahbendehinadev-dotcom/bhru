@@ -11,6 +11,7 @@ const uuid=z.string().uuid();
 const query=z.object({
   page:z.coerce.number().int().min(1).max(100000).default(1),
   search:z.string().trim().max(100).optional(),status:z.enum(['active','blocked']).optional(),
+  groupId:z.string().uuid().optional(),
 }).strict();
 router.get('/clients',async(req,res)=>{
   const owner=subscriberContext(req);

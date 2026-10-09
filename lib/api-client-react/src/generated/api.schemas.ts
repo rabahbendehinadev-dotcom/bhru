@@ -414,8 +414,120 @@ export interface FoundationGroupInput {
 }
 
 export interface ClientGroupAssignment {
+  groupId: string;
+}
+
+export interface ClientGroupInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+  /** @maxLength 1000 */
+  description?: string;
+  active?: boolean;
+  /**
+     * @minimum 0
+     * @maximum 100000
+     */
+  sortOrder?: number;
+}
+
+export interface EmptyInput { [key: string]: unknown }
+
+export interface ClientGroup {
+  id: string;
+  name: string;
+  description: string;
+  active: boolean;
+  isDefault: boolean;
+  sortOrder: number;
+  customerCount: number;
+  pricingRuleCount: number;
+}
+
+export interface ClientGroupList {
+  data: ClientGroup[];
+}
+
+export type ServicePricingInputMethod = typeof ServicePricingInputMethod[keyof typeof ServicePricingInputMethod];
+
+
+export const ServicePricingInputMethod = {
+  INHERIT_DEFAULT: 'INHERIT_DEFAULT',
+  FIXED_PRICE: 'FIXED_PRICE',
+  PERCENT_DISCOUNT: 'PERCENT_DISCOUNT',
+  PERCENT_MARKUP: 'PERCENT_MARKUP',
+} as const;
+
+export interface ServicePricingInput {
+  method: ServicePricingInputMethod;
+  /** Fixed USD amount or percentage with at most two percentage decimals */
+  value?: string;
+}
+
+export type ServicePricingRuleMethod = typeof ServicePricingRuleMethod[keyof typeof ServicePricingRuleMethod];
+
+
+export const ServicePricingRuleMethod = {
+  FIXED_PRICE: 'FIXED_PRICE',
+  PERCENT_DISCOUNT: 'PERCENT_DISCOUNT',
+  PERCENT_MARKUP: 'PERCENT_MARKUP',
+} as const;
+
+export interface ServicePricingRule {
+  id: string;
+  method: ServicePricingRuleMethod;
+  value: string;
+}
+
+export interface ServicePricingRow {
+  serviceId: string;
+  serviceName: string;
+  serviceType: string;
+  active: boolean;
+  standardPriceUsd: string;
+  effectivePriceUsd: string;
+  rule: ServicePricingRule | null;
+}
+
+export interface ServicePricingList {
+  data: ServicePricingRow[];
+  page: number;
+  hasMore: boolean;
+}
+
+export type EffectiveServicePriceSource = typeof EffectiveServicePriceSource[keyof typeof EffectiveServicePriceSource];
+
+
+export const EffectiveServicePriceSource = {
+  CUSTOMER: 'CUSTOMER',
+  GROUP: 'GROUP',
+  STANDARD: 'STANDARD',
+} as const;
+
+export interface EffectiveServicePrice {
+  serviceId: string;
+  standardPriceUsd: string;
+  effectivePriceUsd: string;
+  source: EffectiveServicePriceSource;
   /** @nullable */
   groupId: string | null;
+  /** @nullable */
+  groupName: string | null;
+  /** @nullable */
+  groupActive: boolean | null;
+  /** @nullable */
+  ruleId: string | null;
+  /** @nullable */
+  method: string | null;
+  /** @nullable */
+  value: string | null;
+  currency: string;
+  rate: string;
+  priceUsdUnits: string;
+  priceAccountUnits: string;
+  formattedTotal: string;
 }
 
 export type ServiceRequirementType = typeof ServiceRequirementType[keyof typeof ServiceRequirementType];
@@ -692,6 +804,10 @@ export type ResellerClient = PublicCustomerProfile & ({
   lockedAmount?: string;
   /** @nullable */
   groupId?: string | null;
+  /** @nullable */
+  groupName?: string | null;
+  /** @nullable */
+  groupActive?: boolean | null;
   financial: ClientFinancialSummary;
 });
 
@@ -740,6 +856,9 @@ export const ClientActivityEventEventType = {
   payment_confirmed: 'payment_confirmed',
   payment_failed: 'payment_failed',
   wallet_funded_from_payment: 'wallet_funded_from_payment',
+  customer_group_assigned: 'customer_group_assigned',
+  customer_group_changed: 'customer_group_changed',
+  customer_pricing_override_changed: 'customer_pricing_override_changed',
 } as const;
 
 export type ClientActivityEventActorType = typeof ClientActivityEventActorType[keyof typeof ClientActivityEventActorType];
@@ -1759,6 +1878,22 @@ export const ListManualServicesStatus = {
   inactive: 'inactive',
 } as const;
 
+export type ListGroupServicePricingParams = {
+search?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+};
+
+export type ListCustomerServicePricingParams = {
+search?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+};
+
 export type GetClientStatementParams = {
 /**
  * @minimum 1
@@ -1907,6 +2042,7 @@ page?: number;
  */
 search?: string;
 status?: ListResellerClientsStatus;
+groupId?: string;
 };
 
 export type ListResellerClientsStatus = typeof ListResellerClientsStatus[keyof typeof ListResellerClientsStatus];

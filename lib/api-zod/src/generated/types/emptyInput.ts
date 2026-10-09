@@ -6,6 +6,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ClientGroupAssignment {
-  groupId: string;
-}
+export interface EmptyInput { [key: string]: unknown }

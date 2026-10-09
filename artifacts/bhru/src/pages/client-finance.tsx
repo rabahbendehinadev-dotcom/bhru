@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, ArrowRight, Search } from 'lucide-react';
 import { Btn, Card, ConfirmDialog, Field } from '@/components/bhru/ui';
 import { EmptyState } from '@/components/subscriber/EmptyState';
@@ -171,16 +171,21 @@ export function ClientGroupAssign({ id, d }: { id: string; d: ResellerClientDeta
   const { assign } = useClientGroupMutations();
   const cur = ((d.client as unknown as { groupId?: string | null }).groupId) ?? '';
   const [sel, setSel] = useState(cur);
+  const dirty = useRef(false);
+  useEffect(() => { if (!dirty.current) setSel(cur); }, [cur]);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
-  const save = async (groupId: string | null) => { try { await assign.mutateAsync({ id, data: { groupId } }); setMsg({ ok: true, t: groupId ? 'Group assigned.' : 'Removed from group.' }); if (!groupId) setSel(''); } catch (e) { setMsg({ ok: false, t: errText(e) }); } };
+  const save = async () => { try { await assign.mutateAsync({ id, data: { groupId: sel } }); dirty.current = false; setMsg({ ok: true, t: 'Group assigned.' }); } catch (e) { setMsg({ ok: false, t: errText(e) }); } };
+  const rows = (g.rows ?? []) as { id: string; name: string; active: boolean }[];
   return (
     <Card className="mt-3 space-y-2 p-3.5" data-testid="client-group-assign"><h2 className="text-[13px] font-semibold">Client group</h2>
+      {g.isLoading ? <div className="h-8 w-60 animate-pulse rounded bg-white/5" aria-busy="true" /> : (
       <div className="flex flex-wrap items-center gap-2">
-        <select className="input w-auto min-w-[200px]" value={sel} onChange={(e) => { setSel(e.target.value); setMsg(null); }} aria-label="Client group" data-testid="select-client-group"><option value="">No group</option>{(g.rows ?? []).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
-        <Btn sm v="brand" disabled={assign.isPending || !sel} onClick={() => void save(sel)} data-testid="button-group-assign">Assign</Btn>
-        <Btn sm disabled={assign.isPending || (!cur && !sel)} onClick={() => void save(null)} data-testid="button-group-remove">Remove from group</Btn>
-      </div>
-      {g.isError && <p role="alert" className="text-[12px] text-danger">{errText(g.error)}</p>}
+        <select className="input w-auto min-w-[200px]" value={sel} onChange={(e) => { dirty.current = true; setSel(e.target.value); setMsg(null); }} aria-label="Client group" data-testid="select-client-group">
+          {rows.map((x) => <option key={x.id} value={x.id} disabled={!x.active}>{x.name}{!x.active ? (x.id === cur ? ' (inactive, current)' : ' (inactive)') : ''}</option>)}
+        </select>
+        <Btn sm v="brand" disabled={assign.isPending || !sel || sel === cur} onClick={() => void save()} data-testid="button-group-assign">{assign.isPending ? 'Saving...' : 'Assign'}</Btn>
+      </div>)}
+      {g.isError && <p role="alert" className="text-[12px] text-danger">{errText(g.error)} <Btn sm onClick={() => void g.refetch()}>Retry</Btn></p>}
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`text-[12px] ${msg.ok ? 'text-ok' : 'text-danger'}`}>{msg.t}</p>}
     </Card>
   );

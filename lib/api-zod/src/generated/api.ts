@@ -1012,18 +1012,233 @@ export const UpdateServiceGroupAvailabilityBody = zod.object({
 export const UpdateServiceGroupAvailabilityResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
 
 
-export const ListClientGroupsResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+export const ListClientGroupsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "active": zod.boolean(),
+  "isDefault": zod.boolean(),
+  "sortOrder": zod.number().int(),
+  "customerCount": zod.number().int(),
+  "pricingRuleCount": zod.number().int()
+}))
+})
 
 
 export const createClientGroupBodyNameMax = 100;
 
+export const createClientGroupBodyDescriptionMax = 1000;
+
+export const createClientGroupBodySortOrderMin = 0;
+export const createClientGroupBodySortOrderMax = 100000;
+
 
 
 export const CreateClientGroupBody = zod.object({
-  "name": zod.string().min(1).max(createClientGroupBodyNameMax)
+  "name": zod.string().min(1).max(createClientGroupBodyNameMax),
+  "description": zod.string().max(createClientGroupBodyDescriptionMax).optional(),
+  "active": zod.boolean().optional(),
+  "sortOrder": zod.number().int().min(createClientGroupBodySortOrderMin).max(createClientGroupBodySortOrderMax).optional()
 })
 
-export const CreateClientGroupResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+export const CreateClientGroupResponse = zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "active": zod.boolean(),
+  "isDefault": zod.boolean(),
+  "sortOrder": zod.number().int(),
+  "customerCount": zod.number().int(),
+  "pricingRuleCount": zod.number().int()
+})
+
+
+export const UpdateClientGroupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateClientGroupBodyNameMax = 100;
+
+export const updateClientGroupBodyDescriptionMax = 1000;
+
+export const updateClientGroupBodySortOrderMin = 0;
+export const updateClientGroupBodySortOrderMax = 100000;
+
+
+
+export const UpdateClientGroupBody = zod.object({
+  "name": zod.string().min(1).max(updateClientGroupBodyNameMax),
+  "description": zod.string().max(updateClientGroupBodyDescriptionMax).optional(),
+  "active": zod.boolean().optional(),
+  "sortOrder": zod.number().int().min(updateClientGroupBodySortOrderMin).max(updateClientGroupBodySortOrderMax).optional()
+})
+
+export const UpdateClientGroupResponse = zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "active": zod.boolean(),
+  "isDefault": zod.boolean(),
+  "sortOrder": zod.number().int(),
+  "customerCount": zod.number().int(),
+  "pricingRuleCount": zod.number().int()
+})
+
+
+export const DeleteUnusedClientGroupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const DeleteUnusedClientGroupResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const SelectDefaultClientGroupParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const SelectDefaultClientGroupBody = zod.object({
+
+})
+
+export const SelectDefaultClientGroupResponse = zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "active": zod.boolean(),
+  "isDefault": zod.boolean(),
+  "sortOrder": zod.number().int(),
+  "customerCount": zod.number().int(),
+  "pricingRuleCount": zod.number().int()
+})
+
+
+export const ListGroupServicePricingParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+
+
+
+export const ListGroupServicePricingQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "page": zod.coerce.number().int().min(1).optional()
+})
+
+export const ListGroupServicePricingResponse = zod.object({
+  "data": zod.array(zod.object({
+  "serviceId": zod.string().uuid(),
+  "serviceName": zod.string(),
+  "serviceType": zod.string(),
+  "active": zod.boolean(),
+  "standardPriceUsd": zod.string(),
+  "effectivePriceUsd": zod.string(),
+  "rule": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "method": zod.enum(['FIXED_PRICE', 'PERCENT_DISCOUNT', 'PERCENT_MARKUP']),
+  "value": zod.string()
+}),zod.null()])
+})),
+  "page": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+export const SaveGroupServicePricingParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "serviceId": zod.coerce.string().uuid()
+})
+
+export const SaveGroupServicePricingBody = zod.object({
+  "method": zod.enum(['INHERIT_DEFAULT', 'FIXED_PRICE', 'PERCENT_DISCOUNT', 'PERCENT_MARKUP']),
+  "value": zod.string().optional().describe('Fixed USD amount or percentage with at most two percentage decimals')
+})
+
+export const SaveGroupServicePricingResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const RemoveGroupServicePricingParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "serviceId": zod.coerce.string().uuid()
+})
+
+export const RemoveGroupServicePricingResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const ListCustomerServicePricingParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+
+
+
+export const ListCustomerServicePricingQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "page": zod.coerce.number().int().min(1).optional()
+})
+
+export const ListCustomerServicePricingResponse = zod.object({
+  "data": zod.array(zod.object({
+  "serviceId": zod.string().uuid(),
+  "serviceName": zod.string(),
+  "serviceType": zod.string(),
+  "active": zod.boolean(),
+  "standardPriceUsd": zod.string(),
+  "effectivePriceUsd": zod.string(),
+  "rule": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "method": zod.enum(['FIXED_PRICE', 'PERCENT_DISCOUNT', 'PERCENT_MARKUP']),
+  "value": zod.string()
+}),zod.null()])
+})),
+  "page": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+export const SaveCustomerServicePricingParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "serviceId": zod.coerce.string().uuid()
+})
+
+export const SaveCustomerServicePricingBody = zod.object({
+  "method": zod.enum(['INHERIT_DEFAULT', 'FIXED_PRICE', 'PERCENT_DISCOUNT', 'PERCENT_MARKUP']),
+  "value": zod.string().optional().describe('Fixed USD amount or percentage with at most two percentage decimals')
+})
+
+export const SaveCustomerServicePricingResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const RemoveCustomerServicePricingParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "serviceId": zod.coerce.string().uuid()
+})
+
+export const RemoveCustomerServicePricingResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
+
+
+export const PreviewCustomerServicePriceParams = zod.object({
+  "id": zod.coerce.string().uuid(),
+  "serviceId": zod.coerce.string().uuid()
+})
+
+export const PreviewCustomerServicePriceResponse = zod.object({
+  "serviceId": zod.string().uuid(),
+  "standardPriceUsd": zod.string(),
+  "effectivePriceUsd": zod.string(),
+  "source": zod.enum(['CUSTOMER', 'GROUP', 'STANDARD']),
+  "groupId": zod.string().uuid().nullable(),
+  "groupName": zod.string().nullable(),
+  "groupActive": zod.boolean().nullable(),
+  "ruleId": zod.string().uuid().nullable(),
+  "method": zod.string().nullable(),
+  "value": zod.string().nullable(),
+  "currency": zod.string(),
+  "rate": zod.string(),
+  "priceUsdUnits": zod.string(),
+  "priceAccountUnits": zod.string(),
+  "formattedTotal": zod.string()
+})
 
 
 export const AssignClientGroupParams = zod.object({
@@ -1031,7 +1246,7 @@ export const AssignClientGroupParams = zod.object({
 })
 
 export const AssignClientGroupBody = zod.object({
-  "groupId": zod.string().uuid().nullable()
+  "groupId": zod.string().uuid()
 })
 
 export const AssignClientGroupResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
@@ -1339,7 +1554,8 @@ export const listResellerClientsQuerySearchMax = 100;
 export const ListResellerClientsQueryParams = zod.object({
   "page": zod.coerce.number().int().min(1).optional(),
   "search": zod.coerce.string().max(listResellerClientsQuerySearchMax).optional(),
-  "status": zod.enum(['active', 'blocked']).optional()
+  "status": zod.enum(['active', 'blocked']).optional(),
+  "groupId": zod.coerce.string().uuid().optional()
 })
 
 export const ListResellerClientsResponse = zod.object({
@@ -1370,6 +1586,8 @@ export const ListResellerClientsResponse = zod.object({
   "availableBalance": zod.string(),
   "lockedAmount": zod.string().optional(),
   "groupId": zod.string().uuid().nullish(),
+  "groupName": zod.string().nullish(),
+  "groupActive": zod.boolean().nullish(),
   "financial": zod.object({
   "reportingVersion": zod.literal(2),
   "availableBalance": zod.string().describe('Spendable prepaid wallet balance.'),
@@ -1432,6 +1650,8 @@ export const GetResellerClientResponse = zod.object({
   "availableBalance": zod.string(),
   "lockedAmount": zod.string().optional(),
   "groupId": zod.string().uuid().nullish(),
+  "groupName": zod.string().nullish(),
+  "groupActive": zod.boolean().nullish(),
   "financial": zod.object({
   "reportingVersion": zod.literal(2),
   "availableBalance": zod.string().describe('Spendable prepaid wallet balance.'),
@@ -1761,7 +1981,7 @@ export const ListResellerClientActivityResponse = zod.object({
   "data": zod.array(zod.object({
   "id": zod.string().uuid(),
   "eventCategory": zod.enum(['ACCOUNT', 'PROFILE', 'FINANCIAL', 'ORDER', 'SECURITY']),
-  "eventType": zod.enum(['account_created', 'account_blocked', 'account_unblocked', 'profile_updated', 'client_note_added', 'wallet_funds_added', 'wallet_deducted', 'wallet_adjusted', 'service_order_charged', 'service_order_refunded', 'service_order_created', 'service_order_processing', 'service_order_completed', 'service_order_rejected', 'customer_logged_out', 'login_success', 'login_failed', 'login_locked', 'password_changed', 'password_reset_requested', 'password_reset_completed', 'session_revoked', 'all_other_sessions_revoked', 'reseller_force_logout', 'funding_request_created', 'funding_request_cancelled', 'payment_pending', 'payment_confirmed', 'payment_failed', 'wallet_funded_from_payment']),
+  "eventType": zod.enum(['account_created', 'account_blocked', 'account_unblocked', 'profile_updated', 'client_note_added', 'wallet_funds_added', 'wallet_deducted', 'wallet_adjusted', 'service_order_charged', 'service_order_refunded', 'service_order_created', 'service_order_processing', 'service_order_completed', 'service_order_rejected', 'customer_logged_out', 'login_success', 'login_failed', 'login_locked', 'password_changed', 'password_reset_requested', 'password_reset_completed', 'session_revoked', 'all_other_sessions_revoked', 'reseller_force_logout', 'funding_request_created', 'funding_request_cancelled', 'payment_pending', 'payment_confirmed', 'payment_failed', 'wallet_funded_from_payment', 'customer_group_assigned', 'customer_group_changed', 'customer_pricing_override_changed']),
   "summary": zod.string(),
   "actorType": zod.enum(['customer', 'subscriber_owner', 'system']),
   "actorId": zod.string().uuid().nullable(),

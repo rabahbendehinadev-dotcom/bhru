@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { AlertTriangle, ArrowLeft, ArrowRight, Search, Users } from 'lucide-react';
 import { Btn, Card } from '@/components/bhru/ui';
 import { EmptyState } from '@/components/subscriber/EmptyState';
+import { useClientGroupMutations, useClientGroups } from '@/hooks/use-services';
 import { useClientList } from '@/hooks/use-clients';
 import { errText } from '@/hooks/use-commerce';
 import type { ResellerClient } from '@workspace/api-client-react';
@@ -16,7 +17,12 @@ export function ClientTable({ embedded }: { embedded?: boolean }) {
   const [text, setText] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'' | 'active' | 'blocked'>('');
-  const q = useClientList({ page, ...(search ? { search } : {}), ...(status ? { status } : {}) });
+  const [groupId, setGroupId] = useState('');
+  const groups = useClientGroups();
+  const { assign } = useClientGroupMutations();
+  const [rowMsg, setRowMsg] = useState<{ id: string; t: string } | null>(null);
+  const move = async (cid: string, groupId: string) => { setRowMsg(null); try { await assign.mutateAsync({ id: cid, data: { groupId } }); } catch (e) { setRowMsg({ id: cid, t: errText(e) }); } };
+  const q = useClientList({ page, ...(groupId ? { groupId } : {}), ...(search ? { search } : {}), ...(status ? { status } : {}) });
   const rows = q.data?.data;
   return (
     <Card data-testid={embedded ? 'registered-clients' : 'clients-page'}>
@@ -28,6 +34,7 @@ export function ClientTable({ embedded }: { embedded?: boolean }) {
         <select className="input w-auto" value={status} onChange={(e) => { setStatus(e.target.value as typeof status); setPage(1); }} aria-label="Status filter" data-testid="select-client-status">
           <option value="">All statuses</option><option value="active">Active</option><option value="blocked">Blocked</option>
         </select>
+        <select className="input w-auto" value={groupId} onChange={(e) => { setGroupId(e.target.value); setPage(1); }} aria-label="Group filter" data-testid="select-client-group-filter"><option value="">All groups</option>{(groups.rows ?? []).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
         <Btn type="submit" v="brand" sm data-testid="button-client-search">Search</Btn>
         <Btn type="button" sm disabled={q.isFetching} onClick={() => void q.refetch()} data-testid="button-clients-refresh">Refresh</Btn>
       </form>
@@ -39,11 +46,11 @@ export function ClientTable({ embedded }: { embedded?: boolean }) {
           <Btn sm onClick={() => void q.refetch()} data-testid="button-clients-retry">Try again</Btn>
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState compact icon={<Users size={18} />} title={search || status ? 'No clients match' : 'No registered clients yet'} description="Visitors who register on your public website appear here immediately, even before their first order." />
+        <EmptyState compact icon={<Users size={18} />} title={search || status || groupId ? 'No clients match' : 'No registered clients yet'} description="Visitors who register on your public website appear here immediately, even before their first order." />
       ) : (
         <div className="scroll-thin overflow-x-auto">
           <table className="tbl">
-            <thead><tr><th>Client / Email</th><th>Code</th><th>Username</th><th>WhatsApp</th><th>Location</th><th>Status</th><th>Currency</th><th>Orders</th><th>Available balance</th>{rows.some(c => BigInt(c.financial.lockedAmount) !== 0n) && <th>Locked balance</th>}<th>Joined</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Client / Email</th><th>Code</th><th>Username</th><th>WhatsApp</th><th>Location</th><th>Group</th><th>Status</th><th>Currency</th><th>Orders</th><th>Available balance</th>{rows.some(c => BigInt(c.financial.lockedAmount) !== 0n) && <th>Locked balance</th>}<th>Joined</th><th>Actions</th></tr></thead>
             <tbody>{rows.map((c) => (
               <tr key={c.id} data-testid={`row-client-${c.id}`}>
                 <td className="min-w-[180px]"><Link href={`/m/clients/${c.id}`} className="font-semibold hover:text-[hsl(var(--brand))]" data-testid={`link-client-${c.id}`}>{clientName(c)}</Link><div className="text-[11px] text-muted-foreground">{c.email}</div></td>
@@ -51,6 +58,13 @@ export function ClientTable({ embedded }: { embedded?: boolean }) {
                 <td>{c.username || '-'}</td>
                 <td className="whitespace-nowrap">{c.whatsappPhone || '-'}</td>
                 <td>{[c.city, c.countryCode].filter(Boolean).join(', ') || '-'}</td>
+                <td data-testid={`text-client-group-${c.id}`}>
+                  <select className="input w-auto min-w-[120px] py-1 text-[12px]" disabled={assign.isPending && assign.variables?.id === c.id} value={(c as unknown as { groupId?: string | null }).groupId ?? ''} onChange={(e) => void move(c.id, e.target.value)} aria-label="Assign group" data-testid={`select-row-group-${c.id}`}>
+                    {!(c as unknown as { groupId?: string | null }).groupId && <option value="" disabled>-</option>}
+                    {((groups.rows ?? []) as { id: string; name: string; active: boolean }[]).map((x) => <option key={x.id} value={x.id} disabled={!x.active}>{x.name}{x.active ? '' : ' (inactive)'}</option>)}
+                  </select>
+                  {rowMsg?.id === c.id && <p role="alert" className="text-[11px] text-danger">{rowMsg.t}</p>}
+                </td>
                 <td><span className={`badge ${c.enabled ? 'bg-ok/20' : 'bg-danger/20'}`}>{c.enabled ? 'Active' : 'Blocked'}</span></td>
                 <td>{c.effectiveCurrency || c.preferredCurrency || '-'}</td>
                 <td>{c.orderCount}</td><td>{c.availableBalance}</td>{rows.some(row => BigInt(row.financial.lockedAmount) !== 0n) && <td data-testid={`text-locked-${c.id}`}>{c.financial.formattedLocked}</td>}<td className="whitespace-nowrap">{day(c.createdAt)}</td>

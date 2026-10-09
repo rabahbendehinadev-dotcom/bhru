@@ -5,6 +5,7 @@ import { HttpError } from '../auth';
 import { parseUsd } from '../commerce/currency-money';
 import { registrationOptions } from '../customer-auth/profile';
 import { displayCurrency, money, accountPrice, usdText } from './wallet';
+import {pricingLock,effectivePrice} from './pricing';
 
 const field=z.object({
   key:z.string().regex(/^[a-z][a-z0-9_]{0,31}$/).refine(k=>!['constructor','prototype'].includes(k),'Choose a different field key.'),
@@ -29,6 +30,7 @@ export const catalogQuery=z.object({
   status:z.enum(['active','inactive']).optional(),currency:z.string().regex(/^[A-Z]{3}$/).optional(),
 }).strict();
 export async function serviceRow(sub:string,id:string,db:PoolClient,active=false,lock=false) {
+  await pricingLock(sub,db);
   const row=(await db.query(`SELECT s.*,g.name group_name FROM manual_services s
     LEFT JOIN manual_service_groups g ON g.subscriber_id=s.subscriber_id AND g.id=s.group_id
     WHERE s.subscriber_id=$1 AND s.id=$2 ${active?'AND s.active AND (g.id IS NULL OR g.enabled)':''} ${lock?'FOR SHARE OF s':''}`,[sub,id])).rows[0];
@@ -40,14 +42,15 @@ export async function serviceRow(sub:string,id:string,db:PoolClient,active=false
     [sub,row.group_id])).rowCount) throw new HttpError(404,'Service group is unavailable.');
   return row;
 }
-export function serviceView(row:Record<string,any>,currency?:Awaited<ReturnType<typeof displayCurrency>>) {
+export function serviceView(row:Record<string,any>,currency?:Awaited<ReturnType<typeof displayCurrency>>,price?:Awaited<ReturnType<typeof effectivePrice>>['view']) {
   return {id:row.id,name:row.name,serviceType:row.service_type,groupId:row.group_id,groupName:row.group_name??null,
-    description:row.description,priceUsd:usdText(row.selling_price_usd_units),priceUsdUnits:String(row.selling_price_usd_units),
-    formattedPrice:currency?money(accountPrice(row.selling_price_usd_units,currency),currency):`${usdText(row.selling_price_usd_units)} USD`,
+    description:row.description,priceUsd:price?.effectivePriceUsd??usdText(row.selling_price_usd_units),priceUsdUnits:price?.priceUsdUnits??String(row.selling_price_usd_units),
+    formattedPrice:price?.formattedTotal??(currency?money(accountPrice(row.selling_price_usd_units,currency),currency):`${usdText(row.selling_price_usd_units)} USD`),
     currency:currency?.code??'USD',estimatedTime:row.estimated_time,active:row.active,displayOrder:row.display_order,
     requirements:row.requirements,createdAt:row.created_at,updatedAt:row.updated_at};
 }
 export async function saveService(sub:string,id:string|undefined,raw:unknown,db:PoolClient) {
+  await pricingLock(sub,db,true);
   const input=serviceInput.parse(raw),price=parseUsd(input.priceUsd);
   if(price<=0n)throw new HttpError(400,'Service price must be positive.');
   if(input.groupId&&!(await db.query('SELECT id FROM manual_service_groups WHERE subscriber_id=$1 AND id=$2',[sub,input.groupId])).rowCount)throw new HttpError(404,'Service group not found.');
@@ -62,6 +65,7 @@ export async function saveService(sub:string,id:string|undefined,raw:unknown,db:
   return serviceView(await serviceRow(sub,key,db));
 }
 export async function listServices(sub:string,raw:unknown,db:PoolClient,customer?:string) {
+  await pricingLock(sub,db);
   const q=catalogQuery.parse(raw),search=q.search?`%${q.search.replace(/[\\%_]/g,'\\$&')}%`:null;
   const rows=(await db.query(`SELECT s.*,g.name group_name FROM manual_services s LEFT JOIN manual_service_groups g ON g.subscriber_id=s.subscriber_id AND g.id=s.group_id
     WHERE s.subscriber_id=$1 AND($2::text IS NULL OR s.name ILIKE $2 OR s.description ILIKE $2)
@@ -71,7 +75,8 @@ export async function listServices(sub:string,raw:unknown,db:PoolClient,customer
     ORDER BY s.display_order,s.name,s.id LIMIT 31 OFFSET $6`,
     [sub,search,q.serviceType??null,q.groupId??null,customer?true:q.status?q.status==='active':null,(q.page-1)*30])).rows;
   const options=await registrationOptions(sub,db),currency=customer?await displayCurrency(sub,customer,db,q.currency):undefined;
-  return {data:rows.slice(0,30).map(r=>serviceView(r,currency)),page:q.page,hasMore:rows.length>30,
+  const data=[];for(const r of rows.slice(0,30))data.push(serviceView(r,currency,customer?(await effectivePrice(sub,customer,r,db,currency)).view:undefined));
+  return {data,page:q.page,hasMore:rows.length>30,
     groups:(await db.query(`SELECT id,name,enabled FROM manual_service_groups WHERE subscriber_id=$1 ${customer?'AND enabled':''} ORDER BY name`,[sub])).rows,
     currencies:customer?[{code:currency!.code,name:currency!.name}]:options.currencies,defaultCurrency:currency?.code??options.defaultCurrency};
 }

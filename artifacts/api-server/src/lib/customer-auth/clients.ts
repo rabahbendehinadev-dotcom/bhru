@@ -8,14 +8,15 @@ import { financialSummary, financialSummaries } from '../client-finance/wallet';
 import { orderSummary } from '../client-finance/orders';
 import { activityContext } from './activity';
 
-type ClientRow = CustomerIdentity & { enabled: boolean; orderCount: number };
+type ClientRow = CustomerIdentity & { enabled: boolean; orderCount: number;groupName:string|null;groupActive:boolean|null };
 export const CLIENT_PAGE_SIZE = 30;
 export async function ownedClient(subscriber: string, id: string, db: PoolClient, lock = false): Promise<ClientRow> {
   const row = (await db.query(`SELECT ${CUSTOMER_PROFILE_SELECT},c.enabled,
-    c.client_group_id AS "groupId",w.available_balance AS "walletAvailable",w.locked_balance AS "walletLocked",
+    c.client_group_id AS "groupId",g.name AS "groupName",g.is_active AS "groupActive",w.available_balance AS "walletAvailable",w.locked_balance AS "walletLocked",
     ((SELECT count(*)::int FROM store_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id)
     +(SELECT count(*)::int FROM service_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id)) AS "orderCount"
     FROM public_customer_accounts c JOIN customer_wallets w ON w.subscriber_id=c.subscriber_id AND w.customer_id=c.id
+    LEFT JOIN reseller_client_groups g ON g.subscriber_id=c.subscriber_id AND g.id=c.client_group_id
     WHERE c.subscriber_id=$1 AND c.id=$2 ${lock?'FOR UPDATE OF c':''}`,[subscriber,id])).rows[0];
   if (!row) throw new HttpError(404, 'Client not found.');
   return row;
@@ -23,24 +24,26 @@ export async function ownedClient(subscriber: string, id: string, db: PoolClient
 function clientView(row: ClientRow, financial: Awaited<ReturnType<typeof financialSummary>>) {
   const wallet=row as ClientRow & {walletAvailable:string;walletLocked:string;groupId:string|null};
   return {...customerProfile(row),id:row.id,enabled:row.enabled,orderCount:row.orderCount,
-    groupId:wallet.groupId,effectiveCurrency:financial.accountCurrency,availableBalance:financial.formattedAvailable,
+    groupId:wallet.groupId,groupName:row.groupName,groupActive:row.groupActive,effectiveCurrency:financial.accountCurrency,availableBalance:financial.formattedAvailable,
     lockedAmount:financial.formattedLocked,financial};
 }
-export async function listClients(subscriber: string, query: {page:number;search?:string;status?:string}, db: PoolClient) {
+export async function listClients(subscriber: string, query: {page:number;search?:string;status?:string;groupId?:string}, db: PoolClient) {
   const search = query.search ? `%${query.search.replace(/[\\%_]/g,'\\$&')}%` : null;
   const phoneSearch = query.search ? `%${query.search.replace(/[\s().-]/g,'').replace(/[\\%_]/g,'\\$&')}%` : null;
   const rows = (await db.query(`SELECT ${CUSTOMER_PROFILE_SELECT},c.enabled,
-    c.client_group_id AS "groupId",w.available_balance AS "walletAvailable",w.locked_balance AS "walletLocked",
+    c.client_group_id AS "groupId",g.name AS "groupName",g.is_active AS "groupActive",w.available_balance AS "walletAvailable",w.locked_balance AS "walletLocked",
     ((SELECT count(*)::int FROM store_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id)
     +(SELECT count(*)::int FROM service_orders o WHERE o.subscriber_id=c.subscriber_id AND o.customer_id=c.id)) AS "orderCount"
     FROM public_customer_accounts c JOIN customer_wallets w ON w.subscriber_id=c.subscriber_id AND w.customer_id=c.id
+    LEFT JOIN reseller_client_groups g ON g.subscriber_id=c.subscriber_id AND g.id=c.client_group_id
     WHERE c.subscriber_id=$1
       AND ($2::text IS NULL OR c.username ILIKE $2 OR c.client_code ILIKE $2 OR c.first_name ILIKE $2
         OR c.last_name ILIKE $2 OR concat_ws(' ',c.first_name,c.last_name) ILIKE $2 OR c.email ILIKE $2
         OR c.whatsapp_phone ILIKE $2 OR c.whatsapp_phone ILIKE $6)
       AND ($3::boolean IS NULL OR c.enabled=$3)
+      AND ($7::uuid IS NULL OR c.client_group_id=$7)
     ORDER BY c.created_at DESC,c.id LIMIT $4 OFFSET $5`,
-    [subscriber,search,query.status ? query.status==='active' : null,CLIENT_PAGE_SIZE+1,(query.page-1)*CLIENT_PAGE_SIZE,phoneSearch])).rows as ClientRow[];
+    [subscriber,search,query.status ? query.status==='active' : null,CLIENT_PAGE_SIZE+1,(query.page-1)*CLIENT_PAGE_SIZE,phoneSearch,query.groupId??null])).rows as ClientRow[];
   const visible=rows.slice(0,CLIENT_PAGE_SIZE);
   const summaries=await financialSummaries(subscriber,visible.map(row=>row.id),db);
   return {data:visible.map(row => {

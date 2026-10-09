@@ -17,4 +17,5 @@ page?: number;
  */
 search?: string;
 status?: ListResellerClientsStatus;
+groupId?: string;
 };

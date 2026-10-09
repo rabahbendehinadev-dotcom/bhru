@@ -42,10 +42,15 @@ export function money(units:string|bigint,c:StoreCurrency) {
   return formatCurrencyMinor((BigInt(units)+divisor/2n)/divisor,c);
 }
 /** Only catalog pricing converts USD to account money, rounded once to minor units. */
-export function accountPrice(usd:string|bigint,c:StoreCurrency) {
+export function accountPrice(usd:string|bigint,c:StoreCurrency,denominator=1n) {
   if(c.code!=='USD'&&(!(c as AccountCurrency).usd_basis_configured||c.rate_configured===false))
     throw new HttpError(503,'A verified USD-based manual rate is required for service pricing in this account currency.');
-  const amount=convertMinor(usd,c,12)*10n**BigInt(12-c.decimals);
+  // Preserve fractional percentage units through FX; round only the final account minor amount.
+  if(denominator<=0n)throw new HttpError(400,'Invalid price denominator.');
+  const divisor=USD_FACTOR*RATE_FACTOR*denominator;
+  const minor=(BigInt(usd)*rateUnits(c.rate)*10n**BigInt(c.decimals)+divisor/2n)/divisor;
+  if(minor>MAX_MINOR)throw new HttpError(400,'Service price exceeds the account-currency minor-unit limit.');
+  const amount=minor*10n**BigInt(12-c.decimals);
   if(amount<=0n||amount>MAX_USD_UNITS)throw new HttpError(400,'Service price is outside the account-currency money limits.');
   return amount;
 }

@@ -15,7 +15,7 @@ import CustomDomainsPage from '@/pages/custom-domains';
 import ManualServicesPage from '@/pages/manual-services';
 import ServiceOrdersPage from '@/pages/service-orders';
 import { ResellerPaymentGateways, FundingHistory } from '@/pages/payment-gateways';
-import { ClientGroupsPage } from '@/pages/client-finance';
+import ClientGroupsPage from '@/pages/client-groups';
 
 function Crumbs({ items }: { items: string[] }) {
   return (

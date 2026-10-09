@@ -5,7 +5,8 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ClientGroup } from './clientGroup';
 
-export interface ClientGroupAssignment {
-  groupId: string;
+export interface ClientGroupList {
+  data: ClientGroup[];
 }
