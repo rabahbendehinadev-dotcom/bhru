@@ -6,6 +6,7 @@ import { customerProfile, type CustomerIdentity } from './types';
 import { CUSTOMER_PROFILE_SELECT, normalizePhone, profileEditInput, registrationOptions, validatePreferences } from './profile';
 import { financialSummary, financialSummaries } from '../client-finance/wallet';
 import { orderSummary } from '../client-finance/orders';
+import { activityContext } from './activity';
 
 type ClientRow = CustomerIdentity & { enabled: boolean; orderCount: number };
 export const CLIENT_PAGE_SIZE = 30;
@@ -85,6 +86,7 @@ export async function updateClientProfile(subscriber: string, id: string, raw: u
   // Same lock order as registration prevents username/client-code namespace races.
   await db.query('SELECT id FROM subscribers WHERE id=$1 FOR UPDATE',[subscriber]);
   const prior = await ownedClient(subscriber,id,db,true);
+  await activityContext(db,subscriber,id,{type:'subscriber_owner',id:actor});
   if(input.preferredCurrency!==prior.preferredCurrency)throw new HttpError(409,'Account currency is immutable after registration.');
   if (input.countryCode) input.countryCode=input.countryCode.toUpperCase();
   if (input.whatsappPhone) input.whatsappPhone=normalizePhone(input.whatsappPhone);
@@ -98,14 +100,16 @@ export async function updateClientProfile(subscriber: string, id: string, raw: u
       input.preferredCurrency,input.newsletterOptIn,input.addressLine1,input.addressLine2,input.countryCode,input.state,input.city,input.postalCode]);
   await clientActivity(subscriber,id,'profile_updated',actor,db);
 }
-export async function changeClientStatus(subscriber: string, id: string, enabled: boolean, actor: string, db: PoolClient) {
+export async function changeClientStatus(subscriber: string, id: string, enabled: boolean, actor: string, db: PoolClient, reason = '') {
   const prior = await ownedClient(subscriber,id,db,true);
+  await activityContext(db,subscriber,id,{type:'subscriber_owner',id:actor},reason);
   await db.query('UPDATE public_customer_accounts SET enabled=$3,updated_at=now() WHERE subscriber_id=$1 AND id=$2',[subscriber,id,enabled]);
   if (!enabled) await db.query('DELETE FROM public_customer_sessions WHERE subscriber_id=$1 AND customer_id=$2',[subscriber,id]);
   if (prior.enabled!==enabled) await clientActivity(subscriber,id,enabled?'reactivated':'blocked',actor,db);
 }
 export async function addClientNote(subscriber: string, id: string, body: string, actor: string, db: PoolClient) {
   await ownedClient(subscriber,id,db);
+  await activityContext(db,subscriber,id,{type:'subscriber_owner',id:actor});
   await db.query('INSERT INTO reseller_client_notes(id,subscriber_id,customer_id,author_id,body) VALUES($1,$2,$3,$4,$5)',[randomUUID(),subscriber,id,actor,body]);
   await clientActivity(subscriber,id,'note_added',actor,db);
 }

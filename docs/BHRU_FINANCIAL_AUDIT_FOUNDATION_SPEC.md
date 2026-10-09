@@ -2,7 +2,124 @@
 ## Financial semantics and client activity/audit baseline
 
 Date: 2026-10-08  
-Status: **design approved; Slices 1–2 implemented in Replit Preview only. Remaining slices are not implemented; future migrations require separate approval.**
+Status: **design approved; Slices 1–3 implemented in Replit Preview only. Remaining slices are not implemented; future migrations require separate approval.**
+
+### Implemented Slice 3 — general client activity/audit baseline
+
+Implemented on 2026-10-09. Activity is a chronological business/account audit
+trail, NOT the financial ledger or authoritative service-order state. No password
+recovery, 2FA, session-management UI, failed-login history, funding/payments,
+invoices, credit, pricing/access policies, customer API or preferences are added.
+
+#### Previous implementation and historical preservation
+
+Client Detail previously loaded at most 50 persisted `public_customer_activity`
+rows, tenant/customer-scoped, displaying only `action` and timestamp. Some owner
+actions had `actor_id`; customer registration/login/service-order labels often
+had none. Categories, snapshots, validated references and pagination were absent.
+These are real old-format records, not reconstructed financial history.
+The bounded legacy list remains in a clearly labelled, collapsed subsection;
+existing compatibility writers remain intact. It can include old-format labels
+corresponding to newer events. The new timeline reads ONLY the structured model.
+No past events, actor identities or tracking-start baseline events are fabricated.
+
+#### Model, taxonomy and references
+
+Additive `026_client_activity_audit.sql` creates immutable `client_activity_events`:
+UUID, tenant/customer composite FK, category/type, verified actor identity/display
+snapshot, structured reference, unique event key, fixed summary, limited JSONB
+metadata, optional IP/user agent, and database-generated timestamp.
+
+| Category | Captured types |
+| --- | --- |
+| ACCOUNT | `account_created`, `account_blocked`, `account_unblocked` |
+| PROFILE | `profile_updated`, `client_note_added` |
+| FINANCIAL | `wallet_funds_added`, `wallet_deducted`, `wallet_adjusted`, `service_order_charged`, `service_order_refunded` |
+| ORDER | `service_order_created`, `service_order_processing`, `service_order_completed`, `service_order_rejected` |
+| SECURITY | `customer_logged_out` through the existing centralized logout |
+
+API, PAYMENT and VERIFICATION remain reserved, not accepted/emitted. No fictional
+activation or unsupported account states are added. Existing successful-login
+labels remain legacy-format only; fuller login/security activity belongs to Slice 4.
+The closed registry is mirrored in `customer-auth/activity.ts`, the database
+validator and OpenAPI; future changes must update these together.
+
+Actors are `customer` (canonical account ID), `subscriber_owner` (authenticated
+tenant owner ID), or `system` (null ID). New staff identities are not invented.
+The database resolves the display snapshot and rejects foreign actors.
+Trusted server mutation code supplies transaction-local actor context. Direct
+database-originated operations without human context are recorded as System,
+never attributed to a guessed owner/customer.
+
+Reference types are `customer_account`, `service_order`, `wallet_ledger_entry`;
+all are UUIDs validated against BOTH tenant and customer. Financial events reuse
+the exact Slice 2 ledger actor/reference, with one event per posting. Amount,
+currency, direction and financial reason are joined from the immutable ledger
+when reading; no financial truth is copied into event JSON. Order events reference
+the canonical order, leaving its lifecycle validation and snapshots unchanged.
+Reseller note events identify that a note was added, not its private contents.
+
+#### Atomicity, immutability and retries
+
+AFTER triggers capture actual account/profile changes, immutable ledger INSERTs,
+service-order INSERT/status changes and note INSERTs within their authoritative
+transactions. An activity failure rolls back the associated operation. No
+asynchronous/eventual audit path exists. UPDATE/DELETE of posted events is blocked.
+
+Account blocking still deletes existing customer sessions in the same transaction;
+its semantics are unchanged. Registration identifies the new customer and captures
+safe request context. Centralized logout emits only when a real tenant session is
+deleted; retries without that session emit nothing and no session identifier is
+stored. Login behavior, credential verification and authorization are unchanged.
+
+Financial event keys/partial unique indexes enforce one event per posting.
+Order keys/partial unique indexes enforce one event per actual supported
+transition. Unchanged status/profile retries emit nothing; an actual reversal
+creates a new event. Existing service/wallet idempotency remains authoritative.
+Profile metadata lists supported changed field names, not old/new values;
+login timestamps alone do not generate profile events.
+
+#### Reseller surface, pagination, privacy and retention
+
+`GET /api/clients/{id}/activity` uses existing subscriber authorization and
+tenant/customer checks. Optional category filtering and microsecond-preserving
+keyset cursor paginate 30 events newest-first by `(created_at DESC,id DESC)`.
+Chronology/category indexes and scoped partial reference uniqueness indexes
+support these queries without loading full history.
+
+Only the Activity tab changes: compact event/actor/category/reference/details,
+All/Account/Profile/Financial/Orders/Security filters, refresh, Previous/Next,
+loading/error/empty states and bounded legacy records. Existing client/wallet/order
+mutations invalidate its scoped cache; mount/window-focus/finite freshness and
+explicit refresh handle changes made elsewhere.
+
+The DTO explicitly projects approved fields; stored JSON/database rows are never
+returned wholesale. Metadata allows only controlled changed fields and account
+status/reason information. Financial internal notes, reseller note bodies,
+passwords/hashes, tokens, cookies, session identifiers and arbitrary request bodies
+are not included. IP and a control-character-stripped, 500-character maximum
+user agent are captured only where request context is naturally available.
+Customer statement/panel APIs never expose this reseller-only audit endpoint.
+
+No automatic retention purge is added. Audit names and IP/user-agent data require
+a separately approved retention/privacy policy; any future archival/deletion
+mechanism must be explicitly privileged and must not mutate financial history.
+
+#### Validation and Preview status
+
+All **35 focused disposable PostgreSQL/HTTP groups passed**: existing wallet/order,
+reconciliation/Retail checks remain intact, plus an empty historical cutover,
+real customer registration, block/unblock/session revocation, profile changes,
+ledger/order links, retry deduplication, atomic audit-failure rollback,
+cross-tenant reference/read denial, immutable/allowlisted events, stable pagination,
+category filters, customer access denial and safe centralized logout.
+API/frontend TypeScript, generated libraries and API/frontend builds passed.
+No broad browser/E2E suite was run.
+
+Migration 026 is applied only to fingerprint-verified Replit development using
+the existing tracked migration runner; migrations 019–025 are unchanged.
+There is no commit, push, deployment, VPS/Dokploy/production access or project
+memory/internal-note change in this slice.
 
 ### Implemented Slice 2 — ledger attribution and reconciliation
 
@@ -249,8 +366,8 @@ about existing guards describe source, not a production-data certification.
 ## B. Pre-Slice 1 BHRU financial model — audit baseline
 
 Sections B/C retain the original audit findings for traceability. The implemented
-Slices 1–2 status above identifies the reporting, attribution, reconciliation and
-privacy issues now resolved; general activity/credit recommendations remain
+Slices 1–3 status above identifies the reporting, attribution, reconciliation,
+activity baseline and privacy issues now resolved; fuller security/credit recommendations remain
 future work.
 
 ### Canonical identity and boundaries
@@ -1123,9 +1240,9 @@ must not be smuggled into an audit-foundation implementation.
 ### Approval boundary and task completion
 
 Only `docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md` was authored for this task.
-Slices 1–2 change the approved financial reporting/UI, ledger attribution,
-reconciliation, contracts, focused tests and this specification. Additive
-migration 025 creates origin metadata without changing existing balances,
+Slices 1–3 change the approved financial reporting/UI, ledger attribution,
+reconciliation, activity baseline, contracts, focused tests and this specification. Additive
+migrations 025/026 create origin/audit metadata without changing existing balances,
 currencies, ledger entries or service-order snapshots. No commit, push,
 deployment, production access, VPS/Dokploy access, browser test or workflow restart
 was performed.

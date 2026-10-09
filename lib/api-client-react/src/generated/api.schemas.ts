@@ -187,6 +187,8 @@ export interface ServiceOrderTransition {
 
 export interface ResellerClientStatusInput {
   enabled: boolean;
+  /** @maxLength 1000 */
+  reason?: string;
 }
 
 export interface ResellerClientNoteInput {
@@ -301,6 +303,106 @@ export type ResellerClient = PublicCustomerProfile & ({
   groupId?: string | null;
   financial: ClientFinancialSummary;
 });
+
+export type ClientActivityEventEventCategory = typeof ClientActivityEventEventCategory[keyof typeof ClientActivityEventEventCategory];
+
+
+export const ClientActivityEventEventCategory = {
+  ACCOUNT: 'ACCOUNT',
+  PROFILE: 'PROFILE',
+  FINANCIAL: 'FINANCIAL',
+  ORDER: 'ORDER',
+  SECURITY: 'SECURITY',
+} as const;
+
+export type ClientActivityEventEventType = typeof ClientActivityEventEventType[keyof typeof ClientActivityEventEventType];
+
+
+export const ClientActivityEventEventType = {
+  account_created: 'account_created',
+  account_blocked: 'account_blocked',
+  account_unblocked: 'account_unblocked',
+  profile_updated: 'profile_updated',
+  client_note_added: 'client_note_added',
+  wallet_funds_added: 'wallet_funds_added',
+  wallet_deducted: 'wallet_deducted',
+  wallet_adjusted: 'wallet_adjusted',
+  service_order_charged: 'service_order_charged',
+  service_order_refunded: 'service_order_refunded',
+  service_order_created: 'service_order_created',
+  service_order_processing: 'service_order_processing',
+  service_order_completed: 'service_order_completed',
+  service_order_rejected: 'service_order_rejected',
+  customer_logged_out: 'customer_logged_out',
+} as const;
+
+export type ClientActivityEventActorType = typeof ClientActivityEventActorType[keyof typeof ClientActivityEventActorType];
+
+
+export const ClientActivityEventActorType = {
+  customer: 'customer',
+  subscriber_owner: 'subscriber_owner',
+  system: 'system',
+} as const;
+
+export type ClientActivityEventReferenceType = typeof ClientActivityEventReferenceType[keyof typeof ClientActivityEventReferenceType];
+
+
+export const ClientActivityEventReferenceType = {
+  customer_account: 'customer_account',
+  service_order: 'service_order',
+  wallet_ledger_entry: 'wallet_ledger_entry',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ClientActivityEventDirection = typeof ClientActivityEventDirection[keyof typeof ClientActivityEventDirection] | null;
+
+
+export const ClientActivityEventDirection = {
+  credit: 'credit',
+  debit: 'debit',
+} as const;
+
+export interface ClientActivityEvent {
+  id: string;
+  eventCategory: ClientActivityEventEventCategory;
+  eventType: ClientActivityEventEventType;
+  summary: string;
+  actorType: ClientActivityEventActorType;
+  /** @nullable */
+  actorId: string | null;
+  actorDisplay: string;
+  referenceType: ClientActivityEventReferenceType;
+  referenceId: string;
+  /** @nullable */
+  referenceLabel: string | null;
+  createdAt: string;
+  changedFields: string[];
+  /** @nullable */
+  reason: string | null;
+  /** @nullable */
+  previousStatus: string | null;
+  /** @nullable */
+  status: string | null;
+  /** @nullable */
+  formattedAmount: string | null;
+  /** @nullable */
+  direction: ClientActivityEventDirection;
+  /** @nullable */
+  currency: string | null;
+  /** @nullable */
+  ipAddress: string | null;
+  /** @nullable */
+  userAgent: string | null;
+}
+
+export interface ClientActivityPage {
+  data: ClientActivityEvent[];
+  /** @nullable */
+  nextCursor: string | null;
+}
 
 export type ClientReconciliationStatus = typeof ClientReconciliationStatus[keyof typeof ClientReconciliationStatus];
 
@@ -1376,6 +1478,25 @@ export type ListResellerClientsStatus = typeof ListResellerClientsStatus[keyof t
 export const ListResellerClientsStatus = {
   active: 'active',
   blocked: 'blocked',
+} as const;
+
+export type ListResellerClientActivityParams = {
+category?: ListResellerClientActivityCategory;
+/**
+ * @maxLength 100
+ */
+cursor?: string;
+};
+
+export type ListResellerClientActivityCategory = typeof ListResellerClientActivityCategory[keyof typeof ListResellerClientActivityCategory];
+
+
+export const ListResellerClientActivityCategory = {
+  ACCOUNT: 'ACCOUNT',
+  PROFILE: 'PROFILE',
+  FINANCIAL: 'FINANCIAL',
+  ORDER: 'ORDER',
+  SECURITY: 'SECURITY',
 } as const;
 
 export type CreateCustomerRegistrationChallenge200 = {

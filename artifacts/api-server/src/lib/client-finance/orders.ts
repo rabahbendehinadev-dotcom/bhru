@@ -3,6 +3,7 @@ import { z } from '@workspace/api-zod';
 import type { PoolClient } from '@workspace/db';
 import { HttpError } from '../auth';
 import { lockClient, walletRow, displayCurrency, money, accountPrice, hashRequest, appendMovement, audit } from './wallet';
+import { activityContext } from '../customer-auth/activity';
 import { serviceRow, serviceView, validateServiceInputs } from './catalog';
 
 export const orderQuery=z.object({
@@ -87,6 +88,7 @@ export async function purchaseService(sub:string,customer:string,raw:unknown,db:
   const wallet=await walletRow(sub,customer,db,true),balance=BigInt(wallet.available_balance);
   if(balance<amount)throw new InsufficientBalance({formattedBalance:money(balance,currency),formattedTotal:money(amount,currency),formattedMissing:money(amount-balance,currency),currency:currency.code});
   const id=randomUUID(),debit=randomUUID();
+  await activityContext(db,sub,customer,{type:'customer',id:customer});
   await db.query(`INSERT INTO service_orders(id,reference,subscriber_id,customer_id,service_id,service_type,customer_input_snapshot,
     service_name_snapshot,price_usd_units,currency_snapshot,wallet_debit_reference,idempotency_key,request_hash,
     price_account_units,account_currency_snapshot)
@@ -112,6 +114,7 @@ export async function transitionOrder(sub:string,id:string,raw:unknown,actor:str
   if(!['pending','processing'].includes(order.status)||order.status==='processing'&&input.status==='processing')throw new HttpError(409,'This order is terminal or the status transition is not allowed.');
   if(input.status==='completed'&&!input.result)throw new HttpError(400,'A completion result/response is required.');
   if(input.status==='rejected'&&!input.reason)throw new HttpError(400,'A rejection reason is required.');
+  await activityContext(db,sub,order.customer_id,{type:'subscriber_owner',id:actor});
   if(input.status==='rejected') {
     const debit=(await db.query('SELECT * FROM customer_wallet_ledger WHERE subscriber_id=$1 AND customer_id=$2 AND id=$3 AND type=$4',[sub,order.customer_id,order.wallet_debit_reference,'order_debit'])).rows[0];
     if(!debit)throw new HttpError(409,'Original wallet charge was not found.');

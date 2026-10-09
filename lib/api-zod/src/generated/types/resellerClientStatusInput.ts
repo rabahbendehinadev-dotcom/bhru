@@ -8,4 +8,6 @@
 
 export interface ResellerClientStatusInput {
   enabled: boolean;
+  /** @maxLength 1000 */
+  reason?: string;
 }

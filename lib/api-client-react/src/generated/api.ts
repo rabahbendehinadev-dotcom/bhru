@@ -24,6 +24,7 @@ import type {
   AdminCredentialsInput,
   AdminSummary,
   AuthEntry,
+  ClientActivityPage,
   ClientFinancialSummary,
   ClientGroupAssignment,
   ClientReconciliation,
@@ -55,6 +56,7 @@ import type {
   ListCustomerServiceOrdersParams,
   ListCustomerServicesParams,
   ListManualServicesParams,
+  ListResellerClientActivityParams,
   ListResellerClientsParams,
   ListServiceOrdersParams,
   ManualServiceInput,
@@ -2314,6 +2316,89 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getUpdateResellerClientMutationOptions(options));
     }
+
+export const getListResellerClientActivityUrl = (id: string,
+    params?: ListResellerClientActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/clients/${id}/activity?${stringifiedParams}` : `/api/clients/${id}/activity`
+}
+
+export const listResellerClientActivity = async (id: string,
+    params?: ListResellerClientActivityParams, options?: Parameters<typeof customFetch>[1]): Promise<ClientActivityPage> => {
+
+  return customFetch<ClientActivityPage>(getListResellerClientActivityUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListResellerClientActivityQueryKey = (id: string,
+    params?: ListResellerClientActivityParams,) => {
+    return [
+    `/api/clients/${id}/activity`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListResellerClientActivityQueryOptions = <TData = Awaited<ReturnType<typeof listResellerClientActivity>>, TError = ErrorType<void>>(id: string,
+    params?: ListResellerClientActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listResellerClientActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListResellerClientActivityQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listResellerClientActivity>>> = ({ signal }) => listResellerClientActivity(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listResellerClientActivity>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListResellerClientActivityQueryResult = NonNullable<Awaited<ReturnType<typeof listResellerClientActivity>>>
+export type ListResellerClientActivityQueryError = ErrorType<void>
+
+
+
+export function useListResellerClientActivity<TData = Awaited<ReturnType<typeof listResellerClientActivity>>, TError = ErrorType<void>>(
+ id: string,
+    params?: ListResellerClientActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listResellerClientActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListResellerClientActivityQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getSetResellerClientStatusUrl = (id: string,) => {
 

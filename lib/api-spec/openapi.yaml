@@ -235,6 +235,24 @@ paths:
             schema: { $ref: "#/components/schemas/ResellerClientProfileInput" }
       responses:
         "200": { description: Profile saved }
+  /clients/{id}/activity:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+    get:
+      operationId: listResellerClientActivity
+      tags: [Clients]
+      parameters:
+        - { name: category, in: query, schema: { type: string, enum: [ACCOUNT, PROFILE, FINANCIAL, ORDER, SECURITY] } }
+        - { name: cursor, in: query, schema: { type: string, maxLength: 100 } }
+      responses:
+        "200":
+          description: Tenant-scoped immutable activity, newest first, 30 events per page.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClientActivityPage" }
+        "400": { description: Invalid filter or cursor }
+        "401": { description: Subscriber authentication required }
+        "403": { description: Subscriber access denied }
+        "404": { description: Client not found }
   /clients/{id}/status:
     put:
       operationId: setResellerClientStatus
@@ -1036,7 +1054,9 @@ components:
       type: object
       required: [enabled]
       additionalProperties: false
-      properties: { enabled: { type: boolean } }
+      properties:
+        enabled: { type: boolean }
+        reason: { type: string, maxLength: 1000 }
     ResellerClientNoteInput:
       type: object
       required: [body]
@@ -1069,6 +1089,36 @@ components:
             lockedAmount: {type: string}
             groupId: {type: [string, 'null'], format: uuid}
             financial: { $ref: "#/components/schemas/ClientFinancialSummary" }
+    ClientActivityEvent:
+      type: object
+      required: [id,eventCategory,eventType,summary,actorType,actorId,actorDisplay,referenceType,referenceId,referenceLabel,createdAt,changedFields,reason,previousStatus,status,formattedAmount,direction,currency,ipAddress,userAgent]
+      properties:
+        id: { type: string, format: uuid }
+        eventCategory: { type: string, enum: [ACCOUNT, PROFILE, FINANCIAL, ORDER, SECURITY] }
+        eventType: { type: string, enum: [account_created,account_blocked,account_unblocked,profile_updated,client_note_added,wallet_funds_added,wallet_deducted,wallet_adjusted,service_order_charged,service_order_refunded,service_order_created,service_order_processing,service_order_completed,service_order_rejected,customer_logged_out] }
+        summary: { type: string }
+        actorType: { type: string, enum: [customer, subscriber_owner, system] }
+        actorId: { type: ["string","null"], format: uuid }
+        actorDisplay: { type: string }
+        referenceType: { type: string, enum: [customer_account,service_order,wallet_ledger_entry] }
+        referenceId: { type: string, format: uuid }
+        referenceLabel: { type: ["string","null"] }
+        createdAt: { type: string, format: date-time }
+        changedFields: { type: array, items: { type: string } }
+        reason: { type: ["string","null"] }
+        previousStatus: { type: ["string","null"] }
+        status: { type: ["string","null"] }
+        formattedAmount: { type: ["string","null"] }
+        direction: { type: ["string","null"], enum: [credit,debit,null] }
+        currency: { type: ["string","null"] }
+        ipAddress: { type: ["string","null"] }
+        userAgent: { type: ["string","null"] }
+    ClientActivityPage:
+      type: object
+      required: [data,nextCursor]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/ClientActivityEvent" } }
+        nextCursor: { type: ["string","null"] }
     ClientReconciliation:
       type: object
       required: [status, accountCurrency, storedBalance, ledgerDerivedBalance, difference, formattedStoredBalance, formattedLedgerDerivedBalance, formattedDifference, openingBalance, baselineBasis, baselineRecordedAt, entryCount, legacyEntryCount, currencyIssues, sequenceIssues, orderIssues, readOnly]

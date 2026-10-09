@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Btn, Card, ConfirmDialog, Field } from '@/components/bhru/ui';
 import { EmptyState } from '@/components/subscriber/EmptyState';
 import { useClientDetail, useClientMutations } from '@/hooks/use-clients';
+import { ClientActivityPanel } from './client-activity';
 import { errText } from '@/hooks/use-commerce';
 import { FinancialPanel, ClientOrdersPanel, ClientGroupAssign } from '@/pages/client-finance';
 import { clientName } from '@/pages/clients';
@@ -124,7 +125,7 @@ export default function ClientDetailPage({ id }: { id: string }) {
         {tab === 'Financial' && <FinancialPanel id={id} d={d} />}
         {tab === 'Profile' && <><ProfileForm id={id} d={d} /><ClientGroupAssign id={id} d={d} /></>}
         {tab === 'Orders' && <ClientOrdersPanel id={id} d={d} />}
-        {tab === 'Activity' && <Card>{d.activity.length === 0 ? <EmptyState compact title="No activity yet" /> : <ul className="divide-y">{d.activity.map((a) => <li key={a.id} className="flex justify-between gap-3 p-3 text-[12.5px]"><span>{a.action}</span><span className="shrink-0 text-muted-foreground">{when(a.createdAt)}</span></li>)}</ul>}</Card>}
+        {tab === 'Activity' && <ClientActivityPanel key={id} id={id} legacy={d.activity} />}
         {tab === 'Notes' && <Notes id={id} d={d} />}
       </div>
       <ConfirmDialog open={confirm} title="Block this client?" body="They will no longer be able to log in to your public website." confirmLabel="Block client" danger onConfirm={toggle} onClose={() => setConfirm(false)} />

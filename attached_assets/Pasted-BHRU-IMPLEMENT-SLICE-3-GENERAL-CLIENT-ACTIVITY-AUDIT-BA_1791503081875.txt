@@ -1,0 +1,672 @@
+BHRU — IMPLEMENT SLICE 3
+GENERAL CLIENT ACTIVITY / AUDIT BASELINE
+
+Use the approved architecture from:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+Slices 1 and 2 are complete.
+
+Implement ONLY Slice 3:
+a structured, tenant-safe client activity/audit foundation.
+
+Do NOT implement:
+- password recovery
+- 2FA
+- full session management
+- funding requests/payments
+- invoices
+- credit facility
+- client groups/pricing
+- service-access policies
+- customer API
+- notification preferences
+
+==================================================
+1. CORE PRINCIPLE
+==================================================
+
+Client Activity is NOT the financial ledger.
+
+Keep these domains separate:
+
+Financial Ledger
+= authoritative financial history
+
+Service Order History
+= authoritative order lifecycle
+
+Client Activity
+= chronological business/account audit trail that references those authoritative objects
+
+Never duplicate financial truth into Activity.
+
+Activity may reference a financial ledger entry, but must not replace it.
+
+==================================================
+2. AUDIT CURRENT ACTIVITY TAB
+==================================================
+
+Inspect the existing reseller:
+
+Client → Activity
+
+Determine:
+- what it currently shows
+- where data comes from
+- whether entries are real persisted events or derived/display-only
+- whether actor attribution exists
+- whether tenant isolation is enforced
+- whether customer events and staff events are distinguishable
+
+Preserve useful existing behavior where safe.
+
+==================================================
+3. CREATE A STRUCTURED EVENT MODEL
+==================================================
+
+Design/implement a normalized activity-event model.
+
+Use the canonical customer:
+
+public_customer_accounts
+
+Every client activity event must belong to:
+- subscriber / tenant
+- customer
+
+Recommended concepts:
+
+id
+subscriber_id
+customer_id
+event_category
+event_type
+actor_type
+actor_id
+actor_display_snapshot
+reference_type
+reference_id
+summary
+metadata
+ip_address where appropriate
+user_agent where appropriate
+created_at
+
+Do not blindly add every field if not required.
+
+Use PostgreSQL JSONB only for structured auxiliary metadata, not as a replacement for core columns.
+
+==================================================
+4. EVENT CATEGORIES
+==================================================
+
+Use controlled categories.
+
+At minimum:
+
+ACCOUNT
+PROFILE
+FINANCIAL
+ORDER
+SECURITY
+
+Reserve:
+API
+PAYMENT
+VERIFICATION
+
+for later slices.
+
+==================================================
+5. ACCOUNT EVENTS
+==================================================
+
+Record important account lifecycle events such as:
+
+account_created
+account_activated if applicable
+account_blocked
+account_unblocked
+account_status_changed
+
+If current BHRU only has Active/Blocked:
+use only real supported states.
+
+Do not invent Pending Verification / Suspended / Closed yet.
+
+For block/unblock:
+record:
+- actor
+- reason if available
+- timestamp
+
+Blocking must preserve existing behavior of revoking customer sessions if already implemented.
+
+Do not change block semantics in this slice.
+
+==================================================
+6. PROFILE EVENTS
+==================================================
+
+Record meaningful profile changes.
+
+Examples:
+
+profile_updated
+email_changed if editable
+phone_changed
+company_changed
+address_changed
+language_changed if supported
+
+Do NOT generate one event per individual field unless useful.
+
+Preferred behavior:
+
+one profile_updated event with safe metadata listing changed field names.
+
+Example metadata:
+
+changed_fields:
+["phone", "city"]
+
+Do NOT store old/new password or other secrets.
+
+Do not leak sensitive values unnecessarily into activity metadata.
+
+==================================================
+7. FINANCIAL ACTIVITY EVENTS
+==================================================
+
+Use Slice 2 ledger attribution.
+
+For new financial mutations, create/reference Activity events such as:
+
+wallet_funds_added
+wallet_deducted
+wallet_adjusted
+service_order_charged
+service_order_refunded
+
+IMPORTANT:
+
+Do not duplicate amount/balance truth manually if it can be referenced from ledger.
+
+Activity event should reference:
+reference_type = wallet_ledger_entry
+reference_id = ledger entry id
+
+Metadata may include safe summary information such as:
+- operation type
+- account currency
+- amount snapshot
+
+but ledger remains authoritative.
+
+Financial posting and corresponding audit event should be transactionally consistent where practical.
+
+Do not allow a wallet mutation to succeed and silently lose required audit attribution.
+
+==================================================
+8. ORDER ACTIVITY EVENTS
+==================================================
+
+Record service-order lifecycle events:
+
+service_order_created
+service_order_processing
+service_order_completed
+service_order_rejected
+
+Reference:
+service_order id
+
+Preserve existing order history/state tables.
+
+Activity does not replace order history.
+
+If order status transition already has an authoritative status-history mechanism:
+reuse/reference it rather than duplicating logic.
+
+==================================================
+9. ACTOR MODEL
+==================================================
+
+Reuse the verified actor taxonomy established in Slice 2:
+
+customer
+subscriber_owner
+system
+
+Do not fabricate subscriber_staff until a real staff-membership/auth model exists.
+
+Future staff support can extend the enum/model safely.
+
+Every privileged account/client mutation should identify an actor.
+
+System-generated events:
+actor_type = system
+
+Customer-generated events:
+actor_type = customer
+actor_id = canonical customer id
+
+Subscriber owner actions:
+actor_type = subscriber_owner
+actor_id = authenticated subscriber owner id
+
+==================================================
+10. ACTOR DISPLAY SNAPSHOT
+==================================================
+
+Store a safe display snapshot if useful so historical activity remains understandable if names change later.
+
+Examples:
+"Rabah Bendehina"
+"Subscriber owner"
+"System"
+
+Do not use snapshot as authorization identity.
+
+actor_type + actor_id remain authoritative.
+
+==================================================
+11. REFERENCES
+==================================================
+
+Use structured references.
+
+Possible reference types:
+
+customer_account
+service_order
+wallet_ledger_entry
+
+Later:
+funding_request
+payment_transaction
+invoice
+api_key
+session
+
+Do not use arbitrary free-text IDs.
+
+Cross-tenant references must be rejected.
+
+==================================================
+12. EVENT IMMUTABILITY
+==================================================
+
+Posted audit/activity events are immutable.
+
+Do not provide:
+- edit
+- delete
+- rewrite
+
+If an earlier business action is reversed:
+record a new event.
+
+Example:
+
+account_blocked
+then later
+account_unblocked
+
+Do not mutate the first event.
+
+==================================================
+13. IP / USER AGENT
+==================================================
+
+For customer-originated security/account events where request context is available, capture:
+
+- IP address
+- user agent
+
+Do not require IP/user-agent for system events.
+
+Do not store:
+- raw auth cookies
+- session secrets
+- password tokens
+- passwords
+- API secrets
+
+==================================================
+14. RESELLER CLIENT ACTIVITY TAB
+==================================================
+
+Upgrade the existing Activity tab into a real chronological timeline/list.
+
+Recommended columns/content:
+
+Date/Time
+Event
+Actor
+Category
+Reference
+Details
+
+Examples:
+
+08 Oct 2026 18:42
+Service order #1234 completed
+System
+ORDER
+
+08 Oct 2026 17:03
+Funds added +100.00 USD
+Rabah (Owner)
+FINANCIAL
+
+08 Oct 2026 16:11
+Profile updated: Phone, City
+Customer
+PROFILE
+
+08 Oct 2026 15:57
+Customer account created
+Customer/System
+ACCOUNT
+
+Use compact professional design.
+
+Do not redesign the rest of Client Detail.
+
+==================================================
+15. FILTERS
+==================================================
+
+Add useful lightweight filters if simple:
+
+All
+Account
+Profile
+Financial
+Orders
+Security
+
+Optional date/search filter if existing architecture makes it cheap.
+
+Do not overbuild advanced analytics.
+
+==================================================
+16. CUSTOMER VISIBILITY
+==================================================
+
+This Slice is primarily for reseller audit visibility.
+
+Do NOT expose the full Activity tab to the customer.
+
+Customer already has:
+- Account Statement
+- My Orders
+- Profile
+- Security
+
+Future customer-facing security history can be added separately.
+
+Internal activity may include reseller actions the customer should not see.
+
+==================================================
+17. CURRENT SECURITY EVENTS
+==================================================
+
+Slice 4 will handle full login/security activity.
+
+For Slice 3, only integrate security events that are already naturally available and safe.
+
+For example:
+- account blocked
+- account unblocked
+- logout if already centralized
+
+Do NOT build:
+- session list
+- 2FA
+- password reset
+- failed login history
+
+yet.
+
+==================================================
+18. TRANSACTION / CONSISTENCY
+==================================================
+
+Where an activity event accompanies an authoritative mutation:
+
+prefer the same PostgreSQL transaction.
+
+Examples:
+
+account block + account_blocked audit event
+wallet adjustment + ledger + financial activity event
+order status change + order activity event
+
+If one fails, do not leave ambiguous partial state.
+
+Document any cases where asynchronous/eventual audit is intentionally used.
+
+==================================================
+19. IDEMPOTENCY
+==================================================
+
+Retries must not create duplicate Activity events.
+
+Use deterministic event keys/correlation where appropriate.
+
+Examples:
+- one service_order_completed activity event per actual transition
+- one financial activity event per immutable ledger posting
+
+A repeated API request must not spam duplicate events.
+
+==================================================
+20. HISTORICAL DATA
+==================================================
+
+Do NOT fabricate historical activity for existing accounts.
+
+Do not infer fake past events from current state.
+
+Optionally create only an explicit safe baseline marker if required, such as:
+
+activity_tracking_started
+
+but only if useful.
+
+Preferred:
+start capturing authoritative Activity from this migration onward.
+
+Old Client Activity can remain absent rather than invented.
+
+==================================================
+21. PAGINATION
+==================================================
+
+Activity may grow large.
+
+Use server-side pagination.
+
+Recommended:
+- newest first
+- stable ordering by created_at + id
+
+Do not load entire client history at once.
+
+==================================================
+22. TENANT ISOLATION
+==================================================
+
+Critical:
+
+Every Activity query/write must be scoped to:
+
+subscriber_id + customer_id
+
+A reseller must never read events belonging to another tenant.
+
+Customer IDs alone are not sufficient authorization.
+
+==================================================
+23. INDEXES
+==================================================
+
+Design indexes for likely queries.
+
+At minimum evaluate:
+
+(subscriber_id, customer_id, created_at DESC)
+
+(subscriber_id, customer_id, event_category, created_at DESC)
+
+reference lookup where required.
+
+Avoid excessive indexes.
+
+==================================================
+24. MIGRATION
+==================================================
+
+Latest migration is:
+
+025_wallet_attribution_reconciliation.sql
+
+If schema is needed, create additive:
+
+026_client_activity_audit.sql
+
+Do NOT modify migrations 019–025.
+
+No destructive changes.
+
+Do not modify financial data.
+
+==================================================
+25. OPENAPI / API
+==================================================
+
+Create/update typed APIs for reseller client Activity.
+
+Support:
+- paginated event list
+- category filtering
+
+Do not expose internal metadata blindly.
+
+Use a safe response DTO.
+
+Do not return database JSON wholesale.
+
+==================================================
+26. ACTIVITY DETAILS / PRIVACY
+==================================================
+
+Define public-safe vs reseller-private metadata.
+
+Reseller Activity may show:
+- actor
+- reason
+- changed field names
+- reference
+- amount/currency snapshot
+
+Do not expose:
+- password values
+- auth tokens
+- internal cookies/session secret
+- sensitive payment data
+- full arbitrary request bodies
+
+==================================================
+27. EVENT TAXONOMY DOCUMENTATION
+==================================================
+
+Document controlled event types and category mapping.
+
+Avoid developers adding random event_type strings later.
+
+Provide a central registry/type definition where appropriate.
+
+==================================================
+28. TESTS
+==================================================
+
+Focused tests only.
+
+Must cover:
+
+- account creation activity
+- account block activity with actor
+- account unblock activity
+- profile-update event
+- financial posting references correct ledger entry
+- service-order create event
+- processing transition event
+- completed transition event
+- rejected transition event
+- retry does not duplicate event
+- cross-tenant read denied
+- cross-tenant reference rejected
+- pagination stable/newest-first
+- category filtering
+- customer cannot access reseller-only activity endpoint
+- secret/internal data not exposed
+
+Preserve all existing wallet/order tests.
+
+Do not run broad browser/E2E suites.
+
+==================================================
+29. DOCUMENTATION
+==================================================
+
+Update:
+
+docs/BHRU_FINANCIAL_AUDIT_FOUNDATION_SPEC.md
+
+Mark Slice 3 implemented.
+
+Also document:
+
+- event categories
+- event types
+- actor taxonomy
+- reference taxonomy
+- privacy rules
+- retention considerations
+
+==================================================
+30. FILE HYGIENE
+==================================================
+
+Do not modify project memory/internal note files unless technically required for the application.
+
+Prefer application/source/docs/tests only.
+
+Do not spend time updating Replit memory metadata for this task.
+
+==================================================
+PREVIEW ONLY
+==================================================
+
+Do not git commit.
+Do not git push.
+Do not deploy.
+Do not access VPS/Dokploy/production.
+
+Return:
+
+1. previous Activity implementation found
+2. new audit/event model
+3. migration status
+4. captured event categories/types
+5. actor/reference model
+6. transaction/idempotency behavior
+7. Activity tab behavior
+8. historical handling
+9. privacy/security behavior
+10. focused checks
+11. files changed

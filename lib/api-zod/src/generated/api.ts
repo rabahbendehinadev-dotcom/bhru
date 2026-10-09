@@ -702,12 +702,57 @@ export const UpdateResellerClientBody = zod.object({
 export const UpdateResellerClientResponse = zod.unknown()
 
 
+export const ListResellerClientActivityParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const listResellerClientActivityQueryCursorMax = 100;
+
+
+
+export const ListResellerClientActivityQueryParams = zod.object({
+  "category": zod.enum(['ACCOUNT', 'PROFILE', 'FINANCIAL', 'ORDER', 'SECURITY']).optional(),
+  "cursor": zod.coerce.string().max(listResellerClientActivityQueryCursorMax).optional()
+})
+
+export const ListResellerClientActivityResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "eventCategory": zod.enum(['ACCOUNT', 'PROFILE', 'FINANCIAL', 'ORDER', 'SECURITY']),
+  "eventType": zod.enum(['account_created', 'account_blocked', 'account_unblocked', 'profile_updated', 'client_note_added', 'wallet_funds_added', 'wallet_deducted', 'wallet_adjusted', 'service_order_charged', 'service_order_refunded', 'service_order_created', 'service_order_processing', 'service_order_completed', 'service_order_rejected', 'customer_logged_out']),
+  "summary": zod.string(),
+  "actorType": zod.enum(['customer', 'subscriber_owner', 'system']),
+  "actorId": zod.string().uuid().nullable(),
+  "actorDisplay": zod.string(),
+  "referenceType": zod.enum(['customer_account', 'service_order', 'wallet_ledger_entry']),
+  "referenceId": zod.string().uuid(),
+  "referenceLabel": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "changedFields": zod.array(zod.string()),
+  "reason": zod.string().nullable(),
+  "previousStatus": zod.string().nullable(),
+  "status": zod.string().nullable(),
+  "formattedAmount": zod.string().nullable(),
+  "direction": zod.union([zod.literal('credit'),zod.literal('debit'),zod.literal(null)]).nullable(),
+  "currency": zod.string().nullable(),
+  "ipAddress": zod.string().nullable(),
+  "userAgent": zod.string().nullable()
+})),
+  "nextCursor": zod.string().nullable()
+})
+
+
 export const SetResellerClientStatusParams = zod.object({
   "id": zod.coerce.string().uuid()
 })
 
+export const setResellerClientStatusBodyReasonMax = 1000;
+
+
+
 export const SetResellerClientStatusBody = zod.object({
-  "enabled": zod.boolean()
+  "enabled": zod.boolean(),
+  "reason": zod.string().max(setResellerClientStatusBodyReasonMax).optional()
 })
 
 export const SetResellerClientStatusResponse = zod.unknown()

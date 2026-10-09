@@ -3,6 +3,7 @@ import { z } from '@workspace/api-zod';
 import { subscriberContext } from '../lib/commerce/data';
 import { transaction } from '../lib/platform';
 import { listClients, clientDetail, updateClientProfile, changeClientStatus, addClientNote } from '../lib/customer-auth/clients';
+import { listActivity } from '../lib/customer-auth/activity';
 
 const router=Router();
 const uuid=z.string().uuid();
@@ -18,6 +19,10 @@ router.get('/clients/:id',async(req,res)=>{
   const owner=subscriberContext(req),id=uuid.parse(req.params.id);
   res.json(await transaction(db=>clientDetail(owner.subscriber_id,id,db)));
 });
+router.get('/clients/:id/activity',async(req,res)=>{
+  const owner=subscriberContext(req),id=uuid.parse(req.params.id);
+  res.json(await transaction(db=>listActivity(owner.subscriber_id,id,req.query,db)));
+});
 router.patch('/clients/:id',async(req,res)=>{
   const owner=subscriberContext(req),id=uuid.parse(req.params.id);
   await transaction(db=>updateClientProfile(owner.subscriber_id,id,req.body,owner.id,db));
@@ -25,8 +30,8 @@ router.patch('/clients/:id',async(req,res)=>{
 });
 router.put('/clients/:id/status',async(req,res)=>{
   const owner=subscriberContext(req),id=uuid.parse(req.params.id);
-  const input=z.object({enabled:z.boolean()}).strict().parse(req.body);
-  await transaction(db=>changeClientStatus(owner.subscriber_id,id,input.enabled,owner.id,db));
+  const input=z.object({enabled:z.boolean(),reason:z.string().trim().max(1000).regex(/^[^\u0000-\u001f\u007f]*$/).optional()}).strict().parse(req.body);
+  await transaction(db=>changeClientStatus(owner.subscriber_id,id,input.enabled,owner.id,db,input.reason));
   res.json({ok:true});
 });
 router.post('/clients/:id/notes',async(req,res)=>{

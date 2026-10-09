@@ -12,6 +12,7 @@ import {Script} from 'node:vm';
 import {build} from '../artifacts/api-server/node_modules/esbuild/lib/main.js';
 import {testWalletServices} from './test-wallet-services.mjs';
 import {testLedgerAttribution} from './test-ledger-attribution.mjs';
+import {testClientActivity} from './test-client-activity.mjs';
 
 const root=resolve(import.meta.dirname,'..'),temp=await mkdtemp(join(tmpdir(),'bhru-finance-'));
 let started=false,pool,server,checks=0,requestId=0;
@@ -40,13 +41,20 @@ try{
       export {PANEL_SCRIPT,PANEL_SCRIPT_HASH} from '${root}/artifacts/api-server/src/lib/customer-auth/panel-ui.ts';`,
       resolveDir:root,sourcefile:'financial-test-entry.ts',loader:'ts'},
     outfile:bundle,bundle:true,platform:'node',format:'esm',logLevel:'silent',
+    plugins:[{name:'test-only-registration-challenge',setup(builder){
+      builder.onLoad({filter:/\/customer-auth\/challenge\.ts$/},async({path})=>{
+        const content=await readFile(path,'utf8'),needle='return { id, image:challengeImage(answer), expiresAt:expiresAt.toISOString() };';
+        assert.ok(content.includes(needle));
+        return {contents:content.replace(needle,'return { id, image:challengeImage(answer), expiresAt:expiresAt.toISOString(), testAnswer:answer };'),loader:'ts'};
+      });
+    }}],
     banner:{js:"import {createRequire as testCreateRequire} from 'node:module';const require=testCreateRequire(import.meta.url);"},
   });
   const api=await import(pathToFileURL(bundle).href);pool=api.pool;
   const db=await pool.connect();
   try{
     for(const name of (await readdir(join(root,'lib/db/src/migrations'))).filter(n=>/^\d+_.+\.sql$/.test(n)).sort()){
-      if(name.startsWith('025_'))continue; // Test an actual 024 -> 025 cutover below.
+      if(name.startsWith('025_')||name.startsWith('026_'))continue; // Explicit additive cutovers below.
       await db.query('BEGIN');
       if(name.startsWith('004_'))await db.query("SELECT set_config('bhru.private_admin_segment',$1,true)",['private-test-entry']);
       await db.query(await readFile(join(root,'lib/db/src/migrations',name),'utf8'));
@@ -119,8 +127,17 @@ try{
       });
     });r.on('error',fail);if(payload)r.write(payload);r.end();
   });
+  await check('migration 026 creates no historical activity and preserves ledger/wallet history',async()=>{
+    const ledger=(await pool.query('SELECT * FROM customer_wallet_ledger ORDER BY id')).rows;
+    const wallets=(await pool.query('SELECT * FROM customer_wallets ORDER BY customer_id')).rows;
+    await pool.query(await readFile(join(root,'lib/db/src/migrations/026_client_activity_audit.sql'),'utf8'));
+    assert.equal((await pool.query('SELECT count(*)::int n FROM client_activity_events')).rows[0].n,0);
+    assert.deepEqual((await pool.query('SELECT * FROM customer_wallet_ledger ORDER BY id')).rows,ledger);
+    assert.deepEqual((await pool.query('SELECT * FROM customer_wallets ORDER BY customer_id')).rows,wallets);
+  });
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testLedgerAttribution({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
+  await testClientActivity({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await check('customer projections redact legacy internal reasons without changing immutable entries',async()=>{
     const original=(await pool.query("SELECT * FROM customer_wallet_ledger WHERE customer_id=$1 AND type='admin_credit' LIMIT 1",[newClient.id])).rows[0];
     const legacy={...original,reason:null,description:'Private staff reason',internal_note:'Private staff reason\nPrivate staff details'};

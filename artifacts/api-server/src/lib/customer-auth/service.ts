@@ -9,6 +9,7 @@ import { createCustomerSession } from './session';
 import { type CustomerContext, type CustomerIdentity } from './types';
 import { CUSTOMER_PROFILE_SELECT, normalizePhone, USERNAME, validatePreferences, effectiveCustomerProfile } from './profile';
 import { consumeRegistrationChallenge } from './challenge';
+import { activityContext } from './activity';
 
 export function customerContext(req: Request): CustomerContext {
   if (!req.customerPublic) throw new HttpError(404, 'Public website not found.');
@@ -77,6 +78,7 @@ export async function registerCustomer(req: Request) {
     }
     if (!code) throw new HttpError(503,'Client code allocation is busy. Please retry.');
     const customerId = randomUUID();
+    await activityContext(db,tenant.id,customerId,{type:'customer',id:customerId},'',req);
     await db.query(`INSERT INTO public_customer_accounts(id,subscriber_id,first_name,last_name,email,password_hash,
       client_code,username,whatsapp_phone,preferred_language,preferred_currency,newsletter_opt_in,
       address_line_1,address_line_2,country_code,state,city,postal_code,terms_accepted_at)
@@ -118,7 +120,14 @@ export async function logoutCustomer(req: Request) {
   customerCsrf(req);
   LogoutPublicCustomerBody.strict().parse(req.body);
   await transaction(async db => {
-    if (sessionHash) await db.query('DELETE FROM public_customer_sessions WHERE token_hash=$1 AND subscriber_id=$2', [sessionHash, tenant.id]);
+    if (sessionHash) {
+      const removed=await db.query('DELETE FROM public_customer_sessions WHERE token_hash=$1 AND subscriber_id=$2 RETURNING customer_id', [sessionHash, tenant.id]);
+      const customer=removed.rows[0]?.customer_id as string|undefined;
+      if(customer){
+        await activityContext(db,tenant.id,customer,{type:'customer',id:customer},'',req);
+        await db.query("SELECT emit_client_activity($1,$2,'customer_logged_out','SECURITY','customer_account',$2,$3)",[tenant.id,customer,randomUUID()]);
+      }
+    }
   });
   return { next: customerLinks(tenant.slug, tenant.customRoot).homeHref };
 }
