@@ -5,6 +5,172 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface EmptyPaymentAction { [key: string]: unknown }
+
+export interface AdminGatewayPolicyInput {
+  globalEnabled: boolean;
+  resellerAvailable: boolean;
+}
+
+export interface FundingIntent {
+  gatewayCode: string;
+  paymentMethod: string;
+  /** Requested wallet credit in fixed account currency */
+  amount: string;
+  paymentCurrency: string;
+}
+
+export type FundingCreateInput = FundingIntent & {
+  idempotencyKey: string;
+};
+
+export interface GatewayField {
+  key: string;
+  label: string;
+  secret: boolean;
+  required: boolean;
+}
+
+export type GatewayViewIntegrationStatus = typeof GatewayViewIntegrationStatus[keyof typeof GatewayViewIntegrationStatus];
+
+
+export const GatewayViewIntegrationStatus = {
+  AVAILABLE: 'AVAILABLE',
+  NOT_IMPLEMENTED: 'NOT_IMPLEMENTED',
+  DISABLED: 'DISABLED',
+} as const;
+
+export interface GatewayCurrencyRule {
+  currency: string;
+  minimum: string;
+  maximum: string;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  feeBps: number;
+  fixedFee: string;
+}
+
+export type GatewayViewValidationStatus = typeof GatewayViewValidationStatus[keyof typeof GatewayViewValidationStatus];
+
+
+export const GatewayViewValidationStatus = {
+  NOT_IMPLEMENTED: 'NOT_IMPLEMENTED',
+  NOT_CONFIGURED: 'NOT_CONFIGURED',
+  NOT_VALIDATED: 'NOT_VALIDATED',
+  VALID: 'VALID',
+  INVALID: 'INVALID',
+} as const;
+
+export type GatewayViewConfigurationSchema = { [key: string]: unknown };
+
+export interface GatewayView {
+  code: string;
+  displayName: string;
+  description: string;
+  supportedCurrencies: string[];
+  configurationSchema?: GatewayViewConfigurationSchema;
+  supportedMethods: string[];
+  automaticConfirmationSupported: boolean;
+  webhookSupported: boolean;
+  requiredCredentials: GatewayField[];
+  configurationFields: GatewayField[];
+  integrationStatus: GatewayViewIntegrationStatus;
+  version: string;
+  feesSupported: boolean;
+  globalEnabled: boolean;
+  resellerAvailable: boolean;
+  operational: boolean;
+  enabled: boolean;
+  instructions: string;
+  currencyRules: GatewayCurrencyRule[];
+  configuredCredentialFields: string[];
+  validationStatus: GatewayViewValidationStatus;
+}
+
+export interface GatewayList {
+  data: GatewayView[];
+  credentialStorageReady: boolean;
+}
+
+export type GatewayConfigInputCredentials = {[key: string]: string};
+
+export interface GatewayConfigInput {
+  enabled: boolean;
+  /** @maxLength 1000 */
+  instructions: string;
+  currencyRules: GatewayCurrencyRule[];
+  credentials?: GatewayConfigInputCredentials;
+}
+
+export interface FundingQuote {
+  accountCurrency: string;
+  paymentCurrency: string;
+  requestedCreditUnits: string;
+  paymentBaseMinor: string;
+  feeMinor: string;
+  expectedPaymentMinor: string;
+  formattedCredit: string;
+  formattedBase: string;
+  formattedFee: string;
+  formattedPayable: string;
+  fxDescription: string;
+}
+
+export type FundingPaymentStatus = typeof FundingPaymentStatus[keyof typeof FundingPaymentStatus];
+
+
+export const FundingPaymentStatus = {
+  VERIFIED: 'VERIFIED',
+  SETTLED: 'SETTLED',
+  FAILED: 'FAILED',
+} as const;
+
+export interface FundingPayment {
+  id: string;
+  status: FundingPaymentStatus;
+  amountMinor: string;
+  formattedAmount: string;
+  currency: string;
+  /** @nullable */
+  providerReference: string | null;
+  createdAt: string;
+  /** @nullable */
+  settledAt: string | null;
+}
+
+export type FundingViewStatus = typeof FundingViewStatus[keyof typeof FundingViewStatus];
+
+
+export const FundingViewStatus = {
+  CREATED: 'CREATED',
+  PENDING_PAYMENT: 'PENDING_PAYMENT',
+  PAID: 'PAID',
+  FAILED: 'FAILED',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export type FundingView = FundingQuote & ({
+  id: string;
+  gatewayCode: string;
+  gatewayName: string;
+  paymentMethod: string;
+  /** @nullable */
+  customerName: string | null;
+  status: FundingViewStatus;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  payments: FundingPayment[];
+});
+
+export interface FundingList {
+  data: FundingView[];
+  hasMore: boolean;
+}
+
 export interface CustomerSecurityAction { [key: string]: unknown }
 
 export interface CustomerSecurityResult {
@@ -463,6 +629,12 @@ export const ClientActivityEventEventType = {
   session_revoked: 'session_revoked',
   all_other_sessions_revoked: 'all_other_sessions_revoked',
   reseller_force_logout: 'reseller_force_logout',
+  funding_request_created: 'funding_request_created',
+  funding_request_cancelled: 'funding_request_cancelled',
+  payment_pending: 'payment_pending',
+  payment_confirmed: 'payment_confirmed',
+  payment_failed: 'payment_failed',
+  wallet_funded_from_payment: 'wallet_funded_from_payment',
 } as const;
 
 export type ClientActivityEventActorType = typeof ClientActivityEventActorType[keyof typeof ClientActivityEventActorType];
@@ -481,6 +653,8 @@ export const ClientActivityEventReferenceType = {
   customer_account: 'customer_account',
   service_order: 'service_order',
   wallet_ledger_entry: 'wallet_ledger_entry',
+  funding_request: 'funding_request',
+  payment_transaction: 'payment_transaction',
 } as const;
 
 /**
@@ -1484,6 +1658,7 @@ export const GetClientStatementType = {
   adjustment: 'adjustment',
   order_debit: 'order_debit',
   order_refund: 'order_refund',
+  payment_credit: 'payment_credit',
 } as const;
 
 export type ListServiceOrdersParams = {
@@ -1587,6 +1762,7 @@ export const GetCustomerStatementType = {
   adjustment: 'adjustment',
   order_debit: 'order_debit',
   order_refund: 'order_refund',
+  payment_credit: 'payment_credit',
 } as const;
 
 export type ListResellerClientsParams = {

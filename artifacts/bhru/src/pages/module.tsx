@@ -14,6 +14,7 @@ import ClientDetailPage from '@/pages/client-detail';
 import CustomDomainsPage from '@/pages/custom-domains';
 import ManualServicesPage from '@/pages/manual-services';
 import ServiceOrdersPage from '@/pages/service-orders';
+import { ResellerPaymentGateways, FundingHistory } from '@/pages/payment-gateways';
 import { ClientGroupsPage } from '@/pages/client-finance';
 
 function Crumbs({ items }: { items: string[] }) {
@@ -61,6 +62,9 @@ export default function Module() {
   if (r.slug in ord) return <><Crumbs items={r.crumbs} /><ServiceOrdersPage key={r.slug} type={ord[r.slug]} title={r.title} /></>;
   if (r.slug === 'order-history') return <><Crumbs items={r.crumbs} /><ServiceOrdersPage key={r.slug} title={r.title} history /></>;
   if (r.slug === 'client-group') return <><Crumbs items={r.crumbs} /><ClientGroupsPage /></>;
+
+  if (r.slug === 'payment-gateways') return <><Crumbs items={r.crumbs} /><ResellerPaymentGateways /></>;
+  if (r.slug === 'funding-requests') return <><Crumbs items={r.crumbs} /><FundingHistory /></>;
 
   if (r.slug === 'ecommerce') return <EcommercePage />;
 

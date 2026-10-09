@@ -1,3 +1,4 @@
+import { renderFundingMain } from './payment-ui';
 import { createHash } from 'node:crypto';
 import { escapeHTML as e } from '../public-site/safety';
 import type { PublicSiteModel } from '../public-site/model';
@@ -315,7 +316,7 @@ export function renderPanelMain(m: PublicSiteModel, page: PanelPage, customer?: 
   const login = localPath(ca?.loginHref) ?? '/';
   const href = (p: PanelPage) => `${base}/${p}`;
   const greeting = page === 'dashboard' ? `<h1>Welcome back${customer?.firstName ? ', ' + e(customer.firstName) : ''}</h1>` : `<h1>${e(TITLES[page])}</h1><p class="pn-sub">${e(m.siteName)}</p>`;
-  const addFunds = page === 'wallet' ? `<section class="pn-card accent" id="add-funds" tabindex="-1" style="margin:0 0 18px"><h2>Add Funds</h2><p>Account Currency: <strong data-acct-currency>${e(customer?.effectiveCurrency ?? customer?.preferredCurrency ?? '')}</strong>. Your account currency is fixed and cannot be changed.</p><p>Funds are added by your reseller. Contact ${e(m.siteName)} through their listed channels, tell them your client code${customer?.clientCode ? ' (' + e(customer.clientCode) + ')' : ''} and the amount, and the credit will appear in your wallet once confirmed. There is no online payment on this website.</p></section>` : '';
+  const addFunds = page === 'wallet' ? `<section class="pn-card accent" id="add-funds" tabindex="-1" style="margin:0 0 18px"><h2>Add Funds</h2><p>Account Currency: <strong data-acct-currency>${e(customer?.effectiveCurrency ?? customer?.preferredCurrency ?? '')}</strong>. Your account currency is fixed and cannot be changed.</p>${renderFundingMain(api, customer)}</section>` : '';
   const security = page === 'security' ? renderSecurityMain(api, localPath(ca?.homeHref) ?? '/', customer) : '';
   const content = page === 'security' ? security : page === 'profile'
     ? `<div class="pn-card">${profileDetails(customer ?? { firstName: '', lastName: '', email: '' })}<p class="pn-sub">Profile details are managed by your reseller. Contact them to change anything.</p></div>`

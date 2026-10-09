@@ -1,0 +1,483 @@
+BHRU — SLICE 5A
+MULTI-TENANT PAYMENT GATEWAY FOUNDATION
+PLATFORM ADMIN MANAGED GATEWAY CATALOG
+
+PROJECT CONTEXT
+
+BHRU is a multi-tenant SaaS platform inspired by
+DHRU Fusion.
+
+Slices 1–4 are completed in Replit Preview.
+
+Existing foundations:
+- Canonical public_customer_accounts
+- Immutable customer account currency
+- Customer wallet and immutable ledger
+- Atomic financial postings
+- Ledger attribution and reconciliation
+- Client Activity audit
+- Customer security and session management
+
+Latest migration:
+027_customer_security_sessions.sql
+
+Read the existing architecture and specifications
+before implementation.
+
+==================================================
+1. CORE ARCHITECTURE
+==================================================
+
+Payment Gateway definitions are controlled
+exclusively by the Platform Admin.
+
+Resellers cannot create or upload gateway plugins.
+
+Resellers can only configure and activate gateways
+made available by the Platform Admin.
+
+Customers can only use gateways activated
+by their own reseller.
+
+Strict tenant isolation is mandatory.
+
+==================================================
+2. PLATFORM ADMIN — PAYMENT GATEWAYS
+==================================================
+
+Add Payment Gateways management to the existing
+private Platform Admin interface.
+
+Preserve the existing private admin URL,
+authentication and authorization.
+
+Platform Admin can:
+
+- View installed gateway definitions
+- Enable/disable a gateway globally
+- Control availability to resellers
+- View gateway integration status
+- View supported currencies
+- View supported payment methods
+- View required configuration fields
+- View integration version
+- View whether automatic confirmation is supported
+
+IMPORTANT:
+
+Gateway implementations must be registered
+in trusted application code.
+
+Do not allow arbitrary executable code,
+custom webhook scripts or uploaded plugins.
+
+Do not create a generic API endpoint that allows
+a reseller to define an arbitrary payment provider.
+
+==================================================
+3. GATEWAY REGISTRY
+==================================================
+
+Create a typed payment gateway registry.
+
+Each gateway definition should describe:
+
+gateway_code
+display_name
+description
+supported_payment_currencies
+supported_payment_methods
+automatic_confirmation_supported
+webhook_supported
+required_credentials
+configuration_schema
+integration_status
+version
+
+Integration statuses:
+
+AVAILABLE
+NOT_IMPLEMENTED
+DISABLED
+
+Do not mark a gateway AVAILABLE unless
+a functioning integration exists.
+
+Do not invent API endpoints for payment providers.
+
+==================================================
+4. RESELLER — PAYMENT GATEWAYS
+==================================================
+
+Add a Payment Gateways section to the
+existing reseller dashboard.
+
+Reseller can:
+
+- View available gateway definitions
+- Activate/deactivate supported gateways
+- Enter required credentials
+- Configure supported payment currencies
+- Configure minimum/maximum funding amounts
+- Configure customer-visible instructions
+- Configure permitted fees where supported
+- View connection/validation status
+
+Only show activation controls for gateways
+with implemented integrations.
+
+Unavailable gateways should be clearly marked
+Coming Soon or Not Integrated.
+
+==================================================
+5. CREDENTIAL SECURITY
+==================================================
+
+Gateway credentials belong to each reseller.
+
+Never expose secrets in API responses.
+
+Encrypt sensitive credentials at rest using
+authenticated encryption and a server-side key.
+
+Do not store encryption keys in the database.
+
+Do not include secrets in:
+- activity logs
+- HTTP logs
+- error messages
+- browser responses
+- frontend bundles
+
+Support safe credential replacement.
+
+Never display the original secret after saving.
+
+==================================================
+6. CUSTOMER — ADD FUNDS
+==================================================
+
+Prepare a real Add Funds page inside the
+authenticated customer Wallet.
+
+Display only gateways that are:
+
+- globally enabled
+- implemented
+- enabled by the reseller
+- compatible with the customer's funding currency
+
+Show:
+
+Payment Method
+Amount
+Currency
+Fees
+Estimated Wallet Credit
+Total Payable
+
+No fake payment confirmation.
+
+No automatic wallet credit without verified
+payment confirmation.
+
+==================================================
+7. CURRENCY RULES
+==================================================
+
+Customer Account Currency is immutable.
+
+Payment Currency may differ from Account Currency.
+
+Example:
+
+Account Currency: DZD
+Payment Currency: USD
+
+The system must calculate and freeze:
+
+- requested wallet credit in DZD
+- payment amount in USD
+- exchange rate
+- applicable fees
+- expected provider amount
+
+Use the existing reseller-approved FX model.
+
+Never silently convert existing wallet balances.
+
+Use exact decimal/integer-minor-unit arithmetic.
+
+Never use JavaScript floating-point arithmetic
+for financial settlement.
+
+==================================================
+8. FUNDING REQUESTS
+==================================================
+
+Create a dedicated funding request model.
+
+Suggested lifecycle:
+
+CREATED
+PENDING_PAYMENT
+PAID
+FAILED
+EXPIRED
+CANCELLED
+
+Store:
+
+tenant
+customer
+gateway
+account currency
+payment currency
+requested wallet credit
+expected payment amount
+fee snapshot
+FX snapshot
+status
+created/updated timestamps
+
+Do not mix funding requests with wallet ledger.
+
+==================================================
+9. PAYMENT TRANSACTIONS
+==================================================
+
+Create a separate payment transaction model.
+
+Store:
+
+tenant
+customer
+funding request
+gateway
+provider transaction reference
+payment status
+payment amount/currency
+verified payment metadata
+timestamps
+
+Never store card numbers or CVV.
+
+Provider transaction references must be
+uniquely constrained in the appropriate
+gateway/tenant scope.
+
+==================================================
+10. AUTOMATIC WALLET CREDIT
+==================================================
+
+Design a central payment settlement service.
+
+Only a verified successful payment event
+may trigger automatic wallet credit.
+
+Settlement must atomically:
+
+1. Verify funding request state
+2. Verify expected payment amount/currency
+3. Verify provider transaction identity
+4. Lock relevant funding/wallet records
+5. Mark payment settled
+6. Credit customer wallet
+7. Insert immutable ledger entry
+8. Record client Activity event
+
+All inside the appropriate database transaction.
+
+Retries must never credit twice.
+
+Never trust customer browser redirects
+as proof of payment.
+
+==================================================
+11. WEBHOOK SECURITY
+==================================================
+
+Prepare a gateway-specific webhook architecture.
+
+Every implemented provider adapter must define
+its own verified callback/authentication mechanism.
+
+Require:
+
+- signature/authentication verification
+- provider transaction validation
+- tenant/gateway resolution
+- replay protection
+- idempotent processing
+- amount/currency verification
+- safe error handling
+
+Do not implement a universal
+"payment_success=true" endpoint.
+
+Do not invent webhook signature formats.
+
+==================================================
+12. RESELLER FUNDING HISTORY
+==================================================
+
+Add a funding/payment management view.
+
+Reseller can see:
+
+- customer
+- gateway
+- requested amount
+- payment amount/currency
+- fees
+- status
+- timestamps
+- provider reference when available
+
+Only transactions belonging to their tenant.
+
+==================================================
+13. CUSTOMER FUNDING HISTORY
+==================================================
+
+Customer can view their own:
+
+- funding requests
+- payment status
+- gateway
+- amount
+- fees
+- wallet credit
+- date/time
+
+Keep payment history separate from
+the immutable Account Statement.
+
+==================================================
+14. ACTIVITY INTEGRATION
+==================================================
+
+Extend the existing client Activity audit with
+controlled payment events.
+
+Examples:
+
+funding_request_created
+payment_pending
+payment_confirmed
+payment_failed
+wallet_funded_from_payment
+
+Use structured references.
+
+Do not duplicate financial truth.
+
+==================================================
+15. MIGRATION
+==================================================
+
+Create additive migration:
+
+028_payment_gateway_foundation.sql
+
+Do not modify migrations 019–027.
+
+Preserve all existing:
+
+- customers
+- wallets
+- ledger rows
+- service orders
+- account currencies
+- sessions
+- activity events
+
+==================================================
+16. IMPORTANT SCOPE LIMIT
+==================================================
+
+This is the FOUNDATION slice.
+
+Do not integrate real provider APIs yet.
+
+Do not fabricate working USDT Portal,
+PayPal, Cryptomus or other integrations.
+
+Do not mark gateways operational.
+
+Do not accept real payments.
+
+Do not simulate successful payments
+in production-facing customer UI.
+
+Prepare architecture for Slice 5B,
+where the first real gateway will be integrated.
+
+==================================================
+17. TESTING
+==================================================
+
+Focused tests only:
+
+- Platform Admin-only gateway management
+- Reseller cannot create gateway definitions
+- Tenant credential isolation
+- Secret encryption/redaction
+- Customer sees only eligible gateways
+- Currency/fee snapshot accuracy
+- Funding request ownership
+- Payment transaction ownership
+- Cross-tenant access denied
+- Settlement idempotency
+- Duplicate provider callback rejected
+- No wallet credit without verified settlement
+- Existing wallet/order behavior unchanged
+
+Do not run broad browser/E2E suites.
+
+==================================================
+18. DOCUMENTATION
+==================================================
+
+Create:
+
+docs/BHRU_PAYMENT_GATEWAY_ARCHITECTURE.md
+
+Document:
+
+- Gateway registry
+- Platform Admin permissions
+- Reseller configuration
+- Customer Add Funds
+- Currency rules
+- Funding request lifecycle
+- Payment transaction lifecycle
+- Settlement invariants
+- Webhook adapter contract
+- Next Slice 5B requirements
+
+==================================================
+PREVIEW ONLY
+==================================================
+
+Do not git commit.
+Do not git push.
+Do not deploy.
+Do not access VPS/Dokploy/production.
+
+Do not modify Replit memory or internal notes.
+
+Return:
+
+1. Existing payment architecture found
+2. Gateway registry implemented
+3. Platform Admin interface
+4. Reseller configuration interface
+5. Customer Add Funds interface
+6. Funding request/payment models
+7. Settlement and webhook foundation
+8. Migration status
+9. Security and tenant isolation
+10. Focused test results
+11. Files changed
+12. Remaining work for Slice 5B

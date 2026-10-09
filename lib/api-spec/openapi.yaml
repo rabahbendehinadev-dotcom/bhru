@@ -11,6 +11,187 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /admin/payment-gateways:
+    get:
+      operationId: listAdminPaymentGateways
+      tags: [Payments]
+      responses:
+        "200":
+          description: Trusted installed gateway catalog
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GatewayList"}
+  /admin/payment-gateways/{code}:
+    patch:
+      operationId: updateAdminPaymentGateway
+      tags: [Payments]
+      parameters:
+        - {name: code, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AdminGatewayPolicyInput"}
+      responses:
+        "200":
+          description: Updated availability policy, not integration code
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GatewayView"}
+  /payment-gateways:
+    get:
+      operationId: listResellerPaymentGateways
+      tags: [Payments]
+      responses:
+        "200":
+          description: Own gateway configuration; secrets excluded
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GatewayList"}
+  /payment-gateways/{code}:
+    put:
+      operationId: configureResellerPaymentGateway
+      tags: [Payments]
+      parameters:
+        - {name: code, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/GatewayConfigInput"}
+      responses:
+        "200":
+          description: Saved own configuration without secret disclosure
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GatewayView"}
+  /payment-gateways/{code}/validate:
+    post:
+      operationId: validateResellerPaymentGateway
+      tags: [Payments]
+      parameters:
+        - {name: code, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/EmptyPaymentAction"}
+      responses:
+        "200":
+          description: Adapter validation result, never fabricated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GatewayView"}
+  /funding-requests:
+    get:
+      operationId: listResellerFundingRequests
+      tags: [Payments]
+      responses:
+        "200":
+          description: Own tenant funding and payment history
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FundingList"}
+  /funding-requests/{id}:
+    get:
+      operationId: getResellerFundingRequest
+      tags: [Payments]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Tenant-owned request and payment transactions
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FundingView"}
+  /public/customer/{slug}/panel/funding:
+    get:
+      operationId: listCustomerFundingRequests
+      tags: [Payments]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Own funding history, separate from account statement
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FundingList"}
+    post:
+      operationId: createCustomerFundingRequest
+      tags: [Payments]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/FundingCreateInput"}
+      responses:
+        "201":
+          description: Frozen funding intent; not payment confirmation
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FundingView"}
+  /public/customer/{slug}/panel/funding/gateways:
+    get:
+      operationId: listCustomerFundingGateways
+      tags: [Payments]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Only operational, globally and tenant enabled, compatible gateways
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GatewayList"}
+  /public/customer/{slug}/panel/funding/quote:
+    post:
+      operationId: quoteCustomerFunding
+      tags: [Payments]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/FundingIntent"}
+      responses:
+        "200":
+          description: Exact server-calculated preview; creation freezes final snapshot
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FundingQuote"}
+  /public/customer/{slug}/panel/funding/{id}:
+    get:
+      operationId: getCustomerFundingRequest
+      tags: [Payments]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Own funding request and safe payment status
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FundingView"}
+  /public/customer/{slug}/panel/funding/{id}/cancel:
+    post:
+      operationId: cancelCustomerFundingRequest
+      tags: [Payments]
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/EmptyPaymentAction"}
+      responses:
+        "200":
+          description: Unpaid funding request cancelled; no wallet mutation
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FundingView"}
   /manual-services:
     get:
       operationId: listManualServices
@@ -107,7 +288,7 @@ paths:
         - {$ref: '#/components/parameters/FoundationPage'}
         - {$ref: '#/components/parameters/FoundationSearch'}
         - {in: query, name: direction, schema: {type: string, enum: [credit, debit]}}
-        - {in: query, name: type, schema: {type: string, enum: [admin_credit, admin_debit, adjustment, order_debit, order_refund]}}
+        - {in: query, name: type, schema: {type: string, enum: [admin_credit, admin_debit, adjustment, order_debit, order_refund, payment_credit]}}
       responses:
         '200': {description: Paginated internal statement, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
   /service-orders:
@@ -194,7 +375,7 @@ paths:
         - {$ref: '#/components/parameters/FoundationPage'}
         - {$ref: '#/components/parameters/FoundationSearch'}
         - {in: query, name: direction, schema: {type: string, enum: [credit, debit]}}
-        - {in: query, name: type, schema: {type: string, enum: [admin_credit, admin_debit, adjustment, order_debit, order_refund]}}
+        - {in: query, name: type, schema: {type: string, enum: [admin_credit, admin_debit, adjustment, order_debit, order_refund, payment_credit]}}
       responses:
         '200': {description: Own paginated statement excluding internal notes and actor IDs, content: {application/json: {schema: {$ref: '#/components/schemas/FoundationResponse'}}}}
   /clients:
@@ -1089,6 +1270,134 @@ components:
     FoundationSearch: {in: query, name: search, schema: {type: string, maxLength: 100}}
     FoundationServiceType: {in: query, name: serviceType, schema: {type: string, enum: [imei, server, file, remote]}}
   schemas:
+    EmptyPaymentAction:
+      type: object
+      additionalProperties: false
+    AdminGatewayPolicyInput:
+      type: object
+      additionalProperties: false
+      required: [globalEnabled, resellerAvailable]
+      properties:
+        globalEnabled: {type: boolean}
+        resellerAvailable: {type: boolean}
+    FundingCreateInput:
+      allOf:
+        - {$ref: "#/components/schemas/FundingIntent"}
+        - {type: object, required: [idempotencyKey], properties: {idempotencyKey: {type: string, format: uuid}}}
+    GatewayList:
+      type: object
+      required: [data, credentialStorageReady]
+      properties:
+        data: {type: array, items: {$ref: "#/components/schemas/GatewayView"}}
+        credentialStorageReady: {type: boolean}
+    GatewayField:
+      type: object
+      required: [key, label, secret, required]
+      properties:
+        key: {type: string}
+        label: {type: string}
+        secret: {type: boolean}
+        required: {type: boolean}
+    GatewayCurrencyRule:
+      type: object
+      required: [currency, minimum, maximum, feeBps, fixedFee]
+      properties:
+        currency: {type: string}
+        minimum: {type: string}
+        maximum: {type: string}
+        feeBps: {type: integer, minimum: 0, maximum: 10000}
+        fixedFee: {type: string}
+    GatewayConfigInput:
+      type: object
+      additionalProperties: false
+      required: [enabled, instructions, currencyRules]
+      properties:
+        enabled: {type: boolean}
+        instructions: {type: string, maxLength: 1000}
+        currencyRules: {type: array, items: {$ref: "#/components/schemas/GatewayCurrencyRule"}}
+        credentials: {type: object, additionalProperties: {type: string}}
+    GatewayView:
+      type: object
+      required: [code, displayName, description, supportedCurrencies, supportedMethods, automaticConfirmationSupported, webhookSupported, requiredCredentials, configurationFields, integrationStatus, version, feesSupported, globalEnabled, resellerAvailable, operational, enabled, instructions, currencyRules, configuredCredentialFields, validationStatus]
+      properties:
+        code: {type: string}
+        displayName: {type: string}
+        description: {type: string}
+        supportedCurrencies: {type: array, items: {type: string}}
+        configurationSchema: {type: object, additionalProperties: true}
+        supportedMethods: {type: array, items: {type: string}}
+        automaticConfirmationSupported: {type: boolean}
+        webhookSupported: {type: boolean}
+        requiredCredentials: {type: array, items: {$ref: "#/components/schemas/GatewayField"}}
+        configurationFields: {type: array, items: {$ref: "#/components/schemas/GatewayField"}}
+        integrationStatus: {type: string, enum: [AVAILABLE, NOT_IMPLEMENTED, DISABLED]}
+        version: {type: string}
+        feesSupported: {type: boolean}
+        globalEnabled: {type: boolean}
+        resellerAvailable: {type: boolean}
+        operational: {type: boolean}
+        enabled: {type: boolean}
+        instructions: {type: string}
+        currencyRules: {type: array, items: {$ref: "#/components/schemas/GatewayCurrencyRule"}}
+        configuredCredentialFields: {type: array, items: {type: string}}
+        validationStatus: {type: string, enum: [NOT_IMPLEMENTED, NOT_CONFIGURED, NOT_VALIDATED, VALID, INVALID]}
+    FundingIntent:
+      type: object
+      required: [gatewayCode, paymentMethod, amount, paymentCurrency]
+      properties:
+        gatewayCode: {type: string}
+        paymentMethod: {type: string}
+        amount: {type: string, description: Requested wallet credit in fixed account currency}
+        paymentCurrency: {type: string}
+    FundingQuote:
+      type: object
+      required: [accountCurrency, paymentCurrency, requestedCreditUnits, paymentBaseMinor, feeMinor, expectedPaymentMinor, formattedCredit, formattedBase, formattedFee, formattedPayable, fxDescription]
+      properties:
+        accountCurrency: {type: string}
+        paymentCurrency: {type: string}
+        requestedCreditUnits: {type: string}
+        paymentBaseMinor: {type: string}
+        feeMinor: {type: string}
+        expectedPaymentMinor: {type: string}
+        formattedCredit: {type: string}
+        formattedBase: {type: string}
+        formattedFee: {type: string}
+        formattedPayable: {type: string}
+        fxDescription: {type: string}
+    FundingPayment:
+      type: object
+      required: [id, status, amountMinor, formattedAmount, currency, providerReference, createdAt, settledAt]
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [VERIFIED, SETTLED, FAILED]}
+        amountMinor: {type: string}
+        formattedAmount: {type: string}
+        currency: {type: string}
+        providerReference: {type: [string, "null"]}
+        createdAt: {type: string, format: date-time}
+        settledAt: {type: [string, "null"], format: date-time}
+    FundingView:
+      allOf:
+        - {$ref: "#/components/schemas/FundingQuote"}
+        - type: object
+          required: [id, gatewayCode, gatewayName, paymentMethod, customerName, status, createdAt, updatedAt, expiresAt, payments]
+          properties:
+            id: {type: string, format: uuid}
+            gatewayCode: {type: string}
+            gatewayName: {type: string}
+            paymentMethod: {type: string}
+            customerName: {type: [string, "null"]}
+            status: {type: string, enum: [CREATED, PENDING_PAYMENT, PAID, FAILED, EXPIRED, CANCELLED]}
+            createdAt: {type: string, format: date-time}
+            updatedAt: {type: string, format: date-time}
+            expiresAt: {type: string, format: date-time}
+            payments: {type: array, items: {$ref: "#/components/schemas/FundingPayment"}}
+    FundingList:
+      type: object
+      required: [data, hasMore]
+      properties:
+        data: {type: array, items: {$ref: "#/components/schemas/FundingView"}}
+        hasMore: {type: boolean}
     CustomerSecurityAction:
       type: object
       additionalProperties: false
@@ -1297,12 +1606,12 @@ components:
       properties:
         id: { type: string, format: uuid }
         eventCategory: { type: string, enum: [ACCOUNT, PROFILE, FINANCIAL, ORDER, SECURITY] }
-        eventType: { type: string, enum: [account_created,account_blocked,account_unblocked,profile_updated,client_note_added,wallet_funds_added,wallet_deducted,wallet_adjusted,service_order_charged,service_order_refunded,service_order_created,service_order_processing,service_order_completed,service_order_rejected,customer_logged_out,login_success,login_failed,login_locked,password_changed,password_reset_requested,password_reset_completed,session_revoked,all_other_sessions_revoked,reseller_force_logout] }
+        eventType: { type: string, enum: [account_created,account_blocked,account_unblocked,profile_updated,client_note_added,wallet_funds_added,wallet_deducted,wallet_adjusted,service_order_charged,service_order_refunded,service_order_created,service_order_processing,service_order_completed,service_order_rejected,customer_logged_out,login_success,login_failed,login_locked,password_changed,password_reset_requested,password_reset_completed,session_revoked,all_other_sessions_revoked,reseller_force_logout,funding_request_created,funding_request_cancelled,payment_pending,payment_confirmed,payment_failed,wallet_funded_from_payment] }
         summary: { type: string }
         actorType: { type: string, enum: [customer, subscriber_owner, system] }
         actorId: { type: ["string","null"], format: uuid }
         actorDisplay: { type: string }
-        referenceType: { type: string, enum: [customer_account,service_order,wallet_ledger_entry] }
+        referenceType: { type: string, enum: [customer_account,service_order,wallet_ledger_entry,funding_request,payment_transaction] }
         referenceId: { type: string, format: uuid }
         referenceLabel: { type: ["string","null"] }
         createdAt: { type: string, format: date-time }

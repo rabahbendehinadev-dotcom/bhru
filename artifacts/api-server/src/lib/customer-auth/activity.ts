@@ -5,12 +5,14 @@ import { z } from '@workspace/api-zod';
 import { HttpError } from '../auth';
 import { money } from '../client-finance/wallet';
 
-/** Mirrors the database's closed registry. Reserved API/PAYMENT/VERIFICATION are not emitted. */
+/** Mirrors the database's closed registry. Activity never becomes financial truth. */
 export const CLIENT_ACTIVITY_TYPES = {
   account_created:'ACCOUNT',account_blocked:'ACCOUNT',account_unblocked:'ACCOUNT',
   profile_updated:'PROFILE',client_note_added:'PROFILE',
   wallet_funds_added:'FINANCIAL',wallet_deducted:'FINANCIAL',wallet_adjusted:'FINANCIAL',
   service_order_charged:'FINANCIAL',service_order_refunded:'FINANCIAL',
+  funding_request_created:'FINANCIAL',funding_request_cancelled:'FINANCIAL',payment_pending:'FINANCIAL',
+  payment_confirmed:'FINANCIAL',payment_failed:'FINANCIAL',wallet_funded_from_payment:'FINANCIAL',
   service_order_created:'ORDER',service_order_processing:'ORDER',service_order_completed:'ORDER',service_order_rejected:'ORDER',
   customer_logged_out:'SECURITY',
   login_success:'SECURITY',login_failed:'SECURITY',login_locked:'SECURITY',

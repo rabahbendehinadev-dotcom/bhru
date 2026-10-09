@@ -13,4 +13,6 @@ export const ClientActivityEventReferenceType = {
   customer_account: 'customer_account',
   service_order: 'service_order',
   wallet_ledger_entry: 'wallet_ledger_entry',
+  funding_request: 'funding_request',
+  payment_transaction: 'payment_transaction',
 } as const;

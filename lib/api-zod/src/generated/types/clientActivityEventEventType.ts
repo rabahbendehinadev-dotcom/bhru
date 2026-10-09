@@ -34,4 +34,10 @@ export const ClientActivityEventEventType = {
   session_revoked: 'session_revoked',
   all_other_sessions_revoked: 'all_other_sessions_revoked',
   reseller_force_logout: 'reseller_force_logout',
+  funding_request_created: 'funding_request_created',
+  funding_request_cancelled: 'funding_request_cancelled',
+  payment_pending: 'payment_pending',
+  payment_confirmed: 'payment_confirmed',
+  payment_failed: 'payment_failed',
+  wallet_funded_from_payment: 'wallet_funded_from_payment',
 } as const;

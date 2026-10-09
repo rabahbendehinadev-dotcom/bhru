@@ -15,4 +15,5 @@ export const GetCustomerStatementType = {
   adjustment: 'adjustment',
   order_debit: 'order_debit',
   order_refund: 'order_refund',
+  payment_credit: 'payment_credit',
 } as const;

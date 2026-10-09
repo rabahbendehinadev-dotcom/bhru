@@ -14,6 +14,7 @@ import Subscribers from '@/pages/admin/subscribers';
 import Plans from '@/pages/admin/plans';
 import { Licences, Activations } from '@/pages/admin/licences';
 import { AdminUsers, ActivityLogs, PlatformSettings } from '@/pages/admin/misc';
+import { AdminPaymentGateways } from '@/pages/payment-gateways';
 import { useStore, refreshState } from '@/lib/store';
 import { resolveAuthEntry, type AuthEntry } from '@workspace/api-client-react';
 import { AdminEntryContext } from '@/lib/admin-entry';
@@ -57,7 +58,7 @@ function Router() {
         <Route path="/register" component={Register} />
         {adminPath && session.role === 'admin' && [
           ['', Overview], ['/subscribers', Subscribers], ['/plans', Plans], ['/licences', Licences],
-          ['/activations', Activations], ['/users', AdminUsers], ['/logs', ActivityLogs], ['/settings', PlatformSettings],
+          ['/activations', Activations], ['/users', AdminUsers], ['/logs', ActivityLogs], ['/settings', PlatformSettings], ['/payment-gateways', AdminPaymentGateways],
         ].map(([suffix, Component]) => <Route key={suffix as string} path={`${adminPath}${suffix}`} component={Component as typeof Overview} />)}
         <Route component={NotFound} />
       </Switch>

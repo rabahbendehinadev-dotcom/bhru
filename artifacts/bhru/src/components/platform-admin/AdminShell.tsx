@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useSearch } from 'wouter';
 import {
-  LayoutDashboard, Users, Zap, CreditCard, KeyRound, Puzzle, ShieldCheck, ListChecks, Settings, Menu, Search, Bell, Clock, LogOut,
+  LayoutDashboard, Users, Zap, CreditCard, KeyRound, Puzzle, ShieldCheck, ListChecks, Settings, Wallet, Menu, Search, Bell, Clock, LogOut,
   Eye, X, Moon, Sun, ChevronRight, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,7 @@ const groups = (b: string): { title: string; items: Item[] }[] => [
   { title: 'PLATFORM', items: [
     { label: 'Admin Users', href: `${b}/users`, icon: <ShieldCheck size={sz} /> },
     { label: 'Activity Logs', href: `${b}/logs`, icon: <ListChecks size={sz} /> },
+    { label: 'Payment Gateways', href: `${b}/payment-gateways`, icon: <Wallet size={sz} /> },
     { label: 'Platform Settings', href: `${b}/settings`, icon: <Settings size={sz} /> },
   ] },
 ];

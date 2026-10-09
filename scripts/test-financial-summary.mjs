@@ -13,6 +13,7 @@ import {build} from '../artifacts/api-server/node_modules/esbuild/lib/main.js';
 import {testWalletServices} from './test-wallet-services.mjs';
 import {testLedgerAttribution} from './test-ledger-attribution.mjs';
 import {testClientActivity} from './test-client-activity.mjs';
+import {testPaymentFoundation,paymentTestPlugin} from './test-payment-foundation.mjs';
 import {testCustomerSecurity} from './test-customer-security.mjs';
 
 const root=resolve(import.meta.dirname,'..'),temp=await mkdtemp(join(tmpdir(),'bhru-finance-'));
@@ -40,10 +41,14 @@ try{
       export {createSession} from '${root}/artifacts/api-server/src/lib/auth.ts';
       export {ledgerView} from '${root}/artifacts/api-server/src/lib/client-finance/wallet.ts';
       export {PANEL_SCRIPT,PANEL_SCRIPT_HASH} from '${root}/artifacts/api-server/src/lib/customer-auth/panel-ui.ts';
-      export {issueResetToken,securityAccount} from '${root}/artifacts/api-server/src/lib/customer-auth/security.ts';`,
+      export {issueResetToken,securityAccount} from '${root}/artifacts/api-server/src/lib/customer-auth/security.ts';
+      export {verifyGatewayCallback} from '${root}/artifacts/api-server/src/lib/payments/verification.ts';
+      export {recordVerifiedPayment,settleVerifiedPayment,processGatewayCallback} from '${root}/artifacts/api-server/src/lib/payments/settlement.ts';
+      export {decryptCredentials} from '${root}/artifacts/api-server/src/lib/payments/credentials.ts';
+      export {PAYMENT_SCRIPT,paymentScriptHash} from '${root}/artifacts/api-server/src/lib/customer-auth/payment-ui.ts';`,
       resolveDir:root,sourcefile:'financial-test-entry.ts',loader:'ts'},
     outfile:bundle,bundle:true,platform:'node',format:'esm',logLevel:'silent',
-    plugins:[{name:'test-only-registration-challenge',setup(builder){
+    plugins:[paymentTestPlugin(),{name:'test-only-registration-challenge',setup(builder){
       builder.onLoad({filter:/\/customer-auth\/challenge\.ts$/},async({path})=>{
         const content=await readFile(path,'utf8'),needle='return { id, image:challengeImage(answer), expiresAt:expiresAt.toISOString() };';
         assert.ok(content.includes(needle));
@@ -56,7 +61,7 @@ try{
   const db=await pool.connect();
   try{
     for(const name of (await readdir(join(root,'lib/db/src/migrations'))).filter(n=>/^\d+_.+\.sql$/.test(n)).sort()){
-    if(name.startsWith('025_')||name.startsWith('026_')||name.startsWith('027_'))continue; // Explicit additive cutovers below.
+    if(name.startsWith('025_')||name.startsWith('026_')||name.startsWith('027_')||name.startsWith('028_'))continue; // Explicit additive cutovers below.
       await db.query('BEGIN');
       if(name.startsWith('004_'))await db.query("SELECT set_config('bhru.private_admin_segment',$1,true)",['private-test-entry']);
       await db.query(await readFile(join(root,'lib/db/src/migrations',name),'utf8'));
@@ -154,6 +159,14 @@ try{
     assert.equal(legacy.status,200,legacy.text);assert.equal(legacy.json.sessions.length,1);assert.equal(legacy.json.sessions[0].current,true);
     assert.equal(legacy.json.sessions[0].device,'Unknown device (legacy session)');
   });
+  await check('migration 028 preserves original accounts, wallets, ledger, orders, sessions and activity',async()=>{
+    const tables=['public_customer_accounts','customer_wallets','customer_wallet_ledger','service_orders','public_customer_sessions','client_activity_events'];
+    const snapshot=async()=>Promise.all(tables.map(async table=>(await pool.query(`SELECT md5(coalesce(string_agg((to_jsonb(t)-'payment_transaction_id')::text,',' ORDER BY (to_jsonb(t)-'payment_transaction_id')::text),'')) digest FROM ${table} t`)).rows[0].digest));
+    const before=await snapshot();
+    await pool.query(await readFile(join(root,'lib/db/src/migrations/028_payment_gateway_foundation.sql'),'utf8'));
+    assert.deepEqual(await snapshot(),before);
+  });
+  if(!process.argv.includes('--payments-only')){
   await testWalletServices({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testLedgerAttribution({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
   await testClientActivity({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,newClient});
@@ -208,6 +221,8 @@ try{
       if(page==='transactions')assert.ok(res.text.includes('Account Statement'));
     }
   });
+  }
+  await testPaymentFoundation({req,pool,check,sidA,sidB,ownerCookieA,ownerCookieB,password,api});
   console.log(`\n${checks} focused finance SQL/HTTP groups passed. No existing database, browser, VPS or deployment used.`);
 }finally{
   if(server)await new Promise(r=>server.close(r));

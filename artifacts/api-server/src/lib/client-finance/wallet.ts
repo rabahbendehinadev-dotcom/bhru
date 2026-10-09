@@ -100,9 +100,9 @@ export async function audit(sub:string,id:string,action:string,actor:string|null
     [randomUUID(),sub,id,action,actor]);
 }
 type Movement = {
-  id?:string;type:'admin_credit'|'admin_debit'|'adjustment'|'order_debit'|'order_refund';direction:'credit'|'debit';
+  id?:string;type:'admin_credit'|'admin_debit'|'adjustment'|'order_debit'|'order_refund'|'payment_credit';direction:'credit'|'debit';
   amount:bigint;currency:StoreCurrency;description:string;method?:string;transactionReference?:string;internalNote?:string;
-  actorType:'reseller'|'customer'|'system';actor:string|null;referenceId?:string;originalDebit?:string;key:string;hash:string;
+  actorType:'reseller'|'customer'|'system';actor:string|null;referenceId?:string;paymentTransactionId?:string;originalDebit?:string;key:string;hash:string;
   reason?:string;customerNote?:string;
   sourceUsdUnits?:string|null;legacyCurrencySnapshot?:StoreCurrency;
 };
@@ -122,13 +122,13 @@ export async function appendMovement(sub:string,id:string,m:Movement,db:PoolClie
   const entry=(await db.query(`INSERT INTO customer_wallet_ledger
     (id,subscriber_id,customer_id,type,direction,amount_usd_units,balance_after,currency_snapshot,description,method,
       transaction_reference,internal_note,created_by_type,created_by_id,reference_type,reference_id,original_debit_id,idempotency_key,request_hash,
-      amount_account_units,account_currency_snapshot,operation_source,correlation_id,reason,customer_note)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb,$22,$23,$24,$25) RETURNING *`,
+      amount_account_units,account_currency_snapshot,operation_source,correlation_id,reason,customer_note,payment_transaction_id)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb,$22,$23,$24,$25,$26) RETURNING *`,
     [entryId,sub,id,m.type,m.direction,m.sourceUsdUnits!==undefined?m.sourceUsdUnits:m.currency.code==='USD'?m.amount.toString():null,after.toString(),JSON.stringify(m.legacyCurrencySnapshot??m.currency),m.description,
-      m.method??'',m.transactionReference??'',m.internalNote??'',m.actorType==='reseller'?'subscriber_owner':m.actorType,m.actor,m.referenceId?'service_order':'manual',
+      m.method??'',m.transactionReference??'',m.internalNote??'',m.actorType==='reseller'?'subscriber_owner':m.actorType,m.actor,m.paymentTransactionId?'payment_transaction':m.referenceId?'service_order':'manual',
       m.referenceId??null,m.originalDebit??null,m.key,m.hash,m.amount.toString(),JSON.stringify(m.currency),
-      m.type==='order_debit'?'service_order':m.type==='order_refund'?'service_order_refund':'manual_wallet',
-      m.referenceId??entryId,m.reason??'',m.customerNote??'']) ).rows[0];
+      m.type==='payment_credit'?'payment_gateway':m.type==='order_debit'?'service_order':m.type==='order_refund'?'service_order_refund':'manual_wallet',
+      m.paymentTransactionId??m.referenceId??entryId,m.reason??'',m.customerNote??'',m.paymentTransactionId??null]) ).rows[0];
   return entry;
 }
 export function ledgerView(row:Record<string,any>,internal=false) {
@@ -142,7 +142,7 @@ export function ledgerView(row:Record<string,any>,internal=false) {
     id:row.id,type:row.type,direction:row.direction,amountUsdUnits:row.amount_usd_units==null?null:String(row.amount_usd_units),
     amountAccountUnits:String(row.amount_account_units),
     formattedAmount:money(row.amount_account_units,c),formattedBalanceAfter:money(row.balance_after,c),currency:c.code,
-    description,referenceType:row.reference_type,referenceId:row.reference_id,
+    description,referenceType:row.reference_type,referenceId:row.payment_transaction_id??row.reference_id,
     createdAt:row.created_at,method:row.method,transactionReference:row.transaction_reference,
     ...(internal?{
       internalNote:row.internal_note,reason:row.reason??'',customerNote:row.customer_note,
@@ -152,7 +152,7 @@ export function ledgerView(row:Record<string,any>,internal=false) {
       correlationId:row.correlation_id??null,originalDebitId:row.original_debit_id??null,
       correctionOfId:row.correction_of_id??null,
       referenceType:row.reference_type==='manual'?'manual_adjustment':row.reference_type,
-      referenceId:row.reference_type==='manual'?row.id:row.reference_id,
+      referenceId:row.reference_type==='manual'?row.id:row.payment_transaction_id??row.reference_id,
       balanceBefore:(BigInt(row.balance_after)+(row.direction==='debit'?BigInt(row.amount_account_units):-BigInt(row.amount_account_units))).toString(),
       balanceAfter:String(row.balance_after),
       formattedBalanceBefore:money(BigInt(row.balance_after)+(row.direction==='debit'?BigInt(row.amount_account_units):-BigInt(row.amount_account_units)),c),
@@ -162,7 +162,7 @@ export function ledgerView(row:Record<string,any>,internal=false) {
 export const statementQuery=z.object({
   page:z.coerce.number().int().min(1).max(100000).default(1),search:z.string().trim().max(100).optional(),
   direction:z.enum(['credit','debit']).optional(),
-  type:z.enum(['admin_credit','admin_debit','adjustment','order_debit','order_refund']).optional(),
+  type:z.enum(['admin_credit','admin_debit','adjustment','order_debit','order_refund','payment_credit']).optional(),
 }).strict();
 // Customer search must use the same redacted description as the visible row,
 // not provide an oracle for legacy internal reasons copied into description.

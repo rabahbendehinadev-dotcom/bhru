@@ -8,6 +8,613 @@
 import * as zod from 'zod';
 
 
+export const listAdminPaymentGatewaysResponseDataItemCurrencyRulesItemFeeBpsMin = 0;
+export const listAdminPaymentGatewaysResponseDataItemCurrencyRulesItemFeeBpsMax = 10000;
+
+
+
+export const ListAdminPaymentGatewaysResponse = zod.object({
+  "data": zod.array(zod.object({
+  "code": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "supportedCurrencies": zod.array(zod.string()),
+  "configurationSchema": zod.record(zod.string(), zod.unknown()).optional(),
+  "supportedMethods": zod.array(zod.string()),
+  "automaticConfirmationSupported": zod.boolean(),
+  "webhookSupported": zod.boolean(),
+  "requiredCredentials": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "configurationFields": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "integrationStatus": zod.enum(['AVAILABLE', 'NOT_IMPLEMENTED', 'DISABLED']),
+  "version": zod.string(),
+  "feesSupported": zod.boolean(),
+  "globalEnabled": zod.boolean(),
+  "resellerAvailable": zod.boolean(),
+  "operational": zod.boolean(),
+  "enabled": zod.boolean(),
+  "instructions": zod.string(),
+  "currencyRules": zod.array(zod.object({
+  "currency": zod.string(),
+  "minimum": zod.string(),
+  "maximum": zod.string(),
+  "feeBps": zod.number().int().min(listAdminPaymentGatewaysResponseDataItemCurrencyRulesItemFeeBpsMin).max(listAdminPaymentGatewaysResponseDataItemCurrencyRulesItemFeeBpsMax),
+  "fixedFee": zod.string()
+})),
+  "configuredCredentialFields": zod.array(zod.string()),
+  "validationStatus": zod.enum(['NOT_IMPLEMENTED', 'NOT_CONFIGURED', 'NOT_VALIDATED', 'VALID', 'INVALID'])
+})),
+  "credentialStorageReady": zod.boolean()
+})
+
+
+export const UpdateAdminPaymentGatewayParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const UpdateAdminPaymentGatewayBody = zod.object({
+  "globalEnabled": zod.boolean(),
+  "resellerAvailable": zod.boolean()
+})
+
+export const updateAdminPaymentGatewayResponseCurrencyRulesItemFeeBpsMin = 0;
+export const updateAdminPaymentGatewayResponseCurrencyRulesItemFeeBpsMax = 10000;
+
+
+
+export const UpdateAdminPaymentGatewayResponse = zod.object({
+  "code": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "supportedCurrencies": zod.array(zod.string()),
+  "configurationSchema": zod.record(zod.string(), zod.unknown()).optional(),
+  "supportedMethods": zod.array(zod.string()),
+  "automaticConfirmationSupported": zod.boolean(),
+  "webhookSupported": zod.boolean(),
+  "requiredCredentials": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "configurationFields": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "integrationStatus": zod.enum(['AVAILABLE', 'NOT_IMPLEMENTED', 'DISABLED']),
+  "version": zod.string(),
+  "feesSupported": zod.boolean(),
+  "globalEnabled": zod.boolean(),
+  "resellerAvailable": zod.boolean(),
+  "operational": zod.boolean(),
+  "enabled": zod.boolean(),
+  "instructions": zod.string(),
+  "currencyRules": zod.array(zod.object({
+  "currency": zod.string(),
+  "minimum": zod.string(),
+  "maximum": zod.string(),
+  "feeBps": zod.number().int().min(updateAdminPaymentGatewayResponseCurrencyRulesItemFeeBpsMin).max(updateAdminPaymentGatewayResponseCurrencyRulesItemFeeBpsMax),
+  "fixedFee": zod.string()
+})),
+  "configuredCredentialFields": zod.array(zod.string()),
+  "validationStatus": zod.enum(['NOT_IMPLEMENTED', 'NOT_CONFIGURED', 'NOT_VALIDATED', 'VALID', 'INVALID'])
+})
+
+
+export const listResellerPaymentGatewaysResponseDataItemCurrencyRulesItemFeeBpsMin = 0;
+export const listResellerPaymentGatewaysResponseDataItemCurrencyRulesItemFeeBpsMax = 10000;
+
+
+
+export const ListResellerPaymentGatewaysResponse = zod.object({
+  "data": zod.array(zod.object({
+  "code": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "supportedCurrencies": zod.array(zod.string()),
+  "configurationSchema": zod.record(zod.string(), zod.unknown()).optional(),
+  "supportedMethods": zod.array(zod.string()),
+  "automaticConfirmationSupported": zod.boolean(),
+  "webhookSupported": zod.boolean(),
+  "requiredCredentials": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "configurationFields": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "integrationStatus": zod.enum(['AVAILABLE', 'NOT_IMPLEMENTED', 'DISABLED']),
+  "version": zod.string(),
+  "feesSupported": zod.boolean(),
+  "globalEnabled": zod.boolean(),
+  "resellerAvailable": zod.boolean(),
+  "operational": zod.boolean(),
+  "enabled": zod.boolean(),
+  "instructions": zod.string(),
+  "currencyRules": zod.array(zod.object({
+  "currency": zod.string(),
+  "minimum": zod.string(),
+  "maximum": zod.string(),
+  "feeBps": zod.number().int().min(listResellerPaymentGatewaysResponseDataItemCurrencyRulesItemFeeBpsMin).max(listResellerPaymentGatewaysResponseDataItemCurrencyRulesItemFeeBpsMax),
+  "fixedFee": zod.string()
+})),
+  "configuredCredentialFields": zod.array(zod.string()),
+  "validationStatus": zod.enum(['NOT_IMPLEMENTED', 'NOT_CONFIGURED', 'NOT_VALIDATED', 'VALID', 'INVALID'])
+})),
+  "credentialStorageReady": zod.boolean()
+})
+
+
+export const ConfigureResellerPaymentGatewayParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const configureResellerPaymentGatewayBodyInstructionsMax = 1000;
+
+export const configureResellerPaymentGatewayBodyCurrencyRulesItemFeeBpsMin = 0;
+export const configureResellerPaymentGatewayBodyCurrencyRulesItemFeeBpsMax = 10000;
+
+
+
+export const ConfigureResellerPaymentGatewayBody = zod.object({
+  "enabled": zod.boolean(),
+  "instructions": zod.string().max(configureResellerPaymentGatewayBodyInstructionsMax),
+  "currencyRules": zod.array(zod.object({
+  "currency": zod.string(),
+  "minimum": zod.string(),
+  "maximum": zod.string(),
+  "feeBps": zod.number().int().min(configureResellerPaymentGatewayBodyCurrencyRulesItemFeeBpsMin).max(configureResellerPaymentGatewayBodyCurrencyRulesItemFeeBpsMax),
+  "fixedFee": zod.string()
+})),
+  "credentials": zod.record(zod.string(), zod.string()).optional()
+})
+
+export const configureResellerPaymentGatewayResponseCurrencyRulesItemFeeBpsMin = 0;
+export const configureResellerPaymentGatewayResponseCurrencyRulesItemFeeBpsMax = 10000;
+
+
+
+export const ConfigureResellerPaymentGatewayResponse = zod.object({
+  "code": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "supportedCurrencies": zod.array(zod.string()),
+  "configurationSchema": zod.record(zod.string(), zod.unknown()).optional(),
+  "supportedMethods": zod.array(zod.string()),
+  "automaticConfirmationSupported": zod.boolean(),
+  "webhookSupported": zod.boolean(),
+  "requiredCredentials": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "configurationFields": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "integrationStatus": zod.enum(['AVAILABLE', 'NOT_IMPLEMENTED', 'DISABLED']),
+  "version": zod.string(),
+  "feesSupported": zod.boolean(),
+  "globalEnabled": zod.boolean(),
+  "resellerAvailable": zod.boolean(),
+  "operational": zod.boolean(),
+  "enabled": zod.boolean(),
+  "instructions": zod.string(),
+  "currencyRules": zod.array(zod.object({
+  "currency": zod.string(),
+  "minimum": zod.string(),
+  "maximum": zod.string(),
+  "feeBps": zod.number().int().min(configureResellerPaymentGatewayResponseCurrencyRulesItemFeeBpsMin).max(configureResellerPaymentGatewayResponseCurrencyRulesItemFeeBpsMax),
+  "fixedFee": zod.string()
+})),
+  "configuredCredentialFields": zod.array(zod.string()),
+  "validationStatus": zod.enum(['NOT_IMPLEMENTED', 'NOT_CONFIGURED', 'NOT_VALIDATED', 'VALID', 'INVALID'])
+})
+
+
+export const ValidateResellerPaymentGatewayParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const ValidateResellerPaymentGatewayBody = zod.object({
+
+})
+
+export const validateResellerPaymentGatewayResponseCurrencyRulesItemFeeBpsMin = 0;
+export const validateResellerPaymentGatewayResponseCurrencyRulesItemFeeBpsMax = 10000;
+
+
+
+export const ValidateResellerPaymentGatewayResponse = zod.object({
+  "code": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "supportedCurrencies": zod.array(zod.string()),
+  "configurationSchema": zod.record(zod.string(), zod.unknown()).optional(),
+  "supportedMethods": zod.array(zod.string()),
+  "automaticConfirmationSupported": zod.boolean(),
+  "webhookSupported": zod.boolean(),
+  "requiredCredentials": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "configurationFields": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "integrationStatus": zod.enum(['AVAILABLE', 'NOT_IMPLEMENTED', 'DISABLED']),
+  "version": zod.string(),
+  "feesSupported": zod.boolean(),
+  "globalEnabled": zod.boolean(),
+  "resellerAvailable": zod.boolean(),
+  "operational": zod.boolean(),
+  "enabled": zod.boolean(),
+  "instructions": zod.string(),
+  "currencyRules": zod.array(zod.object({
+  "currency": zod.string(),
+  "minimum": zod.string(),
+  "maximum": zod.string(),
+  "feeBps": zod.number().int().min(validateResellerPaymentGatewayResponseCurrencyRulesItemFeeBpsMin).max(validateResellerPaymentGatewayResponseCurrencyRulesItemFeeBpsMax),
+  "fixedFee": zod.string()
+})),
+  "configuredCredentialFields": zod.array(zod.string()),
+  "validationStatus": zod.enum(['NOT_IMPLEMENTED', 'NOT_CONFIGURED', 'NOT_VALIDATED', 'VALID', 'INVALID'])
+})
+
+
+export const ListResellerFundingRequestsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "accountCurrency": zod.string(),
+  "paymentCurrency": zod.string(),
+  "requestedCreditUnits": zod.string(),
+  "paymentBaseMinor": zod.string(),
+  "feeMinor": zod.string(),
+  "expectedPaymentMinor": zod.string(),
+  "formattedCredit": zod.string(),
+  "formattedBase": zod.string(),
+  "formattedFee": zod.string(),
+  "formattedPayable": zod.string(),
+  "fxDescription": zod.string()
+}).and(zod.object({
+  "id": zod.string().uuid(),
+  "gatewayCode": zod.string(),
+  "gatewayName": zod.string(),
+  "paymentMethod": zod.string(),
+  "customerName": zod.string().nullable(),
+  "status": zod.enum(['CREATED', 'PENDING_PAYMENT', 'PAID', 'FAILED', 'EXPIRED', 'CANCELLED']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "payments": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['VERIFIED', 'SETTLED', 'FAILED']),
+  "amountMinor": zod.string(),
+  "formattedAmount": zod.string(),
+  "currency": zod.string(),
+  "providerReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "settledAt": zod.coerce.date().nullable()
+}))
+}))),
+  "hasMore": zod.boolean()
+})
+
+
+export const GetResellerFundingRequestParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetResellerFundingRequestResponse = zod.object({
+  "accountCurrency": zod.string(),
+  "paymentCurrency": zod.string(),
+  "requestedCreditUnits": zod.string(),
+  "paymentBaseMinor": zod.string(),
+  "feeMinor": zod.string(),
+  "expectedPaymentMinor": zod.string(),
+  "formattedCredit": zod.string(),
+  "formattedBase": zod.string(),
+  "formattedFee": zod.string(),
+  "formattedPayable": zod.string(),
+  "fxDescription": zod.string()
+}).and(zod.object({
+  "id": zod.string().uuid(),
+  "gatewayCode": zod.string(),
+  "gatewayName": zod.string(),
+  "paymentMethod": zod.string(),
+  "customerName": zod.string().nullable(),
+  "status": zod.enum(['CREATED', 'PENDING_PAYMENT', 'PAID', 'FAILED', 'EXPIRED', 'CANCELLED']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "payments": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['VERIFIED', 'SETTLED', 'FAILED']),
+  "amountMinor": zod.string(),
+  "formattedAmount": zod.string(),
+  "currency": zod.string(),
+  "providerReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "settledAt": zod.coerce.date().nullable()
+}))
+}))
+
+
+export const ListCustomerFundingRequestsParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const ListCustomerFundingRequestsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "accountCurrency": zod.string(),
+  "paymentCurrency": zod.string(),
+  "requestedCreditUnits": zod.string(),
+  "paymentBaseMinor": zod.string(),
+  "feeMinor": zod.string(),
+  "expectedPaymentMinor": zod.string(),
+  "formattedCredit": zod.string(),
+  "formattedBase": zod.string(),
+  "formattedFee": zod.string(),
+  "formattedPayable": zod.string(),
+  "fxDescription": zod.string()
+}).and(zod.object({
+  "id": zod.string().uuid(),
+  "gatewayCode": zod.string(),
+  "gatewayName": zod.string(),
+  "paymentMethod": zod.string(),
+  "customerName": zod.string().nullable(),
+  "status": zod.enum(['CREATED', 'PENDING_PAYMENT', 'PAID', 'FAILED', 'EXPIRED', 'CANCELLED']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "payments": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['VERIFIED', 'SETTLED', 'FAILED']),
+  "amountMinor": zod.string(),
+  "formattedAmount": zod.string(),
+  "currency": zod.string(),
+  "providerReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "settledAt": zod.coerce.date().nullable()
+}))
+}))),
+  "hasMore": zod.boolean()
+})
+
+
+export const CreateCustomerFundingRequestParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const CreateCustomerFundingRequestBody = zod.object({
+  "gatewayCode": zod.string(),
+  "paymentMethod": zod.string(),
+  "amount": zod.string().describe('Requested wallet credit in fixed account currency'),
+  "paymentCurrency": zod.string()
+}).and(zod.object({
+  "idempotencyKey": zod.string().uuid()
+}))
+
+export const CreateCustomerFundingRequestResponse = zod.object({
+  "accountCurrency": zod.string(),
+  "paymentCurrency": zod.string(),
+  "requestedCreditUnits": zod.string(),
+  "paymentBaseMinor": zod.string(),
+  "feeMinor": zod.string(),
+  "expectedPaymentMinor": zod.string(),
+  "formattedCredit": zod.string(),
+  "formattedBase": zod.string(),
+  "formattedFee": zod.string(),
+  "formattedPayable": zod.string(),
+  "fxDescription": zod.string()
+}).and(zod.object({
+  "id": zod.string().uuid(),
+  "gatewayCode": zod.string(),
+  "gatewayName": zod.string(),
+  "paymentMethod": zod.string(),
+  "customerName": zod.string().nullable(),
+  "status": zod.enum(['CREATED', 'PENDING_PAYMENT', 'PAID', 'FAILED', 'EXPIRED', 'CANCELLED']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "payments": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['VERIFIED', 'SETTLED', 'FAILED']),
+  "amountMinor": zod.string(),
+  "formattedAmount": zod.string(),
+  "currency": zod.string(),
+  "providerReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "settledAt": zod.coerce.date().nullable()
+}))
+}))
+
+
+export const ListCustomerFundingGatewaysParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const listCustomerFundingGatewaysResponseDataItemCurrencyRulesItemFeeBpsMin = 0;
+export const listCustomerFundingGatewaysResponseDataItemCurrencyRulesItemFeeBpsMax = 10000;
+
+
+
+export const ListCustomerFundingGatewaysResponse = zod.object({
+  "data": zod.array(zod.object({
+  "code": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "supportedCurrencies": zod.array(zod.string()),
+  "configurationSchema": zod.record(zod.string(), zod.unknown()).optional(),
+  "supportedMethods": zod.array(zod.string()),
+  "automaticConfirmationSupported": zod.boolean(),
+  "webhookSupported": zod.boolean(),
+  "requiredCredentials": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "configurationFields": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "secret": zod.boolean(),
+  "required": zod.boolean()
+})),
+  "integrationStatus": zod.enum(['AVAILABLE', 'NOT_IMPLEMENTED', 'DISABLED']),
+  "version": zod.string(),
+  "feesSupported": zod.boolean(),
+  "globalEnabled": zod.boolean(),
+  "resellerAvailable": zod.boolean(),
+  "operational": zod.boolean(),
+  "enabled": zod.boolean(),
+  "instructions": zod.string(),
+  "currencyRules": zod.array(zod.object({
+  "currency": zod.string(),
+  "minimum": zod.string(),
+  "maximum": zod.string(),
+  "feeBps": zod.number().int().min(listCustomerFundingGatewaysResponseDataItemCurrencyRulesItemFeeBpsMin).max(listCustomerFundingGatewaysResponseDataItemCurrencyRulesItemFeeBpsMax),
+  "fixedFee": zod.string()
+})),
+  "configuredCredentialFields": zod.array(zod.string()),
+  "validationStatus": zod.enum(['NOT_IMPLEMENTED', 'NOT_CONFIGURED', 'NOT_VALIDATED', 'VALID', 'INVALID'])
+})),
+  "credentialStorageReady": zod.boolean()
+})
+
+
+export const QuoteCustomerFundingParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const QuoteCustomerFundingBody = zod.object({
+  "gatewayCode": zod.string(),
+  "paymentMethod": zod.string(),
+  "amount": zod.string().describe('Requested wallet credit in fixed account currency'),
+  "paymentCurrency": zod.string()
+})
+
+export const QuoteCustomerFundingResponse = zod.object({
+  "accountCurrency": zod.string(),
+  "paymentCurrency": zod.string(),
+  "requestedCreditUnits": zod.string(),
+  "paymentBaseMinor": zod.string(),
+  "feeMinor": zod.string(),
+  "expectedPaymentMinor": zod.string(),
+  "formattedCredit": zod.string(),
+  "formattedBase": zod.string(),
+  "formattedFee": zod.string(),
+  "formattedPayable": zod.string(),
+  "fxDescription": zod.string()
+})
+
+
+export const GetCustomerFundingRequestParams = zod.object({
+  "slug": zod.coerce.string(),
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetCustomerFundingRequestResponse = zod.object({
+  "accountCurrency": zod.string(),
+  "paymentCurrency": zod.string(),
+  "requestedCreditUnits": zod.string(),
+  "paymentBaseMinor": zod.string(),
+  "feeMinor": zod.string(),
+  "expectedPaymentMinor": zod.string(),
+  "formattedCredit": zod.string(),
+  "formattedBase": zod.string(),
+  "formattedFee": zod.string(),
+  "formattedPayable": zod.string(),
+  "fxDescription": zod.string()
+}).and(zod.object({
+  "id": zod.string().uuid(),
+  "gatewayCode": zod.string(),
+  "gatewayName": zod.string(),
+  "paymentMethod": zod.string(),
+  "customerName": zod.string().nullable(),
+  "status": zod.enum(['CREATED', 'PENDING_PAYMENT', 'PAID', 'FAILED', 'EXPIRED', 'CANCELLED']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "payments": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['VERIFIED', 'SETTLED', 'FAILED']),
+  "amountMinor": zod.string(),
+  "formattedAmount": zod.string(),
+  "currency": zod.string(),
+  "providerReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "settledAt": zod.coerce.date().nullable()
+}))
+}))
+
+
+export const CancelCustomerFundingRequestParams = zod.object({
+  "slug": zod.coerce.string(),
+  "id": zod.coerce.string().uuid()
+})
+
+export const CancelCustomerFundingRequestBody = zod.object({
+
+})
+
+export const CancelCustomerFundingRequestResponse = zod.object({
+  "accountCurrency": zod.string(),
+  "paymentCurrency": zod.string(),
+  "requestedCreditUnits": zod.string(),
+  "paymentBaseMinor": zod.string(),
+  "feeMinor": zod.string(),
+  "expectedPaymentMinor": zod.string(),
+  "formattedCredit": zod.string(),
+  "formattedBase": zod.string(),
+  "formattedFee": zod.string(),
+  "formattedPayable": zod.string(),
+  "fxDescription": zod.string()
+}).and(zod.object({
+  "id": zod.string().uuid(),
+  "gatewayCode": zod.string(),
+  "gatewayName": zod.string(),
+  "paymentMethod": zod.string(),
+  "customerName": zod.string().nullable(),
+  "status": zod.enum(['CREATED', 'PENDING_PAYMENT', 'PAID', 'FAILED', 'EXPIRED', 'CANCELLED']),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "payments": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "status": zod.enum(['VERIFIED', 'SETTLED', 'FAILED']),
+  "amountMinor": zod.string(),
+  "formattedAmount": zod.string(),
+  "currency": zod.string(),
+  "providerReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "settledAt": zod.coerce.date().nullable()
+}))
+}))
+
+
 export const listManualServicesQueryPageDefault = 1;
 export const listManualServicesQueryPageMax = 100000;
 
@@ -280,7 +887,7 @@ export const GetClientStatementQueryParams = zod.object({
   "page": zod.coerce.number().int().min(1).max(getClientStatementQueryPageMax).default(getClientStatementQueryPageDefault),
   "search": zod.coerce.string().max(getClientStatementQuerySearchMax).optional(),
   "direction": zod.enum(['credit', 'debit']).optional(),
-  "type": zod.enum(['admin_credit', 'admin_debit', 'adjustment', 'order_debit', 'order_refund']).optional()
+  "type": zod.enum(['admin_credit', 'admin_debit', 'adjustment', 'order_debit', 'order_refund', 'payment_credit']).optional()
 })
 
 export const GetClientStatementResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
@@ -459,7 +1066,7 @@ export const GetCustomerStatementQueryParams = zod.object({
   "page": zod.coerce.number().int().min(1).max(getCustomerStatementQueryPageMax).default(getCustomerStatementQueryPageDefault),
   "search": zod.coerce.string().max(getCustomerStatementQuerySearchMax).optional(),
   "direction": zod.enum(['credit', 'debit']).optional(),
-  "type": zod.enum(['admin_credit', 'admin_debit', 'adjustment', 'order_debit', 'order_refund']).optional()
+  "type": zod.enum(['admin_credit', 'admin_debit', 'adjustment', 'order_debit', 'order_refund', 'payment_credit']).optional()
 })
 
 export const GetCustomerStatementResponse = zod.record(zod.string(), zod.unknown()).describe('Foundation JSON envelope; exact USD units are decimal strings, never floating-point amounts.')
@@ -895,12 +1502,12 @@ export const ListResellerClientActivityResponse = zod.object({
   "data": zod.array(zod.object({
   "id": zod.string().uuid(),
   "eventCategory": zod.enum(['ACCOUNT', 'PROFILE', 'FINANCIAL', 'ORDER', 'SECURITY']),
-  "eventType": zod.enum(['account_created', 'account_blocked', 'account_unblocked', 'profile_updated', 'client_note_added', 'wallet_funds_added', 'wallet_deducted', 'wallet_adjusted', 'service_order_charged', 'service_order_refunded', 'service_order_created', 'service_order_processing', 'service_order_completed', 'service_order_rejected', 'customer_logged_out', 'login_success', 'login_failed', 'login_locked', 'password_changed', 'password_reset_requested', 'password_reset_completed', 'session_revoked', 'all_other_sessions_revoked', 'reseller_force_logout']),
+  "eventType": zod.enum(['account_created', 'account_blocked', 'account_unblocked', 'profile_updated', 'client_note_added', 'wallet_funds_added', 'wallet_deducted', 'wallet_adjusted', 'service_order_charged', 'service_order_refunded', 'service_order_created', 'service_order_processing', 'service_order_completed', 'service_order_rejected', 'customer_logged_out', 'login_success', 'login_failed', 'login_locked', 'password_changed', 'password_reset_requested', 'password_reset_completed', 'session_revoked', 'all_other_sessions_revoked', 'reseller_force_logout', 'funding_request_created', 'funding_request_cancelled', 'payment_pending', 'payment_confirmed', 'payment_failed', 'wallet_funded_from_payment']),
   "summary": zod.string(),
   "actorType": zod.enum(['customer', 'subscriber_owner', 'system']),
   "actorId": zod.string().uuid().nullable(),
   "actorDisplay": zod.string(),
-  "referenceType": zod.enum(['customer_account', 'service_order', 'wallet_ledger_entry']),
+  "referenceType": zod.enum(['customer_account', 'service_order', 'wallet_ledger_entry', 'funding_request', 'payment_transaction']),
   "referenceId": zod.string().uuid(),
   "referenceLabel": zod.string().nullable(),
   "createdAt": zod.coerce.date(),

@@ -3,13 +3,15 @@ import { z } from '@workspace/api-zod';
 import { HttpError } from '../lib/auth';
 import { transaction } from '../lib/platform';
 import { customerContext, customerCsrf } from '../lib/customer-auth/service';
-import { financialSummary, statement } from '../lib/client-finance/wallet';
+import { financialSummary, statement, lockClient } from '../lib/client-finance/wallet';
 import { listServices, serviceRow, serviceView } from '../lib/client-finance/catalog';
 import { displayCurrency } from '../lib/client-finance/wallet';
 import { listOrders, orderRow, orderView, orderSummary, quoteService, purchaseService, InsufficientBalance } from '../lib/client-finance/orders';
 import { effectiveCustomerProfile } from '../lib/customer-auth/profile';
 import { customerAnnouncements } from '../lib/customer-auth/announcements';
 import {customerSecurity,changePassword,revokeSession} from '../lib/customer-auth/security';
+import {listFunding,fundingRow,fundingView,createFunding,cancelFunding} from '../lib/payments/funding';
+import {eligibleGateways,quoteFunding} from '../lib/payments/quote';
 const router=Router({mergeParams:true}),uuid=z.string().uuid();
 router.use(json({limit:'64kb'}));
 router.use((req,_res,next)=>{
@@ -21,6 +23,28 @@ router.use((req,_res,next)=>{
 const identity=(req:Parameters<typeof customerContext>[0])=>{
   const {tenant,customer}=customerContext(req);return {sub:tenant.id,id:customer!.id};
 };
+router.get('/funding/gateways',async(req,res)=>{
+  const {sub,id}=identity(req);res.json(await transaction(db=>eligibleGateways(sub,id,db)));
+});
+router.post('/funding/quote',async(req,res)=>{
+  const {sub,id}=identity(req);res.json(await transaction(async db=>{
+    await lockClient(sub,id,db,true);const {input:_input,snapshot:_snapshot,...quote}=await quoteFunding(sub,id,req.body,db);return quote;
+  }));
+});
+router.get('/funding',async(req,res)=>{
+  const {sub,id}=identity(req);res.json(await transaction(db=>listFunding(sub,db,id,req.query.page??'1')));
+});
+router.post('/funding',async(req,res)=>{
+  const {sub,id}=identity(req);res.status(201).json(await transaction(db=>createFunding(sub,id,req.body,db)));
+});
+router.get('/funding/:id',async(req,res)=>{
+  const {sub,id}=identity(req),requestId=uuid.parse(req.params.id);
+  res.json(await transaction(async db=>fundingView(await fundingRow(sub,requestId,db,id),db)));
+});
+router.post('/funding/:id/cancel',async(req,res)=>{
+  const {sub,id}=identity(req),requestId=uuid.parse(req.params.id);z.object({}).strict().parse(req.body);
+  res.json(await transaction(db=>cancelFunding(sub,id,requestId,db)));
+});
 router.get('/',async(req,res)=>{
   const {sub,id}=identity(req),{customer,tenant}=customerContext(req);
   res.json(await transaction(async db=>({
