@@ -127,7 +127,7 @@ export default function ExternalProvidersPage() {
   const [form, setForm] = useState<ProviderConnection | 'new' | null>(null);
   const [pricing, setPricing] = useState<ProviderConnection | null>(null), [hist, setHist] = useState<ProviderConnection | null>(null), [cat, setCat] = useState<ProviderConnection | null>(null);
   const [off, setOff] = useState<ProviderConnection | null>(null), [err, setErr] = useState('');
-  const d = query.data, ready = d?.storageReady === true;
+  const d = query.data, ready = query.isSuccess && !query.isFetching && d?.storageReady === true;
   const run = (p: ProviderConnection, kind: 'TEST' | 'SYNC') => { setErr(''); startJob.mutate({ id: p.id, data: { kind } }, { onError: e => setErr(errorMessage(e)) }); };
   const toggle = (p: ProviderConnection) => update.mutateAsync({ id: p.id, data: { name: p.name, protocol: p.protocol as ProviderInput['protocol'], baseUrl: p.baseUrl, enabled: !p.enabled, currency: p.currency } })
     .then(() => true, e => { setErr(errorMessage(e)); return false; });
@@ -138,7 +138,10 @@ export default function ExternalProvidersPage() {
           <p className="text-[12.5px] text-[hsl(var(--text-secondary))]">External providers: connect, sync catalogs, price and import services.</p></div>
         <Btn v="brand" onClick={() => setForm('new')} disabled={!ready} data-testid="button-add-provider">Add provider</Btn>
       </div>
-      {d && !ready && <div className="mb-3 rounded-md border border-[hsl(var(--warn)/.4)] bg-[hsl(var(--warn)/.12)] p-2.5 text-[12.5px]" role="alert" data-testid="warning-storage">Provider storage is not ready. Operations are disabled until it is available.</div>}
+      {d?.storageReady === false && <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[hsl(var(--warn)/.4)] bg-[hsl(var(--warn)/.12)] p-2.5 text-[12.5px]" role="alert" data-testid="warning-storage">
+        <span>Provider encryption is not ready. BHRU_PROVIDER_ENCRYPTION_KEY_V1 must be configured as a valid 32-byte Base64 key in the running API. Operations remain disabled until the check passes.</span>
+        <Btn sm disabled={query.isFetching} onClick={() => void query.refetch()} data-testid="button-retry-provider-readiness">{query.isFetching ? 'Checking…' : 'Check again'}</Btn>
+      </div>}
       {err && <div className="mb-3 rounded-md border border-[hsl(var(--danger)/.4)] bg-[hsl(var(--danger)/.12)] p-2.5 text-[12.5px]" role="alert" data-testid="text-action-error">{err}</div>}
       <div className="sl-surface overflow-x-auto scroll-thin">
         {query.isLoading ? <div className="space-y-2 p-3">{[0, 1, 2].map(i => <div key={i} className="h-9 animate-pulse rounded bg-[hsl(var(--muted))]" />)}</div>

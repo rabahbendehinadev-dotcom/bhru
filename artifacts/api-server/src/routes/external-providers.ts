@@ -4,6 +4,7 @@ import {subscriberContext} from '../lib/commerce/data';
 import {transaction,audit} from '../lib/platform';
 import {HttpError,rateLimit} from '../lib/auth';
 import {providerStorageReady} from '../lib/providers/credentials';
+import {assertProviderSchemaReady} from '../lib/providers/schema-ready';
 import {providerInput,inputCredentials,configureProvider,providerRow,providerView,policyInput,validatePolicyGroups} from '../lib/providers/connections';
 import {providerProtocols,providerAdapter} from '../lib/providers/adapter';
 import {providerUrl,ProviderError} from '../lib/providers/transport';
@@ -14,10 +15,13 @@ const router=Router(),uuid=z.string().uuid();
 router.use('/external-providers',(_req,res,next)=>{res.set('Cache-Control','private, no-store');next();});
 router.get('/external-providers',async(req,res)=>{
   const owner=subscriberContext(req);
-  res.json(await transaction(async db=>({data:(await db.query(`SELECT p.*,
+  res.json(await transaction(async db=>{
+    await assertProviderSchemaReady(db);
+    return {data:(await db.query(`SELECT p.*,
     (SELECT count(*)::int FROM external_provider_catalog c WHERE c.subscriber_id=p.subscriber_id AND c.provider_id=p.id AND NOT c.missing) service_count
     FROM external_providers p WHERE p.subscriber_id=$1 ORDER BY p.created_at DESC LIMIT 100`,[owner.subscriber_id])).rows.map(providerView),
-    protocols:providerProtocols,storageReady:providerStorageReady()})));
+    protocols:providerProtocols,storageReady:providerStorageReady()};
+  }));
 });
 router.post('/external-providers/test',async(req,res)=>{
   const owner=subscriberContext(req);await rateLimit(`provider-draft:${owner.subscriber_id}`,20);

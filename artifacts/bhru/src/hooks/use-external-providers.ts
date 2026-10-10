@@ -26,7 +26,10 @@ export function useProviders() {
   const g = useGate(), qc = useQueryClient();
   const query = useListExternalProviders({ request: subReq(), query: {
     queryKey: [...getListExternalProvidersQueryKey(), ...g.scope], enabled: g.on,
-    staleTime: FRESH, refetchOnMount: true, refetchOnWindowFocus: true, retry: false,
+    staleTime: FRESH, refetchOnMount: 'always', refetchOnWindowFocus: true, refetchOnReconnect: true, retry: false,
+    // A valid but unavailable response otherwise stays cached after the backend
+    // picks up a newly configured key. Poll only this local read, never providers.
+    refetchInterval: q => q.state.data?.storageReady === false ? 5000 : false,
   } });
   const refresh = () => qc.invalidateQueries({ queryKey: getListExternalProvidersQueryKey() });
   const create = useCreateExternalProvider({ request: subReq(), mutation: { gcTime: 0, onSuccess: refresh } });
