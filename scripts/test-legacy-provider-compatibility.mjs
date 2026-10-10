@@ -13,7 +13,9 @@ try{
   const entry=resolve('artifacts/api-server/src/lib/providers'),mock=resolve('scripts/lib/provider-transport-mock.mjs');
   await build({
     stdin:{contents:`export {providerAdapter} from '${entry}/adapter.ts';
-      export {safeLegacyRead,safeRead,providerUrl} from '${entry}/transport.ts';
+      export {safeLegacyRead,safeRead,providerUrl,ProviderError} from '${entry}/transport.ts';
+      export {runProviderJob} from '${entry}/worker.ts';
+      export {TestExternalProviderDraftResponse} from '${resolve('lib/api-zod/src/generated/api.ts')}';
       export {state} from '${mock}';
       export {providerFailureMessage,providerSavedFailureMessage} from '${resolve('artifacts/bhru/src/lib/provider-diagnostics.ts')}';`,
       resolveDir:process.cwd(),loader:'ts'},
@@ -23,6 +25,19 @@ try{
       b.onResolve({filter:/^node:(https|dns\/promises)$/},()=>({path:mock}));
       b.onLoad({filter:/\/lib\/auth\.ts$/},()=>({
         contents:'export class HttpError extends Error {constructor(status,message){super(message);this.status=status}}',loader:'ts'}));
+      b.onLoad({filter:/\/lib\/logger\.ts$/},()=>({
+        contents:`export {logger} from '${mock}';`,loader:'ts'}));
+      b.onLoad({filter:/\/lib\/platform\.ts$/},()=>({
+        contents:`import {state} from '${mock}';
+          export const transaction=async fn=>fn({query:async(sql,values)=>{
+            state.queries.push({sql,values});return {rowCount:1,rows:[]};}});`,loader:'ts'}));
+      b.onLoad({filter:/\/providers\/connections\.ts$/},()=>({
+        contents:`import {state} from '${mock}';
+          export const providerRow=async(sub,id)=>{
+            if(sub!==state.workerProvider.subscriber_id||id!==state.workerProvider.id)throw Error('Wrong tenant');
+            return state.workerProvider;};`,loader:'ts'}));
+      b.onLoad({filter:/\/providers\/credentials\.ts$/},()=>({
+        contents:`import {state} from '${mock}'; export const decryptToken=()=>state.workerCredentials;`,loader:'ts'}));
     }}],
   });
   const m=await import('file://'+join(out,'offline.mjs'));
@@ -31,15 +46,21 @@ try{
   const credentials=JSON.stringify({username,apiAccessKey:key});
   const valid='{"SUCCESS":[{"AccoutInfo":{"credit":123.123456789012,"currency":"USD"}}],"apiversion":"6.1"}';
   const reset=()=>Object.assign(m.state,{status:200,body:valid,contentType:'application/json; charset=utf-8',
-    encoding:'identity',networkError:false,hang:false,requireJsonFormat:false,records:[{address:'8.8.8.8',family:4}]});
-  const rejected=async(reason,category='INVALID_RESPONSE')=>{
+    encoding:'identity',networkError:false,networkErrorCode:null,hang:false,requireJsonFormat:false,logs:[],queries:[],
+    workerProvider:null,workerCredentials:credentials,records:[{address:'8.8.8.8',family:4}]});
+  const rejected=async(reason,category='INVALID_RESPONSE',status=undefined)=>{
     let error;
     try{await a.account(endpoint,credentials)}catch(e){error=e}
     assert(error,'Expected a rejected fixture');
     assert.equal(error.category,category);assert.equal(error.diagnosticCode,reason);
-    const exposed=JSON.stringify(error)+' '+error.message+' '+m.providerFailureMessage(category,reason);
-    for(const sensitive of [username,key,'secret-upstream-value','someone@private.example','198.51.100.99'])
+    assert.equal(error.upstreamHttpStatus,status);
+    const exposed=JSON.stringify(error)+' '+error.message+' '+error.safeError+' '+
+      m.providerFailureMessage(category,reason,error.upstreamHttpStatus)+' '+
+      m.providerSavedFailureMessage(error.safeError)+' '+JSON.stringify(m.state.logs);
+    for(const sensitive of [username,key,'secret-upstream-value','someone@private.example','198.51.100.99',
+      'fixture-token','synthetic-rest-token','postgres://private-db:private-password@private-host/private-db'])
       assert(!exposed.includes(sensitive),'Confidential fixture value was exposed');
+    return error;
   };
   reset();
   await check('Legacy account accepts official v6.1 JSON and preserves exact numeric money',async()=>{
@@ -108,16 +129,114 @@ try{
     });
   }
   for(const [status,category] of [[302,'INVALID_RESPONSE'],[400,'INVALID_RESPONSE'],[401,'AUTHENTICATION_FAILED'],
-    [403,'AUTHENTICATION_FAILED'],[429,'UNREACHABLE'],[500,'UNREACHABLE']]){
+    [402,'AUTHENTICATION_FAILED'],[403,'AUTHENTICATION_FAILED'],[404,'INVALID_RESPONSE'],
+    [405,'INVALID_RESPONSE'],[429,'UNREACHABLE'],[500,'UNREACHABLE'],[502,'UNREACHABLE'],[503,'UNREACHABLE']]){
     await check(`HTTP ${status} yields HTTP_FAILURE without guessing an IP/credential cause`,async()=>{
-      reset();m.state.status=status;await rejected('HTTP_FAILURE',category);
+      reset();m.state.status=status;
+      // Must not parse/log any error body, even HTML containing credentials.
+      m.state.contentType='text/html';m.state.body=[
+        credentials,'secret-upstream-value','someone@private.example','198.51.100.99',
+        'authorization: fixture-token','Bearer synthetic-rest-token',
+        'postgres://private-db:private-password@private-host/private-db',
+      ].join(' ');
+      const error=await rejected('HTTP_FAILURE',category,status);
+      assert.equal(error.safeError,`${category}:HTTP_FAILURE:${status}`);
+      assert.equal(error.retryable,status===429||status>=500);
+      const result={health:error.category,diagnosticCode:error.diagnosticCode,
+        upstreamHttpStatus:error.upstreamHttpStatus,currency:null,balance:null};
+      assert.deepEqual(m.TestExternalProviderDraftResponse.parse(result),result);
+      assert.match(m.providerFailureMessage(category,'HTTP_FAILURE',status),new RegExp(`HTTP ${status}`));
+      assert.match(m.providerSavedFailureMessage(error.safeError),new RegExp(`HTTP ${status}`));
+      assert.deepEqual(m.state.logs,[{fields:{providerProtocol:'DHRU_FUSION_LEGACY_V61',
+        diagnosticCode:'HTTP_FAILURE',upstreamHttpStatus:status},
+        message:'Legacy provider returned an unsuccessful HTTP response'}]);
+      assert.equal(new URLSearchParams(m.state.captured.body).get('requestformat'),'JSON');
     });
   }
+  await check('Catalog HTTP failure preserves the status and safe sync-history encoding',async()=>{
+    reset();m.state.status=405;
+    await assert.rejects(a.catalog(endpoint,credentials),e=>
+      e.category==='INVALID_RESPONSE'&&e.diagnosticCode==='HTTP_FAILURE'&&
+      e.upstreamHttpStatus===405&&e.safeError==='INVALID_RESPONSE:HTTP_FAILURE:405');
+  });
+  await check('Catalog-list failure after successful accountinfo retains its own HTTP status',async()=>{
+    reset();
+    const actions=[];
+    await assert.rejects(a.catalog(endpoint,credentials,async(base,token,action)=>{
+      actions.push(action);
+      if(action==='imeiservicelist')m.state.status=404;
+      return m.safeLegacyRead(base,token,action);
+    }),e=>e.diagnosticCode==='HTTP_FAILURE'&&e.upstreamHttpStatus===404&&
+      e.safeError==='INVALID_RESPONSE:HTTP_FAILURE:404');
+    assert.deepEqual(actions,['accountinfo','imeiservicelist']);
+    assert.equal(new URLSearchParams(m.state.captured.body).get('action'),'imeiservicelist');
+  });
+  await check('Actual TEST/SYNC worker persists status to both error fields using only mocked transactions',async()=>{
+    for(const kind of ['TEST','SYNC']){
+      for(const [status,category] of [[401,'AUTHENTICATION_FAILED'],[403,'AUTHENTICATION_FAILED'],
+        [404,'INVALID_RESPONSE'],[405,'INVALID_RESPONSE'],[429,'UNREACHABLE'],[500,'UNREACHABLE']]){
+        reset();m.state.status=status;
+        m.state.workerProvider={id:'synthetic-provider',subscriber_id:'synthetic-subscriber',
+          enabled:true,config_version:1,protocol:'DHRU_FUSION_LEGACY_V61',base_url:endpoint,
+          credentials_encrypted:'synthetic-not-an-encrypted-credential',currency:null};
+        await m.runProviderJob({id:'synthetic-job',subscriber_id:'synthetic-subscriber',
+          provider_id:'synthetic-provider',config_version:1,kind,attempts:4,lease_token:'synthetic-lease'});
+        assert.equal(m.state.queries.length,2);
+        const [job,provider]=m.state.queries;
+        assert.match(job.sql,/UPDATE external_provider_jobs/);
+        assert.equal(job.values[2],'FAILED');
+        assert.equal(job.values[3],`${category}:HTTP_FAILURE:${status}`);
+        assert.match(provider.sql,/UPDATE external_providers/);
+        assert.deepEqual(provider.values,['synthetic-subscriber','synthetic-provider',category,
+          `${category}:HTTP_FAILURE:${status}`,1]);
+        assert.match(m.providerSavedFailureMessage(provider.values[3]),new RegExp(`HTTP ${status}`));
+        for(const secret of [username,key,credentials,'synthetic-not-an-encrypted-credential']){
+          assert(!JSON.stringify({queries:m.state.queries,logs:m.state.logs}).includes(secret));
+        }
+      }
+    }
+  });
+  await check('Malformed or absent statuses cannot inject text into diagnostic/log output',async()=>{
+    for(const status of [undefined,null,0,99,600,400.5,NaN,'403 secret-upstream-value']){
+      const e=new m.ProviderError('INVALID_RESPONSE',false,'HTTP_FAILURE',status);
+      assert.equal(e.upstreamHttpStatus,undefined);
+      assert.equal(e.safeError,'INVALID_RESPONSE:HTTP_FAILURE');
+      assert(!m.providerFailureMessage(e.category,e.diagnosticCode,status).includes('secret-upstream-value'));
+    }
+    for(const suffix of ['403 secret-upstream-value','403.5','600','0','NaN']){
+      assert(!m.providerSavedFailureMessage(`INVALID_RESPONSE:HTTP_FAILURE:${suffix}`).includes('secret-upstream-value'));
+      assert(!m.providerSavedFailureMessage(`INVALID_RESPONSE:HTTP_FAILURE:${suffix}`).includes(`HTTP ${suffix}`));
+    }
+    reset();m.state.status=undefined;await rejected('HTTP_FAILURE');
+    assert.deepEqual(m.state.logs,[]);
+    assert.equal(new m.ProviderError('INVALID_RESPONSE',false,'MALFORMED_JSON',403).upstreamHttpStatus,undefined);
+  });
   await check('Compression rejection remains fail-closed',async()=>{
     reset();m.state.encoding='gzip';await rejected('UNSUPPORTED_CONTENT_ENCODING');
   });
   await check('Network failures retain category and retryability with a safe diagnostic',async()=>{
     reset();m.state.networkError=true;await rejected('NETWORK_FAILURE','UNREACHABLE');
+    assert.deepEqual(m.state.logs,[]);
+  });
+  await check('TLS certificate failure is a network diagnostic, never a guessed HTTP status',async()=>{
+    reset();m.state.networkError=true;m.state.networkErrorCode='ERR_TLS_CERT_ALTNAME_INVALID';
+    await rejected('NETWORK_FAILURE','UNREACHABLE');assert.deepEqual(m.state.logs,[]);
+  });
+  await check('DNS security failure has no upstream HTTP status',async()=>{
+    reset();m.state.records=[{address:'127.0.0.1',family:4}];
+    await rejected('NETWORK_FAILURE','UNREACHABLE');assert.deepEqual(m.state.logs,[]);
+  });
+  await check('Response timeout has no upstream HTTP status or sensitive exception text',async()=>{
+    reset();m.state.hang=true;
+    const original=globalThis.setTimeout;
+    // Only shorten the actual transport's 20s deadline; no network is performed.
+    globalThis.setTimeout=(fn,delay,...args)=>{
+      const timer=original(fn,delay===20000?1:delay,...args);
+      if(delay===20000)timer.unref=()=>timer;
+      return timer;
+    };
+    try{await rejected('NETWORK_FAILURE','UNREACHABLE');assert.deepEqual(m.state.logs,[]);}
+    finally{globalThis.setTimeout=original;}
   });
   await check('Oversized body is rejected without leaking data',async()=>{
     reset();m.state.body=' '.repeat(8*1024*1024+1);await rejected('RESPONSE_TOO_LARGE');
@@ -144,7 +263,9 @@ try{
     for(const status of [302,403,500]){
       reset();m.state.status=status;
       await assert.rejects(m.safeRead(endpoint+'/api/reseller/v1','synthetic-rest-token','account'),
-        e=>e.category===({302:'INVALID_RESPONSE',403:'AUTH_FAILED',500:'UNREACHABLE'})[status]&&e.diagnosticCode===undefined);
+        e=>e.category===({302:'INVALID_RESPONSE',403:'AUTH_FAILED',500:'UNREACHABLE'})[status]&&
+          e.diagnosticCode===undefined&&e.upstreamHttpStatus===undefined&&e.safeError===e.category);
+      assert.deepEqual(m.state.logs,[]);
     }
     reset();m.state.contentType='text/html';
     await assert.rejects(m.safeRead(endpoint+'/api/reseller/v1','synthetic-rest-token','account'),

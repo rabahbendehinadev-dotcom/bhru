@@ -30,7 +30,7 @@ function ProviderForm({ initial, protocols, onClose }: { initial: ProviderConnec
   const valid = name.trim().length > 0 && (legacy ? /^https:\/\/[^?#]+$/.test(baseUrl.trim()) : /^https:\/\/.+\/api\/reseller\/v1\/?$/.test(baseUrl.trim())) && (!currency.trim() || /^[A-Za-z]{3}$/.test(currency.trim())) && credentialValid;
   const test = () => { setErr(''); setMsg(''); testDraft.mutate({ data: input() }, {
     onSuccess: r => { if (r.health === 'CONNECTED') setMsg(`Account responded: ${r.health}, currency: ${r.currency ?? 'Not supplied'}, balance: ${r.balance ?? 'Not supplied'}`);
-      else setErr(`Connection test: ${providerFailureMessage(r.health,r.diagnosticCode)}`); }, onError: e => setErr(errorMessage(e)) }); };
+      else setErr(`Connection test: ${providerFailureMessage(r.health,r.diagnosticCode,r.upstreamHttpStatus)}`); }, onError: e => setErr(errorMessage(e)) }); };
   const save = () => { setErr(''); const done = { onSuccess: () => close(), onError: (e: unknown) => setErr(errorMessage(e)) };
     if (initial) update.mutate({ id: initial.id, data: input() }, done); else create.mutate({ data: input() }, done); };
   const pending = create.isPending || update.isPending;

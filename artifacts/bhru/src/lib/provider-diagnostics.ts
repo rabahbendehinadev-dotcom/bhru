@@ -13,8 +13,12 @@ const messages:Record<string,string>={
   RESPONSE_TOO_LARGE:'Provider response exceeded the safe size limit.',
   NETWORK_FAILURE:'Provider network request could not be completed. Check DNS, TLS and availability.',
 };
-export function providerFailureMessage(category:string,diagnostic?:string|null){
+export function providerFailureMessage(category:string,diagnostic?:string|null,upstreamHttpStatus?:number|null){
   const code=diagnostic??category.split(':')[1];
+  const savedStatus=category.split(':')[2];
+  const status=upstreamHttpStatus??(savedStatus&&/^[1-5][0-9]{2}$/.test(savedStatus)?Number(savedStatus):undefined);
+  if(code==='HTTP_FAILURE'&&typeof status==='number'&&Number.isInteger(status)&&status>=100&&status<=599)
+    return `Provider returned an unsuccessful upstream HTTP response (HTTP ${status}). Check endpoint, access permissions and availability.`;
   if(code&&Object.hasOwn(messages,code))return messages[code]!;
   const health=category.split(':')[0];
   if(health==='AUTHENTICATION_FAILED'||health==='AUTH_FAILED')return 'Provider access was rejected. Verify credentials and upstream access permissions.';

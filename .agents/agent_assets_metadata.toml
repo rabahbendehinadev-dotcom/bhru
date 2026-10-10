@@ -56,3 +56,17 @@ mtime_ms = 1791643121786
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/b85b1fbc-c480-4098-b3b4-74962114428f/57abac63-beca-4094-8ea4-113ebbed58f1"
 storage_version_token = "1791643146658625"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "_CqRmT50c6WFZJOe00ERd"
+uri = "file://BHRU_LEGACY_HTTP_DIAGNOSTICS.md"
+type = "text"
+title = "Legacy Provider HTTP Diagnostics Report"
+description = "Exact changed files, upstream status handling, 54 offline checks, logging safeguards and remaining limitations."
+logical_id = "0c3de55d-3a57-46b0-9356-cda18b8b2b28"
+content_hash = "sha256:9f9c785b4cd0ee63f2b78ee98d047b40c589f7b4c50d190eadd2d98d646426f7"
+size = 5228
+mtime_ms = 1791648033998
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/0c3de55d-3a57-46b0-9356-cda18b8b2b28/f88b2cc5-ca43-4d4e-9ed3-d122cd534296"
+storage_version_token = "1791648092746763"
+content_type = "text/markdown"

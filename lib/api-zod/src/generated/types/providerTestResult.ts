@@ -13,6 +13,13 @@ export interface ProviderTestResult {
      * @nullable
      */
   diagnosticCode?: string | null;
+  /**
+     * Optional numeric upstream status for Legacy HTTP_FAILURE only; absent or null for other failures. Not the incoming BHRU response status.
+     * @minimum 100
+     * @maximum 599
+     * @nullable
+     */
+  upstreamHttpStatus?: number | null;
   /** @nullable */
   currency: string | null;
   /** @nullable */

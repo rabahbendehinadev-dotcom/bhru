@@ -2,9 +2,21 @@ import {BlockList,isIP} from 'node:net';
 import {lookup} from 'node:dns/promises';
 import {request} from 'node:https';
 import {HttpError} from '../auth';
+import {logger} from '../logger';
 import {legacyMimeDiagnostic,type LegacyDiagnosticCode} from './legacy-diagnostics';
 export class ProviderError extends Error{
-  constructor(public category:'AUTH_FAILED'|'AUTHENTICATION_FAILED'|'UNSUPPORTED_PROVIDER'|'UNREACHABLE'|'INVALID_RESPONSE'|'CONFIGURATION_CHANGED',public retryable=false,public diagnosticCode?:LegacyDiagnosticCode){super(category);}
+  readonly upstreamHttpStatus?:number;
+  constructor(public category:'AUTH_FAILED'|'AUTHENTICATION_FAILED'|'UNSUPPORTED_PROVIDER'|'UNREACHABLE'|'INVALID_RESPONSE'|'CONFIGURATION_CHANGED',public retryable=false,public diagnosticCode?:LegacyDiagnosticCode,upstreamHttpStatus?:number){
+    super(category);
+    // Only a numeric HTTP status may leave the transport; never upstream text.
+    if(diagnosticCode==='HTTP_FAILURE'&&typeof upstreamHttpStatus==='number'&&
+      Number.isInteger(upstreamHttpStatus)&&upstreamHttpStatus>=100&&upstreamHttpStatus<=599)
+      this.upstreamHttpStatus=upstreamHttpStatus;
+  }
+  get safeError(){
+    if(!this.diagnosticCode)return this.category;
+    return `${this.category}:${this.diagnosticCode}${this.upstreamHttpStatus===undefined?'':`:${this.upstreamHttpStatus}`}`;
+  }
 }
 const blocked=new BlockList();
 for(const [ip,prefix] of [
@@ -72,7 +84,7 @@ export async function safeLegacyRead(base:string,serialized:string,action:'accou
   try{return await sendRead(new URL(providerUrl(base,'DHRU_FUSION_LEGACY_V61')),'POST',
     {'Content-Type':'application/x-www-form-urlencoded','Content-Length':String(Buffer.byteLength(body))},body,true);}
   catch(e){
-    if(e instanceof ProviderError&&e.category==='AUTH_FAILED')throw new ProviderError('AUTHENTICATION_FAILED',e.retryable,e.diagnosticCode);
+    if(e instanceof ProviderError&&e.category==='AUTH_FAILED')throw new ProviderError('AUTHENTICATION_FAILED',e.retryable,e.diagnosticCode,e.upstreamHttpStatus);
     if(e instanceof ProviderError&&e.category==='UNREACHABLE'&&!e.diagnosticCode)
       throw new ProviderError(e.category,e.retryable,'NETWORK_FAILURE');
     throw e;
@@ -97,8 +109,13 @@ async function sendRead(url:URL,method:'GET'|'POST',headers:Record<string,string
       headers:{...headers,Accept:'application/json','Accept-Encoding':'identity'},
     },res=>{
       const status=res.statusCode??0;
-      if(status===401||status===402||status===403){res.destroy();done(new ProviderError('AUTH_FAILED',false,legacy?'HTTP_FAILURE':undefined));return;}
-      if(status<200||status>=300){res.destroy();done(new ProviderError(status>=500||status===429?'UNREACHABLE':'INVALID_RESPONSE',status>=500||status===429,legacy?'HTTP_FAILURE':undefined));return;}
+      if(legacy&&(status<200||status>=300)&&Number.isInteger(status)&&status>=100&&status<=599){
+        // Explicit allowlist of fields. No URL, headers, request, response or error object.
+        logger.warn({providerProtocol:'DHRU_FUSION_LEGACY_V61',diagnosticCode:'HTTP_FAILURE',upstreamHttpStatus:status},
+          'Legacy provider returned an unsuccessful HTTP response');
+      }
+      if(status===401||status===402||status===403){res.destroy();done(new ProviderError('AUTH_FAILED',false,legacy?'HTTP_FAILURE':undefined,legacy?status:undefined));return;}
+      if(status<200||status>=300){res.destroy();done(new ProviderError(status>=500||status===429?'UNREACHABLE':'INVALID_RESPONSE',status>=500||status===429,legacy?'HTTP_FAILURE':undefined,legacy?status:undefined));return;}
       const contentType=res.headers['content-type']??'';
       if(!/^application\/(?:[a-z0-9.+-]*\+)?json(?:;|$)/i.test(contentType)){res.destroy();done(new ProviderError('INVALID_RESPONSE',false,legacy?legacyMimeDiagnostic(contentType):undefined));return;}
       if(res.headers['content-encoding']&&res.headers['content-encoding']!=='identity'){res.destroy();done(new ProviderError('INVALID_RESPONSE',false,legacy?'UNSUPPORTED_CONTENT_ENCODING':undefined));return;}

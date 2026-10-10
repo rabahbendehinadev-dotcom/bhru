@@ -117,9 +117,15 @@ export const TestExternalProviderDraftBody = zod.object({
   "enabled": zod.boolean()
 })
 
+export const testExternalProviderDraftResponseUpstreamHttpStatusMin = 100;
+export const testExternalProviderDraftResponseUpstreamHttpStatusMax = 599;
+
+
+
 export const TestExternalProviderDraftResponse = zod.object({
   "health": zod.string(),
   "diagnosticCode": zod.string().nullish().describe('Optional fixed, redacted Legacy diagnostic code. Never contains upstream text or credentials.'),
+  "upstreamHttpStatus": zod.number().int().min(testExternalProviderDraftResponseUpstreamHttpStatusMin).max(testExternalProviderDraftResponseUpstreamHttpStatusMax).nullish().describe('Optional numeric upstream status for Legacy HTTP_FAILURE only; absent or null for other failures. Not the incoming BHRU response status.'),
   "currency": zod.string().nullable(),
   "balance": zod.string().nullable()
 })

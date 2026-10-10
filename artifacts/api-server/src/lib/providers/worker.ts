@@ -123,7 +123,7 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
     });
   }catch(error){
     const category=error instanceof ProviderError?error.category:error instanceof HttpError&&error.status===503?'CREDENTIALS_UNAVAILABLE':'INVALID_RESPONSE';
-    const safeError=error instanceof ProviderError&&error.diagnosticCode?`${category}:${error.diagnosticCode}`:category;
+    const safeError=error instanceof ProviderError?error.safeError:category;
     const retry=error instanceof ProviderError&&error.retryable&&j.attempts<4;
     await transaction(async db=>{
       // Same lock order as configuration and successful finalization.
