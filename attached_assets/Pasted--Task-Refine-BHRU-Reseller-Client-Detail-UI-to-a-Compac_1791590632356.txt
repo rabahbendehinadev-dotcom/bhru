@@ -1,0 +1,40 @@
+**Task: Refine BHRU Reseller Client Detail UI to a Compact Professional Density**
+
+We have completed the new Reseller Client Detail layout. The functional structure is good, but the current visual density feels too large compared with DHRU Fusion's compact administrative interface.
+
+**Scope: UI/CSS only, restricted to the Reseller Client Detail page and its directly related components.**
+
+### Objectives
+
+1. Reduce typography size and excessive vertical spacing without making the interface difficult to read.
+2. Use approximately 12–13px for metadata, table values, navigation labels and secondary text; 14–15px for section headings. Preserve an appropriately prominent but more compact wallet balance.
+3. Make the left client profile card narrower and denser where the existing responsive layout allows it.
+4. Reduce vertical padding between sidebar navigation items.
+5. Make Personal Info rows compact, with smaller gaps and reduced row heights.
+6. Reduce Credit Info card height and excess whitespace while preserving the existing wallet figures and labels.
+7. Convert Quick Actions into compact, consistently sized controls with appropriate wrapping on smaller screens.
+8. Keep the existing BHRU design language, orange accents, visual hierarchy, accessibility and responsive behavior.
+9. Avoid applying global CSS changes to unrelated pages.
+10. Do not use CSS `zoom`, `transform: scale()`, or browser zoom tricks.
+
+### Functional preservation
+
+Do not change routing, authentication, API calls, wallet calculations, pricing, service access, activity, security, notes, customer data, database schemas, migrations, or business logic.
+
+Keep all existing client detail tabs and actions fully functional.
+
+### Verification
+
+- Inspect existing components and styles before editing.
+- Make minimal targeted changes.
+- Run focused TypeScript/build checks and report results.
+- Summarize changed files and the visual changes.
+- Do not perform broad E2E/browser test suites.
+
+**STRICT SAFETY RULES**
+
+Work in Replit Preview only.
+
+Do not commit, push, deploy, access VPS/Dokploy, change production, or modify production data.
+
+Stop after implementation and provide a concise completion report.
