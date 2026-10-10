@@ -1,15 +1,16 @@
 import {createHash} from 'node:crypto';
 import {parseUsd} from '../commerce/currency-money';
 import {ProviderError,safeRead} from './transport';
-export type ReadTransport=(base:string,token:string,path:'account'|'products')=>Promise<string>;
-export type ProviderProtocol='fusion_rest'|'fusion_legacy'|'simple_listener';
+import {legacyAdapter} from './legacy-adapter';
+export type ReadTransport=(base:string,token:string,path:'account'|'products'|'accountinfo'|'imeiservicelist')=>Promise<string>;
+export type ProviderProtocol='fusion_rest'|'DHRU_FUSION_LEGACY_V61'|'simple_listener';
 export interface CatalogItem{
   upstreamId:string;name:string;serviceType:string|null;categoryId:string|null;categoryName:string|null;
   costUnits:string;currency:string;estimatedTime:string;requirements:Record<string,unknown>[];
   availability:boolean|null;reviewReasons:string[];snapshot:Record<string,unknown>;hash:string;
 }
 export interface ReadOnlyAdapter{
-  account(base:string,token:string,read?:ReadTransport):Promise<{currency:string;balance:string}>;
+  account(base:string,token:string,read?:ReadTransport):Promise<{currency:string|null;balance:string|null}>;
   catalog(base:string,token:string,read?:ReadTransport):Promise<{currency:string;items:CatalogItem[]}>;
 }
 /** Quote JSON numeric tokens before parsing, never round upstream money through Number. */
@@ -27,16 +28,16 @@ export function exactJson(raw:string):unknown{
   }
   try{return JSON.parse(out);}catch{throw new ProviderError('INVALID_RESPONSE');}
 }
-function object(value:unknown):Record<string,any>{
+export function object(value:unknown):Record<string,any>{
   if(!value||typeof value!=='object'||Array.isArray(value))throw new ProviderError('INVALID_RESPONSE');
   return value as Record<string,any>;
 }
-function text(value:unknown,max:number){
+export function text(value:unknown,max:number){
   if(typeof value!=='string'||value.length>max||/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value))throw new ProviderError('INVALID_RESPONSE');
   return value;
 }
-function currency(value:unknown){const c=text(value,3);if(!/^[A-Z]{3}$/.test(c))throw new ProviderError('INVALID_RESPONSE');return c;}
-function decimal(value:unknown){
+export function currency(value:unknown){const c=text(value,3);if(!/^[A-Z]{3}$/.test(c))throw new ProviderError('INVALID_RESPONSE');return c;}
+export function decimal(value:unknown){
   const s=text(value,32);
   try{return {text:s,units:parseUsd(s).toString()};}catch{throw new ProviderError('INVALID_RESPONSE');}
 }
@@ -85,12 +86,12 @@ function fields(raw:unknown){
   return {reasons:[...new Set(reasons)],requirements,source};
 }
 const rest:ReadOnlyAdapter={
-  async account(base,token,read=safeRead){
-    const data=envelope(await read(base,token,'account'));
+  async account(base,token,read){
+    const data=envelope(await (read??safeRead)(base,token,'account'));
     return {currency:currency(data.currency),balance:decimal(data.balance).text};
   },
-  async catalog(base,token,read=safeRead){
-    const data=envelope(await read(base,token,'products')),c=currency(data.currency);
+  async catalog(base,token,read){
+    const data=envelope(await (read??safeRead)(base,token,'products')),c=currency(data.currency);
     const categories=object(data.categories),products=object(data.products),entries=Object.entries(products);
     if(entries.length>20000||Object.keys(categories).length>20000)throw new ProviderError('INVALID_RESPONSE');
     // No paging contract was supplied. Never interpret a paged result as a complete catalog.
@@ -128,10 +129,11 @@ const rest:ReadOnlyAdapter={
 };
 export const providerProtocols=[
   {code:'fusion_rest',name:'DHRU Fusion Pro REST',available:true,reason:null},
-  {code:'fusion_legacy',name:'Legacy DHRU Fusion',available:false,reason:'Not implemented: reference authentication is a stub.'},
+  {code:'DHRU_FUSION_LEGACY_V61',name:'DHRU Fusion Legacy v6.1',available:true,reason:null},
   {code:'simple_listener',name:'Fusion Pro Simple Listener',available:false,reason:'Not implemented: distinct supplier-side protocol.'},
 ] as const;
 export function providerAdapter(protocol:string):ReadOnlyAdapter{
-  if(protocol!=='fusion_rest')throw new ProviderError('INVALID_RESPONSE');
-  return rest;
+  if(protocol==='fusion_rest')return rest;
+  if(protocol==='DHRU_FUSION_LEGACY_V61')return legacyAdapter;
+  throw new ProviderError('UNSUPPORTED_PROVIDER');
 }

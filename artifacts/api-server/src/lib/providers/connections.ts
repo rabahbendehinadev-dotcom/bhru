@@ -5,12 +5,22 @@ import {HttpError} from '../auth';
 import {encryptToken,providerStorageReady} from './credentials';
 import {providerUrl} from './transport';
 import {parseUsd} from '../commerce/currency-money';
-export const providerInput=z.object({
-  name:z.string().trim().min(1).max(100),protocol:z.literal('fusion_rest'),
-  baseUrl:z.string().trim().max(300),enabled:z.boolean(),
-  token:z.string().min(1).max(4096).regex(/^[\x21-\x7e]+$/).optional(),
+const common={
+  name:z.string().trim().min(1).max(100),baseUrl:z.string().trim().max(300),enabled:z.boolean(),
   currency:z.string().regex(/^[A-Z]{3}$/).nullable().optional(),
-}).strict();
+};
+export const providerInput=z.discriminatedUnion('protocol',[
+  z.object({...common,protocol:z.literal('fusion_rest'),
+    token:z.string().min(1).max(4096).regex(/^[\x21-\x7e]+$/).optional()}).strict(),
+  z.object({...common,protocol:z.literal('DHRU_FUSION_LEGACY_V61'),
+    username:z.string().trim().min(1).max(200).regex(/^[^\x00-\x1f\x7f]+$/).optional(),
+    apiAccessKey:z.string().min(1).max(4096).regex(/^[\x21-\x7e]+$/).optional()}).strict(),
+]);
+export function inputCredentials(input:z.infer<typeof providerInput>):string|undefined{
+  if(input.protocol==='fusion_rest')return input.token;
+  if(!!input.username!==!!input.apiAccessKey)throw new HttpError(400,'Replace both Username and API Access Key together.');
+  return input.username&&input.apiAccessKey?JSON.stringify({username:input.username,apiAccessKey:input.apiAccessKey}):undefined;
+}
 export const policyInput=z.object({
   percentage:z.string().regex(/^\d{1,5}(?:\.\d{1,2})?$/),
   fixedUsd:z.string().regex(/^\d{1,10}(?:\.\d{1,12})?$/),
@@ -42,13 +52,16 @@ export function providerView(p:Record<string,any>){
 }
 export async function configureProvider(sub:string,id:string|undefined,raw:unknown,db:PoolClient){
   if(!providerStorageReady())throw new HttpError(503,'Configure BHRU_PROVIDER_ENCRYPTION_KEY_V1 before saving providers.');
-  const input=providerInput.parse(raw),url=providerUrl(input.baseUrl),key=id??randomUUID();
+  const input=providerInput.parse(raw),url=providerUrl(input.baseUrl,input.protocol),key=id??randomUUID();
   const old=id?await providerRow(sub,id,db,true):null;
-  if(!old&&!input.token)throw new HttpError(400,'A Bearer token is required for a new connection.');
-  const encrypted=input.token?encryptToken(sub,key,input.token):old.credentials_encrypted;
+  if(old&&old.protocol!==input.protocol)throw new HttpError(409,'Provider type cannot be changed. Create a separate connection.');
+  const credential=inputCredentials(input);
+  if(!old&&!credential)throw new HttpError(400,input.protocol==='fusion_rest'?
+    'A Bearer token is required for a new connection.':'Username and API Access Key are required for a new Legacy connection.');
+  const encrypted=credential?encryptToken(sub,key,credential):old!.credentials_encrypted;
   const currency=input.currency===undefined?old?.currency??null:input.currency;
   if(old){
-    const changed=!!input.token||url!==old.base_url||currency!==old.currency||input.enabled!==old.enabled;
+    const changed=!!credential||url!==old.base_url||currency!==old.currency||input.enabled!==old.enabled;
     await db.query(`UPDATE external_providers SET name=$3,base_url=$4,credentials_encrypted=$5,currency=$6,enabled=$7,
       health=CASE WHEN NOT $7 THEN 'DISABLED' WHEN $8 THEN 'NOT_TESTED' ELSE health END,
       safe_error=CASE WHEN $8 THEN NULL ELSE safe_error END,

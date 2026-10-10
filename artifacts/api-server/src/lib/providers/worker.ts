@@ -64,7 +64,7 @@ export async function stageCatalog(sub:string,id:string,job:string,items:Catalog
     const old=map.get(item.upstreamId),changes:string[]=[];
     if(!old){counts.new++;changes.push('new');}
     else{
-      for(const [label,key] of [['cost','cost'],['name','name'],['category','cid'],['categories','cids'],['category_name','categoryName'],['fields','fields'],['availability','availability'],['type','type'],['currency','currency'],['time','time'],['review','reviewReasons']] as const){
+      for(const [label,key] of [['cost','cost'],['name','name'],['category','cid'],['categories','cids'],['category_name','categoryName'],['fields','fields'],['availability','availability'],['type','type'],['currency','currency'],['time','time'],['review','reviewReasons'],['metadata','definitionHash'],['description','description']] as const){
         if(hashValue(old.source_snapshot[key]??null)!==hashValue(item.snapshot[key]??null))changes.push(label);
       }
       if(old.missing)changes.push('returned');
@@ -104,15 +104,15 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
     const token=decryptToken(p.subscriber_id,p.id,p.credentials_encrypted),adapter=providerAdapter(p.protocol);
     const account=j.kind==='TEST'?await adapter.account(p.base_url,token,read):null;
     const catalog=j.kind==='SYNC'?await adapter.catalog(p.base_url,token,read):null;
-    const currency=account?.currency??catalog!.currency;
-    if(p.currency&&p.currency!==currency)throw new ProviderError('INVALID_RESPONSE');
+    const currency=account?.currency??catalog?.currency??null;
+    if(p.currency&&currency&&p.currency!==currency)throw new ProviderError('INVALID_RESPONSE');
     await transaction(async db=>{
       const current=await providerRow(p.subscriber_id,p.id,db,true);
       const owned=(await db.query(`SELECT id FROM external_provider_jobs WHERE id=$1 AND lease_token=$2 AND state='RUNNING' AND lease_until>now() FOR UPDATE`,[j.id,j.lease_token])).rowCount;
       if(!owned)return;
       if(!current.enabled||current.config_version!==j.config_version)throw new ProviderError('CONFIGURATION_CHANGED');
       const counts=catalog?await stageCatalog(p.subscriber_id,p.id,j.id,catalog.items,db):{};
-      await db.query(`UPDATE external_providers SET currency=$3,health='CONNECTED',safe_error=NULL,
+      await db.query(`UPDATE external_providers SET currency=coalesce($3,currency),health='CONNECTED',safe_error=NULL,
         balance=CASE WHEN $4::text IS NOT NULL THEN $4 ELSE balance END,
         last_test_at=CASE WHEN $5 THEN now() ELSE last_test_at END,
         last_sync_at=CASE WHEN $5 THEN last_sync_at ELSE now() END,updated_at=now() WHERE subscriber_id=$1 AND id=$2`,
@@ -133,7 +133,7 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
         [j.id,j.lease_token,retry?'QUEUED':'FAILED',category,Math.min(300,5*2**j.attempts+randomInt(0,6))]);
       if(result.rowCount)await db.query(`UPDATE external_providers SET health=$3,safe_error=$4,updated_at=now()
         WHERE subscriber_id=$1 AND id=$2 AND config_version=$5`,
-        [j.subscriber_id,j.provider_id,['AUTH_FAILED','UNREACHABLE','INVALID_RESPONSE'].includes(category)?category:'SYNC_FAILED',category,j.config_version]);
+        [j.subscriber_id,j.provider_id,['AUTH_FAILED','AUTHENTICATION_FAILED','UNSUPPORTED_PROVIDER','UNREACHABLE','INVALID_RESPONSE'].includes(category)?category:'SYNC_FAILED',category,j.config_version]);
     });
   }
 }

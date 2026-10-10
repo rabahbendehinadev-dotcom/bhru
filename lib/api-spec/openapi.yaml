@@ -1639,9 +1639,11 @@ components:
       required: [name, protocol, baseUrl, enabled]
       properties:
         name: {type: string, minLength: 1, maxLength: 100}
-        protocol: {type: string, enum: [fusion_rest]}
+        protocol: {type: string, enum: [fusion_rest, DHRU_FUSION_LEGACY_V61]}
         baseUrl: {type: string, maxLength: 300}
         token: {type: string, maxLength: 4096, writeOnly: true}
+        username: {type: string, minLength: 1, maxLength: 200, writeOnly: true}
+        apiAccessKey: {type: string, minLength: 1, maxLength: 4096, writeOnly: true}
         currency: {type: [string, "null"], pattern: "^[A-Z]{3}$"}
         enabled: {type: boolean}
     ProviderPricingPolicy:
@@ -1698,8 +1700,8 @@ components:
       required: [health, currency, balance]
       properties:
         health: {type: string}
-        currency: {type: string}
-        balance: {type: string}
+        currency: {type: [string, "null"]}
+        balance: {type: [string, "null"]}
     ProviderJobInput:
       type: object
       required: [kind]

@@ -10,6 +10,7 @@ export type ProviderInputProtocol = typeof ProviderInputProtocol[keyof typeof Pr
 
 export const ProviderInputProtocol = {
   fusion_rest: 'fusion_rest',
+  DHRU_FUSION_LEGACY_V61: 'DHRU_FUSION_LEGACY_V61',
 } as const;
 
 export interface ProviderInput {
@@ -23,6 +24,16 @@ export interface ProviderInput {
   baseUrl: string;
   /** @maxLength 4096 */
   token?: string;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  username?: string;
+  /**
+     * @minLength 1
+     * @maxLength 4096
+     */
+  apiAccessKey?: string;
   /**
      * @nullable
      * @pattern ^[A-Z]{3}$
@@ -81,8 +92,10 @@ export interface ProviderList {
 
 export interface ProviderTestResult {
   health: string;
-  currency: string;
-  balance: string;
+  /** @nullable */
+  currency: string | null;
+  /** @nullable */
+  balance: string | null;
 }
 
 export type ProviderJobInputKind = typeof ProviderJobInputKind[keyof typeof ProviderJobInputKind];

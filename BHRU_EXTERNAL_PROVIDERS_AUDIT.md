@@ -1,3 +1,10 @@
+# Legacy extension status
+
+Slice 7A.1 adds verified read-only DHRU Fusion Legacy v6.1 support. Historical
+Legacy "not implemented" findings below describe the original Slice 7A only.
+See `BHRU_LEGACY_PROVIDERS.md` for the exact implemented POST contract, reference
+files, key-replacement verification, migration 033 and focused test results.
+
 # BHRU Slice 7A — architecture and protocol audit
 
 ## Status and execution boundary

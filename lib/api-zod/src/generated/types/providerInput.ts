@@ -19,6 +19,16 @@ export interface ProviderInput {
   /** @maxLength 4096 */
   token?: string;
   /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  username?: string;
+  /**
+     * @minLength 1
+     * @maxLength 4096
+     */
+  apiAccessKey?: string;
+  /**
      * @nullable
      * @pattern ^[A-Z]{3}$
      */

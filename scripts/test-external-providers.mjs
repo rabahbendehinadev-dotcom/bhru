@@ -36,6 +36,7 @@ try{
   helpers=await bundle('helpers',[
     "export * from '"+entry+"/lib/providers/adapter.ts';",
     "export * from '"+entry+"/lib/providers/transport.ts';",
+    "export * from '"+entry+"/lib/providers/credentials.ts';",
     "export * from '"+entry+"/lib/providers/connections.ts';",
     "export * from '"+entry+"/lib/providers/import.ts';",
     "export * from '"+entry+"/lib/providers/worker.ts';",
@@ -49,6 +50,18 @@ try{
   const product=(changes={})=>({name:'Fixture IMEI',type:'imei',cid:'C1',price:'1.250000000001',time:'1-5 Minutes',
     fields:[{type:'imei',name:'IMEI',required:true}],...changes});
   const catalog=(products={'123':product()})=>response({currency:'USD',categories:{C1:{name:'IMEI Services',type:'imei'}},products});
+  const legacyCredentials=JSON.stringify({username:'fixture-legacy-user',apiAccessKey:'fixture-legacy-key'});
+  const legacyAccount=JSON.stringify({SUCCESS:[{message:'Your Accout Info',AccoutInfo:{credit:'123.123456789012',currency:'USD'}}],apiversion:'6.1'});
+  const legacyService=(changes={})=>({SERVICEID:'123',SERVICETYPE:'IMEI',SERVICENAME:'Legacy fixture',CREDIT:'1.250000000001',
+    INFO:'Fixture description',TIME:'1-2 Minutes',QNT:'0',
+    'Requires.Custom':[{type:'serviceimei',fieldname:'USERNAME',fieldtype:'text',description:'',fieldoptions:'',required:'1'}],...changes});
+  const legacyList=(services={'123':legacyService()},type='IMEI')=>JSON.stringify({
+    SUCCESS:[{MESSAGE:'IMEI Service List',LIST:{'Fixture Group':{GROUPNAME:'Fixture Group',GROUPTYPE:type,SERVICES:services}}}],apiversion:'6.1'});
+  const legacyMock=(list=legacyList(),account=legacyAccount)=>async(_url,credential,action)=>{
+    assert.equal(credential,legacyCredentials);assert(['accountinfo','imeiservicelist'].includes(action));
+    return action==='accountinfo'?account:list;
+  };
+  const legacy=helpers.providerAdapter('DHRU_FUSION_LEGACY_V61');
   const adapter=helpers.providerAdapter('fusion_rest');
   const mock=raw=>async(_url,_token,path)=>{assert(['account','products'].includes(path));return raw;};
   await check('verified REST account uses exact decimal strings and read-only method surface',async()=>{
@@ -65,6 +78,56 @@ try{
       response({currency:'USD',balance:'NaN'}),response({currency:'US',balance:'1'})]){
       await assert.rejects(adapter.account('','',mock(raw)),e=>!e.message.includes('SECRET')&&['AUTH_FAILED','INVALID_RESPONSE'].includes(e.category));
     }
+  });
+  await check('Legacy accountinfo authenticates and preserves exact numeric JSON money',async()=>{
+    assert.deepEqual(await legacy.account('',legacyCredentials,legacyMock()),{currency:'USD',balance:'123.123456789012'});
+    const raw='{"SUCCESS":[{"AccoutInfo":{"credit":123.123456789012,"currency":"USD"}}],"apiversion":"6.1"}';
+    assert.equal((await legacy.account('',legacyCredentials,async()=>raw)).balance,'123.123456789012');
+    assert.deepEqual(await legacy.account('',legacyCredentials,async()=> '{"SUCCESS":[{"AccoutInfo":{}}]}'),{currency:null,balance:null});
+  });
+  await check('Legacy invalid username/key and provider errors are truthful and redacted',async()=>{
+    for(const _case of ['invalid username','invalid API key']){
+      await assert.rejects(legacy.account('',legacyCredentials,async()=> '{"ERROR":[{"MESSAGE":"Authentication Failed"}]}'),
+        e=>e.category==='AUTHENTICATION_FAILED'&&!e.message.includes('fixture'));
+    }
+    await assert.rejects(legacy.account('',legacyCredentials,async()=> '{"ERROR":[{"MESSAGE":"secret-upstream-error"}]}'),
+      e=>e.category==='INVALID_RESPONSE'&&!e.message.includes('secret'));
+  });
+  await check('Legacy non-JSON, malformed envelopes, wrong versions/money/currency fail closed',async()=>{
+    for(const raw of ['<html>error</html>','{"SUCCESS":{}}','{"SUCCESS":[{}]}','{"SUCCESS":[{},{}]}',
+      '{"ERROR":[],"SUCCESS":[{"AccoutInfo":{}}]}','{"SUCCESS":[{"AccoutInfo":{"currency":"US"}}]}',
+      '{"SUCCESS":[{"AccoutInfo":{"credit":"NaN"}}]}','{"SUCCESS":[{"AccoutInfo":{}}],"apiversion":"99"}']){
+      await assert.rejects(legacy.account('',legacyCredentials,async()=>raw),e=>e.category==='INVALID_RESPONSE');
+    }
+  });
+  await check('Legacy list normalizes IMEI, SERVER and explicitly referenced REMOTE; File remains review-only',async()=>{
+    const items=(await legacy.catalog('',legacyCredentials,legacyMock())).items;
+    assert.equal(items[0].costUnits,'1250000000001');assert.equal(items[0].currency,'USD');
+    assert.equal(items[0].serviceType,'imei');assert.equal(items[0].categoryName,'Fixture Group');
+    assert.deepEqual(items[0].requirements,[{key:'username',label:'USERNAME',type:'text',required:true}]);
+    for(const [upstream,type] of [['SERVER','server'],['REMOTE','remote'],['FILE',null]]){
+      const item=(await legacy.catalog('',legacyCredentials,legacyMock(legacyList({'123':legacyService({SERVICETYPE:upstream})},upstream)))).items[0];
+      assert.equal(item.serviceType,type);if(!type)assert(item.reviewReasons.length);
+    }
+  });
+  await check('Legacy requirements, quantity and undocumented metadata are review-blocked, not guessed',async()=>{
+    for(const change of [{'Requires.Network':'Required'},{QNT:'1',QNTOPTIONS:'10,20'},{unknown:'secret-extra'},
+      {'Requires.Custom':[{fieldname:'DATE',fieldtype:'datepicker',required:'1'}]}]){
+      const item=(await legacy.catalog('',legacyCredentials,legacyMock(legacyList({'123':legacyService(change)})))).items[0];
+      assert(item.reviewReasons.length);assert(!JSON.stringify(item.snapshot).includes('secret-extra'));
+    }
+    const p=legacyService({'Requires.SN':'Required','Requires.Reference':'Required','Requires.Custom':[
+      {type:'serviceimei',fieldname:'USERTYPE',fieldtype:'dropdown',description:'',fieldoptions:'New,Existing',required:'0'}]});
+    const item=(await legacy.catalog('',legacyCredentials,legacyMock(legacyList({'123':p})))).items[0];
+    assert.deepEqual(item.requirements.map(f=>f.type),['reference','reference','select']);
+    assert.deepEqual(item.requirements[2].options,['New','Existing']);
+  });
+  await check('Legacy missing currency and duplicate upstream IDs reject whole catalog before staging',async()=>{
+    await assert.rejects(legacy.catalog('',legacyCredentials,legacyMock(legacyList(),'{"SUCCESS":[{"AccoutInfo":{}}]}')));
+    const raw=JSON.stringify({SUCCESS:[{LIST:{a:{GROUPNAME:'a',GROUPTYPE:'IMEI',SERVICES:{'123':legacyService()}},
+      b:{GROUPNAME:'b',GROUPTYPE:'IMEI',SERVICES:{'123':legacyService()}}}}]});
+    await assert.rejects(legacy.catalog('',legacyCredentials,legacyMock(raw)));
+    await assert.rejects(legacy.catalog('',legacyCredentials,legacyMock(legacyList({'wrong-id':legacyService()}))));
   });
   await check('HTTPS URL restrictions and public IPv4/IPv6 range policy',async()=>{
     for(const url of ['http://example.com/api/reseller/v1','https://user:pass@example.com/api/reseller/v1',
@@ -102,6 +165,36 @@ try{
     s.networkError=false;s.hang=true;await assert.rejects(pinned.safeRead(base,'fixture-token','account'),e=>e.category==='UNREACHABLE');
     assert(pinned.deadlines.includes(20000));assert(pinned.deadlines.includes(5000));
     await assert.rejects(pinned.safeRead(base,'fixture-token','order'));
+    await check('Legacy transport uses form POST to exact URL, pinned TLS and never sends Bearer or query credentials',async()=>{
+      s.hang=false;s.body=legacyAccount;
+      const endpoint='https://provider.example/legacy/api.php';
+      await pinned.safeLegacyRead(endpoint,legacyCredentials,'accountinfo');
+      assert.equal(s.captured.url,endpoint);assert.equal(s.captured.options.method,'POST');
+      assert.equal(s.captured.options.headers.Authorization,undefined);
+      assert.equal(s.captured.options.headers['Content-Type'],'application/x-www-form-urlencoded');
+      assert.equal(s.captured.options.rejectUnauthorized,true);assert.equal(s.captured.address,'8.8.8.8');
+      const form=new URLSearchParams(s.captured.body);
+      assert.deepEqual([...form.keys()].sort(),['action','apiaccesskey','username']);
+      assert.equal(form.get('username'),'fixture-legacy-user');assert.equal(form.get('apiaccesskey'),'fixture-legacy-key');
+      assert.equal(form.get('action'),'accountinfo');
+      await pinned.safeLegacyRead('https://provider.example',legacyCredentials,'imeiservicelist');
+      assert.equal(s.captured.url,'https://provider.example/');assert.equal(new URLSearchParams(s.captured.body).get('action'),'imeiservicelist');
+      for(const status of [302,401,500]){
+        s.status=status;await assert.rejects(pinned.safeLegacyRead(endpoint,legacyCredentials,'accountinfo'),
+          e=>['INVALID_RESPONSE','AUTHENTICATION_FAILED','UNREACHABLE'].includes(e.category)&&!e.message.includes('fixture'));
+      }
+      s.status=200;s.networkError=true;await assert.rejects(pinned.safeLegacyRead(endpoint,legacyCredentials,'accountinfo'));
+      s.networkError=false;s.hang=true;await assert.rejects(pinned.safeLegacyRead(endpoint,legacyCredentials,'accountinfo'));
+      s.hang=false;s.records=[{address:'8.8.8.8',family:4},{address:'192.168.1.1',family:4}];
+      const count=s.requests;await assert.rejects(pinned.safeLegacyRead(endpoint,legacyCredentials,'accountinfo'));assert.equal(s.requests,count);
+      for(const raw of ['http://provider.example','https://127.0.0.1','https://provider.example?apiaccesskey=x',
+        'https://user:key@provider.example','https://provider.example:8443','https://provider.internal',
+        'https://provider.example/%2fsecret','https://provider.example/#secret']){
+        assert.throws(()=>pinned.providerUrl(raw,'DHRU_FUSION_LEGACY_V61'));
+      }
+      await assert.rejects(pinned.safeLegacyRead(endpoint,legacyCredentials,'placeimeiorder'));
+      await assert.rejects(pinned.safeLegacyRead(endpoint,legacyCredentials,'getimeiorder'));
+    });
   });
   await check('isolated encryption tests: authenticated tenant/provider binding, versioning and missing-key fail closed',async()=>{
     const cryptoBuild=await build({entryPoints:[entry+'/lib/providers/credentials.ts'],bundle:true,write:false,platform:'node',format:'cjs',
@@ -141,6 +234,36 @@ try{
   db=await pool.connect();await db.query('BEGIN');
   const create=async(sid,name)=>helpers.configureProvider(sid,undefined,{name,protocol:'fusion_rest',baseUrl:'https://provider.example/api/reseller/v1',token:'fixture-token',enabled:true,currency:'USD'},db);
   const p=await create(sub,'Read-only provider'),pb=await create(other,'Other tenant provider');
+  const legacyInput={name:'Legacy read-only provider',protocol:'DHRU_FUSION_LEGACY_V61',baseUrl:'https://provider.example',
+    username:'fixture-legacy-user',apiAccessKey:'fixture-legacy-key',enabled:true,currency:'USD'};
+  const lp=await helpers.configureProvider(sub,undefined,legacyInput,db);
+  await check('Legacy credential pair is encrypted, tenant-bound, redacted and replaceable without protocol changes',async()=>{
+    assert(!JSON.stringify(lp).includes('fixture-legacy'));
+    const stored=(await db.query('SELECT credentials_encrypted FROM external_providers WHERE id=$1',[lp.id])).rows[0].credentials_encrypted;
+    assert(!JSON.stringify(stored).includes('fixture-legacy'));
+    assert.equal(helpers.decryptToken(sub,lp.id,stored),legacyCredentials);
+    assert.throws(()=>helpers.decryptToken(other,lp.id,stored));
+    await assert.rejects(helpers.configureProvider(other,lp.id,legacyInput,db),e=>e.status===404);
+    await assert.rejects(helpers.configureProvider(sub,lp.id,{...legacyInput,protocol:'fusion_rest',token:'fixture',
+      username:undefined,apiAccessKey:undefined,baseUrl:p.baseUrl},db));
+    await assert.rejects(helpers.configureProvider(sub,lp.id,{...legacyInput,apiAccessKey:undefined},db),e=>e.status===400);
+    await helpers.configureProvider(sub,lp.id,{...legacyInput,username:'fixture-replacement',apiAccessKey:'fixture-replacement-key'},db);
+    const replaced=(await db.query('SELECT credentials_encrypted FROM external_providers WHERE id=$1',[lp.id])).rows[0].credentials_encrypted;
+    assert.equal(JSON.parse(helpers.decryptToken(sub,lp.id,replaced)).username,'fixture-replacement');
+    const {username,apiAccessKey,...keep}=legacyInput;
+    await helpers.configureProvider(sub,lp.id,{...keep,name:'Edited Legacy name'},db);
+    assert.deepEqual((await db.query('SELECT credentials_encrypted FROM external_providers WHERE id=$1',[lp.id])).rows[0].credentials_encrypted,replaced);
+  });
+  await check('Legacy staged sync deduplicates and detects metadata/requirement changes',async()=>{
+    const j=await helpers.enqueueProviderJob(sub,lp.id,owner,'SYNC',db);
+    assert.equal((await helpers.enqueueProviderJob(sub,lp.id,owner,'SYNC',db)).id,j.id);
+    const items=(await legacy.catalog('',legacyCredentials,legacyMock())).items;
+    assert.equal((await helpers.stageCatalog(sub,lp.id,j.id,items,db)).new,1);
+    assert.equal((await helpers.stageCatalog(sub,lp.id,j.id,items,db)).changed,0);
+    const changed=(await legacy.catalog('',legacyCredentials,legacyMock(legacyList({'123':legacyService({INFO:'New description'})})))).items;
+    assert.equal((await helpers.stageCatalog(sub,lp.id,j.id,changed,db)).changed,1);
+    assert.equal((await db.query('SELECT count(*)::int n FROM external_provider_catalog WHERE provider_id=$1',[lp.id])).rows[0].n,1);
+  });
   await check('saved connection is Not Tested, safe response contains no token; replacement remains encrypted',async()=>{
     assert.equal(p.health,'NOT_TESTED');assert(!JSON.stringify(p).includes('fixture-token'));
     const stored=(await db.query('SELECT credentials_encrypted FROM external_providers WHERE id=$1',[p.id])).rows[0];
@@ -254,9 +377,12 @@ try{
     const stale=await pool.query("UPDATE external_provider_jobs SET state='COMPLETED' WHERE id=$1 AND lease_token=$2",[j.id,j.lease_token]);assert.equal(stale.rowCount,0);
   });
   await pool.query("UPDATE external_provider_jobs SET state='FAILED',lease_until=NULL,lease_token=NULL WHERE subscriber_id=$1",[sub]);
+  const mockTransportPath=resolve('scripts/lib/provider-transport-mock.mjs');
   api=await bundle('http',`export {default as router} from '${entry}/routes/external-providers.ts';
-    export {loadSession,csrfProtection} from '${entry}/lib/auth.ts';export {pool} from '@workspace/db';`,
-    [{name:'quiet-test-logger',setup(b){b.onLoad({filter:/\/lib\/logger\.ts$/},()=>({contents:'export const logger={warn(){},info(){},error(){}};',loader:'ts'}));}}]);
+    export {loadSession,csrfProtection} from '${entry}/lib/auth.ts';export {pool} from '@workspace/db';
+    export {state} from '${mockTransportPath}';`,
+    [{name:'quiet-test-logger',setup(b){b.onLoad({filter:/\/lib\/logger\.ts$/},()=>({contents:'export const logger={warn(){},info(){},error(){}};',loader:'ts'}));}},
+     {name:'no-upstream-network',setup(b){b.onResolve({filter:/^node:(https|dns\/promises)$/},()=>({path:mockTransportPath}));}}]);
   const express=require('express'),cookieParser=require('cookie-parser'),app=express();
   app.use(express.json(),cookieParser(),api.loadSession);
   app.use('/api',api.csrfProtection,api.router);
@@ -327,6 +453,73 @@ try{
     await call(`/${live.id}`,'PATCH',{name:live.name,protocol:'fusion_rest',baseUrl:live.baseUrl,enabled:false,currency:live.currency});
     let reads=0;await helpers.runProviderJob(j,async()=>{reads++;return catalog();});
     assert.equal(reads,0);assert.equal((await pool.query('SELECT state FROM external_provider_jobs WHERE id=$1',[j.id])).rows[0].state,'FAILED');
+  });
+  let legacyLive;
+  await check('Legacy HTTP add/edit/test routes use masked credentials, authenticated states, CSRF and tenant isolation',async()=>{
+    const created=await call('','POST',legacyInput);assert.equal(created.status,201);legacyLive=created.body;
+    assert.equal(legacyLive.health,'NOT_TESTED');assert(!JSON.stringify(created.body).includes('fixture-legacy'));
+    assert.equal((await call(`/${legacyLive.id}/catalog`,'GET',undefined,`bhru_session=${tokenB}`)).status,404);
+    assert.equal((await call(`/${legacyLive.id}`,'PATCH',legacyInput,`bhru_session=${tokenB}`)).status,404);
+    assert.equal((await call(`/${legacyLive.id}/jobs`,'POST',{kind:'SYNC'},`bhru_session=${tokenB}`)).status,404);
+    assert.equal((await call(`/${legacyLive.id}/import`,'POST',{items:[{id:randomUUID()}],
+      pricing:{percentage:'0',fixedUsd:'1',groups:[]}},`bhru_session=${tokenB}`)).status,404);
+    assert.equal((await call(`/${legacyLive.id}`,'PATCH',legacyInput,undefined,{'X-BHRU-Request':'0'})).status,403);
+    assert.equal((await call('/test','POST',{...legacyInput,baseUrl:'https://127.0.0.1'})).status,400);
+    api.state.body=legacyAccount;
+    const success=await call('/test','POST',legacyInput);assert.equal(success.status,200);
+    assert.equal(success.body.health,'CONNECTED');assert.equal(success.body.balance,'123.123456789012');
+    assert.equal(api.state.captured.options.method,'POST');
+    for(const wrong of [{username:'wrong-user'},{apiAccessKey:'wrong-key'}]){
+      api.state.body='{"ERROR":[{"MESSAGE":"Authentication Failed"}]}';
+      const failed=await call('/test','POST',{...legacyInput,...wrong});
+      assert.equal(failed.body.health,'AUTHENTICATION_FAILED');assert.equal(failed.body.balance,null);
+    }
+    api.state.body='<html>failure</html>';
+    assert.equal((await call('/test','POST',legacyInput)).body.health,'INVALID_RESPONSE');
+    api.state.networkError=true;
+    assert.equal((await call('/test','POST',legacyInput)).body.health,'UNREACHABLE');api.state.networkError=false;
+    assert.equal((await call('/test','POST',{...legacyInput,enabled:false})).body.health,'DISABLED');
+    assert.equal((await call(`/${legacyLive.id}`,'PATCH',{name:'Wrong protocol',protocol:'fusion_rest',
+      baseUrl:'https://provider.example/api/reseller/v1',enabled:true,token:'fixture-rest-token'})).status,409);
+  });
+  await check('Legacy durable worker authenticates, syncs with currency, deduplicates and records independent history',async()=>{
+    await call(`/${legacyLive.id}/jobs`,'POST',{kind:'TEST'});
+    let j=await helpers.claimProviderJob();assert(j);await helpers.runProviderJob(j,legacyMock());
+    let rows=(await call('')).body.data,stored=rows.find(r=>r.id===legacyLive.id);
+    assert.equal(stored.health,'CONNECTED');assert.equal(stored.balance,'123.123456789012');
+    const a=await call(`/${legacyLive.id}/jobs`,'POST',{kind:'SYNC'});
+    assert.equal((await call(`/${legacyLive.id}/jobs`,'POST',{kind:'SYNC'})).body.id,a.body.id);
+    j=await helpers.claimProviderJob();await helpers.runProviderJob(j,legacyMock());
+    assert.equal((await call(`/${legacyLive.id}/catalog`)).body.data.length,1);
+    await call(`/${legacyLive.id}/jobs`,'POST',{kind:'SYNC'});
+    j=await helpers.claimProviderJob();await helpers.runProviderJob(j,legacyMock());
+    const hist=await call(`/${legacyLive.id}/jobs`);assert.equal(hist.body.data[0].counts.new,0);assert.equal(hist.body.data[0].counts.changed,0);
+    await call(`/${legacyLive.id}/jobs`,'POST',{kind:'TEST'});j=await helpers.claimProviderJob();
+    await helpers.runProviderJob(j,async()=> '{"ERROR":[{"MESSAGE":"Authentication Failed"}]}');
+    stored=(await call('')).body.data.find(r=>r.id===legacyLive.id);assert.equal(stored.health,'AUTHENTICATION_FAILED');
+  });
+  await check('Legacy pricing preview/import reuses canonical catalog, remains inactive and concurrent imports deduplicate',async()=>{
+    const item=(await call(`/${legacyLive.id}/catalog`)).body.data[0];
+    assert.equal(item.cost,'1.250000000001');assert.equal(item.currency,'USD');
+    const data={items:[{id:item.id}],pricing:{percentage:'20',fixedUsd:'1',groups:[]}};
+    const preview=await call(`/${legacyLive.id}/preview`,'POST',data);assert.equal(preview.status,200);
+    const result=await Promise.all([call(`/${legacyLive.id}/import`,'POST',{...data,previewHash:preview.body.previewHash}),
+      call(`/${legacyLive.id}/import`,'POST',{...data,previewHash:preview.body.previewHash})]);
+    assert(result.every(r=>r.status===200));assert.equal(result.reduce((n,r)=>n+r.body.imported,0),1);
+    const service=(await pool.query(`SELECT s.* FROM manual_services s JOIN external_provider_service_links l
+      ON s.id=l.service_id AND s.subscriber_id=l.subscriber_id WHERE l.provider_id=$1`,[legacyLive.id])).rows[0];
+    assert.equal(service.active,false);assert.equal(service.fulfillment_source,'external_provider');
+    assert.equal(String(service.selling_price_usd_units),'2500000000001');
+    await assert.rejects(pool.query('UPDATE manual_services SET active=true WHERE id=$1',[service.id]));
+  });
+  await check('Legacy disable keeps encrypted credentials and stops all upstream reads',async()=>{
+    const {username,apiAccessKey,...data}=legacyInput;
+    const before=(await pool.query('SELECT credentials_encrypted FROM external_providers WHERE id=$1',[legacyLive.id])).rows[0].credentials_encrypted;
+    await call(`/${legacyLive.id}/jobs`,'POST',{kind:'TEST'});const j=await helpers.claimProviderJob();
+    assert.equal((await call(`/${legacyLive.id}`,'PATCH',{...data,enabled:false})).body.health,'DISABLED');
+    let reads=0;await helpers.runProviderJob(j,async()=>{reads++;return legacyAccount;});assert.equal(reads,0);
+    assert.deepEqual((await pool.query('SELECT credentials_encrypted FROM external_providers WHERE id=$1',[legacyLive.id])).rows[0].credentials_encrypted,before);
+    assert.equal((await call(`/${legacyLive.id}/jobs`,'POST',{kind:'TEST'})).status,409);
   });
   await check('wallet/ledger/orders/client prices/access and Retail data unchanged',async()=>assert.deepEqual(await digest(),before));
   console.log(`RESULT: ${passed} focused provider checks passed. No upstream network request or paid order.`);

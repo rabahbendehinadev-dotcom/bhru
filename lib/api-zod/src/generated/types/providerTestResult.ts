@@ -8,6 +8,8 @@
 
 export interface ProviderTestResult {
   health: string;
-  currency: string;
-  balance: string;
+  /** @nullable */
+  currency: string | null;
+  /** @nullable */
+  balance: string | null;
 }

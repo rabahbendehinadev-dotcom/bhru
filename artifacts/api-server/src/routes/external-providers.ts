@@ -4,7 +4,7 @@ import {subscriberContext} from '../lib/commerce/data';
 import {transaction,audit} from '../lib/platform';
 import {HttpError,rateLimit} from '../lib/auth';
 import {providerStorageReady} from '../lib/providers/credentials';
-import {providerInput,configureProvider,providerRow,providerView,policyInput,validatePolicyGroups} from '../lib/providers/connections';
+import {providerInput,inputCredentials,configureProvider,providerRow,providerView,policyInput,validatePolicyGroups} from '../lib/providers/connections';
 import {providerProtocols,providerAdapter} from '../lib/providers/adapter';
 import {providerUrl,ProviderError} from '../lib/providers/transport';
 import {enqueueProviderJob,jobView} from '../lib/providers/worker';
@@ -22,13 +22,23 @@ router.get('/external-providers',async(req,res)=>{
 router.post('/external-providers/test',async(req,res)=>{
   const owner=subscriberContext(req);await rateLimit(`provider-draft:${owner.subscriber_id}`,20);
   if(!providerStorageReady())throw new HttpError(503,'Provider encryption is not configured.');
-  const input=providerInput.parse(req.body);providerUrl(input.baseUrl);
-  if(!input.token)throw new HttpError(400,'Enter a new Bearer token for this draft test.');
+  const input=providerInput.parse(req.body);providerUrl(input.baseUrl,input.protocol);
+  const credential=inputCredentials(input);
+  if(!input.enabled){res.json({health:'DISABLED',currency:null,balance:null});return;}
+  if(!credential)throw new HttpError(400,'Enter new credentials for this draft test. Saved connections can be tested from the provider list.');
   try{
-    const account=await providerAdapter(input.protocol).account(input.baseUrl,input.token);
+    const account=await providerAdapter(input.protocol).account(input.baseUrl,credential);
     if(input.currency&&input.currency!==account.currency)throw new HttpError(409,'Provider currency differs from the configured currency.');
     res.json({health:'CONNECTED',...account});
-  }catch(e){if(e instanceof ProviderError)throw new HttpError(502,`Provider test failed: ${e.category}. Verify URL, token, currency and upstream IP permissions.`);throw e;}
+  }catch(e){
+    if(e instanceof ProviderError){
+      if(input.protocol==='DHRU_FUSION_LEGACY_V61'){
+        res.json({health:e.category,currency:null,balance:null});return;
+      }
+      throw new HttpError(502,`Provider test failed: ${e.category}. Verify URL, credentials, currency and upstream IP permissions.`);
+    }
+    throw e;
+  }
 });
 router.post('/external-providers',async(req,res)=>{
   const owner=subscriberContext(req);await rateLimit(`provider-save:${owner.subscriber_id}`,50);

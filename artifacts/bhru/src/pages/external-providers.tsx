@@ -15,31 +15,48 @@ function ProviderForm({ initial, protocols, onClose }: { initial: ProviderConnec
   const { create, update, testDraft } = useProviders();
   const [name, setName] = useState(initial?.name ?? ''), [currency, setCurrency] = useState(initial?.currency ?? '');
   const [baseUrl, setBaseUrl] = useState(initial?.baseUrl ?? '');
+  const [protocol, setProtocol] = useState<ProviderInput['protocol']>(initial?.protocol === 'DHRU_FUSION_LEGACY_V61' ? 'DHRU_FUSION_LEGACY_V61' : 'fusion_rest');
+  const [username, setUsername] = useState(''), [apiAccessKey, setApiAccessKey] = useState('');
+  const legacy = protocol === 'DHRU_FUSION_LEGACY_V61';
   const [enabled, setEnabled] = useState(initial?.enabled ?? true), [token, setToken] = useState('');
   const [msg, setMsg] = useState(''), [err, setErr] = useState('');
-  const close = () => { setToken(''); create.reset(); update.reset(); testDraft.reset(); onClose(); };
-  const input = (): ProviderInput => ({ name: name.trim(), protocol: 'fusion_rest', baseUrl: baseUrl.trim(), enabled, currency: currency.trim() ? currency.trim().toUpperCase() : null, ...(token ? { token } : {}) });
-  const valid = name.trim().length > 0 && /^https:\/\/.+\/api\/reseller\/v1\/?$/.test(baseUrl.trim()) && (!currency.trim() || /^[A-Za-z]{3}$/.test(currency.trim())) && (!!initial || token.length > 0);
+  const clearCredentials = () => { setToken(''); setUsername(''); setApiAccessKey(''); create.reset(); update.reset(); testDraft.reset(); };
+  const close = () => { clearCredentials(); onClose(); };
+  const input = (): ProviderInput => ({ name: name.trim(), protocol, baseUrl: baseUrl.trim(), enabled, currency: currency.trim() ? currency.trim().toUpperCase() : null,
+    ...(legacy ? { ...(username.trim() ? { username: username.trim() } : {}), ...(apiAccessKey ? { apiAccessKey } : {}) } : token ? { token } : {}) });
+  const newCredentials = legacy ? !!username.trim() && !!apiAccessKey : !!token;
+  const credentialValid = legacy ? newCredentials || (!!initial && !username.trim() && !apiAccessKey) : !!initial || !!token;
+  const valid = name.trim().length > 0 && (legacy ? /^https:\/\/[^?#]+$/.test(baseUrl.trim()) : /^https:\/\/.+\/api\/reseller\/v1\/?$/.test(baseUrl.trim())) && (!currency.trim() || /^[A-Za-z]{3}$/.test(currency.trim())) && credentialValid;
   const test = () => { setErr(''); setMsg(''); testDraft.mutate({ data: input() }, {
-    onSuccess: r => { setMsg(`Account responded: ${r.health}, ${r.currency} ${r.balance}`); }, onError: e => setErr(errorMessage(e)) }); };
+    onSuccess: r => { if (r.health === 'CONNECTED') setMsg(`Account responded: ${r.health}, currency: ${r.currency ?? 'Not supplied'}, balance: ${r.balance ?? 'Not supplied'}`);
+      else setErr(`Connection test: ${r.health}. Check endpoint, credentials and provider access permissions.`); }, onError: e => setErr(errorMessage(e)) }); };
   const save = () => { setErr(''); const done = { onSuccess: () => close(), onError: (e: unknown) => setErr(errorMessage(e)) };
     if (initial) update.mutate({ id: initial.id, data: input() }, done); else create.mutate({ data: input() }, done); };
   const pending = create.isPending || update.isPending;
   return (
     <Modal open onClose={close} title={initial ? `Edit ${initial.name}` : 'Add provider'} footer={<>
-      <Btn onClick={test} disabled={!token || !valid || testDraft.isPending} data-testid="button-test-draft">{testDraft.isPending ? 'Testing…' : 'Test connection'}</Btn>
+      <Btn onClick={test} disabled={!newCredentials || !enabled || !valid || testDraft.isPending || pending} data-testid="button-test-draft">{testDraft.isPending ? 'Testing…' : 'Test connection'}</Btn>
       <Btn v="brand" onClick={save} disabled={!valid || pending} data-testid="button-save-provider">{pending ? 'Saving…' : 'Save'}</Btn></>}>
       <div className="space-y-3">
         <Field label="Name"><input className="input" maxLength={100} value={name} onChange={e => setName(e.target.value)} data-testid="input-provider-name" /></Field>
         <Field label="Provider type">
-          <select className="input" value="fusion_rest" onChange={() => undefined} data-testid="select-provider-protocol">
+          <select className="input" value={protocol} disabled={!!initial} onChange={e => {
+            setProtocol(e.target.value as ProviderInput['protocol']); clearCredentials(); setBaseUrl(''); setMsg(''); setErr('');
+          }} data-testid="select-provider-protocol">
             {(protocols.length ? protocols : [{ code: 'fusion_rest', name: 'Fusion REST', available: true, reason: null }]).map(p => (
               <option key={p.code} value={p.code} disabled={!p.available}>{p.name}{p.available ? '' : ' — Not Implemented'}</option>))}
           </select></Field>
-        <Field label="API base URL" hint="Public HTTPS host; exact path /api/reseller/v1"><input className="input" type="url" maxLength={300} value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder="https://provider.example/api/reseller/v1" data-testid="input-provider-baseurl" /></Field>
+        <Field label={legacy ? 'API Endpoint URL' : 'API base URL'} hint={legacy ? 'Exact public HTTPS endpoint supplied by your provider; no query credentials. No /api.php path is added automatically.' : 'Public HTTPS host; exact path /api/reseller/v1'}><input className="input" type="url" maxLength={300} value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder={legacy ? 'https://api.provider.example' : 'https://provider.example/api/reseller/v1'} data-testid="input-provider-baseurl" /></Field>
         <Field label="Currency (optional)" hint="Three-letter code, e.g. USD"><input className="input" maxLength={3} value={currency} onChange={e => setCurrency(e.target.value)} data-testid="input-provider-currency" /></Field>
-        <Field label={initial?.credentialSaved ? 'Replace token (leave blank to keep saved credential)' : 'API token'}>
-          <input className="input" type="password" autoComplete="new-password" value={token} onChange={e => setToken(e.target.value)} placeholder={initial?.credentialSaved ? 'Saved — not displayed' : ''} data-testid="input-provider-token" /></Field>
+        {legacy ? <>
+          <Field label="Username" hint={initial?.credentialSaved ? 'Enter both fields to replace credentials. Leave both blank to keep saved credentials.' : undefined}>
+            <input className="input" autoComplete="off" maxLength={200} value={username} onChange={e => setUsername(e.target.value)} data-testid="input-provider-username" />
+          </Field>
+          <Field label={initial?.credentialSaved ? 'Replace API Access Key' : 'API Access Key'}>
+            <input className="input" type="password" autoComplete="new-password" maxLength={4096} value={apiAccessKey} onChange={e => setApiAccessKey(e.target.value)} data-testid="input-provider-access-key" />
+          </Field>
+        </> : <Field label={initial?.credentialSaved ? 'Replace token (leave blank to keep saved credential)' : 'API token'}>
+          <input className="input" type="password" autoComplete="new-password" maxLength={4096} value={token} onChange={e => setToken(e.target.value)} placeholder={initial?.credentialSaved ? 'Saved — not displayed' : ''} data-testid="input-provider-token" /></Field>}
         <label className="flex items-center gap-2 text-[12.5px]"><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} data-testid="checkbox-provider-enabled" />Enabled</label>
         {msg && <div className="text-[12px] text-[hsl(152_60%_58%)]" data-testid="text-draft-result">{msg}</div>}
         {err && <div className="text-[12px] text-[hsl(0_90%_72%)]" role="alert" data-testid="text-provider-error">{err}</div>}
@@ -112,7 +129,7 @@ export default function ExternalProvidersPage() {
   const [off, setOff] = useState<ProviderConnection | null>(null), [err, setErr] = useState('');
   const d = query.data, ready = d?.storageReady === true;
   const run = (p: ProviderConnection, kind: 'TEST' | 'SYNC') => { setErr(''); startJob.mutate({ id: p.id, data: { kind } }, { onError: e => setErr(errorMessage(e)) }); };
-  const toggle = (p: ProviderConnection) => update.mutateAsync({ id: p.id, data: { name: p.name, protocol: 'fusion_rest', baseUrl: p.baseUrl as typeof p.baseUrl, enabled: !p.enabled, currency: p.currency } })
+  const toggle = (p: ProviderConnection) => update.mutateAsync({ id: p.id, data: { name: p.name, protocol: p.protocol as ProviderInput['protocol'], baseUrl: p.baseUrl, enabled: !p.enabled, currency: p.currency } })
     .then(() => true, e => { setErr(errorMessage(e)); return false; });
   return (
     <div data-testid="page-external-providers">

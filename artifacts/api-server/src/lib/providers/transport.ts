@@ -3,7 +3,7 @@ import {lookup} from 'node:dns/promises';
 import {request} from 'node:https';
 import {HttpError} from '../auth';
 export class ProviderError extends Error{
-  constructor(public category:'AUTH_FAILED'|'UNREACHABLE'|'INVALID_RESPONSE'|'CONFIGURATION_CHANGED',public retryable=false){super(category);}
+  constructor(public category:'AUTH_FAILED'|'AUTHENTICATION_FAILED'|'UNSUPPORTED_PROVIDER'|'UNREACHABLE'|'INVALID_RESPONSE'|'CONFIGURATION_CHANGED',public retryable=false){super(category);}
 }
 const blocked=new BlockList();
 for(const [ip,prefix] of [
@@ -18,14 +18,20 @@ export function publicAddress(ip:string){
   const family=isIP(ip);
   return family===4?!blocked.check(ip,'ipv4'):family===6&&global6.check(ip,'ipv6')&&!blocked.check(ip,'ipv6');
 }
-export function providerUrl(raw:string){
-  let url:URL;try{url=new URL(raw);}catch{throw new HttpError(400,'Enter a valid HTTPS Fusion REST API URL.');}
+export function providerUrl(raw:string,protocol='fusion_rest'){
+  if(!['fusion_rest','DHRU_FUSION_LEGACY_V61'].includes(protocol))throw new ProviderError('UNSUPPORTED_PROVIDER');
+  let url:URL;try{url=new URL(raw);}catch{throw new HttpError(400,'Enter a valid public HTTPS API URL.');}
   const host=url.hostname.replace(/^\[|\]$/g,'').toLowerCase();
   if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash||url.port&&url.port!=='443'||
     !host.includes('.')&&!isIP(host)||/^(localhost|.*\.(localhost|local|internal|lan|home|test|invalid))$/.test(host)||
-    isIP(host)&&!publicAddress(host)||url.pathname.replace(/\/+$/,'')!=='/api/reseller/v1')
-    throw new HttpError(400,'Use a public HTTPS host on port 443 with API path /api/reseller/v1; no credentials, query or fragment.');
-  url.pathname='/api/reseller/v1';return url.toString().replace(/\/$/,'');
+    isIP(host)&&!publicAddress(host)||raw.includes('\\')||
+    (protocol==='fusion_rest'?url.pathname.replace(/\/+$/,'')!=='/api/reseller/v1':
+      !/^\/[a-zA-Z0-9_./-]*$/.test(url.pathname)||/(?:^|\/)\.{1,2}(?:\/|$)/.test(raw)))
+    throw new HttpError(400,protocol==='fusion_rest'?
+      'Use a public HTTPS host on port 443 with API path /api/reseller/v1; no credentials, query or fragment.':
+      'Use the exact public HTTPS Legacy endpoint on port 443; no credentials, query, fragment or encoded path.');
+  if(protocol==='fusion_rest'){url.pathname='/api/reseller/v1';return url.toString().replace(/\/$/,'');}
+  return url.toString();
 }
 export async function resolvePublic(host:string){
   if(isIP(host)){if(!publicAddress(host))throw new ProviderError('UNREACHABLE');return {address:host,family:isIP(host)};}
@@ -39,10 +45,32 @@ export async function resolvePublic(host:string){
   }catch(error){if(error instanceof ProviderError)throw error;throw new ProviderError('UNREACHABLE',true);}
   finally{if(timer)clearTimeout(timer);}
 }
-/** The only production transport: GET to two fixed read endpoints. No redirects, proxy or socket reuse. */
+/** REST can GET only these two endpoints. No paid actions exist in this transport. */
 export async function safeRead(base:string,token:string,path:'account'|'products'){
   if(path!=='account'&&path!=='products')throw new ProviderError('INVALID_RESPONSE');
-  const url=new URL(`${providerUrl(base)}/${path}`),host=url.hostname.replace(/^\[|\]$/g,'');
+  return sendRead(new URL(`${providerUrl(base)}/${path}`),'GET',{Authorization:`Bearer ${token}`});
+}
+export type LegacyCredentials={username:string;apiAccessKey:string};
+export function legacyCredentials(serialized:string):LegacyCredentials{
+  try{
+    const v=JSON.parse(serialized);
+    if(typeof v.username!=='string'||!v.username.trim()||v.username.length>200||
+      typeof v.apiAccessKey!=='string'||!v.apiAccessKey.length||v.apiAccessKey.length>4096||
+      /[\x00-\x1f\x7f]/.test(v.username+v.apiAccessKey))throw Error();
+    return {username:v.username,apiAccessKey:v.apiAccessKey};
+  }catch{throw new ProviderError('INVALID_RESPONSE');}
+}
+/** Exact reference contract: form POST to configured URL, never URL query credentials. */
+export async function safeLegacyRead(base:string,serialized:string,action:'accountinfo'|'imeiservicelist'){
+  if(action!=='accountinfo'&&action!=='imeiservicelist')throw new ProviderError('INVALID_RESPONSE');
+  const {username,apiAccessKey}=legacyCredentials(serialized);
+  const body=new URLSearchParams({username,apiaccesskey:apiAccessKey,action}).toString();
+  try{return await sendRead(new URL(providerUrl(base,'DHRU_FUSION_LEGACY_V61')),'POST',
+    {'Content-Type':'application/x-www-form-urlencoded','Content-Length':String(Buffer.byteLength(body))},body);}
+  catch(e){if(e instanceof ProviderError&&e.category==='AUTH_FAILED')throw new ProviderError('AUTHENTICATION_FAILED');throw e;}
+}
+async function sendRead(url:URL,method:'GET'|'POST',headers:Record<string,string>,body?:string){
+  const host=url.hostname.replace(/^\[|\]$/g,'');
   const destination=await resolvePublic(host);
   return new Promise<string>((resolve,reject)=>{
     let settled=false,timer:ReturnType<typeof setTimeout>|undefined;
@@ -51,13 +79,13 @@ export async function safeRead(base:string,token:string,path:'account'|'products
       if(error)reject(error);else resolve(body!);
     };
     const req=request(url,{
-      method:'GET',agent:false,rejectUnauthorized:true,
+      method,agent:false,rejectUnauthorized:true,
       ...(isIP(host)?{}:{servername:host}),
       // Pin the vetted address in the actual connection; no second DNS lookup.
       lookup:((_hostname:unknown,options:any,callback:any)=>{
         callback(null,options?.all?[destination]:destination.address,destination.family);
       }) as any,
-      headers:{Authorization:`Bearer ${token}`,Accept:'application/json','Accept-Encoding':'identity'},
+      headers:{...headers,Accept:'application/json','Accept-Encoding':'identity'},
     },res=>{
       const status=res.statusCode??0;
       if(status===401||status===402||status===403){res.destroy();done(new ProviderError('AUTH_FAILED'));return;}
@@ -72,6 +100,6 @@ export async function safeRead(base:string,token:string,path:'account'|'products
     });
     req.on('error',()=>done(new ProviderError('UNREACHABLE',true)));
     timer=setTimeout(()=>{done(new ProviderError('UNREACHABLE',true));req.destroy();},20000);timer.unref();
-    req.end();
+    req.end(body);
   });
 }

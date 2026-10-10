@@ -6,7 +6,8 @@ export async function lookup(){state.dnsCalls++;return state.records;}
 export function request(url,options,onResponse){
  state.requests++;state.captured={url:String(url),options,address:null};
  const req=new EventEmitter();req.destroy=()=>{};
- req.end=()=>{
+ req.end=(body)=>{
+  state.captured.body=body??null;
   if(state.hang)return;
   options.lookup(url.hostname,{all:true},(_err,addresses)=>{
    state.captured.address=addresses[0].address;

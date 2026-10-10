@@ -49,14 +49,20 @@ export const createExternalProviderBodyBaseUrlMax = 300;
 
 export const createExternalProviderBodyTokenMax = 4096;
 
+export const createExternalProviderBodyUsernameMax = 200;
+
+export const createExternalProviderBodyApiAccessKeyMax = 4096;
+
 export const createExternalProviderBodyCurrencyRegExp = new RegExp('^[A-Z]{3}$');
 
 
 export const CreateExternalProviderBody = zod.object({
   "name": zod.string().min(1).max(createExternalProviderBodyNameMax),
-  "protocol": zod.enum(['fusion_rest']),
+  "protocol": zod.enum(['fusion_rest', 'DHRU_FUSION_LEGACY_V61']),
   "baseUrl": zod.string().max(createExternalProviderBodyBaseUrlMax),
   "token": zod.string().max(createExternalProviderBodyTokenMax).optional(),
+  "username": zod.string().min(1).max(createExternalProviderBodyUsernameMax).optional(),
+  "apiAccessKey": zod.string().min(1).max(createExternalProviderBodyApiAccessKeyMax).optional(),
   "currency": zod.string().regex(createExternalProviderBodyCurrencyRegExp).nullish(),
   "enabled": zod.boolean()
 })
@@ -93,22 +99,28 @@ export const testExternalProviderDraftBodyBaseUrlMax = 300;
 
 export const testExternalProviderDraftBodyTokenMax = 4096;
 
+export const testExternalProviderDraftBodyUsernameMax = 200;
+
+export const testExternalProviderDraftBodyApiAccessKeyMax = 4096;
+
 export const testExternalProviderDraftBodyCurrencyRegExp = new RegExp('^[A-Z]{3}$');
 
 
 export const TestExternalProviderDraftBody = zod.object({
   "name": zod.string().min(1).max(testExternalProviderDraftBodyNameMax),
-  "protocol": zod.enum(['fusion_rest']),
+  "protocol": zod.enum(['fusion_rest', 'DHRU_FUSION_LEGACY_V61']),
   "baseUrl": zod.string().max(testExternalProviderDraftBodyBaseUrlMax),
   "token": zod.string().max(testExternalProviderDraftBodyTokenMax).optional(),
+  "username": zod.string().min(1).max(testExternalProviderDraftBodyUsernameMax).optional(),
+  "apiAccessKey": zod.string().min(1).max(testExternalProviderDraftBodyApiAccessKeyMax).optional(),
   "currency": zod.string().regex(testExternalProviderDraftBodyCurrencyRegExp).nullish(),
   "enabled": zod.boolean()
 })
 
 export const TestExternalProviderDraftResponse = zod.object({
   "health": zod.string(),
-  "currency": zod.string(),
-  "balance": zod.string()
+  "currency": zod.string().nullable(),
+  "balance": zod.string().nullable()
 })
 
 
@@ -122,14 +134,20 @@ export const updateExternalProviderBodyBaseUrlMax = 300;
 
 export const updateExternalProviderBodyTokenMax = 4096;
 
+export const updateExternalProviderBodyUsernameMax = 200;
+
+export const updateExternalProviderBodyApiAccessKeyMax = 4096;
+
 export const updateExternalProviderBodyCurrencyRegExp = new RegExp('^[A-Z]{3}$');
 
 
 export const UpdateExternalProviderBody = zod.object({
   "name": zod.string().min(1).max(updateExternalProviderBodyNameMax),
-  "protocol": zod.enum(['fusion_rest']),
+  "protocol": zod.enum(['fusion_rest', 'DHRU_FUSION_LEGACY_V61']),
   "baseUrl": zod.string().max(updateExternalProviderBodyBaseUrlMax),
   "token": zod.string().max(updateExternalProviderBodyTokenMax).optional(),
+  "username": zod.string().min(1).max(updateExternalProviderBodyUsernameMax).optional(),
+  "apiAccessKey": zod.string().min(1).max(updateExternalProviderBodyApiAccessKeyMax).optional(),
   "currency": zod.string().regex(updateExternalProviderBodyCurrencyRegExp).nullish(),
   "enabled": zod.boolean()
 })

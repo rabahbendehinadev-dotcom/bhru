@@ -11,4 +11,5 @@ export type ProviderInputProtocol = typeof ProviderInputProtocol[keyof typeof Pr
 
 export const ProviderInputProtocol = {
   fusion_rest: 'fusion_rest',
+  DHRU_FUSION_LEGACY_V61: 'DHRU_FUSION_LEGACY_V61',
 } as const;
