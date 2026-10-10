@@ -1,0 +1,71 @@
+# BHRU — Fix iFree Legacy Catalog Import Eligibility
+
+## Context
+
+The iFree DHRU Fusion Legacy v6.1 connection is now successful.
+
+Confirmed working endpoint:
+`https://api.ifreeicloud.co.uk/api/index.php`
+
+Account connection, balance retrieval and catalog synchronization are working.
+
+However, the Catalog modal displays:
+
+- 72 services retrieved
+- 0 selectable services
+- 72 skipped
+- Status: `Needs review`
+- Reason: `Undocumented Legacy service metadata needs review`
+
+## Objective
+
+Investigate why every iFree Legacy service is rejected for import, and implement the smallest safe correction for services whose metadata and request contract can be verified.
+
+Do NOT bypass safety validation globally.
+
+## Tasks
+
+1. Trace the entire Legacy catalog pipeline, including upstream response parsing, service normalization, eligibility checks, catalog preview and import selection.
+
+2. Determine which specific fields or validation rules cause all 72 services to be marked `Needs review`.
+
+3. Compare the actual supported metadata against the DHRU Legacy v6.1 specification and existing official integration references.
+
+4. Verify that supported IMEI services can be represented correctly in BHRU, including external service ID, name, category, currency, source cost, order input requirements and provider mapping.
+
+5. Where metadata is genuinely incomplete, preserve `Needs review` and provide a clear explanation of the missing information. Add a controlled manual-review and approval workflow if necessary, without inventing service capabilities.
+
+6. Permit import only for services that pass verified eligibility checks or an explicitly validated safe mapping. Never mark all 72 services supported automatically.
+
+7. Preserve tenant isolation, existing imported services, provider identifiers, pricing rules and customer permissions.
+
+8. Keep original provider costs unchanged during catalog sync. Do not automatically introduce retail pricing, currency conversion or profit margins.
+
+9. Fix HTML entity display issues in names, such as `&#128680;`, using safe text decoding rather than rendering untrusted HTML.
+
+10. Ensure Preview/Import operations never submit actual upstream service orders or consume provider balance.
+
+## Verification
+
+Use focused offline tests with sanitized or synthetic Legacy catalog fixtures.
+
+Test eligible services, unsupported services, incomplete metadata, duplicates, pricing, tenant isolation and safe input handling.
+
+Run TypeScript checks and relevant builds.
+
+## Strict limits
+
+- Replit Preview only
+- No live provider requests
+- No paid orders
+- No database migrations or production database writes
+- No changes to credentials or encryption keys
+- No Git commit or push
+- No VPS/Dokploy access
+- No deployment
+
+## Final report
+
+Provide the exact rejection rule responsible for the 72 skipped services, the verified service mappings, modified files, test results, remaining risks and the number of services that are demonstrably eligible after the correction.
+
+Stop after offline verification and wait for approval.
