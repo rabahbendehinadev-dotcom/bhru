@@ -7,3 +7,4 @@
 - [Financial integrity boundaries](financial-integrity-boundaries.md) — diagnostics do not repair history; future imported wallet openings need verified provenance.
 - [Provider key safety](provider-key-safety.md) — rotate exposed keys only after checking encrypted records; never overwrite keys protecting saved credentials.
 - [Preview HTTP fixtures](preview-http-fixtures.md) — authenticated GET probes may initialize defaults; clean only disposable test tenants and all their defaults.
+- [Supplier diagnostic boundaries](provider-diagnostic-boundaries.md) — preserve working iFree; diagnostic observations never authorize new versions or production-worker pauses.

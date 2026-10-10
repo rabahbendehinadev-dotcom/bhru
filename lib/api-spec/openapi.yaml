@@ -50,6 +50,27 @@ paths:
           content:
             application/json:
               schema: {$ref: "#/components/schemas/ProviderTestResult"}
+  /external-providers/{id}/diagnostic-test:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      operationId: startExternalProviderDiagnosticTest
+      tags: [ExternalProviders]
+      description: Requires independent Platform Admin and matching subscriber sessions, CSRF protection and explicit saved-provider confirmation. Creates a single-use five-minute authorization atomically with a new TEST.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProviderDiagnosticInput"}
+      responses:
+        "202":
+          description: Newly authorized TEST or the same idempotent job; no provider credentials returned.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderJob"}
+        "403": {description: Independent administrator or subscriber authorization denied}
+        "409": {description: "Existing live job, unsupported provider or idempotency conflict"}
+        "429": {description: Existing tenant job rate or queue limit exceeded}
   /external-providers/{id}:
     parameters:
       - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
@@ -1715,6 +1736,13 @@ components:
       required: [kind]
       properties:
         kind: {type: string, enum: [TEST,SYNC]}
+    ProviderDiagnosticInput:
+      type: object
+      additionalProperties: false
+      required: [confirmedProviderId, idempotencyKey]
+      properties:
+        confirmedProviderId: {type: string, format: uuid}
+        idempotencyKey: {type: string, format: uuid}
     ProviderJob:
       type: object
       required: [id, kind, state, attempts, counts, safeError, createdAt, startedAt, completedAt]

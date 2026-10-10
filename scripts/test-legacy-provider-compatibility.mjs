@@ -30,6 +30,7 @@ try{
         contents:`import {logger as base} from '${mock}'; export const logger={...base,info:base.warn};`,loader:'ts'}));
       b.onLoad({filter:/\/lib\/platform\.ts$/},()=>({
         contents:`import {state} from '${mock}';
+          export const audit=async()=>{};
           export const transaction=async fn=>fn({query:async(sql,values)=>{
             state.queries.push({sql,values});
             return {rowCount:sql.includes('safe_error=$4')&&sql.includes('lease_token=$2')?

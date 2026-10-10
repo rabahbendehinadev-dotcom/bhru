@@ -131,6 +131,31 @@ export const TestExternalProviderDraftResponse = zod.object({
 })
 
 
+/**
+ * Requires independent Platform Admin and matching subscriber sessions, CSRF protection and explicit saved-provider confirmation. Creates a single-use five-minute authorization atomically with a new TEST.
+ */
+export const StartExternalProviderDiagnosticTestParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const StartExternalProviderDiagnosticTestBody = zod.object({
+  "confirmedProviderId": zod.string().uuid(),
+  "idempotencyKey": zod.string().uuid()
+})
+
+export const StartExternalProviderDiagnosticTestResponse = zod.object({
+  "id": zod.string(),
+  "kind": zod.string(),
+  "state": zod.string(),
+  "attempts": zod.number().int(),
+  "counts": zod.record(zod.string(), zod.number().int()),
+  "safeError": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "startedAt": zod.string().nullable(),
+  "completedAt": zod.string().nullable()
+})
+
+
 export const UpdateExternalProviderParams = zod.object({
   "id": zod.coerce.string().uuid()
 })

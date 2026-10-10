@@ -2,7 +2,8 @@ import {Router} from 'express';
 import {z} from '@workspace/api-zod';
 import {subscriberContext} from '../lib/commerce/data';
 import {transaction,audit} from '../lib/platform';
-import {HttpError,rateLimit} from '../lib/auth';
+import {HttpError,rateLimit,requireAdmin} from '../lib/auth';
+import {enqueueDiagnosticTest} from '../lib/providers/one-time-diagnostics';
 import {providerStorageReady} from '../lib/providers/credentials';
 import {assertProviderSchemaReady} from '../lib/providers/schema-ready';
 import {providerInput,inputCredentials,configureProvider,providerRow,providerView,policyInput,validatePolicyGroups} from '../lib/providers/connections';
@@ -13,6 +14,28 @@ import {enqueueProviderJob,jobView} from '../lib/providers/worker';
 import {previewImport,importServices} from '../lib/providers/import';
 import {usdText} from '../lib/client-finance/wallet';
 const router=Router(),uuid=z.string().uuid();
+router.post('/external-providers/:id/diagnostic-test',async(req,res)=>{
+  let owner:ReturnType<typeof subscriberContext>|undefined;
+  let admin:ReturnType<typeof requireAdmin>|undefined;
+  try{
+    admin=requireAdmin(req);
+    owner=subscriberContext(req);
+    const id=uuid.parse(req.params.id);
+    const input=z.object({confirmedProviderId:uuid,idempotencyKey:uuid}).strict().parse(req.body);
+    if(input.confirmedProviderId!==id)throw new HttpError(400,'Confirm the exact selected saved provider.');
+    if(!providerStorageReady())throw new HttpError(503,'Provider encryption is not configured.');
+    await rateLimit(`provider-job:${owner.subscriber_id}`,30);
+    res.status(202).json(await transaction(db=>enqueueDiagnosticTest(db,owner!,admin!,id,input.idempotencyKey)));
+  }catch(error){
+    // Fixed audit description only; do not include the untrusted body or error message.
+    if(admin&&owner)await transaction(db=>audit(db,admin!,'Diagnostic TEST authorization rejected',
+      'subscriber',owner!.subscriber_id,'No new diagnostic job authorized'));
+    req.log.warn({diagnosticCode:'DIAGNOSTIC_TEST_AUTHORIZATION_REJECTED',requestId:req.id,
+      adminId:admin?.id??null,tenantId:owner?.subscriber_id??null},'Diagnostic TEST authorization rejected');
+    if((error as {code?:string})?.code==='42P01')throw new HttpError(503,'Diagnostic job storage is unavailable. Migration 034 is required.');
+    throw error;
+  }
+});
 router.use('/external-providers',(_req,res,next)=>{res.set('Cache-Control','private, no-store');next();});
 router.get('/external-providers',async(req,res)=>{
   const owner=subscriberContext(req);

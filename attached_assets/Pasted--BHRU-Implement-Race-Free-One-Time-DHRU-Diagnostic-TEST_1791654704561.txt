@@ -1,0 +1,147 @@
+# BHRU — Implement Race-Free One-Time DHRU Diagnostic TEST
+
+## Objective
+
+Implement the previously investigated, race-free, one-time diagnostic TEST workflow for saved DHRU Fusion Legacy providers.
+
+Read the latest feasibility report and existing provider queue, worker, authorization, audit and rate-limit architecture before making changes.
+
+## Critical business requirement
+
+BHRU is a multi-tenant SaaS platform supporting multiple independent DHRU suppliers per reseller.
+
+The existing iFree integration is working and must remain fully functional.
+
+The current target is Unlock OK, but the implementation must remain provider-independent and compatible with future suppliers such as Adyunlocker.
+
+## Implementation
+
+Create a strictly authorized diagnostic action for an existing saved Legacy provider.
+
+The TEST job and its diagnostic authorization must be created atomically within one PostgreSQL transaction, before the worker can claim the job.
+
+Requirements:
+
+1. Verify independent Platform Admin authorization and tenant ownership using the actual existing authentication architecture. Do not assume an administrator can automatically impersonate a subscriber.
+2. Apply existing CSRF, permissions, provider ownership, rate limiting and queue constraints.
+3. Require explicit confirmation of the selected saved provider.
+4. Require an idempotency key to prevent duplicate TEST requests.
+5. Refuse to attach diagnostic authorization to an existing TEST or SYNC job.
+6. Create one new TEST job and its diagnostic authorization atomically.
+7. Apply a server-generated expiration of five minutes.
+8. Audit authorization creation, consumption, expiration and rejection without recording secrets.
+9. Use an additive, reviewed PostgreSQL migration only if required.
+10. Preserve all existing job records, provider records and credentials.
+
+## Worker behavior
+
+During the normal job-claim transaction:
+
+- Verify the exact tenant, provider and TEST job.
+- Verify diagnostic authorization is valid and unconsumed.
+- Atomically consume the authorization.
+- Bind the permit to the current worker lease.
+- Never reissue a diagnostic permit after a lost lease, crash or retry.
+- Do not stop or restart the shared worker.
+- Do not bypass global rate limits.
+
+For an expired authorization, fail the diagnostic job safely without sending an upstream request.
+
+## Response diagnostics
+
+Use the existing fixed classifications:
+
+- Version classification
+- SUCCESS envelope validity
+- AccoutInfo container validity
+- Currency validation
+- Credit validation
+- HTML/XML/JSON response type
+- Existing upstream HTTP status diagnostics
+
+Do not modify the existing parser acceptance rules.
+
+In particular:
+
+- Do not accept unsupported API versions.
+- Do not automatically approve version 2023.21.
+- Do not weaken monetary validation.
+- Do not change requestformat=JSON.
+- Do not change the iFree adapter behavior.
+- Do not change catalog normalization or import validation.
+
+## Security requirements
+
+Never output or log:
+
+- API keys
+- Usernames
+- Credentials
+- Session secrets
+- Database URLs
+- Raw upstream response bodies
+- Account balances
+- Sensitive headers
+- Arbitrary upstream version strings
+
+Only allowlisted diagnostic classifications and internal identifiers may be recorded.
+
+## Verification
+
+Perform focused offline and local development database tests covering:
+
+- Atomic job/authorization creation
+- Concurrent worker claims
+- Idempotent repeated requests
+- Expired authorization
+- Worker crash and lost lease
+- Rejection of existing TEST/SYNC jobs
+- Cross-tenant access denial
+- Platform Admin authorization
+- CSRF protection
+- Rate limiting
+- Audit events
+- iFree Legacy regression
+- DHRU REST regression
+- Parser acceptance invariance
+- Secret redaction
+
+Run TypeScript checks and relevant builds.
+
+Do not rely only on mocked concurrency tests. Validate transaction behavior against the development PostgreSQL database.
+
+## Deployment boundaries
+
+REPLIT DEVELOPMENT / PREVIEW ONLY.
+
+You may prepare an additive migration in source code, but do not apply it to production.
+
+No real supplier requests.
+
+No paid orders.
+
+No iFree, Unlock OK or Adyunlocker calls.
+
+No Dokploy or VPS access.
+
+No production database changes.
+
+No Git commit.
+
+No Git push.
+
+No deployment.
+
+## Final deliverables
+
+Provide:
+
+1. Exact files modified.
+2. Migration review and backward compatibility notes.
+3. Description of authorization and worker-claim atomicity.
+4. Verified test results.
+5. Confirmation that normal provider operations and iFree behavior remain unchanged.
+6. Required operator steps for a future authorized Unlock OK diagnostic test.
+7. Remaining risks before production deployment.
+
+Stop after implementation and local verification. Await approval before any Git or production action.

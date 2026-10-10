@@ -122,6 +122,11 @@ export interface ProviderJobInput {
   kind: ProviderJobInputKind;
 }
 
+export interface ProviderDiagnosticInput {
+  confirmedProviderId: string;
+  idempotencyKey: string;
+}
+
 export type ProviderJobCounts = {[key: string]: number};
 
 export interface ProviderJob {

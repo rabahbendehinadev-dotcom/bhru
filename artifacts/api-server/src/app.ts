@@ -15,6 +15,7 @@ import { customDomainGateway } from "./lib/domains/gateway";
 import { customerPublicContext } from "./lib/customer-auth/context";
 import customerAuthRouter from "./routes/customer-auth";
 import {paymentWebhookRouter} from "./routes/payment-webhooks";
+import {auditDiagnosticRejection} from "./lib/providers/one-time-diagnostics";
 
 const app: Express = express();
 app.disable("x-powered-by");
@@ -70,6 +71,9 @@ app.get("/healthz", async (_req, res) => {
   res.json({ status: "ok" });
 });
 app.use(loadSession);
+// Observe denied diagnostic actions even when CSRF rejects before the route.
+// No body, headers, URL or untrusted parameter is copied to this audit log.
+app.use(auditDiagnosticRejection);
 app.use("/api", csrfProtection, router);
 app.use("/api", (_req, res) => { res.status(404).json({ error: "Endpoint not found." }); });
 

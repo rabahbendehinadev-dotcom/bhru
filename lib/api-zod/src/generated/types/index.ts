@@ -148,6 +148,7 @@ export * from './providerCatalogItem';
 export * from './providerCatalogList';
 export * from './providerCategory';
 export * from './providerConnection';
+export * from './providerDiagnosticInput';
 export * from './providerGroupMarkup';
 export * from './providerGroupPrice';
 export * from './providerImportInput';

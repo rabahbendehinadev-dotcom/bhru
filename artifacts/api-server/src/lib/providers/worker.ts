@@ -9,6 +9,7 @@ import {ProviderError,safeLegacyRead} from './transport';
 import {accountDiagnosticsAuthorized,classifyAccountResponse,logAccountResponseDiagnostic,
   type AccountResponseDiagnostic} from './legacy-account-response-diagnostics';
 import {isLegacyAccountDiagnostic} from './legacy-diagnostics';
+import {consumeDiagnosticAuthorization,verifyDiagnosticPermit,logOneTimeDiagnostic,rejectChangedDiagnostic} from './one-time-diagnostics';
 import {legacyMetadataDiagnosticsAuthorized,logLegacyMetadataDiagnostic,
   type LegacyMetadataDiagnostic} from './legacy-metadata-diagnostics';
 import type {PoolClient} from '@workspace/db';
@@ -56,9 +57,10 @@ export async function claimProviderJob(){
       (state='QUEUED' AND next_attempt_at<=now() OR state='RUNNING' AND lease_until<now())
       ORDER BY next_attempt_at,created_at LIMIT 1 FOR UPDATE SKIP LOCKED`,[tenant.id])).rows[0];
     if(!j)return null;
-    return (await db.query(`UPDATE external_provider_jobs SET state='RUNNING',attempts=attempts+1,
+    const claimed=(await db.query(`UPDATE external_provider_jobs SET state='RUNNING',attempts=attempts+1,
       started_at=coalesce(started_at,now()),lease_token=$2,lease_until=now()+interval '90 seconds'
       WHERE id=$1 RETURNING *`,[j.id,randomUUID()])).rows[0];
+    return consumeDiagnosticAuthorization(db,claimed);
   });
 }
 export async function stageCatalog(sub:string,id:string,job:string,items:CatalogItem[],db:PoolClient,
@@ -108,11 +110,16 @@ export async function stageCatalog(sub:string,id:string,job:string,items:Catalog
 export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
   let accountDiagnostic:AccountResponseDiagnostic|undefined;
   const emitAccountDiagnostic=()=>{
-    if(accountDiagnostic)try{logAccountResponseDiagnostic(j.subscriber_id,j.provider_id,j.id,accountDiagnostic);}catch{}
+    if(accountDiagnostic)try{
+      if(j.oneTimeDiagnostic)logOneTimeDiagnostic(j,accountDiagnostic);
+      else logAccountResponseDiagnostic(j.subscriber_id,j.provider_id,j.id,accountDiagnostic);
+    }catch{}
   };
   try{
     const p=await transaction(db=>providerRow(j.subscriber_id,j.provider_id,db));
     if(!p.enabled||p.config_version!==j.config_version)throw new ProviderError('CONFIGURATION_CHANGED');
+    if(j.oneTimeDiagnostic&&!await transaction(db=>verifyDiagnosticPermit(db,j)))
+      throw new ProviderError('CONFIGURATION_CHANGED');
     const token=decryptToken(p.subscriber_id,p.id,p.credentials_encrypted),adapter=providerAdapter(p.protocol);
     const diagnostics=new Map<string,LegacyMetadataDiagnostic>();
     const enabled=j.kind==='SYNC'&&p.protocol==='DHRU_FUSION_LEGACY_V61'&&
@@ -121,7 +128,7 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
       if(diagnostics.size<100)diagnostics.set(upstreamId,diagnostic);
     }:undefined;
     const detailed=j.kind==='TEST'&&j.attempts===1&&p.protocol==='DHRU_FUSION_LEGACY_V61'&&
-      accountDiagnosticsAuthorized(p.subscriber_id,p.id,j.id);
+      (j.oneTimeDiagnostic||accountDiagnosticsAuthorized(p.subscriber_id,p.id,j.id));
     const accountRead:ReadTransport|undefined=detailed?async(base,credentials,action)=>{
       try{
         const raw=await (read??safeLegacyRead)(base,credentials,action as 'accountinfo');
@@ -144,12 +151,17 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
       const owned=(await db.query(`SELECT id FROM external_provider_jobs WHERE id=$1 AND lease_token=$2 AND state='RUNNING' AND lease_until>now() FOR UPDATE`,[j.id,j.lease_token])).rowCount;
       if(!owned)return;
       if(!current.enabled||current.config_version!==j.config_version)throw new ProviderError('CONFIGURATION_CHANGED');
+      if(j.oneTimeDiagnostic&&!await verifyDiagnosticPermit(db,j)){
+        await db.query(`UPDATE external_provider_jobs SET state='FAILED',safe_error='DIAGNOSTIC_PERMIT_UNAVAILABLE',
+          completed_at=now(),lease_token=NULL,lease_until=NULL WHERE id=$1 AND lease_token=$2`,[j.id,j.lease_token]);
+        return;
+      }
       const counts=catalog?await stageCatalog(p.subscriber_id,p.id,j.id,catalog.items,db,
         enabled?(upstreamId,catalogId)=>{
           const diagnostic=diagnostics.get(upstreamId);
           if(diagnostic)stagedDiagnostics.push({catalogId,diagnostic});
         }:undefined):{};
-      await db.query(`UPDATE external_providers SET currency=coalesce($3,currency),health='CONNECTED',safe_error=NULL,
+      if(!j.oneTimeDiagnostic)await db.query(`UPDATE external_providers SET currency=coalesce($3,currency),health='CONNECTED',safe_error=NULL,
         balance=CASE WHEN $4::text IS NOT NULL THEN $4 ELSE balance END,
         last_test_at=CASE WHEN $5 THEN now() ELSE last_test_at END,
         last_sync_at=CASE WHEN $5 THEN last_sync_at ELSE now() END,updated_at=now() WHERE subscriber_id=$1 AND id=$2`,
@@ -167,18 +179,23 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
   }catch(error){
     const category=error instanceof ProviderError?error.category:error instanceof HttpError&&error.status===503?'CREDENTIALS_UNAVAILABLE':'INVALID_RESPONSE';
     const safeError=error instanceof ProviderError?error.safeError:category;
-    const retry=error instanceof ProviderError&&error.retryable&&j.attempts<4;
+    const retry=!j.oneTimeDiagnostic&&error instanceof ProviderError&&error.retryable&&j.attempts<4;
     let recorded=false,legacyProvider=false;
     await transaction(async db=>{
       // Same lock order as configuration and successful finalization.
       const current=await providerRow(j.subscriber_id,j.provider_id,db,true);
       legacyProvider=current.protocol==='DHRU_FUSION_LEGACY_V61'&&current.config_version===j.config_version;
+      if(j.oneTimeDiagnostic){
+        const valid=await verifyDiagnosticPermit(db,j);
+        if(valid&&!legacyProvider)await rejectChangedDiagnostic(db,j);
+        legacyProvider=legacyProvider&&valid;
+      }
       const result=await db.query(`UPDATE external_provider_jobs SET state=$3,safe_error=$4,
         completed_at=CASE WHEN $3='FAILED' THEN now() ELSE NULL END,lease_token=NULL,lease_until=NULL,
          next_attempt_at=now()+($5::integer*interval '1 second') WHERE id=$1 AND lease_token=$2 AND state='RUNNING' AND lease_until>now()`,
         [j.id,j.lease_token,retry?'QUEUED':'FAILED',safeError,Math.min(300,5*2**j.attempts+randomInt(0,6))]);
       recorded=!!result.rowCount;
-      if(result.rowCount)await db.query(`UPDATE external_providers SET health=$3,safe_error=$4,updated_at=now()
+      if(result.rowCount&&!j.oneTimeDiagnostic)await db.query(`UPDATE external_providers SET health=$3,safe_error=$4,updated_at=now()
         WHERE subscriber_id=$1 AND id=$2 AND config_version=$5`,
         [j.subscriber_id,j.provider_id,['AUTH_FAILED','AUTHENTICATION_FAILED','UNSUPPORTED_PROVIDER','UNREACHABLE','INVALID_RESPONSE'].includes(category)?category:'SYNC_FAILED',safeError,j.config_version]);
     });

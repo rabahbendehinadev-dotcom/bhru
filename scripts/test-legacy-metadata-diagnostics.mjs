@@ -44,6 +44,7 @@ try{
           state.logs.push({fields,message});},warn(){},error(){}};`,loader:'ts'}));
       b.onLoad({filter:/\/lib\/platform\.ts$/},()=>({contents:`
         import {state} from 'offline-state';
+        export const audit=async()=>{};
         export const transaction=async fn=>{
           const result=await fn({query:async(sql,values)=>{
             state.queries.push({sql,values});
