@@ -1,0 +1,190 @@
+# BHRU — Diagnose iFree DHRU Fusion Legacy v6.1 API Integration
+
+## Mission
+
+Investigate the existing **DHRU Fusion Legacy v6.1** provider integration in BHRU.
+
+A real provider, **iFree iCloud**, consistently returns the application-level error:
+
+`Connection test: INVALID_RESPONSE. Check endpoint, credentials and provider access permissions.`
+
+The objective of this task is to identify the precise technical reason for the error using existing source code, official provider documentation where accessible, and safe local tests.
+
+**This is a read-only investigation and diagnostic task. Do not implement a fix yet.**
+
+## 1. Known provider details
+
+- Provider name: `ifree`
+- Provider type: `DHRU Fusion Legacy v6.1`
+- API endpoint supplied by the provider: `https://api.ifreeicloud.co.uk`
+- Currency: `USD`
+- API username: Already configured in BHRU
+- API key: Secret; never print, reveal, or include in any report
+- Provider status: Dhru API Enabled
+- iFree IP Guard: Enabled
+- iFree linked IP: Previously displayed `Pending connection...`
+- BHRU error: `INVALID_RESPONSE`
+
+The BHRU UI also displays the instruction:
+
+`Exact public HTTPS endpoint supplied by your provider; no query credentials. No /api.php path is added automatically.`
+
+**Important:** Do not assume that `/api.php` is required. Verify the actual upstream protocol and endpoint behavior from reliable documentation or existing integration evidence.
+
+iFree also offers a separate PHP API, but this investigation is specifically about its DHRU Fusion Legacy v6.1 integration. Do not mix the two authentication protocols.
+
+## 2. Inspect existing BHRU implementation
+
+Trace the complete connection-test workflow:
+
+1. Frontend `API Settings` form.
+2. Provider type selection.
+3. Endpoint normalization and validation.
+4. Backend route used by `Test connection`.
+5. Provider adapter implementation.
+6. Authentication parameter construction.
+7. HTTP request execution.
+8. Upstream response handling.
+9. Mapping of failures to `INVALID_RESPONSE`.
+10. Provider credential encryption/decryption and configuration-readiness checks.
+
+Identify the exact source files and relevant functions.
+
+Determine whether the Legacy adapter sends requests using the proper HTTP method, content type, field names, URL, and required DHRU v6.1 protocol parameters.
+
+Do not assume that the implementation is correct simply because it is labeled Legacy v6.1.
+
+## 3. Diagnose INVALID_RESPONSE
+
+Find every code path that returns `INVALID_RESPONSE`.
+
+For each one, identify the underlying condition, for example:
+
+- Unexpected response format.
+- HTML returned instead of JSON or XML.
+- Incorrect API action.
+- Authentication or permission rejection.
+- Incorrect request parameters.
+- HTTP response status.
+- Unexpected provider response schema.
+- Redirect to a web page.
+- Network or TLS error.
+- Unsupported or incorrectly parsed DHRU response.
+- IP Guard restriction.
+
+Distinguish confirmed findings from hypotheses.
+
+Check whether the current error handler hides useful non-secret diagnostic information behind the generic `INVALID_RESPONSE` label.
+
+## 4. Verify iFree compatibility
+
+Compare the implementation against available official iFree DHRU v6.1 API setup instructions.
+
+Verify:
+
+- Correct endpoint URL and path.
+- HTTP method.
+- Authentication fields.
+- Supported connection-test or account-information operation.
+- Request encoding.
+- Expected response structure.
+- Interpretation of provider errors.
+- Whether IP Guard could prevent the first connection.
+
+Do not fabricate documentation, API actions, response structures, or compatibility claims.
+
+If official documentation is insufficient, state exactly what cannot be verified.
+
+## 5. Strict safety rules
+
+This investigation must not affect any real BHRU service.
+
+- Work only in the Replit development environment.
+- No Git commit.
+- No Git push.
+- No deployment.
+- No Dokploy or VPS access.
+- No changes to production databases.
+- No database migrations.
+- No modifications to existing encrypted credentials.
+- Do not rotate or replace API keys.
+- Do not disable iFree IP Guard.
+- Do not create paid IMEI orders.
+- Do not trigger chargeable provider operations.
+- Do not execute live upstream authentication requests without my explicit approval.
+
+Important: iFree IP Guard automatically associates an API key with the connecting server IP. An unapproved live request from Replit could unintentionally bind the key to Replit instead of the production VPS.
+
+Use mocked responses and local tests for initial investigation.
+
+Never expose credentials, authorization headers, session secrets, database URLs, or raw upstream responses containing sensitive information.
+
+## 6. Lightweight verification
+
+Use the existing codebase and the smallest relevant checks:
+
+- Static source inspection.
+- Safe unit tests with mocked DHRU responses.
+- Request-construction tests.
+- Response-parser tests.
+- Relevant TypeScript checks if necessary.
+
+Avoid expensive browser E2E testing.
+
+Do not modify production behavior merely to make a test pass.
+
+## 7. Required final report
+
+Create a concise technical report named:
+
+`BHRU_IFREE_LEGACY_API_DIAGNOSIS.md`
+
+Include:
+
+### A. Existing implementation
+
+Actual source files, functions, routes, and provider adapter architecture.
+
+### B. Request construction
+
+Document the HTTP method, endpoint handling, authentication field names, content type, and connection-test action. Redact all credential values.
+
+### C. Response handling
+
+Explain which conditions generate `INVALID_RESPONSE` and whether the implementation incorrectly rejects valid DHRU v6.1 responses.
+
+### D. iFree compatibility
+
+List confirmed compatibility requirements and unresolved questions.
+
+### E. Root cause
+
+Clearly label the finding as:
+
+- Confirmed
+- Strongly supported
+- Unverified hypothesis
+
+Do not claim a definitive root cause without evidence.
+
+### F. Recommended fix
+
+Propose the smallest safe correction to the existing DHRU Legacy adapter, preserving other provider integrations.
+
+### G. Tests
+
+Report which local checks passed or failed.
+
+### H. Deployment impact
+
+Identify whether the eventual correction would need code changes, configuration changes, or both. No deployment actions.
+
+## Final instruction
+
+**Stop after investigation and reporting. Wait for my approval before implementing any fix.**
+
+Do not add a new PHP API provider adapter in this task.
+
+Do not modify existing DHRU Fusion Pro REST behavior.
+
+Do not commit, push, deploy, or touch production.

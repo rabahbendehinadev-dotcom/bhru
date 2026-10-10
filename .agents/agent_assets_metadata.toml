@@ -28,3 +28,17 @@ mtime_ms = 1791496374254
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/ea6e8aae-e191-48eb-8891-21a7922ec108/3e65f195-99dd-4f98-89a2-d73959d5d4e5"
 storage_version_token = "1791496392420612"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "Llrj4gtsvfKdQkXDti1cY"
+uri = "file://BHRU_IFREE_LEGACY_API_DIAGNOSIS.md"
+type = "text"
+title = "BHRU iFree Legacy API Diagnosis"
+description = "Read-only investigation: verified request differences, INVALID_RESPONSE paths, official references, 21 offline checks and recommended next steps."
+logical_id = "3d1b4181-2dff-4fe6-bf3b-95ce20ebe74a"
+content_hash = "sha256:9d95658faed31f87988ce9f59db6291ed689df8ac4c3916d482255dc934dcb13"
+size = 12642
+mtime_ms = 1791642334197
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/3d1b4181-2dff-4fe6-bf3b-95ce20ebe74a/11578fc6-6997-4723-bcfe-966ae63bc3b9"
+storage_version_token = "1791642365683822"
+content_type = "text/markdown"

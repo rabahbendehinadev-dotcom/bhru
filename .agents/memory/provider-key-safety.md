@@ -18,3 +18,14 @@ configuration readiness, not that the key differs from an exposed predecessor.
 Do not claim independent rotation proof without such evidence. Never retrieve,
 print or persist keys in reports/memory. Preview verification says nothing about
 VPS or production credentials.
+
+For iFree, the user reports that IP Guard can associate a key with the first
+connecting server IP. Do not initiate real authenticated calls from Preview
+without explicit approval, even read-only account/balance operations.
+
+**Why:** A diagnostic read from Replit could bind the provider key to Replit
+instead of the intended production server.
+
+**How to apply:** Use public unauthenticated documentation and offline mocks
+first. Approval for local diagnostic tests is not approval for live upstream
+authentication. Never disable IP Guard to make a test pass.
