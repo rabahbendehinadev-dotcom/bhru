@@ -1,0 +1,445 @@
+# BHRU SaaS — SLICE 7A.1
+# REAL DHRU FUSION LEGACY v6.1 API SUPPORT
+
+ROLE:
+Act as a senior SaaS architect, API integration engineer,
+PostgreSQL engineer, and application security specialist.
+
+CONTEXT:
+Slice 7A has already been implemented in Replit Preview.
+
+It includes:
+- Multi-tenant external provider management
+- AES-256-GCM encrypted provider credentials
+- Provider adapters
+- PostgreSQL-backed synchronization jobs
+- Staged upstream catalog
+- Safe service import
+- Pricing preview
+- Sync history
+- Tenant isolation
+- Existing BHRU service catalog integration
+
+The existing Fusion Pro REST adapter must remain functional.
+
+YOUR TASK:
+Extend the existing External Provider system to support
+DHRU Fusion Legacy v6.1 as a fully working provider protocol.
+
+Do NOT rebuild Slice 7A.
+Do NOT create a parallel provider management system.
+
+==================================================
+1. STUDY THE OFFICIAL DHRU LEGACY REFERENCE
+==================================================
+
+The official reference archive was provided previously:
+
+dhru-fusion-api-standards-master.zip
+
+Inspect its actual contents and identify:
+
+- Legacy authentication parameters
+- API endpoint format
+- HTTP method
+- Request encoding
+- Supported actions
+- Response envelopes
+- Error codes
+- Account information structure
+- Service list structure
+- Service prices and currencies
+- Service categories
+- Service input requirements
+
+Pay particular attention to:
+
+accountinfo
+imeiservicelist
+
+Also study the documented order-related actions:
+
+placeimeiorder
+placeimeiorderbulk
+getimeiorder
+getimeiorderbulk
+
+These order actions are for architectural understanding only.
+
+DO NOT execute any order-related actions in this slice.
+
+Do not confuse this protocol with:
+- Fusion Pro REST Reseller API
+- Fusion Pro Simple API Request Listener
+
+Do not invent undocumented API behavior.
+
+If the reference archive is unavailable, stop and
+request it instead of guessing.
+
+==================================================
+2. IMPLEMENT A REAL LEGACY PROVIDER ADAPTER
+==================================================
+
+Create a properly typed Legacy DHRU Fusion v6.1 adapter.
+
+Reuse the existing Slice 7A adapter interface.
+
+Provider type:
+
+DHRU_FUSION_LEGACY_V61
+
+Authentication:
+Use the exact username/API access key mechanism
+documented in the official legacy reference.
+
+Do not use Bearer authentication for this adapter.
+
+Implement the verified read-only operations:
+
+- Get Account Information
+- Get Provider Balance
+- Get Provider Currency
+- Get Service List
+- Normalize Upstream Services
+
+Use the correct endpoint, request method,
+parameter names and response parsing from the reference.
+
+Do not assume REST endpoint paths such as /account
+or /products exist on legacy servers.
+
+==================================================
+3. SUPPORT REAL LEGACY PROVIDERS
+==================================================
+
+The user wants to connect real external DHRU v6.1 servers,
+including providers such as ifreeicloud.
+
+The Add Provider UI must support:
+
+Provider Type:
+DHRU Fusion Legacy v6.1
+
+Fields:
+- Provider Name
+- API Endpoint URL
+- Username
+- API Access Key
+- Test Connection
+- Save
+
+Example endpoint format:
+
+https://api.ifreeicloud.co.uk
+
+Treat this URL as a user-configured provider endpoint,
+not a hardcoded dependency.
+
+Never embed real API keys or credentials in source code.
+
+Do not request the user's API key in chat.
+
+==================================================
+4. SECURE CREDENTIAL MANAGEMENT
+==================================================
+
+Reuse the existing dedicated provider encryption system:
+
+BHRU_PROVIDER_ENCRYPTION_KEY_V1
+
+Do not introduce plaintext credential storage.
+
+Never return the API access key to the browser
+after it has been saved.
+
+Allow secure credential replacement.
+
+Preserve existing AES-256-GCM encryption and
+tenant-bound associated data.
+
+IMPORTANT:
+The current development encryption key was previously
+exposed in a screenshot.
+
+Before storing real provider credentials, verify that
+the encryption key has been securely rotated and that
+no existing encrypted credentials will be orphaned.
+
+If safe rotation is not possible, stop and report
+the required migration procedure.
+
+Never print encryption keys or provider API keys.
+
+==================================================
+5. REAL CONNECTION TEST
+==================================================
+
+Implement a real server-side Test Connection action.
+
+The test must call the verified legacy accountinfo operation.
+
+Validate:
+- Network connectivity
+- Authentication result
+- Provider response format
+- Account status, when available
+- Provider currency, when available
+- Provider balance, when available
+
+Return truthful states:
+
+CONNECTED
+AUTHENTICATION_FAILED
+UNREACHABLE
+INVALID_RESPONSE
+UNSUPPORTED_PROVIDER
+DISABLED
+
+Do not mark a provider CONNECTED unless an actual
+authenticated account request succeeds.
+
+A syntactically valid endpoint is not proof of connectivity.
+
+Never fabricate provider balance or currency.
+
+==================================================
+6. LEGACY SERVICE SYNCHRONIZATION
+==================================================
+
+Implement real catalog synchronization using the verified
+legacy imeiservicelist operation.
+
+Determine from the reference whether and how the same
+operation returns IMEI and Server services.
+
+Do not assume File and Remote service endpoints exist
+unless the reference actually documents them.
+
+Normalize supported services into the existing
+Slice 7A staged provider catalog.
+
+Preserve:
+- Upstream service ID
+- Provider connection ID
+- Original service name
+- Original category
+- Service type
+- Upstream cost
+- Currency
+- Required input fields
+- Supported metadata
+
+Unsupported or ambiguous fields must be flagged for review.
+
+Do not silently invent input requirements.
+
+Do not duplicate services on repeated synchronization.
+
+Do not automatically delete published services.
+
+==================================================
+7. INTEGRATE WITH EXISTING BHRU FEATURES
+==================================================
+
+Use the existing:
+
+- Canonical service catalog
+- Customer groups
+- Pricing engine
+- Customer-specific price overrides
+- Service access rules
+- Account currency logic
+- Sync jobs
+- Sync history
+- Provider service links
+
+Do not create parallel tables unless an additive schema
+change is genuinely required.
+
+Do not modify customer wallet balances.
+
+Do not modify order processing.
+
+Imported external services must remain inactive
+and unavailable for customer ordering until a
+separately approved fulfillment implementation exists.
+
+==================================================
+8. SECURITY REQUIREMENTS
+==================================================
+
+Reuse and extend existing SSRF protection.
+
+Requirements:
+
+- HTTPS only
+- Safe DNS resolution
+- No private/internal IP connections
+- TLS certificate verification
+- Redirects disabled
+- Bounded timeouts
+- Response-size limits
+- Credential redaction
+- Tenant isolation
+- Rate-limited connection tests
+
+Legacy requests may use different parameter encoding
+than the REST adapter.
+
+Ensure authentication credentials are not leaked through
+query strings, error messages, HTTP logs or redirects.
+
+If the verified protocol requires credentials in a URL
+query string, document the risk and avoid exposing it
+to browser URLs or logs.
+
+Never disable TLS verification to make a provider work.
+
+==================================================
+9. UI INTEGRATION
+==================================================
+
+Extend:
+
+Settings → API Settings
+/m/api-settings
+
+Add the new provider type:
+
+DHRU Fusion Legacy v6.1
+
+The interface must allow:
+
+- Add Legacy Provider
+- Edit Legacy Provider
+- Replace Credentials
+- Test Connection
+- Synchronize Services
+- Browse Staged Services
+- Import Selected Services
+- Preview Pricing
+- View Sync History
+- Disable Provider
+
+Keep the existing compact BHRU design.
+
+Do not redesign unrelated pages.
+
+==================================================
+10. DATABASE AND MIGRATIONS
+==================================================
+
+Inspect migration:
+
+032_external_provider_foundation.sql
+
+Reuse the existing provider schema where possible.
+
+Only create the next additive migration if necessary.
+
+Preserve all existing provider connections.
+
+Preserve existing REST adapter functionality.
+
+Do not reset or truncate tables.
+
+Do not modify production data.
+
+==================================================
+11. TESTING
+==================================================
+
+Run focused tests using deterministic mocked
+legacy API responses.
+
+Test:
+
+- Successful legacy authentication
+- Invalid username
+- Invalid API access key
+- Invalid endpoint
+- Non-JSON or malformed responses
+- Provider-side errors
+- Network timeout
+- Service list parsing
+- Currency and exact decimal prices
+- Duplicate sync prevention
+- Tenant isolation
+- Encrypted credential storage
+- Credential redaction
+- SSRF protection
+- Existing REST adapter regression
+- Existing manual service regression
+
+Run focused TypeScript, HTTP, SQL and build checks.
+
+Do not run expensive broad E2E/browser suites.
+
+Do not execute paid upstream orders.
+
+==================================================
+12. OPTIONAL REAL PROVIDER TEST
+==================================================
+
+Do not automatically contact a real provider.
+
+After implementing and passing mocked tests,
+prepare the UI for a user-initiated real connection test.
+
+Only execute a real provider connection test when
+the user explicitly approves it.
+
+The real test must remain read-only.
+
+Never call order-placement actions.
+
+==================================================
+13. FINAL REPORT
+==================================================
+
+Provide:
+
+1. Official reference files inspected
+2. Exact legacy request contract implemented
+3. Authentication method
+4. Legacy response parsing
+5. Supported service types
+6. Backend files modified
+7. Frontend files modified
+8. Database changes
+9. Tests and results
+10. REST adapter regression results
+11. Known limitations
+12. Whether real-provider testing was performed
+13. Remaining requirements for Slice 7B
+
+Clearly distinguish:
+
+IMPLEMENTED AND TESTED
+IMPLEMENTED BUT NOT TESTED
+NOT IMPLEMENTED
+BLOCKED
+
+==================================================
+STRICT EXECUTION RULES
+==================================================
+
+Work only in Replit Preview.
+
+DO NOT:
+- Commit
+- Push
+- Deploy
+- Publish
+- Access VPS/Dokploy
+- Modify production
+- Place paid orders
+- Execute automatic dispatch
+- Implement refunds or callbacks
+- Change existing wallet or ledger logic
+- Modify unrelated functionality
+
+Stop after completing Slice 7A.1 and focused tests.
+
+Wait for explicit user approval before proceeding.
