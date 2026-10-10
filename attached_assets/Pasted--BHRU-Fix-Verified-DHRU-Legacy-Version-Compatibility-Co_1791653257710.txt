@@ -1,0 +1,60 @@
+# BHRU — Fix Verified DHRU Legacy Version Compatibility
+
+## Context
+
+The latest authenticated BHRU connection test for Unlock OK now returns:
+
+"Provider account response declares an unsupported Legacy API version. Version validation remains strict."
+
+The precise diagnostic confirms `LEGACY_VERSION_MISMATCH`.
+
+The endpoint is:
+`https://www.unlock-ok.com/api/index.php`
+
+The current working iFree integration must remain completely compatible.
+
+## Mission
+
+Investigate and implement the smallest evidence-based compatibility improvement for additional DHRU Fusion API versions.
+
+### Requirements
+
+1. Read `BHRU_LEGACY_ACCOUNT_DIAGNOSTICS.md` and inspect the existing account parser.
+2. Verify whether the actual authenticated Unlock OK account response uses a documented DHRU version distinct from `"6.1"`.
+3. Do not assume the version is `"2023.21"` merely because it appeared in an unauthenticated XML response.
+4. If the authenticated version cannot be established from existing evidence, do not loosen validation. Provide a safe, bounded way to classify or verify it without exposing credentials, raw bodies or sensitive values.
+5. Support additional versions only when their account response envelopes and monetary fields are verified to be compatible.
+6. Prefer a provider-independent compatibility mechanism, not a hardcoded exception based on the name "Unlock OK".
+7. Preserve strict SUCCESS/ERROR envelope validation, account currency validation and exact-money parsing.
+8. Do not change the working iFree request construction, version handling or catalog normalization.
+9. Do not modify provider credentials, existing records, pricing or imported services.
+10. Do not enable paid order dispatch.
+
+## Tests
+
+Run offline regression tests covering:
+
+- Existing iFree-compatible Legacy v6.1 responses
+- Missing version
+- Confirmed compatible alternative versions
+- Unknown and malformed versions
+- Invalid SUCCESS/ERROR envelopes
+- Authentication failures
+- Tenant/provider isolation
+- REST compatibility
+
+Run relevant TypeScript checks and builds.
+
+## Operational boundaries
+
+Replit Preview only.
+
+No live API calls, no database migrations or production changes, no commit, no push, no deployment.
+
+## Final report
+
+Explain the exact version compatibility decision, evidence used, source files changed, tests passed and remaining uncertainties.
+
+If evidence is insufficient, stop after the investigation rather than implementing speculative compatibility.
+
+Wait for approval before any deployment or authenticated test.
