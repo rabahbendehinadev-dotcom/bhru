@@ -70,3 +70,17 @@ mtime_ms = 1791648033998
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/0c3de55d-3a57-46b0-9356-cda18b8b2b28/f88b2cc5-ca43-4d4e-9ed3-d122cd534296"
 storage_version_token = "1791648092746763"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "nnity6nb2KKex7LgvrMjJ"
+uri = "file://BHRU_LEGACY_METADATA_DIAGNOSTICS.md"
+type = "text"
+title = "Legacy Catalog Metadata Diagnostics"
+description = "Capture safeguards, exact authorization scope, log inspection, changed files, offline verification and limitations."
+logical_id = "e6551d70-1536-4327-bf14-4deed0035a10"
+content_hash = "sha256:d245a54714b6d3e98b6958f4ba3eef4b1e72adaafce18417f8a8ceff95443e32"
+size = 6743
+mtime_ms = 1791651823046
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/e6551d70-1536-4327-bf14-4deed0035a10/335442f9-2cf6-4c9f-b09a-e84029e5e823"
+storage_version_token = "1791651866502070"
+content_type = "text/markdown"

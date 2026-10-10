@@ -1,0 +1,55 @@
+# BHRU — Legacy Catalog Unknown Metadata Diagnostics
+
+Read the existing Legacy adapter and the previous iFree catalog investigation.
+
+Confirmed situation:
+- iFree DHRU Fusion Legacy v6.1 connection works.
+- 72 catalog services were synchronized.
+- All 72 are marked Needs review.
+- The exact rejection rule is triggered by undocumented upstream service metadata.
+- Unknown upstream metadata field names were discarded during normalization and are not recoverable from saved snapshots.
+
+## Objective
+
+Implement a minimal, secure diagnostic mechanism that identifies which upstream Legacy service field names trigger the review rule during a future authorized read-only catalog sync.
+
+## Requirements
+
+1. Inspect unknown field names before the Legacy normalizer discards them.
+2. Capture only sanitized metadata key names, never their values.
+3. Explicitly exclude credential, authentication, token, password, personal-data and other sensitive fields.
+4. Apply strict length and count limits, with safe fallback for suspicious field names.
+5. Associate diagnostics with the correct provider, tenant and catalog service.
+6. Make the reason for Needs review precise enough for engineering investigation.
+7. Do not automatically approve or import any service.
+8. Preserve the existing strict validation of order inputs, requirements, pricing, quantity rules and service types.
+9. Do not change existing catalog records or database schema.
+10. Keep diagnostics disabled by default unless explicitly enabled for an authorized troubleshooting operation.
+11. Provide a safe way for the operator to inspect the captured field names without exporting credentials or raw provider responses.
+
+## Verification
+
+- Synthetic Legacy fixtures with known and unknown metadata.
+- Sensitive field-name filtering.
+- Tenant isolation.
+- Existing Legacy and REST regression tests.
+- TypeScript and build checks.
+
+## Restrictions
+
+Replit Preview only.
+
+No requests to iFree, no live sync, no paid orders, no database migrations or production database access.
+
+No commit, push, deployment or credentials changes.
+
+## Final report
+
+Explain:
+- Which files changed.
+- How the sanitized metadata key names are captured.
+- How the diagnostics are enabled and inspected.
+- Test results.
+- Risks and limitations.
+
+Stop after offline tests and await approval.

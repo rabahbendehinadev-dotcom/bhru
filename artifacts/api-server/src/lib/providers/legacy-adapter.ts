@@ -1,5 +1,6 @@
 import {ProviderError,safeLegacyRead} from './transport';
 import {legacyRejection} from './legacy-diagnostics';
+import {unknownLegacyKeys,sanitizeLegacyMetadataKeys} from './legacy-metadata-diagnostics';
 import {exactJson,object,text,currency,decimal,hashValue,type ReadOnlyAdapter,type CatalogItem} from './adapter';
 
 // Protocol reference: dhru-fusion-api-standards-master/api/index.php (v6.1).
@@ -96,7 +97,7 @@ export const legacyAdapter:ReadOnlyAdapter={
       balance:info.credit===undefined||info.credit===null?null:decimal(info.credit).text};
     });
   },
-  async catalog(base,credentials,read){
+  async catalog(base,credentials,read,onUnknownMetadata){
     return withLegacySchema(async()=>{
     // The list contains no currency. Obtain it from a verified account request first.
     const account=await legacyAdapter.account(base,credentials,read);
@@ -119,9 +120,11 @@ export const legacyAdapter:ReadOnlyAdapter={
         if(!serviceType)reviewReasons.push('Unknown Legacy service type; File is not documented.');
         if(group.GROUPTYPE!==undefined&&p.SERVICETYPE!==undefined&&group.GROUPTYPE!==p.SERVICETYPE)
           reviewReasons.push('Legacy group and service types disagree.');
-        const known=new Set(['SERVICEID','SERVICETYPE','SERVICENAME','CREDIT','INFO','TIME','QNT','QNTOPTIONS','MINQNT','MAXQNT']);
-        if(Object.keys(p).some(k=>!known.has(k)&&!k.startsWith('Requires.')))
+        const unknown=unknownLegacyKeys(p);
+        if(unknown.length){
           reviewReasons.push('Undocumented Legacy service metadata needs review.');
+          onUnknownMetadata?.(id,sanitizeLegacyMetadataKeys(unknown));
+        }
         // Hash only: unknown upstream values may contain sensitive content; never persist raw extras.
         const snapshot={name,type,cid:groupId,cids:[groupId],categoryName:groupName,cost:cost.text,currency:c,time,
           description:info,fields:f.fields,definitionHash:hashValue(p),availability:null,reviewReasons};

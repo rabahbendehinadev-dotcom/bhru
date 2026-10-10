@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {parseUsd} from '../commerce/currency-money';
 import {ProviderError,safeRead} from './transport';
 import {legacyAdapter} from './legacy-adapter';
+import type {LegacyMetadataDiagnostic} from './legacy-metadata-diagnostics';
 export type ReadTransport=(base:string,token:string,path:'account'|'products'|'accountinfo'|'imeiservicelist')=>Promise<string>;
 export type ProviderProtocol='fusion_rest'|'DHRU_FUSION_LEGACY_V61'|'simple_listener';
 export interface CatalogItem{
@@ -11,7 +12,8 @@ export interface CatalogItem{
 }
 export interface ReadOnlyAdapter{
   account(base:string,token:string,read?:ReadTransport):Promise<{currency:string|null;balance:string|null}>;
-  catalog(base:string,token:string,read?:ReadTransport):Promise<{currency:string;items:CatalogItem[]}>;
+  catalog(base:string,token:string,read?:ReadTransport,
+    onUnknownMetadata?:(upstreamId:string,diagnostic:LegacyMetadataDiagnostic)=>void):Promise<{currency:string;items:CatalogItem[]}>;
 }
 /** Quote JSON numeric tokens before parsing, never round upstream money through Number. */
 export function exactJson(raw:string):unknown{

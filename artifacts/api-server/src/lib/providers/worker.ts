@@ -6,6 +6,8 @@ import {providerRow} from './connections';
 import {decryptToken} from './credentials';
 import {providerAdapter,hashValue,type ReadTransport,type CatalogItem} from './adapter';
 import {ProviderError} from './transport';
+import {legacyMetadataDiagnosticsAuthorized,logLegacyMetadataDiagnostic,
+  type LegacyMetadataDiagnostic} from './legacy-metadata-diagnostics';
 import type {PoolClient} from '@workspace/db';
 export function jobView(j:Record<string,any>){
   return {id:j.id,kind:j.kind,state:j.state,attempts:j.attempts,counts:j.counts,safeError:j.safe_error??null,
@@ -56,7 +58,8 @@ export async function claimProviderJob(){
       WHERE id=$1 RETURNING *`,[j.id,randomUUID()])).rows[0];
   });
 }
-export async function stageCatalog(sub:string,id:string,job:string,items:CatalogItem[],db:PoolClient){
+export async function stageCatalog(sub:string,id:string,job:string,items:CatalogItem[],db:PoolClient,
+  onStagedService?:(upstreamId:string,catalogId:string)=>void){
   const prior=(await db.query('SELECT * FROM external_provider_catalog WHERE subscriber_id=$1 AND provider_id=$2',[sub,id])).rows;
   const map=new Map(prior.map(p=>[p.upstream_id,p])),seen=new Set(items.map(p=>p.upstreamId));
   const counts={fetched:items.length,new:0,changed:0,missing:0,unsupported:0};
@@ -71,7 +74,9 @@ export async function stageCatalog(sub:string,id:string,job:string,items:Catalog
       if(changes.length)counts.changed++;
     }
     if(item.reviewReasons.length)counts.unsupported++;
-    return {id:old?.id??randomUUID(),upstream_id:item.upstreamId,name:item.name,service_type:item.serviceType,
+    const catalogId=old?.id??randomUUID();
+    onStagedService?.(item.upstreamId,catalogId);
+    return {id:catalogId,upstream_id:item.upstreamId,name:item.name,service_type:item.serviceType,
       category_id:item.categoryId,category_name:item.categoryName,cost_units:item.costUnits,currency:item.currency,
       estimated_time:item.estimatedTime,requirements:item.requirements,source_snapshot:item.snapshot,source_hash:item.hash,
       previous_snapshot:old?.source_snapshot??null,changes,review_reasons:item.reviewReasons,availability:item.availability};
@@ -102,16 +107,28 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
     const p=await transaction(db=>providerRow(j.subscriber_id,j.provider_id,db));
     if(!p.enabled||p.config_version!==j.config_version)throw new ProviderError('CONFIGURATION_CHANGED');
     const token=decryptToken(p.subscriber_id,p.id,p.credentials_encrypted),adapter=providerAdapter(p.protocol);
+    const diagnostics=new Map<string,LegacyMetadataDiagnostic>();
+    const enabled=j.kind==='SYNC'&&p.protocol==='DHRU_FUSION_LEGACY_V61'&&
+      legacyMetadataDiagnosticsAuthorized(p.subscriber_id,p.id,j.id);
+    const capture=enabled?(upstreamId:string,diagnostic:LegacyMetadataDiagnostic)=>{
+      if(diagnostics.size<100)diagnostics.set(upstreamId,diagnostic);
+    }:undefined;
     const account=j.kind==='TEST'?await adapter.account(p.base_url,token,read):null;
-    const catalog=j.kind==='SYNC'?await adapter.catalog(p.base_url,token,read):null;
+    const catalog=j.kind==='SYNC'?await adapter.catalog(p.base_url,token,read,capture):null;
     const currency=account?.currency??catalog?.currency??null;
     if(p.currency&&currency&&p.currency!==currency)throw new ProviderError('INVALID_RESPONSE');
+    const stagedDiagnostics:{catalogId:string;diagnostic:LegacyMetadataDiagnostic}[]=[];
+    let committed=false;
     await transaction(async db=>{
       const current=await providerRow(p.subscriber_id,p.id,db,true);
       const owned=(await db.query(`SELECT id FROM external_provider_jobs WHERE id=$1 AND lease_token=$2 AND state='RUNNING' AND lease_until>now() FOR UPDATE`,[j.id,j.lease_token])).rowCount;
       if(!owned)return;
       if(!current.enabled||current.config_version!==j.config_version)throw new ProviderError('CONFIGURATION_CHANGED');
-      const counts=catalog?await stageCatalog(p.subscriber_id,p.id,j.id,catalog.items,db):{};
+      const counts=catalog?await stageCatalog(p.subscriber_id,p.id,j.id,catalog.items,db,
+        enabled?(upstreamId,catalogId)=>{
+          const diagnostic=diagnostics.get(upstreamId);
+          if(diagnostic)stagedDiagnostics.push({catalogId,diagnostic});
+        }:undefined):{};
       await db.query(`UPDATE external_providers SET currency=coalesce($3,currency),health='CONNECTED',safe_error=NULL,
         balance=CASE WHEN $4::text IS NOT NULL THEN $4 ELSE balance END,
         last_test_at=CASE WHEN $5 THEN now() ELSE last_test_at END,
@@ -120,7 +137,12 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
       await db.query(`UPDATE external_provider_jobs SET state=$3,counts=$4,completed_at=now(),safe_error=NULL,
         lease_token=NULL,lease_until=NULL WHERE id=$1 AND lease_token=$2`,
         [j.id,j.lease_token,catalog?.items.some(i=>i.reviewReasons.length)?'COMPLETED_WITH_WARNINGS':'COMPLETED',counts]);
+      committed=true;
     });
+    if(committed)for(const {catalogId,diagnostic} of stagedDiagnostics){
+      // Diagnostics are best-effort and must never turn a committed sync into a retry.
+      try{logLegacyMetadataDiagnostic(p.subscriber_id,p.id,j.id,catalogId,diagnostic);}catch{}
+    }
   }catch(error){
     const category=error instanceof ProviderError?error.category:error instanceof HttpError&&error.status===503?'CREDENTIALS_UNAVAILABLE':'INVALID_RESPONSE';
     const safeError=error instanceof ProviderError?error.safeError:category;
