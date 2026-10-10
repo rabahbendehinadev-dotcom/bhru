@@ -1,0 +1,128 @@
+# BHRU — Customer Panel Navigation: DHRU-Inspired Hover Dropdowns
+
+## Objective
+
+Improve the existing BHRU Customer Panel navigation by implementing professional, compact, DHRU-inspired dropdown menus that open automatically when the mouse pointer hovers over their parent navigation items.
+
+This is a focused frontend UX task. Do not redesign the entire Customer Panel or change existing functionality.
+
+## Step 1 — Inspect the Existing Implementation
+
+Before modifying anything:
+
+- Locate the actual Customer Panel navigation/header components.
+- Identify all existing customer-facing routes and menu actions.
+- Inspect the current navigation behavior and responsive layout.
+- Reuse the existing router, components, design tokens, icons, authentication and customer permissions.
+- Do not create placeholder pages or invent routes.
+
+## Step 2 — Desktop Hover Dropdowns
+
+Implement hover dropdown behavior for these navigation groups, using their existing labels or equivalent current labels:
+
+### Place an Order
+
+Display links to the existing order creation pages for supported service types, such as IMEI, Server, File and Remote, only when those routes and service types are actually supported.
+
+### Order History
+
+Display links to the existing customer order history views, organized by supported order types where applicable.
+
+### My Profile / Customer Account
+
+Display existing customer account features, such as:
+
+- Profile
+- Account Settings
+- Wallet / Add Funds
+- Account Statement
+- Change Password
+- Login History
+- Active Sessions
+
+Only include destinations that already exist and are accessible to the current customer.
+
+Do not invent functionality or introduce broken navigation links.
+
+## Step 3 — Interaction Requirements
+
+- Open dropdown on mouse hover over the parent item.
+- Keep it open while moving the pointer from the parent item into the dropdown.
+- Close it when the pointer leaves the combined menu area, with a short, natural delay if necessary.
+- Support keyboard focus and Escape to close.
+- Allow click/tap to open and close dropdowns.
+- Preserve normal navigation when selecting a valid destination.
+- Prevent overlapping dropdowns and unwanted flickering.
+- Ensure menus remain visible within the viewport and are not clipped by parent containers.
+- Show clear active and focus states.
+- Do not rely on hover alone for accessibility.
+
+## Step 4 — Mobile and Touch Behavior
+
+On touch devices, use click/tap-to-expand behavior rather than hover.
+
+Ensure the dropdowns work correctly on narrow screens without horizontal overflow or covering unrelated controls.
+
+## Step 5 — Visual Design
+
+Maintain the existing BHRU branding and orange accents.
+
+Use a compact, professional style inspired by DHRU Fusion:
+
+- Small but readable typography.
+- Consistent row heights.
+- Clean dropdown alignment.
+- Subtle borders and shadows.
+- Clear hover/focus highlights.
+- Appropriate spacing and icons.
+- Proper light/dark theme support.
+
+Avoid oversized dropdowns, unnecessary animation, or redesigning unrelated pages.
+
+## Step 6 — Preserve Existing Functionality
+
+Do not change:
+
+- Customer authentication or sessions.
+- Customer permissions or service access rules.
+- Service catalogs or ordering logic.
+- Wallet balances, ledger or payment functionality.
+- Pricing or currency conversion.
+- Database schema or migrations.
+- API endpoints or backend business logic.
+- Reseller Panel or Platform Admin navigation.
+
+The change must remain frontend-only and customer-scoped.
+
+## Step 7 — Focused Verification
+
+Run only appropriate focused checks:
+
+1. TypeScript/type checking for affected components.
+2. Frontend build.
+3. Focused interaction tests if existing lightweight test infrastructure supports them.
+4. Verify existing routes are used and no broken links were introduced.
+5. Verify keyboard, mouse and touch behavior.
+
+Avoid expensive broad browser/E2E suites.
+
+## Final Report
+
+Provide:
+
+- Files modified.
+- Menu groups implemented.
+- Existing routes reused.
+- Mouse, keyboard and mobile interaction behavior.
+- Focused test/build results.
+- Any existing navigation limitations discovered.
+
+## STRICT EXECUTION BOUNDARIES
+
+Work only in Replit Preview.
+
+Do not commit, push, force-push, deploy, publish, access VPS/Dokploy, change production configuration, or modify production data.
+
+Do not perform unrelated refactoring.
+
+Stop after completing the task and wait for further instructions.

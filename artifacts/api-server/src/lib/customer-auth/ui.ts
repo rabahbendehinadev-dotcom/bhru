@@ -9,7 +9,7 @@ import type { PublicSiteModel } from '../public-site/model';
 
 import type { CustomerProfile as Profile } from './types';
 import type { CustomerPageMode } from './context';
-import { renderClientHeader, CLIENT_HEADER_STYLES, PANEL_HEADER_STYLES } from './client-header';
+import { renderClientHeader, CLIENT_HEADER_STYLES, PANEL_HEADER_STYLES, PANEL_NAV_SCRIPT, PANEL_NAV_SCRIPT_HASH } from './client-header';
 import { PANEL_STYLES, PANEL_SCRIPT, PANEL_SCRIPT_HASH, renderPanelMain, panelTitle, type PanelPage } from './panel-ui';
 import { SECURITY_STYLES, SECURITY_SCRIPT, securityScriptHash, renderForgotCard, renderResetCard } from './security-ui';
 import { PAYMENT_STYLES, PAYMENT_SCRIPT, paymentScriptHash } from './payment-ui';
@@ -187,9 +187,9 @@ ${accountDetails(c)}
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${e(title)} | ${e(m.siteName)}</title><style>${renderStyles(m)}${CUSTOMER_AUTH_STYLES}${mode === 'register' ? ONBOARDING_STYLES : ''}${topArea ? TOP_AREA_STYLES : ''}${panel ? PANEL_HEADER_STYLES + PANEL_STYLES : ''}${panel === 'wallet' ? PAYMENT_STYLES : ''}${needSec ? SECURITY_STYLES : ''}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style></head><body>
 ${topArea}${header}<button type="button" class="mobile-menu-backdrop" aria-label="Close mobile menu" hidden></button>
  ${panel ? renderPanelMain(m, panel, customer) : `<main class="ca-page"><div class="ca-card${mode === 'register' ? ' ca-wide' : ''}">${body}<noscript><p class="ca-status">JavaScript is required for customer sign-in and registration.</p></noscript></div></main>`}
-<script>${PUBLIC_MENU_SCRIPT}</script>${topArea ? `<script>${TOP_AREA_SCRIPT}</script>` : ''}<script>${CUSTOMER_AUTH_SCRIPT}</script>${panel ? `<script>${PANEL_SCRIPT}</script>` : ''}${panel === 'wallet' ? `<script>${PAYMENT_SCRIPT}</script>` : ''}${needSec ? `<script>${SECURITY_SCRIPT}</script>` : ''}${mode === 'register' ? `<script>${ONBOARDING_SCRIPT}</script>` : ''}</body></html>`;
+<script>${PUBLIC_MENU_SCRIPT}</script>${topArea ? `<script>${TOP_AREA_SCRIPT}</script>` : ''}<script>${CUSTOMER_AUTH_SCRIPT}</script>${panel ? `<script>${PANEL_SCRIPT}</script><script>${PANEL_NAV_SCRIPT}</script>` : ''}${panel === 'wallet' ? `<script>${PAYMENT_SCRIPT}</script>` : ''}${needSec ? `<script>${SECURITY_SCRIPT}</script>` : ''}${mode === 'register' ? `<script>${ONBOARDING_SCRIPT}</script>` : ''}</body></html>`;
 }
 
-export const CUSTOMER_DOCUMENT_SCRIPT_HASHES = [PUBLIC_MENU_SCRIPT_HASH, CUSTOMER_AUTH_HASH, ONBOARDING_HASH, PANEL_SCRIPT_HASH, TOP_AREA_SCRIPT_HASH, securityScriptHash, paymentScriptHash];
+export const CUSTOMER_DOCUMENT_SCRIPT_HASHES = [PUBLIC_MENU_SCRIPT_HASH, CUSTOMER_AUTH_HASH, ONBOARDING_HASH, PANEL_SCRIPT_HASH, PANEL_NAV_SCRIPT_HASH, TOP_AREA_SCRIPT_HASH, securityScriptHash, paymentScriptHash];
 
 export { PANEL_SCRIPT_HASH, PANEL_STYLES, PANEL_SCRIPT };
