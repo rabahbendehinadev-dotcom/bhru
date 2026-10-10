@@ -1,0 +1,78 @@
+# BHRU — Unlock OK DHRU Compatibility Investigation
+
+## Objective
+
+Investigate the remaining Unlock OK account-connection failure without modifying the working iFree integration.
+
+Before doing anything, read these existing reports:
+
+- `BHRU_IFREE_LEGACY_API_DIAGNOSIS.md`
+- `BHRU_LEGACY_COMPATIBILITY_FIX.md`
+- `BHRU_LEGACY_HTTP_DIAGNOSTICS.md`
+- `BHRU_LEGACY_METADATA_DIAGNOSTICS.md`
+
+Do not repeat completed work or rewrite the Legacy adapter unnecessarily.
+
+## Confirmed facts
+
+**iFree is working:**
+- Account authentication succeeds.
+- Account currency and balance are returned.
+- Catalog sync retrieves 72 services.
+- Its existing behavior must be preserved exactly.
+
+**Unlock OK:**
+- Uses DHRU Fusion.
+- Candidate endpoint: `https://www.unlock-ok.com/api/index.php`
+- The username and authorized VPS IP have been verified from the supplier's account settings.
+- A browser request without authentication returned a DHRUFUSION XML error envelope with version `2023.21`.
+- BHRU's authenticated connection test reports:
+  `Provider JSON did not match the supported DHRU Legacy v6.1 schema.`
+
+This does not establish whether the cause is authentication, action naming, response envelope differences or another provider-specific behavior.
+
+## Tasks
+
+1. Trace the exact DHRU Legacy account-info request and response parser.
+
+2. Identify the accepted account success schemas and error schemas.
+
+3. Verify whether standard DHRU Fusion response envelopes are recognized, including valid JSON error responses and explicitly documented account-info variants.
+
+4. Determine whether the `2023.21` version identifier has any verified protocol significance. Do not assume it requires a separate adapter.
+
+5. Investigate whether a valid upstream JSON error can currently be misclassified as `INVALID_RESPONSE`.
+
+6. Review existing safe logging and structured diagnostics. Identify the smallest additional non-secret information needed to distinguish:
+   - Valid authenticated account response
+   - Explicit API authentication rejection
+   - Invalid API action
+   - Unsupported JSON envelope
+   - Provider-specific response schema
+
+7. Preserve the current working iFree implementation and all previously completed diagnostics.
+
+8. Recommend a provider-independent, evidence-based compatibility solution. Do not hardcode Unlock OK by provider name or weaken validation.
+
+## Important
+
+This task is READ-ONLY investigation.
+
+Do not implement changes yet.
+
+Do not use real credentials, call Unlock OK or iFree, start sync jobs, submit orders or modify IP restrictions.
+
+Do not access production or perform migrations, database writes, Git commits, pushes or deployments.
+
+## Final report
+
+Explain:
+
+1. Whether the existing adapter already supports the standard DHRU envelope used by Unlock OK.
+2. The exact parser condition that produces the schema error.
+3. What is confirmed versus still unknown.
+4. Whether a safe offline compatibility correction is possible.
+5. If not, exactly what minimal sanitized response information is required.
+6. How to preserve all working iFree behavior.
+
+Stop after investigation and wait for approval.
