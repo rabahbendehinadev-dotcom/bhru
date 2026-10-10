@@ -1,0 +1,878 @@
+# BHRU SaaS — SLICE 7A
+# Production-Grade External API Provider Foundation, Connection Management, Service Catalog Synchronization & Safe Import
+
+## YOUR ROLE
+
+Act as a senior SaaS architect, backend engineer, PostgreSQL specialist, API integration engineer, security engineer, and frontend engineer.
+
+You are working inside the existing BHRU multi-tenant SaaS project.
+
+The objective is to implement a professional, extensible External API Provider system inspired by DHRU Fusion's reseller workflow, while preserving BHRU's existing architecture, accounting integrity, customer management, and service catalog.
+
+This is a REAL implementation task, not a mockup or standalone demonstration.
+
+**IMPORTANT: Slice 7A must never place a paid upstream order.**
+
+Work exclusively in Replit Preview. Do not commit, push, deploy, publish, or access the production VPS/Dokploy environment.
+
+---
+
+# 1. FIRST: PERFORM A READ-ONLY ARCHITECTURE AUDIT
+
+Before editing code, inspect the current project and document:
+
+1. Reseller/Subscriber authentication and tenant boundaries.
+2. Platform Admin authentication.
+3. Customer authentication and `public_customer_accounts`.
+4. Existing service catalog, categories, service types and requirements.
+5. Existing IMEI, Server, File and Remote order architecture.
+6. Existing service pricing and USD-based money representation.
+7. Slice 6A customer groups and pricing precedence.
+8. Slice 6B customer/group service access controls.
+9. Wallet, ledger and order lifecycle invariants.
+10. Existing audit/activity infrastructure.
+11. Existing background jobs, queues and scheduling infrastructure.
+12. Existing encryption utilities and environment variable conventions.
+13. Existing Reseller sidebar, tab navigation, route architecture and UI components.
+14. Current PostgreSQL migrations and migration execution strategy.
+
+Review existing migrations, including the latest known `030_client_groups_pricing.sql` and `031_client_service_access.sql`, and discover any newer migrations.
+
+These names are historical references, not an instruction to assume that the repository has a particular schema version.
+
+**Reuse canonical tables and services. Do not build a parallel catalog, pricing engine, wallet, client database, or order system.**
+
+If the architecture differs from the assumptions in this prompt, adapt safely and explain the difference in the final report.
+
+Do not perform destructive migrations.
+
+---
+
+# 2. API REFERENCE MATERIALS
+
+The user has studied these official DHRU repositories:
+
+1. `dhru-com/reseller-api`
+2. `dhru-com/dhru-fusion-api-standards`
+3. `dhru-com/fusion-pro-simple-api-request-listener`
+
+If these ZIP files are present in the Replit workspace, inspect them directly.
+
+If they are not present, do not pretend they are available. The following protocol information is supplied as a baseline. Clearly distinguish documented capabilities from assumptions.
+
+## 2.1 DHRU Fusion Pro REST Reseller API
+
+Documented API base pattern:
+
+`https://YOUR-WORKSPACE-DOMAIN/api/reseller/v1`
+
+Authentication:
+
+`Authorization: Bearer <API_TOKEN>`
+
+`Accept: application/json`
+
+Documented read endpoints:
+
+- `GET /account`
+- `GET /products`
+- `GET /products?product_id=...`
+- `GET /order?order_uuid=...`
+
+Documented write endpoint:
+
+- `POST /order`
+
+The `/products` response contains categories and products. Product entries are keyed by upstream product ID and can contain type, category IDs, price, delivery time and required fields.
+
+Responses use a JSON envelope with `status`, `message`, `code` and `data`.
+
+The API token is NOT interchangeable with a separately generated API key.
+
+The token may be restricted by expiry, source IP and wallet currency.
+
+For Slice 7A, implement ONLY the required read operations. Never call `POST /order`.
+
+## 2.2 DHRU Fusion Legacy API
+
+The legacy API uses operations such as:
+
+- `accountinfo`
+- `imeiservicelist`
+- `placeimeiorder`
+- `placeimeiorderbulk`
+- `getimeiorder`
+- `getimeiorderbulk`
+
+It may use username/API access key authentication and a different request/response envelope.
+
+Do not assume legacy and modern REST protocols are interchangeable.
+
+## 2.3 Fusion Pro Simple API Request Listener
+
+This repository demonstrates an upstream-side custom request listener with actions such as:
+
+- `account_info`
+- `products`
+- `place-order`
+
+This is NOT automatically the same protocol as the Fusion Pro Reseller REST API.
+
+Do not implement this protocol as a working BHRU upstream adapter without confirming the complete contract.
+
+## 2.4 Adapter Strategy
+
+Create an extensible provider adapter interface.
+
+For Slice 7A:
+
+- Fully implement the DHRU Fusion Pro REST read-only adapter.
+- Provide a properly typed registration architecture for future adapters.
+- Add a legacy adapter only if its complete authentication and read-response contracts can be verified from the reference material.
+- If legacy support is incomplete, show it as `Coming Soon / Not Implemented`, not as a functioning connection.
+- Do not invent endpoints or fabricate successful API responses.
+
+---
+
+# 3. MULTI-TENANT PROVIDER MANAGEMENT
+
+Every Reseller must manage only their own upstream providers.
+
+Create or extend tenant-scoped persistence for:
+
+- Provider connection ID.
+- Canonical tenant/reseller ID.
+- Provider protocol/type.
+- Reseller-defined provider name.
+- API base URL.
+- Encrypted credentials.
+- Provider currency.
+- Connection enabled/disabled status.
+- Last successful connection test.
+- Last successful catalog sync.
+- Last observed upstream balance.
+- Connection health.
+- Created/updated timestamps.
+- Safe operational metadata.
+
+A Reseller may connect multiple upstream servers, including multiple connections using the same protocol.
+
+A provider connection belongs to exactly one tenant.
+
+Enforce tenant isolation in SQL queries and server-side authorization, not only in frontend filtering.
+
+Use stable unique identifiers and appropriate database constraints.
+
+Do not expose internal credentials through the public Customer Panel.
+
+---
+
+# 4. SECURITY AND CREDENTIAL STORAGE
+
+This is a security-sensitive integration.
+
+Requirements:
+
+1. Never store provider tokens or API keys in plaintext.
+2. Use authenticated encryption at rest with a dedicated server-side encryption key and versioned key metadata.
+3. Do not silently reuse payment gateway encryption keys.
+4. Do not generate a new encryption key on each application restart.
+5. Never send decrypted credentials to the frontend.
+6. Never include credentials in API responses, audit logs, browser storage or application error messages.
+7. Support secure credential replacement without revealing existing values.
+8. Mask saved credential fields in the UI.
+9. Redact Authorization headers and sensitive URL parameters from logs.
+10. Do not accept arbitrary HTTP headers or request bodies from users as part of connection testing.
+11. Protect connection-test and sync endpoints against CSRF and unauthorized access according to existing application conventions.
+12. Rate-limit connection testing and sync requests.
+
+If the encryption key is not configured:
+
+- Keep the system fail-closed.
+- Explain the missing configuration.
+- Never silently fall back to plaintext storage.
+- Never log the missing key's value.
+
+## SSRF and Network Protection
+
+A Reseller-supplied API URL is untrusted.
+
+Implement robust outbound HTTP safeguards:
+
+- HTTPS required.
+- Reject credentials embedded in URLs.
+- Reject localhost, loopback, private, link-local, multicast and metadata IP ranges.
+- Reject internal hostnames and unsupported ports.
+- Validate DNS resolution and prevent DNS rebinding.
+- Revalidate every redirect or preferably disable redirects.
+- Enforce safe destination resolution at actual connection time.
+- Apply bounded timeouts and response-size limits.
+- Do not permit arbitrary proxy configuration.
+- Do not follow URLs supplied inside upstream response bodies.
+
+If the runtime cannot enforce safe destination IP binding, use an appropriately restricted outbound network mechanism or disable arbitrary custom endpoints until a safe implementation is possible.
+
+Do not describe an ordinary pre-request DNS check as complete SSRF protection.
+
+---
+
+# 5. PROVIDER MANAGEMENT UI
+
+Create a professional Reseller-facing page:
+
+**API Settings / External Providers**
+
+Follow the existing BHRU navigation and design system.
+
+Do not redesign the entire application.
+
+## Provider List
+
+Display:
+
+- Provider name.
+- Provider type.
+- Connection status.
+- Upstream currency.
+- Last known upstream balance.
+- Available upstream service count.
+- Last synchronization time.
+- Actions.
+
+Actions:
+
+- Add Provider.
+- Edit Connection.
+- Test Connection.
+- Synchronize Services.
+- Import Services.
+- Pricing Rules.
+- Sync History.
+- Disable Connection.
+
+Use compact professional spacing and readable typography consistent with BHRU.
+
+The interface should feel like a modern version of DHRU Fusion's API Settings page, not a literal copy.
+
+## Add Provider
+
+Provide:
+
+- Provider protocol selector.
+- Friendly connection name.
+- API URL.
+- Bearer token for Fusion Pro REST.
+- Relevant currency display.
+- Test Connection.
+- Save.
+
+For legacy adapters, use only credential fields that the verified protocol actually requires.
+
+Do not request cPanel username/password.
+
+Do not implement reseller-configured PHP cron jobs.
+
+## Connection States
+
+Use truthful states such as:
+
+- Not Tested.
+- Connected.
+- Authentication Failed.
+- Unreachable.
+- Invalid API Response.
+- Disabled.
+- Sync Failed.
+
+A connection is not considered healthy merely because the provider record was created.
+
+---
+
+# 6. REAL CONNECTION TEST
+
+Implement a server-side connection test for the supported REST adapter.
+
+The test must:
+
+1. Authenticate using the saved or newly supplied token.
+2. Call the documented `GET /account` endpoint.
+3. Validate HTTP status and the JSON response envelope.
+4. Validate expected account information.
+5. Read the returned provider currency.
+6. Read the returned upstream balance using exact decimal handling.
+7. Record connection-test timestamp and result.
+8. Return safe, actionable errors.
+9. Never reveal the token.
+
+Do not fabricate successful connection tests.
+
+Do not automatically mark a provider connected based on a syntactically valid URL.
+
+The upstream balance is informational and must NOT be added to the BHRU customer wallet or tenant ledger.
+
+---
+
+# 7. CATALOG SYNCHRONIZATION
+
+Implement genuine read-only synchronization using the documented `GET /products` endpoint.
+
+The system must fetch and normalize:
+
+- Upstream product ID.
+- Provider connection ID.
+- Product name.
+- Service type.
+- Category ID and category name.
+- Upstream cost.
+- Upstream currency.
+- Delivery-time text, if provided.
+- Required input fields.
+- Product availability/status when explicitly provided.
+- Relevant supported metadata.
+
+Never invent missing product fields or availability flags.
+
+## Service Types
+
+Support the existing BHRU service taxonomy.
+
+Map upstream types to BHRU types only when the mapping is unambiguous.
+
+Handle:
+
+- IMEI.
+- Server.
+- File.
+- Remote.
+
+If an upstream type is unknown, mark the item as unsupported or requiring review.
+
+Do not silently misclassify it.
+
+## Required Fields
+
+Preserve supported upstream input requirements, including:
+
+- Field name/key.
+- Label.
+- Field type.
+- Required/optional state.
+- Supported choices/options.
+- Validation metadata when documented.
+
+Unknown or unsupported field structures must be marked for manual review.
+
+Do not create a generic free-text field that silently discards required upstream constraints.
+
+## Sync Storage
+
+Create a tenant-scoped provider catalog staging area.
+
+Use unique constraints based on tenant, provider connection and upstream product ID.
+
+Repeated synchronization must be idempotent.
+
+Do not create duplicate staged services.
+
+Keep source snapshots or hashes for change detection.
+
+Handle large catalogs efficiently without blocking the UI.
+
+Do not store entire sensitive upstream HTTP payloads in permanent logs.
+
+---
+
+# 8. SAFE SYNC PREVIEW AND CHANGE DETECTION
+
+Synchronization must NOT immediately overwrite the Reseller's published services.
+
+Create a preview showing:
+
+- New upstream services.
+- Changed upstream cost.
+- Changed name.
+- Changed category.
+- Changed required fields.
+- Explicitly disabled services, when supported by the upstream protocol.
+- Previously known services missing from the latest complete upstream catalog.
+
+**Important:** A service missing from a failed or partial sync is not evidence that it was removed by the provider.
+
+Only classify missing services after a successful, complete, validated catalog fetch.
+
+Do not automatically delete or disable published services based on one missing result.
+
+Show a clear comparison:
+
+- Previous upstream cost.
+- New upstream cost.
+- Current BHRU retail price, if linked.
+- Proposed new retail price.
+- Expected margin.
+- Currency.
+
+Display source currency and conversion assumptions transparently.
+
+---
+
+# 9. SERVICE IMPORT WORKFLOW
+
+Build an Import Services interface inspired by DHRU's Quick Add New Service.
+
+Features:
+
+1. Browse imported upstream categories.
+2. Search and filter upstream services.
+3. Select individual services.
+4. Select multiple services.
+5. Select an entire category.
+6. Preview the selected services before importing.
+7. Edit BHRU-facing service names.
+8. Choose or create appropriate BHRU categories using existing category management.
+9. Configure initial visibility.
+10. Configure initial pricing.
+11. Confirm import.
+
+Preserve the external provider link:
+
+`tenant + provider_connection + upstream_product_id`
+
+Imported services must use BHRU's canonical service catalog and existing service identity.
+
+Do not create a separate customer-visible catalog that bypasses BHRU's service rules.
+
+## Fulfillment Mode
+
+Imported services should have a clear, non-ambiguous fulfillment source such as:
+
+- Manual.
+- External Provider.
+
+However, **Slice 7A must not activate paid automatic fulfillment**.
+
+New external services must remain unpublished, disabled for customer ordering, or otherwise protected by a server-enforced dispatch-readiness gate until Slice 7B is implemented.
+
+Do not allow a customer to place an order for a service that cannot yet be fulfilled.
+
+Existing manually fulfilled services must remain operational.
+
+---
+
+# 10. PRICING AUTOMATION — SAFE FOUNDATION
+
+DHRU supports group-specific percentage and fixed markups.
+
+Implement a pricing configuration and preview foundation compatible with existing BHRU Slice 6A.
+
+Allow Resellers to define initial import pricing using:
+
+- Percentage markup.
+- Fixed amount markup.
+- Optional group-specific pricing policy.
+- Manual price override where existing rules permit.
+
+Do not duplicate the existing customer groups table or pricing precedence logic.
+
+Respect the established precedence:
+
+**Customer override > Active group rule > Standard price.**
+
+The system must preserve existing service-access precedence from Slice 6B.
+
+## Currency and Exact Money
+
+BHRU uses USD-based catalog pricing and account-specific currency conversion.
+
+Preserve existing exact-money conventions.
+
+Requirements:
+
+- No JavaScript floating-point money arithmetic.
+- Parse upstream decimal strings exactly.
+- Handle upstream currencies explicitly.
+- Convert upstream costs to the existing canonical pricing unit using an approved and available FX source.
+- Do not invent exchange rates.
+- Apply customer account currency conversion exactly once.
+- Preserve existing rounding behavior and BigInt/minor-unit conventions.
+- Store provider cost and currency separately from customer-facing retail prices.
+
+If a required FX rate is unavailable, block automatic pricing and request a configured rate.
+
+## Pricing Preview
+
+Show:
+
+- Upstream cost.
+- Upstream currency.
+- Markup percentage.
+- Fixed markup.
+- Proposed standard price.
+- Proposed group prices.
+- Expected gross margin.
+
+If the user selects a percentage plus a fixed amount, clearly define and display the calculation order.
+
+For example:
+
+`Proposed Price = Converted Cost × (1 + Markup%) + Fixed Markup`
+
+Use the existing money utilities and rounding conventions rather than independently implementing floating-point calculations.
+
+## Protection Against Overwrites
+
+Synchronization must never silently overwrite:
+
+- Manual retail price overrides.
+- Customer-specific prices.
+- Group-specific prices.
+- Customer service access.
+- Category visibility.
+- Existing service customizations.
+
+Any bulk pricing change requires an explicit preview and confirmation.
+
+Do not implement automatic periodic retail-price overwrites in Slice 7A.
+
+---
+
+# 11. SYNC HISTORY AND AUDIT
+
+Implement a professional synchronization history interface.
+
+Track:
+
+- Tenant.
+- Provider connection.
+- Initiating authorized user.
+- Start and completion timestamps.
+- Sync status.
+- Number of services fetched.
+- New services.
+- Changed services.
+- Missing services.
+- Invalid/unsupported services.
+- Safe error summary.
+- Correlation/job ID.
+
+Use meaningful statuses:
+
+- Queued.
+- Running.
+- Completed.
+- Completed With Warnings.
+- Failed.
+
+Do not store API tokens, authorization headers or unnecessary personal data in history.
+
+Use existing BHRU audit infrastructure when suitable.
+
+Keep sync records tenant-isolated.
+
+---
+
+# 12. BACKGROUND PROCESSING AND CONCURRENCY
+
+Catalog synchronization may involve thousands of services.
+
+Do not make the browser wait for a long-running synchronous request.
+
+Prefer the project's existing durable background-job infrastructure.
+
+If no suitable infrastructure exists, implement a minimal PostgreSQL-backed durable sync job mechanism appropriate to the existing architecture.
+
+Requirements:
+
+- Persist jobs before execution.
+- Recover safely after application restart.
+- Prevent simultaneous conflicting syncs for the same provider.
+- Support multiple application replicas safely.
+- Use transaction-safe job claiming, such as `FOR UPDATE SKIP LOCKED`, where appropriate.
+- Bound retries and apply exponential backoff with jitter.
+- Enforce provider and tenant concurrency limits.
+- Prevent endless retry loops.
+- Record safe job errors.
+- Expose job status to the UI.
+
+Do not create an unbounded in-memory queue.
+
+Do not require cPanel or PHP cron configuration.
+
+If automatic worker execution is not feasible in the current Replit Preview architecture, implement a safe manual synchronization path and clearly report the limitation rather than pretending background processing works.
+
+---
+
+# 13. API ENDPOINTS AND AUTHORIZATION
+
+Implement server-side endpoints consistent with BHRU's existing routing conventions.
+
+Expected operations:
+
+- List provider connections.
+- Create provider connection.
+- Update provider connection.
+- Replace credentials.
+- Disable provider connection.
+- Test provider connection.
+- Start catalog sync.
+- Read sync status/history.
+- Browse staged upstream catalog.
+- Preview changes.
+- Preview pricing.
+- Import selected services.
+
+Do not blindly use these as exact route names. Inspect the current project and follow its established API conventions.
+
+Every endpoint must enforce:
+
+- Correct Reseller authentication.
+- Correct tenant scope.
+- Appropriate permissions.
+- Validated inputs.
+- Bounded pagination.
+- Safe error responses.
+- Audit events for sensitive changes.
+
+Platform Admin and Customer authentication must remain isolated from Reseller operations.
+
+Do not accept tenant IDs from the browser as sufficient proof of authorization.
+
+---
+
+# 14. DATA INTEGRITY AND MIGRATIONS
+
+Use additive PostgreSQL migrations only.
+
+Requirements:
+
+- Preserve existing services, customers, wallets, pricing rules and orders.
+- Use foreign keys to canonical tenant and service identities.
+- Use appropriate uniqueness constraints.
+- Add indexes for tenant/provider/service lookups.
+- Make import operations transactional.
+- Avoid partial service imports.
+- Protect against concurrent duplicate imports.
+- Never truncate or rewrite existing service tables.
+- Never backfill financial data.
+- Never change wallet balances or ledger records.
+
+Use the next available migration number after inspecting the repository.
+
+Do not assume `032` is available.
+
+Do not modify unrelated existing migrations.
+
+---
+
+# 15. EXPLICIT NON-GOALS FOR SLICE 7A
+
+The following are OUT OF SCOPE:
+
+- Sending paid upstream orders.
+- Calling `POST /order`.
+- Automatic provider order dispatch.
+- Provider order retries.
+- Provider webhook processing.
+- Automatic order completion/rejection.
+- Wallet refunds triggered by upstream results.
+- Automatic paid-order reconciliation.
+- Reseller-facing outbound API for their own customers.
+- New payment gateway implementations.
+- Modifying the existing customer checkout.
+- Changing existing order state transitions.
+- Replacing existing manual fulfillment.
+- Production deployment.
+
+These capabilities belong to a later separately approved Slice 7B or subsequent slices.
+
+**No code path introduced in Slice 7A may silently place an upstream paid order.**
+
+---
+
+# 16. REQUIRED FOCUSED TESTS
+
+Implement and run focused tests for:
+
+## Tenant Isolation
+
+- Reseller A cannot view Reseller B's provider.
+- Reseller A cannot update Reseller B's credentials.
+- Reseller A cannot sync or import from Reseller B's provider.
+- Customer sessions cannot access Reseller provider-management endpoints.
+
+## Security
+
+- Invalid URLs are rejected.
+- Private/internal IP destinations are rejected.
+- Unsafe redirects are blocked.
+- Credentials never appear in API responses.
+- Authentication failures do not leak secrets.
+- Missing encryption configuration fails closed.
+
+## Adapter
+
+- Valid REST account response.
+- Invalid Bearer token.
+- Non-JSON upstream response.
+- Upstream HTTP error.
+- JSON `status=error` even with HTTP 200.
+- Timeout.
+- Malformed products.
+- Unsupported service types.
+
+## Catalog
+
+- Initial sync.
+- Repeated sync without duplicates.
+- Changed upstream cost.
+- Changed required fields.
+- Partial sync failure.
+- Missing services after complete sync.
+- Import selected services.
+- Duplicate import prevention.
+- Unpublished external services cannot be ordered.
+
+## Pricing
+
+- Percentage markup.
+- Fixed markup.
+- Combined markup.
+- Customer/group pricing precedence.
+- Existing manual override preservation.
+- Missing FX rate.
+- Exact decimal money calculations.
+
+## Regression
+
+- Existing manual services remain orderable.
+- Existing wallets and ledgers remain unchanged.
+- Existing customer pricing/access logic remains intact.
+- Existing customer account currency rules remain intact.
+
+Use deterministic mocked upstream HTTP responses and local development fixtures.
+
+Do not contact a real paid-order endpoint during tests.
+
+Do not run broad expensive browser/E2E suites.
+
+Run focused TypeScript, SQL, HTTP and build checks suitable for the repository.
+
+---
+
+# 17. USER EXPERIENCE REQUIREMENTS
+
+Use the current BHRU design system.
+
+The page should be:
+
+- Professional.
+- Compact.
+- Responsive.
+- Fast with large catalogs.
+- Accessible.
+- Consistent with existing BHRU light/dark themes.
+- Clear about real connection and synchronization states.
+
+Do not copy DHRU's visual design verbatim.
+
+Do not use global CSS zoom or scaling tricks.
+
+Avoid placeholder buttons and fake success messages.
+
+Every visible action must either work or be clearly marked unavailable.
+
+---
+
+# 18. EXECUTION PLAN
+
+Implement in this order:
+
+### Phase A — Audit and Design
+
+Inspect the architecture, confirm canonical tables and document adapter contracts.
+
+### Phase B — Secure Provider Persistence
+
+Add migrations, tenant isolation, encrypted credential storage and server-side validation.
+
+### Phase C — Real REST Read-Only Adapter
+
+Implement account and products reads with safe HTTP transport and robust response validation.
+
+### Phase D — Provider Management UI
+
+Implement list, create, edit, disable and test connection.
+
+### Phase E — Catalog Sync and Preview
+
+Implement durable synchronization, normalized staging, change detection and history.
+
+### Phase F — Safe Import and Pricing Preview
+
+Integrate selected upstream services into the existing canonical catalog with protected publication status and existing pricing rules.
+
+### Phase G — Focused Verification
+
+Run relevant tests and build checks, fix regressions and provide the final report.
+
+If an important architectural prerequisite is missing, stop at a safe boundary and report the blocker. Do not bypass security or accounting safeguards to make the feature appear complete.
+
+---
+
+# 19. FINAL REPORT FORMAT
+
+After implementation, provide:
+
+1. Existing architecture discovered.
+2. Database migrations added.
+3. Tables and indexes introduced.
+4. Provider adapter protocols supported.
+5. Authentication and encryption approach.
+6. SSRF protection and its actual guarantees.
+7. Backend routes added.
+8. Frontend pages/components added.
+9. Catalog synchronization behavior.
+10. Pricing/import integration behavior.
+11. Tests run and their results.
+12. Existing behavior preserved.
+13. Missing environment configuration.
+14. Known limitations and blockers.
+15. Remaining work for Slice 7B.
+
+Clearly label each feature:
+
+- IMPLEMENTED AND TESTED
+- IMPLEMENTED BUT NOT TESTED
+- NOT IMPLEMENTED
+- BLOCKED
+
+Never report a mock connection test as a real connection test.
+
+Never claim that a provider is connected without an actual successful authorized account request.
+
+---
+
+# 20. STRICT FINAL RULES
+
+**Replit Preview only.**
+
+DO NOT:
+
+- Commit.
+- Push.
+- Force-push.
+- Deploy.
+- Publish.
+- Access VPS or Dokploy.
+- Change production configuration.
+- Modify production databases.
+- Execute paid upstream orders.
+- Introduce mock production behavior.
+- Make unrelated architectural changes.
+
+Preserve the existing BHRU project.
+
+Implement real, safe, tenant-isolated functionality.
+
+Stop after the Slice 7A implementation and focused verification.
+
+Wait for the user's explicit approval before any subsequent slice or deployment.
