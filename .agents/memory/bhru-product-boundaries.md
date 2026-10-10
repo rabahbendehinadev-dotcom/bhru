@@ -44,3 +44,13 @@ Keep subscriber main navigation as one continuous menu in the user's approved or
 **Why:** The user explicitly rejected category-based regrouping and repeated that Dashboard entries must not be renamed, reordered, merged or removed.
 
 **How to apply:** Preserve the approved navigation when implementing individual modules; ask before changing its scope or organization.
+
+External provider catalog imports are a read-only foundation, not authorization
+to start paid supplier fulfillment. Imported external services stay unavailable
+for customer ordering until the user separately approves the next dispatch phase.
+
+**Why:** The user explicitly separated provider reading/import from paid ordering
+and required stopping after the foundation and focused verification.
+
+**How to apply:** Do not infer permission for paid provider calls, callbacks,
+automated completion/refunds or production deployment from approval of imports.

@@ -5,6 +5,215 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export type ProviderInputProtocol = typeof ProviderInputProtocol[keyof typeof ProviderInputProtocol];
+
+
+export const ProviderInputProtocol = {
+  fusion_rest: 'fusion_rest',
+} as const;
+
+export interface ProviderInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+  protocol: ProviderInputProtocol;
+  /** @maxLength 300 */
+  baseUrl: string;
+  /** @maxLength 4096 */
+  token?: string;
+  /**
+     * @nullable
+     * @pattern ^[A-Z]{3}$
+     */
+  currency?: string | null;
+  enabled: boolean;
+}
+
+export interface ProviderGroupMarkup {
+  groupId: string;
+  percentage: string;
+  fixedUsd: string;
+}
+
+export interface ProviderPricingPolicy {
+  percentage: string;
+  fixedUsd: string;
+  groups: ProviderGroupMarkup[];
+}
+
+export interface ProviderConnection {
+  id: string;
+  name: string;
+  protocol: string;
+  baseUrl: string;
+  enabled: boolean;
+  health: string;
+  credentialSaved: boolean;
+  /** @nullable */
+  currency: string | null;
+  /** @nullable */
+  balance: string | null;
+  serviceCount: number;
+  /** @nullable */
+  lastTestAt: string | null;
+  /** @nullable */
+  lastSyncAt: string | null;
+  /** @nullable */
+  safeError: string | null;
+  pricingPolicy: ProviderPricingPolicy;
+}
+
+export interface ProviderProtocol {
+  code: string;
+  name: string;
+  available: boolean;
+  /** @nullable */
+  reason: string | null;
+}
+
+export interface ProviderList {
+  data: ProviderConnection[];
+  protocols: ProviderProtocol[];
+  storageReady: boolean;
+}
+
+export interface ProviderTestResult {
+  health: string;
+  currency: string;
+  balance: string;
+}
+
+export type ProviderJobInputKind = typeof ProviderJobInputKind[keyof typeof ProviderJobInputKind];
+
+
+export const ProviderJobInputKind = {
+  TEST: 'TEST',
+  SYNC: 'SYNC',
+} as const;
+
+export interface ProviderJobInput {
+  kind: ProviderJobInputKind;
+}
+
+export type ProviderJobCounts = {[key: string]: number};
+
+export interface ProviderJob {
+  id: string;
+  kind: string;
+  state: string;
+  attempts: number;
+  counts: ProviderJobCounts;
+  /** @nullable */
+  safeError: string | null;
+  createdAt: string;
+  /** @nullable */
+  startedAt: string | null;
+  /** @nullable */
+  completedAt: string | null;
+}
+
+export interface ProviderJobList {
+  data: ProviderJob[];
+  page: number;
+  hasMore: boolean;
+}
+
+export interface ProviderCatalogItem {
+  id: string;
+  upstreamId: string;
+  name: string;
+  /** @nullable */
+  serviceType: string | null;
+  /** @nullable */
+  categoryId: string | null;
+  /** @nullable */
+  categoryName: string | null;
+  cost: string;
+  currency: string;
+  /** @nullable */
+  previousCost: string | null;
+  changes: string[];
+  reviewReasons: string[];
+  missing: boolean;
+  /** @nullable */
+  availability: boolean | null;
+  /** @nullable */
+  linkedServiceId: string | null;
+  /** @nullable */
+  retailPriceUsd: string | null;
+  estimatedTime: string;
+}
+
+export interface ProviderCategory {
+  id: string;
+  name: string;
+  count: number;
+}
+
+export interface ProviderCatalogList {
+  data: ProviderCatalogItem[];
+  categories: ProviderCategory[];
+  page: number;
+  hasMore: boolean;
+}
+
+export interface ProviderImportItem {
+  id: string;
+  /** @maxLength 160 */
+  name?: string;
+  priceUsd?: string;
+}
+
+export interface ProviderImportInput {
+  /**
+     * @minItems 1
+     * @maxItems 500
+     */
+  items: ProviderImportItem[];
+  pricing: ProviderPricingPolicy;
+  /** @nullable */
+  groupId?: string | null;
+  /** @maxLength 100 */
+  newGroupName?: string;
+  previewHash?: string;
+}
+
+export interface ProviderGroupPrice {
+  groupId: string;
+  priceUsd: string;
+}
+
+export interface ProviderImportPreviewItem {
+  id: string;
+  name: string;
+  sourceCurrency: string;
+  sourceCost: string;
+  fxRate: string;
+  convertedCostUsd: string;
+  proposedPriceUsd: string;
+  marginUsd: string;
+  /** @nullable */
+  currentPriceUsd: string | null;
+  /** @nullable */
+  linkedServiceId: string | null;
+  groupPrices: ProviderGroupPrice[];
+}
+
+export interface ProviderImportPreview {
+  previewHash: string;
+  formula: string;
+  visibility: string;
+  items: ProviderImportPreviewItem[];
+}
+
+export interface ProviderImportResult {
+  imported: number;
+  existing: number;
+  serviceIds: string[];
+}
+
 export interface EmptyPaymentAction { [key: string]: unknown }
 
 export interface AdminGatewayPolicyInput {
@@ -1910,6 +2119,42 @@ export type FoundationServiceTypeParameter = typeof FoundationServiceTypeParamet
 
 
 export const FoundationServiceTypeParameter = {
+  imei: 'imei',
+  server: 'server',
+  file: 'file',
+  remote: 'remote',
+} as const;
+
+export type ListExternalProviderJobsParams = {
+/**
+ * @minimum 1
+ * @maximum 10000
+ */
+page?: number;
+};
+
+export type GetExternalProviderCatalogParams = {
+/**
+ * @minimum 1
+ * @maximum 10000
+ */
+page?: number;
+/**
+ * @maxLength 100
+ */
+search?: string;
+/**
+ * @maxLength 128
+ */
+category?: string;
+serviceType?: GetExternalProviderCatalogServiceType;
+changedOnly?: boolean;
+};
+
+export type GetExternalProviderCatalogServiceType = typeof GetExternalProviderCatalogServiceType[keyof typeof GetExternalProviderCatalogServiceType];
+
+
+export const GetExternalProviderCatalogServiceType = {
   imei: 'imei',
   server: 'server',
   file: 'file',

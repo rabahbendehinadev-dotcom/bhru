@@ -8,6 +8,391 @@
 import * as zod from 'zod';
 
 
+export const ListExternalProvidersResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "protocol": zod.string(),
+  "baseUrl": zod.string(),
+  "enabled": zod.boolean(),
+  "health": zod.string(),
+  "credentialSaved": zod.boolean(),
+  "currency": zod.string().nullable(),
+  "balance": zod.string().nullable(),
+  "serviceCount": zod.number().int(),
+  "lastTestAt": zod.string().nullable(),
+  "lastSyncAt": zod.string().nullable(),
+  "safeError": zod.string().nullable(),
+  "pricingPolicy": zod.object({
+  "percentage": zod.string(),
+  "fixedUsd": zod.string(),
+  "groups": zod.array(zod.object({
+  "groupId": zod.string().uuid(),
+  "percentage": zod.string(),
+  "fixedUsd": zod.string()
+}))
+})
+})),
+  "protocols": zod.array(zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "available": zod.boolean(),
+  "reason": zod.string().nullable()
+})),
+  "storageReady": zod.boolean()
+})
+
+
+export const createExternalProviderBodyNameMax = 100;
+
+export const createExternalProviderBodyBaseUrlMax = 300;
+
+export const createExternalProviderBodyTokenMax = 4096;
+
+export const createExternalProviderBodyCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+
+
+export const CreateExternalProviderBody = zod.object({
+  "name": zod.string().min(1).max(createExternalProviderBodyNameMax),
+  "protocol": zod.enum(['fusion_rest']),
+  "baseUrl": zod.string().max(createExternalProviderBodyBaseUrlMax),
+  "token": zod.string().max(createExternalProviderBodyTokenMax).optional(),
+  "currency": zod.string().regex(createExternalProviderBodyCurrencyRegExp).nullish(),
+  "enabled": zod.boolean()
+})
+
+export const CreateExternalProviderResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "protocol": zod.string(),
+  "baseUrl": zod.string(),
+  "enabled": zod.boolean(),
+  "health": zod.string(),
+  "credentialSaved": zod.boolean(),
+  "currency": zod.string().nullable(),
+  "balance": zod.string().nullable(),
+  "serviceCount": zod.number().int(),
+  "lastTestAt": zod.string().nullable(),
+  "lastSyncAt": zod.string().nullable(),
+  "safeError": zod.string().nullable(),
+  "pricingPolicy": zod.object({
+  "percentage": zod.string(),
+  "fixedUsd": zod.string(),
+  "groups": zod.array(zod.object({
+  "groupId": zod.string().uuid(),
+  "percentage": zod.string(),
+  "fixedUsd": zod.string()
+}))
+})
+})
+
+
+export const testExternalProviderDraftBodyNameMax = 100;
+
+export const testExternalProviderDraftBodyBaseUrlMax = 300;
+
+export const testExternalProviderDraftBodyTokenMax = 4096;
+
+export const testExternalProviderDraftBodyCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+
+
+export const TestExternalProviderDraftBody = zod.object({
+  "name": zod.string().min(1).max(testExternalProviderDraftBodyNameMax),
+  "protocol": zod.enum(['fusion_rest']),
+  "baseUrl": zod.string().max(testExternalProviderDraftBodyBaseUrlMax),
+  "token": zod.string().max(testExternalProviderDraftBodyTokenMax).optional(),
+  "currency": zod.string().regex(testExternalProviderDraftBodyCurrencyRegExp).nullish(),
+  "enabled": zod.boolean()
+})
+
+export const TestExternalProviderDraftResponse = zod.object({
+  "health": zod.string(),
+  "currency": zod.string(),
+  "balance": zod.string()
+})
+
+
+export const UpdateExternalProviderParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateExternalProviderBodyNameMax = 100;
+
+export const updateExternalProviderBodyBaseUrlMax = 300;
+
+export const updateExternalProviderBodyTokenMax = 4096;
+
+export const updateExternalProviderBodyCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+
+
+export const UpdateExternalProviderBody = zod.object({
+  "name": zod.string().min(1).max(updateExternalProviderBodyNameMax),
+  "protocol": zod.enum(['fusion_rest']),
+  "baseUrl": zod.string().max(updateExternalProviderBodyBaseUrlMax),
+  "token": zod.string().max(updateExternalProviderBodyTokenMax).optional(),
+  "currency": zod.string().regex(updateExternalProviderBodyCurrencyRegExp).nullish(),
+  "enabled": zod.boolean()
+})
+
+export const UpdateExternalProviderResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "protocol": zod.string(),
+  "baseUrl": zod.string(),
+  "enabled": zod.boolean(),
+  "health": zod.string(),
+  "credentialSaved": zod.boolean(),
+  "currency": zod.string().nullable(),
+  "balance": zod.string().nullable(),
+  "serviceCount": zod.number().int(),
+  "lastTestAt": zod.string().nullable(),
+  "lastSyncAt": zod.string().nullable(),
+  "safeError": zod.string().nullable(),
+  "pricingPolicy": zod.object({
+  "percentage": zod.string(),
+  "fixedUsd": zod.string(),
+  "groups": zod.array(zod.object({
+  "groupId": zod.string().uuid(),
+  "percentage": zod.string(),
+  "fixedUsd": zod.string()
+}))
+})
+})
+
+
+export const ListExternalProviderJobsParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const listExternalProviderJobsQueryPageMax = 10000;
+
+
+
+export const ListExternalProviderJobsQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(listExternalProviderJobsQueryPageMax).optional()
+})
+
+export const ListExternalProviderJobsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "kind": zod.string(),
+  "state": zod.string(),
+  "attempts": zod.number().int(),
+  "counts": zod.record(zod.string(), zod.number().int()),
+  "safeError": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "startedAt": zod.string().nullable(),
+  "completedAt": zod.string().nullable()
+})),
+  "page": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+export const StartExternalProviderJobParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const StartExternalProviderJobBody = zod.object({
+  "kind": zod.enum(['TEST', 'SYNC'])
+})
+
+export const StartExternalProviderJobResponse = zod.object({
+  "id": zod.string(),
+  "kind": zod.string(),
+  "state": zod.string(),
+  "attempts": zod.number().int(),
+  "counts": zod.record(zod.string(), zod.number().int()),
+  "safeError": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "startedAt": zod.string().nullable(),
+  "completedAt": zod.string().nullable()
+})
+
+
+export const GetExternalProviderCatalogParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const getExternalProviderCatalogQueryPageMax = 10000;
+
+export const getExternalProviderCatalogQuerySearchMax = 100;
+
+export const getExternalProviderCatalogQueryCategoryMax = 128;
+
+
+
+export const GetExternalProviderCatalogQueryParams = zod.object({
+  "page": zod.coerce.number().int().min(1).max(getExternalProviderCatalogQueryPageMax).optional(),
+  "search": zod.coerce.string().max(getExternalProviderCatalogQuerySearchMax).optional(),
+  "category": zod.coerce.string().max(getExternalProviderCatalogQueryCategoryMax).optional(),
+  "serviceType": zod.enum(['imei', 'server', 'file', 'remote']).optional(),
+  "changedOnly": zod.coerce.boolean().optional()
+})
+
+export const GetExternalProviderCatalogResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "upstreamId": zod.string(),
+  "name": zod.string(),
+  "serviceType": zod.string().nullable(),
+  "categoryId": zod.string().nullable(),
+  "categoryName": zod.string().nullable(),
+  "cost": zod.string(),
+  "currency": zod.string(),
+  "previousCost": zod.string().nullable(),
+  "changes": zod.array(zod.string()),
+  "reviewReasons": zod.array(zod.string()),
+  "missing": zod.boolean(),
+  "availability": zod.boolean().nullable(),
+  "linkedServiceId": zod.string().nullable(),
+  "retailPriceUsd": zod.string().nullable(),
+  "estimatedTime": zod.string()
+})),
+  "categories": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "count": zod.number().int()
+})),
+  "page": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+export const SaveExternalProviderPricingParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const SaveExternalProviderPricingBody = zod.object({
+  "percentage": zod.string(),
+  "fixedUsd": zod.string(),
+  "groups": zod.array(zod.object({
+  "groupId": zod.string().uuid(),
+  "percentage": zod.string(),
+  "fixedUsd": zod.string()
+}))
+})
+
+export const SaveExternalProviderPricingResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "protocol": zod.string(),
+  "baseUrl": zod.string(),
+  "enabled": zod.boolean(),
+  "health": zod.string(),
+  "credentialSaved": zod.boolean(),
+  "currency": zod.string().nullable(),
+  "balance": zod.string().nullable(),
+  "serviceCount": zod.number().int(),
+  "lastTestAt": zod.string().nullable(),
+  "lastSyncAt": zod.string().nullable(),
+  "safeError": zod.string().nullable(),
+  "pricingPolicy": zod.object({
+  "percentage": zod.string(),
+  "fixedUsd": zod.string(),
+  "groups": zod.array(zod.object({
+  "groupId": zod.string().uuid(),
+  "percentage": zod.string(),
+  "fixedUsd": zod.string()
+}))
+})
+})
+
+
+export const PreviewExternalProviderImportParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const previewExternalProviderImportBodyItemsItemNameMax = 160;
+
+export const previewExternalProviderImportBodyItemsMax = 500;
+
+export const previewExternalProviderImportBodyNewGroupNameMax = 100;
+
+
+
+export const PreviewExternalProviderImportBody = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string().max(previewExternalProviderImportBodyItemsItemNameMax).optional(),
+  "priceUsd": zod.string().optional()
+})).min(1).max(previewExternalProviderImportBodyItemsMax),
+  "pricing": zod.object({
+  "percentage": zod.string(),
+  "fixedUsd": zod.string(),
+  "groups": zod.array(zod.object({
+  "groupId": zod.string().uuid(),
+  "percentage": zod.string(),
+  "fixedUsd": zod.string()
+}))
+}),
+  "groupId": zod.string().nullish(),
+  "newGroupName": zod.string().max(previewExternalProviderImportBodyNewGroupNameMax).optional(),
+  "previewHash": zod.string().optional()
+})
+
+export const PreviewExternalProviderImportResponse = zod.object({
+  "previewHash": zod.string(),
+  "formula": zod.string(),
+  "visibility": zod.string(),
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "sourceCurrency": zod.string(),
+  "sourceCost": zod.string(),
+  "fxRate": zod.string(),
+  "convertedCostUsd": zod.string(),
+  "proposedPriceUsd": zod.string(),
+  "marginUsd": zod.string(),
+  "currentPriceUsd": zod.string().nullable(),
+  "linkedServiceId": zod.string().nullable(),
+  "groupPrices": zod.array(zod.object({
+  "groupId": zod.string(),
+  "priceUsd": zod.string()
+}))
+}))
+})
+
+
+export const ImportExternalProviderServicesParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const importExternalProviderServicesBodyItemsItemNameMax = 160;
+
+export const importExternalProviderServicesBodyItemsMax = 500;
+
+export const importExternalProviderServicesBodyNewGroupNameMax = 100;
+
+
+
+export const ImportExternalProviderServicesBody = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string().max(importExternalProviderServicesBodyItemsItemNameMax).optional(),
+  "priceUsd": zod.string().optional()
+})).min(1).max(importExternalProviderServicesBodyItemsMax),
+  "pricing": zod.object({
+  "percentage": zod.string(),
+  "fixedUsd": zod.string(),
+  "groups": zod.array(zod.object({
+  "groupId": zod.string().uuid(),
+  "percentage": zod.string(),
+  "fixedUsd": zod.string()
+}))
+}),
+  "groupId": zod.string().nullish(),
+  "newGroupName": zod.string().max(importExternalProviderServicesBodyNewGroupNameMax).optional(),
+  "previewHash": zod.string().optional()
+})
+
+export const ImportExternalProviderServicesResponse = zod.object({
+  "imported": zod.number().int(),
+  "existing": zod.number().int(),
+  "serviceIds": zod.array(zod.string())
+})
+
+
 
 
 

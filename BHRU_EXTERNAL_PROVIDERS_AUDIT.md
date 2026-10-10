@@ -2,18 +2,18 @@
 
 ## Status and execution boundary
 
-**AUDIT COMPLETED. SLICE 7A IMPLEMENTATION NOT STARTED.**
+**SLICE 7A IMPLEMENTED IN REPLIT PREVIEW; FOCUSED VERIFICATION PASSED.**
 
-This document records read-only source inspection and the proposed implementation
-boundary, not implemented capabilities. The three uploaded archives were extracted
+The audit below records the source inspection completed before implementation.
+The three uploaded archives were extracted
 under `/tmp/bhru-protocol-references` and inspected as source text. Their examples
 were not executed. No upstream HTTP requests or paid orders were submitted.
 
-The required dedicated provider encryption secret is not configured in development.
-Only secret-existence metadata was checked; secret values were not read.
-Secure provider persistence and operational connection tests are blocked pending
-configuration. No application code, schema, migrations or existing records were
-changed during this audit. No production/VPS/Dokploy access occurred.
+The initial audit stopped because the dedicated encryption configuration was absent.
+The user subsequently supplied `BHRU_PROVIDER_ENCRYPTION_KEY_V1` through the secure
+configuration flow. Implementation then continued; its report and operating
+instructions are in `BHRU_EXTERNAL_PROVIDERS.md`. Secret values have not been
+displayed. No production/VPS/Dokploy access occurred.
 
 ## Existing BHRU architecture
 
@@ -191,7 +191,7 @@ Archive inventories were also inspected. The REST `.gitignore` was read;
 REST MIT and legacy GPL license headers were inspected. No reference code
 has been copied into application code.
 
-## Proposed implementation, not yet implemented
+## Implemented architecture
 
 1. Separate tenant-scoped connections, staging catalog, canonical-service links
    and sync jobs/history with composite ownership constraints.
@@ -207,7 +207,7 @@ has been copied into application code.
    Validate all DNS answers and pin a validated public destination address in
    the actual TLS socket lookup while retaining original-host certificate/SNI
    verification. Ordinary preflight DNS validation alone is insufficient.
-5. Separate PostgreSQL durable jobs using SKIP LOCKED, renewable/fenced leases,
+5. Separate PostgreSQL durable jobs using SKIP LOCKED, 90-second fenced leases,
    tenant/provider concurrency limits and bounded retry/backoff. Reclaim only
    expired leases; stale workers cannot finalize a newer worker's job.
 6. Whole-catalog validation before one atomic staging update; normalized safe
@@ -223,21 +223,21 @@ has been copied into application code.
 9. Existing API Settings navigation slot, scoped generated API hooks, truthful
    credential-masked connection states, pagination and job polling.
 
-## Blocker and status inventory
+## Final status inventory
 
 | Feature | Status |
 |---|---|
 | Uploaded reference extraction/inspection and architecture audit | IMPLEMENTED AND INSPECTED; no live upstream test |
-| Dedicated provider encryption configuration | BLOCKED — required development secret absent |
-| Provider persistence/migration | NOT IMPLEMENTED |
-| Safe outbound REST adapter | NOT IMPLEMENTED |
-| Provider management UI | NOT IMPLEMENTED |
-| Durable sync/staging/history | NOT IMPLEMENTED |
-| Pricing preview/canonical import | NOT IMPLEMENTED |
-| Focused provider acceptance/security tests | NOT IMPLEMENTED / NOT RUN |
+| Dedicated provider encryption configuration | IMPLEMENTED AND TESTED in development; production configuration not inspected |
+| Provider persistence/migration | IMPLEMENTED AND TESTED; migration 032 applied only to identity-verified development DB |
+| Safe outbound REST adapter | IMPLEMENTED AND TESTED with mocked DNS/HTTPS and exact reference envelopes; live provider NOT TESTED |
+| Provider management UI | IMPLEMENTED BUT NOT TESTED in a signed-in browser; TypeScript/build passed |
+| Durable sync/staging/history | IMPLEMENTED AND TESTED with development SQL and mocked upstream transport |
+| Pricing preview/canonical import | IMPLEMENTED AND TESTED, including concurrent HTTP imports |
+| Focused provider acceptance/security tests | IMPLEMENTED AND TESTED: 25 focused checks passed |
 | Live provider connection | NOT TESTED; no provider is claimed connected |
 | Paid dispatch/order callbacks/reconciliation | NOT IMPLEMENTED — intentionally deferred to Slice 7B |
 
-No type/build/regression run was needed for this documentation-only audit.
-After configuration, implementation must continue through the remaining phases,
-with focused mocked transport and verified isolated development database tests.
+API TypeScript/build, frontend TypeScript/build and shared-library type checks
+passed. No browser/E2E/full regression suite was run. No real provider is claimed
+connected. No paid order was sent. No commit, push, publish or deployment occurred.

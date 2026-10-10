@@ -15,6 +15,7 @@ import CustomDomainsPage from '@/pages/custom-domains';
 import ManualServicesPage from '@/pages/manual-services';
 import ServiceOrdersPage from '@/pages/service-orders';
 import { ResellerPaymentGateways, FundingHistory } from '@/pages/payment-gateways';
+import ExternalProvidersPage from '@/pages/external-providers';
 import ClientGroupsPage from '@/pages/client-groups';
 
 function Crumbs({ items }: { items: string[] }) {
@@ -52,6 +53,10 @@ export default function Module() {
 
   if (r.entry.id === 'settings' && r.child?.label === 'Currencies') {
     return <><Crumbs items={r.crumbs} /><CurrenciesPage /></>;
+  }
+
+  if (r.entry.id === 'settings' && (r.child?.label === 'API Settings' || r.slug === 'api-settings')) {
+    return <><Crumbs items={r.crumbs} /><ExternalProvidersPage /></>;
   }
 
   if (r.slug === 'clients') return <><Crumbs items={r.crumbs} /><ClientsPage /></>;

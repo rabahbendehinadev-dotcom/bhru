@@ -5,6 +5,7 @@ import { pool } from "@workspace/db";
 import { adminPath } from "./lib/admin-entry";
 import { initializePublicMedia } from "./lib/public-site/media";
 import { startDomainController } from "./lib/domains/controller";
+import {startProviderWorker} from "./lib/providers/worker";
 
 const rawPort = process.env["PORT"] || "3000";
 
@@ -52,6 +53,10 @@ try {
   await pool.query("SELECT id,is_default,is_active FROM reseller_client_groups LIMIT 0");
   await pool.query("SELECT id FROM customer_service_prices LIMIT 0");
   await pool.query("SELECT id FROM customer_service_access LIMIT 0");
+  await pool.query("SELECT credentials_encrypted,config_version FROM external_providers LIMIT 0");
+  await pool.query("SELECT lease_token FROM external_provider_jobs LIMIT 0");
+  await pool.query("SELECT source_hash FROM external_provider_catalog LIMIT 0");
+  await pool.query("SELECT fulfillment_source FROM manual_services LIMIT 0");
   await pool.query("SELECT id,wallet_debit_reference FROM service_orders LIMIT 0");
   await pool.query("SELECT hostname,check_generation,dns_checked_at FROM subscriber_custom_domains LIMIT 0");
   await pool.query("SELECT subscriber_id,logo_strip_settings,announcement_ticker_settings FROM public_site_presentation LIMIT 0");
@@ -71,6 +76,7 @@ try {
 }
 await initializePublicMedia();
 const stopPaymentWorker=startPaymentWorker();
+const stopProviderWorker=startProviderWorker();
 const server = app.listen(port, "0.0.0.0", (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
@@ -82,6 +88,7 @@ const server = app.listen(port, "0.0.0.0", (err) => {
 });
 for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => {
   stopPaymentWorker();
+  stopProviderWorker();
   server.close(() => { pool.end().then(() => process.exit(0)); });
   setTimeout(() => process.exit(1), 10000).unref();
 });

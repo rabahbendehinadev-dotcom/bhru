@@ -47,21 +47,25 @@ export function serviceView(row:Record<string,any>,currency?:Awaited<ReturnType<
     description:row.description,priceUsd:price?.effectivePriceUsd??usdText(row.selling_price_usd_units),priceUsdUnits:price?.priceUsdUnits??String(row.selling_price_usd_units),
     formattedPrice:price?.formattedTotal??(currency?money(accountPrice(row.selling_price_usd_units,currency),currency):`${usdText(row.selling_price_usd_units)} USD`),
     currency:currency?.code??'USD',estimatedTime:row.estimated_time,active:row.active,displayOrder:row.display_order,
-    requirements:row.requirements,createdAt:row.created_at,updatedAt:row.updated_at};
+    requirements:row.requirements,fulfillmentSource:row.fulfillment_source??'manual',createdAt:row.created_at,updatedAt:row.updated_at};
 }
-export async function saveService(sub:string,id:string|undefined,raw:unknown,db:PoolClient) {
+export async function saveService(sub:string,id:string|undefined,raw:unknown,db:PoolClient,source:'manual'|'external_provider'='manual') {
   await pricingLock(sub,db,true);
   const input=serviceInput.parse(raw),price=parseUsd(input.priceUsd);
   if(price<=0n)throw new HttpError(400,'Service price must be positive.');
   if(input.groupId&&!(await db.query('SELECT id FROM manual_service_groups WHERE subscriber_id=$1 AND id=$2',[sub,input.groupId])).rowCount)throw new HttpError(404,'Service group not found.');
-  if(id)await serviceRow(sub,id,db);
+  if(id){
+    const existing=await serviceRow(sub,id,db);
+    if(existing.fulfillment_source==='external_provider'&&input.active)
+      throw new HttpError(409,'External provider services remain inactive until dispatch is available in Slice 7B.');
+  }
   const key=id??randomUUID();
   if(id)await db.query(`UPDATE manual_services SET name=$3,service_type=$4,group_id=$5,description=$6,selling_price_usd_units=$7,
     estimated_time=$8,active=$9,display_order=$10,requirements=$11::jsonb,updated_at=now() WHERE subscriber_id=$1 AND id=$2`,
     [sub,key,input.name,input.serviceType,input.groupId,input.description,price.toString(),input.estimatedTime,input.active,input.displayOrder,JSON.stringify(input.requirements)]);
-  else await db.query(`INSERT INTO manual_services(subscriber_id,id,name,service_type,group_id,description,selling_price_usd_units,estimated_time,active,display_order,requirements)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)`,
-    [sub,key,input.name,input.serviceType,input.groupId,input.description,price.toString(),input.estimatedTime,input.active,input.displayOrder,JSON.stringify(input.requirements)]);
+  else await db.query(`INSERT INTO manual_services(subscriber_id,id,name,service_type,group_id,description,selling_price_usd_units,estimated_time,active,display_order,requirements,fulfillment_source)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12)`,
+    [sub,key,input.name,input.serviceType,input.groupId,input.description,price.toString(),input.estimatedTime,input.active,input.displayOrder,JSON.stringify(input.requirements),source]);
   return serviceView(await serviceRow(sub,key,db));
 }
 export async function listServices(sub:string,raw:unknown,db:PoolClient,customer?:string) {

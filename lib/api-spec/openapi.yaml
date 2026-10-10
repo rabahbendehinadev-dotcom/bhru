@@ -11,6 +11,159 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /external-providers:
+    get:
+      operationId: listExternalProviders
+      tags: [ExternalProviders]
+      responses:
+        "200":
+          description: Tenant provider list, no credentials
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderList"}
+    post:
+      operationId: createExternalProvider
+      tags: [ExternalProviders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProviderInput"}
+      responses:
+        "201":
+          description: Saved, not automatically connected
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderConnection"}
+  /external-providers/test:
+    post:
+      operationId: testExternalProviderDraft
+      tags: [ExternalProviders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProviderInput"}
+      responses:
+        "200":
+          description: Real bounded account read with transient credentials
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderTestResult"}
+  /external-providers/{id}:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    patch:
+      operationId: updateExternalProvider
+      tags: [ExternalProviders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProviderInput"}
+      responses:
+        "200":
+          description: Updated connection; credentials replace-only
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderConnection"}
+  /external-providers/{id}/jobs:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      operationId: listExternalProviderJobs
+      tags: [ExternalProviders]
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1, maximum: 10000}}
+      responses:
+        "200":
+          description: Persisted test/sync history
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderJobList"}
+    post:
+      operationId: startExternalProviderJob
+      tags: [ExternalProviders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProviderJobInput"}
+      responses:
+        "202":
+          description: Durable job queued
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderJob"}
+  /external-providers/{id}/catalog:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      operationId: getExternalProviderCatalog
+      tags: [ExternalProviders]
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1, maximum: 10000}}
+        - {name: search, in: query, schema: {type: string, maxLength: 100}}
+        - {name: category, in: query, schema: {type: string, maxLength: 128}}
+        - {name: serviceType, in: query, schema: {type: string, enum: [imei,server,file,remote]}}
+        - {name: changedOnly, in: query, schema: {type: boolean}}
+      responses:
+        "200":
+          description: Staging only; linked retail services are never overwritten
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderCatalogList"}
+  /external-providers/{id}/pricing:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    put:
+      operationId: saveExternalProviderPricing
+      tags: [ExternalProviders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProviderPricingPolicy"}
+      responses:
+        "200":
+          description: Initial import defaults only; no live retail repricing
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderConnection"}
+  /external-providers/{id}/preview:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      operationId: previewExternalProviderImport
+      tags: [ExternalProviders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProviderImportInput"}
+      responses:
+        "200":
+          description: Server-calculated exact price/FX preview
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderImportPreview"}
+  /external-providers/{id}/import:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      operationId: importExternalProviderServices
+      tags: [ExternalProviders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProviderImportInput"}
+      responses:
+        "200":
+          description: Atomic canonical imports, inactive and non-orderable
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProviderImportResult"}
   /payment-reviews:
     get:
       operationId: listPaymentReviews
@@ -1481,6 +1634,186 @@ components:
     FoundationSearch: {in: query, name: search, schema: {type: string, maxLength: 100}}
     FoundationServiceType: {in: query, name: serviceType, schema: {type: string, enum: [imei, server, file, remote]}}
   schemas:
+    ProviderInput:
+      type: object
+      required: [name, protocol, baseUrl, enabled]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        protocol: {type: string, enum: [fusion_rest]}
+        baseUrl: {type: string, maxLength: 300}
+        token: {type: string, maxLength: 4096, writeOnly: true}
+        currency: {type: [string, "null"], pattern: "^[A-Z]{3}$"}
+        enabled: {type: boolean}
+    ProviderPricingPolicy:
+      type: object
+      required: [percentage, fixedUsd, groups]
+      properties:
+        percentage: {type: string}
+        fixedUsd: {type: string}
+        groups:
+          type: array
+          items: {$ref: "#/components/schemas/ProviderGroupMarkup"}
+    ProviderGroupMarkup:
+      type: object
+      required: [groupId, percentage, fixedUsd]
+      properties:
+        groupId: {type: string, format: uuid}
+        percentage: {type: string}
+        fixedUsd: {type: string}
+    ProviderConnection:
+      type: object
+      required: [id, name, protocol, baseUrl, enabled, health, credentialSaved, currency, balance, serviceCount, lastTestAt, lastSyncAt, safeError, pricingPolicy]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        protocol: {type: string}
+        baseUrl: {type: string}
+        enabled: {type: boolean}
+        health: {type: string}
+        credentialSaved: {type: boolean}
+        currency: {type: [string, "null"]}
+        balance: {type: [string, "null"]}
+        serviceCount: {type: integer}
+        lastTestAt: {type: [string, "null"]}
+        lastSyncAt: {type: [string, "null"]}
+        safeError: {type: [string, "null"]}
+        pricingPolicy: {$ref: "#/components/schemas/ProviderPricingPolicy"}
+    ProviderProtocol:
+      type: object
+      required: [code, name, available, reason]
+      properties:
+        code: {type: string}
+        name: {type: string}
+        available: {type: boolean}
+        reason: {type: [string, "null"]}
+    ProviderList:
+      type: object
+      required: [data, protocols, storageReady]
+      properties:
+        data: {type: array, items: {$ref: "#/components/schemas/ProviderConnection"}}
+        protocols: {type: array, items: {$ref: "#/components/schemas/ProviderProtocol"}}
+        storageReady: {type: boolean}
+    ProviderTestResult:
+      type: object
+      required: [health, currency, balance]
+      properties:
+        health: {type: string}
+        currency: {type: string}
+        balance: {type: string}
+    ProviderJobInput:
+      type: object
+      required: [kind]
+      properties:
+        kind: {type: string, enum: [TEST,SYNC]}
+    ProviderJob:
+      type: object
+      required: [id, kind, state, attempts, counts, safeError, createdAt, startedAt, completedAt]
+      properties:
+        id: {type: string}
+        kind: {type: string}
+        state: {type: string}
+        attempts: {type: integer}
+        counts: {type: object, additionalProperties: {type: integer}}
+        safeError: {type: [string, "null"]}
+        createdAt: {type: string}
+        startedAt: {type: [string, "null"]}
+        completedAt: {type: [string, "null"]}
+    ProviderJobList:
+      type: object
+      required: [data, page, hasMore]
+      properties:
+        data: {type: array, items: {$ref: "#/components/schemas/ProviderJob"}}
+        page: {type: integer}
+        hasMore: {type: boolean}
+    ProviderCatalogItem:
+      type: object
+      required: [id, upstreamId, name, serviceType, categoryId, categoryName, cost, currency, previousCost, changes, reviewReasons, missing, availability, linkedServiceId, retailPriceUsd, estimatedTime]
+      properties:
+        id: {type: string}
+        upstreamId: {type: string}
+        name: {type: string}
+        serviceType: {type: [string, "null"]}
+        categoryId: {type: [string, "null"]}
+        categoryName: {type: [string, "null"]}
+        cost: {type: string}
+        currency: {type: string}
+        previousCost: {type: [string, "null"]}
+        changes: {type: array, items: {type: string}}
+        reviewReasons: {type: array, items: {type: string}}
+        missing: {type: boolean}
+        availability: {type: [boolean, "null"]}
+        linkedServiceId: {type: [string, "null"]}
+        retailPriceUsd: {type: [string, "null"]}
+        estimatedTime: {type: string}
+    ProviderCategory:
+      type: object
+      required: [id, name, count]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        count: {type: integer}
+    ProviderCatalogList:
+      type: object
+      required: [data, categories, page, hasMore]
+      properties:
+        data: {type: array, items: {$ref: "#/components/schemas/ProviderCatalogItem"}}
+        categories: {type: array, items: {$ref: "#/components/schemas/ProviderCategory"}}
+        page: {type: integer}
+        hasMore: {type: boolean}
+    ProviderImportItem:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string, maxLength: 160}
+        priceUsd: {type: string}
+    ProviderImportInput:
+      type: object
+      required: [items, pricing]
+      properties:
+        items: {type: array, minItems: 1, maxItems: 500, items: {$ref: "#/components/schemas/ProviderImportItem"}}
+        pricing: {$ref: "#/components/schemas/ProviderPricingPolicy"}
+        groupId: {type: [string, "null"]}
+        newGroupName: {type: string, maxLength: 100}
+        previewHash: {type: string}
+    ProviderImportPreviewItem:
+      type: object
+      required: [id, name, sourceCurrency, sourceCost, fxRate, convertedCostUsd, proposedPriceUsd, marginUsd, currentPriceUsd, linkedServiceId, groupPrices]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        sourceCurrency: {type: string}
+        sourceCost: {type: string}
+        fxRate: {type: string}
+        convertedCostUsd: {type: string}
+        proposedPriceUsd: {type: string}
+        marginUsd: {type: string}
+        currentPriceUsd: {type: [string, "null"]}
+        linkedServiceId: {type: [string, "null"]}
+        groupPrices:
+          type: array
+          items: {$ref: "#/components/schemas/ProviderGroupPrice"}
+    ProviderGroupPrice:
+      type: object
+      required: [groupId, priceUsd]
+      properties:
+        groupId: {type: string}
+        priceUsd: {type: string}
+    ProviderImportPreview:
+      type: object
+      required: [previewHash, items, formula, visibility]
+      properties:
+        previewHash: {type: string}
+        formula: {type: string}
+        visibility: {type: string}
+        items: {type: array, items: {$ref: "#/components/schemas/ProviderImportPreviewItem"}}
+    ProviderImportResult:
+      type: object
+      required: [imported, existing, serviceIds]
+      properties:
+        imported: {type: integer}
+        existing: {type: integer}
+        serviceIds: {type: array, items: {type: string}}
     EmptyPaymentAction:
       type: object
       additionalProperties: false

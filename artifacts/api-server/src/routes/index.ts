@@ -11,6 +11,7 @@ import clientFinanceRouter from "./client-finance";
 import clientPricingRouter from "./client-pricing";
 import clientAccessRouter from "./client-access";
 import paymentsRouter from "./payments";
+import externalProvidersRouter from "./external-providers";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(clientFinanceRouter);
 router.use(clientPricingRouter);
 router.use(clientAccessRouter);
 router.use(paymentsRouter);
+router.use(externalProvidersRouter);
 
 export default router;

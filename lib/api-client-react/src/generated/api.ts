@@ -73,6 +73,7 @@ import type {
   GetClientStatementParams,
   GetCommerceResourceParams,
   GetCustomerStatementParams,
+  GetExternalProviderCatalogParams,
   GetPublicCommerceCatalogParams,
   GetPublicSiteDocumentParams,
   HealthStatus,
@@ -80,6 +81,7 @@ import type {
   ListCustomerServiceOrdersParams,
   ListCustomerServicePricingParams,
   ListCustomerServicesParams,
+  ListExternalProviderJobsParams,
   ListGroupServiceAccessParams,
   ListGroupServicePricingParams,
   ListManualServicesParams,
@@ -97,6 +99,18 @@ import type {
   PlanInput,
   PlatformState,
   PreviewCurrentPublicWebsite200,
+  ProviderCatalogList,
+  ProviderConnection,
+  ProviderImportInput,
+  ProviderImportPreview,
+  ProviderImportResult,
+  ProviderInput,
+  ProviderJob,
+  ProviderJobInput,
+  ProviderJobList,
+  ProviderList,
+  ProviderPricingPolicy,
+  ProviderTestResult,
   PublicPresentationConfiguration,
   PublicPresentationUpdate,
   PublicWebsiteConfiguration,
@@ -152,6 +166,822 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getListExternalProvidersUrl = () => {
+
+
+
+
+  return `/api/external-providers`
+}
+
+export const listExternalProviders = async ( options?: Parameters<typeof customFetch>[1]): Promise<ProviderList> => {
+
+  return customFetch<ProviderList>(getListExternalProvidersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListExternalProvidersQueryKey = () => {
+    return [
+    `/api/external-providers`
+    ] as const;
+    }
+
+
+export const getListExternalProvidersQueryOptions = <TData = Awaited<ReturnType<typeof listExternalProviders>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listExternalProviders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListExternalProvidersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listExternalProviders>>> = ({ signal }) => listExternalProviders({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listExternalProviders>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListExternalProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof listExternalProviders>>>
+export type ListExternalProvidersQueryError = ErrorType<unknown>
+
+
+
+export function useListExternalProviders<TData = Awaited<ReturnType<typeof listExternalProviders>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listExternalProviders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListExternalProvidersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateExternalProviderUrl = () => {
+
+
+
+
+  return `/api/external-providers`
+}
+
+export const createExternalProvider = async (providerInput: ProviderInput, options?: Parameters<typeof customFetch>[1]): Promise<ProviderConnection> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ProviderConnection>(getCreateExternalProviderUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(providerInput)
+  }
+);}
+
+
+
+
+
+export const getCreateExternalProviderMutationKey = () => ['createExternalProvider'] as const;
+
+export const getCreateExternalProviderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createExternalProvider>>, TError,CreateExternalProviderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createExternalProvider>>, TError,CreateExternalProviderMutationVariables, TContext> => {
+
+const mutationKey = getCreateExternalProviderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createExternalProvider>>, CreateExternalProviderMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createExternalProvider(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateExternalProviderMutationResult = NonNullable<Awaited<ReturnType<typeof createExternalProvider>>>
+    export type CreateExternalProviderMutationBody = BodyType<ProviderInput>
+    export type CreateExternalProviderMutationError = ErrorType<unknown>
+    export type CreateExternalProviderMutationVariables = {data: BodyType<ProviderInput>}
+
+    export const useCreateExternalProvider = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createExternalProvider>>, TError,CreateExternalProviderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createExternalProvider>>,
+        TError,
+        CreateExternalProviderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateExternalProviderMutationOptions(options));
+    }
+
+export const getTestExternalProviderDraftUrl = () => {
+
+
+
+
+  return `/api/external-providers/test`
+}
+
+export const testExternalProviderDraft = async (providerInput: ProviderInput, options?: Parameters<typeof customFetch>[1]): Promise<ProviderTestResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ProviderTestResult>(getTestExternalProviderDraftUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(providerInput)
+  }
+);}
+
+
+
+
+
+export const getTestExternalProviderDraftMutationKey = () => ['testExternalProviderDraft'] as const;
+
+export const getTestExternalProviderDraftMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testExternalProviderDraft>>, TError,TestExternalProviderDraftMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof testExternalProviderDraft>>, TError,TestExternalProviderDraftMutationVariables, TContext> => {
+
+const mutationKey = getTestExternalProviderDraftMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof testExternalProviderDraft>>, TestExternalProviderDraftMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  testExternalProviderDraft(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TestExternalProviderDraftMutationResult = NonNullable<Awaited<ReturnType<typeof testExternalProviderDraft>>>
+    export type TestExternalProviderDraftMutationBody = BodyType<ProviderInput>
+    export type TestExternalProviderDraftMutationError = ErrorType<unknown>
+    export type TestExternalProviderDraftMutationVariables = {data: BodyType<ProviderInput>}
+
+    export const useTestExternalProviderDraft = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testExternalProviderDraft>>, TError,TestExternalProviderDraftMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof testExternalProviderDraft>>,
+        TError,
+        TestExternalProviderDraftMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTestExternalProviderDraftMutationOptions(options));
+    }
+
+export const getUpdateExternalProviderUrl = (id: string,) => {
+
+
+
+
+  return `/api/external-providers/${id}`
+}
+
+export const updateExternalProvider = async (id: string,
+    providerInput: ProviderInput, options?: Parameters<typeof customFetch>[1]): Promise<ProviderConnection> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ProviderConnection>(getUpdateExternalProviderUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(providerInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateExternalProviderMutationKey = () => ['updateExternalProvider'] as const;
+
+export const getUpdateExternalProviderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateExternalProvider>>, TError,UpdateExternalProviderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateExternalProvider>>, TError,UpdateExternalProviderMutationVariables, TContext> => {
+
+const mutationKey = getUpdateExternalProviderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateExternalProvider>>, UpdateExternalProviderMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateExternalProvider(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateExternalProviderMutationResult = NonNullable<Awaited<ReturnType<typeof updateExternalProvider>>>
+    export type UpdateExternalProviderMutationBody = BodyType<ProviderInput>
+    export type UpdateExternalProviderMutationError = ErrorType<unknown>
+    export type UpdateExternalProviderMutationVariables = {id: string;data: BodyType<ProviderInput>}
+
+    export const useUpdateExternalProvider = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateExternalProvider>>, TError,UpdateExternalProviderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateExternalProvider>>,
+        TError,
+        UpdateExternalProviderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateExternalProviderMutationOptions(options));
+    }
+
+export const getListExternalProviderJobsUrl = (id: string,
+    params?: ListExternalProviderJobsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/external-providers/${id}/jobs?${stringifiedParams}` : `/api/external-providers/${id}/jobs`
+}
+
+export const listExternalProviderJobs = async (id: string,
+    params?: ListExternalProviderJobsParams, options?: Parameters<typeof customFetch>[1]): Promise<ProviderJobList> => {
+
+  return customFetch<ProviderJobList>(getListExternalProviderJobsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListExternalProviderJobsQueryKey = (id: string,
+    params?: ListExternalProviderJobsParams,) => {
+    return [
+    `/api/external-providers/${id}/jobs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListExternalProviderJobsQueryOptions = <TData = Awaited<ReturnType<typeof listExternalProviderJobs>>, TError = ErrorType<unknown>>(id: string,
+    params?: ListExternalProviderJobsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listExternalProviderJobs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListExternalProviderJobsQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listExternalProviderJobs>>> = ({ signal }) => listExternalProviderJobs(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listExternalProviderJobs>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListExternalProviderJobsQueryResult = NonNullable<Awaited<ReturnType<typeof listExternalProviderJobs>>>
+export type ListExternalProviderJobsQueryError = ErrorType<unknown>
+
+
+
+export function useListExternalProviderJobs<TData = Awaited<ReturnType<typeof listExternalProviderJobs>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: ListExternalProviderJobsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listExternalProviderJobs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListExternalProviderJobsQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartExternalProviderJobUrl = (id: string,) => {
+
+
+
+
+  return `/api/external-providers/${id}/jobs`
+}
+
+export const startExternalProviderJob = async (id: string,
+    providerJobInput: ProviderJobInput, options?: Parameters<typeof customFetch>[1]): Promise<ProviderJob> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ProviderJob>(getStartExternalProviderJobUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(providerJobInput)
+  }
+);}
+
+
+
+
+
+export const getStartExternalProviderJobMutationKey = () => ['startExternalProviderJob'] as const;
+
+export const getStartExternalProviderJobMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startExternalProviderJob>>, TError,StartExternalProviderJobMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startExternalProviderJob>>, TError,StartExternalProviderJobMutationVariables, TContext> => {
+
+const mutationKey = getStartExternalProviderJobMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startExternalProviderJob>>, StartExternalProviderJobMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  startExternalProviderJob(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartExternalProviderJobMutationResult = NonNullable<Awaited<ReturnType<typeof startExternalProviderJob>>>
+    export type StartExternalProviderJobMutationBody = BodyType<ProviderJobInput>
+    export type StartExternalProviderJobMutationError = ErrorType<unknown>
+    export type StartExternalProviderJobMutationVariables = {id: string;data: BodyType<ProviderJobInput>}
+
+    export const useStartExternalProviderJob = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startExternalProviderJob>>, TError,StartExternalProviderJobMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startExternalProviderJob>>,
+        TError,
+        StartExternalProviderJobMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartExternalProviderJobMutationOptions(options));
+    }
+
+export const getGetExternalProviderCatalogUrl = (id: string,
+    params?: GetExternalProviderCatalogParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/external-providers/${id}/catalog?${stringifiedParams}` : `/api/external-providers/${id}/catalog`
+}
+
+export const getExternalProviderCatalog = async (id: string,
+    params?: GetExternalProviderCatalogParams, options?: Parameters<typeof customFetch>[1]): Promise<ProviderCatalogList> => {
+
+  return customFetch<ProviderCatalogList>(getGetExternalProviderCatalogUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExternalProviderCatalogQueryKey = (id: string,
+    params?: GetExternalProviderCatalogParams,) => {
+    return [
+    `/api/external-providers/${id}/catalog`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetExternalProviderCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getExternalProviderCatalog>>, TError = ErrorType<unknown>>(id: string,
+    params?: GetExternalProviderCatalogParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExternalProviderCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExternalProviderCatalogQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExternalProviderCatalog>>> = ({ signal }) => getExternalProviderCatalog(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExternalProviderCatalog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetExternalProviderCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getExternalProviderCatalog>>>
+export type GetExternalProviderCatalogQueryError = ErrorType<unknown>
+
+
+
+export function useGetExternalProviderCatalog<TData = Awaited<ReturnType<typeof getExternalProviderCatalog>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: GetExternalProviderCatalogParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExternalProviderCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetExternalProviderCatalogQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveExternalProviderPricingUrl = (id: string,) => {
+
+
+
+
+  return `/api/external-providers/${id}/pricing`
+}
+
+export const saveExternalProviderPricing = async (id: string,
+    providerPricingPolicy: ProviderPricingPolicy, options?: Parameters<typeof customFetch>[1]): Promise<ProviderConnection> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ProviderConnection>(getSaveExternalProviderPricingUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(providerPricingPolicy)
+  }
+);}
+
+
+
+
+
+export const getSaveExternalProviderPricingMutationKey = () => ['saveExternalProviderPricing'] as const;
+
+export const getSaveExternalProviderPricingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveExternalProviderPricing>>, TError,SaveExternalProviderPricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveExternalProviderPricing>>, TError,SaveExternalProviderPricingMutationVariables, TContext> => {
+
+const mutationKey = getSaveExternalProviderPricingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveExternalProviderPricing>>, SaveExternalProviderPricingMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  saveExternalProviderPricing(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveExternalProviderPricingMutationResult = NonNullable<Awaited<ReturnType<typeof saveExternalProviderPricing>>>
+    export type SaveExternalProviderPricingMutationBody = BodyType<ProviderPricingPolicy>
+    export type SaveExternalProviderPricingMutationError = ErrorType<unknown>
+    export type SaveExternalProviderPricingMutationVariables = {id: string;data: BodyType<ProviderPricingPolicy>}
+
+    export const useSaveExternalProviderPricing = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveExternalProviderPricing>>, TError,SaveExternalProviderPricingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveExternalProviderPricing>>,
+        TError,
+        SaveExternalProviderPricingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveExternalProviderPricingMutationOptions(options));
+    }
+
+export const getPreviewExternalProviderImportUrl = (id: string,) => {
+
+
+
+
+  return `/api/external-providers/${id}/preview`
+}
+
+export const previewExternalProviderImport = async (id: string,
+    providerImportInput: ProviderImportInput, options?: Parameters<typeof customFetch>[1]): Promise<ProviderImportPreview> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ProviderImportPreview>(getPreviewExternalProviderImportUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(providerImportInput)
+  }
+);}
+
+
+
+
+
+export const getPreviewExternalProviderImportMutationKey = () => ['previewExternalProviderImport'] as const;
+
+export const getPreviewExternalProviderImportMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewExternalProviderImport>>, TError,PreviewExternalProviderImportMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof previewExternalProviderImport>>, TError,PreviewExternalProviderImportMutationVariables, TContext> => {
+
+const mutationKey = getPreviewExternalProviderImportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewExternalProviderImport>>, PreviewExternalProviderImportMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  previewExternalProviderImport(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PreviewExternalProviderImportMutationResult = NonNullable<Awaited<ReturnType<typeof previewExternalProviderImport>>>
+    export type PreviewExternalProviderImportMutationBody = BodyType<ProviderImportInput>
+    export type PreviewExternalProviderImportMutationError = ErrorType<unknown>
+    export type PreviewExternalProviderImportMutationVariables = {id: string;data: BodyType<ProviderImportInput>}
+
+    export const usePreviewExternalProviderImport = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewExternalProviderImport>>, TError,PreviewExternalProviderImportMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof previewExternalProviderImport>>,
+        TError,
+        PreviewExternalProviderImportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPreviewExternalProviderImportMutationOptions(options));
+    }
+
+export const getImportExternalProviderServicesUrl = (id: string,) => {
+
+
+
+
+  return `/api/external-providers/${id}/import`
+}
+
+export const importExternalProviderServices = async (id: string,
+    providerImportInput: ProviderImportInput, options?: Parameters<typeof customFetch>[1]): Promise<ProviderImportResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ProviderImportResult>(getImportExternalProviderServicesUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(providerImportInput)
+  }
+);}
+
+
+
+
+
+export const getImportExternalProviderServicesMutationKey = () => ['importExternalProviderServices'] as const;
+
+export const getImportExternalProviderServicesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importExternalProviderServices>>, TError,ImportExternalProviderServicesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importExternalProviderServices>>, TError,ImportExternalProviderServicesMutationVariables, TContext> => {
+
+const mutationKey = getImportExternalProviderServicesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importExternalProviderServices>>, ImportExternalProviderServicesMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  importExternalProviderServices(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportExternalProviderServicesMutationResult = NonNullable<Awaited<ReturnType<typeof importExternalProviderServices>>>
+    export type ImportExternalProviderServicesMutationBody = BodyType<ProviderImportInput>
+    export type ImportExternalProviderServicesMutationError = ErrorType<unknown>
+    export type ImportExternalProviderServicesMutationVariables = {id: string;data: BodyType<ProviderImportInput>}
+
+    export const useImportExternalProviderServices = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importExternalProviderServices>>, TError,ImportExternalProviderServicesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importExternalProviderServices>>,
+        TError,
+        ImportExternalProviderServicesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportExternalProviderServicesMutationOptions(options));
+    }
 
 export const getListPaymentReviewsUrl = (params?: ListPaymentReviewsParams,) => {
   const normalizedParams = new URLSearchParams();
