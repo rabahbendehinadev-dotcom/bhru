@@ -15,6 +15,7 @@ try{
     stdin:{contents:`export {providerAdapter} from '${entry}/adapter.ts';
       export {safeLegacyRead,safeRead,providerUrl,ProviderError} from '${entry}/transport.ts';
       export {runProviderJob} from '${entry}/worker.ts';
+      export {classifyAccountResponse,accountDiagnosticsAuthorized,logAccountResponseDiagnostic} from '${entry}/legacy-account-response-diagnostics.ts';
       export {TestExternalProviderDraftResponse} from '${resolve('lib/api-zod/src/generated/api.ts')}';
       export {state} from '${mock}';
       export {providerFailureMessage,providerSavedFailureMessage} from '${resolve('artifacts/bhru/src/lib/provider-diagnostics.ts')}';`,
@@ -26,7 +27,7 @@ try{
       b.onLoad({filter:/\/lib\/auth\.ts$/},()=>({
         contents:'export class HttpError extends Error {constructor(status,message){super(message);this.status=status}}',loader:'ts'}));
       b.onLoad({filter:/\/lib\/logger\.ts$/},()=>({
-        contents:`export {logger} from '${mock}';`,loader:'ts'}));
+        contents:`import {logger as base} from '${mock}'; export const logger={...base,info:base.warn};`,loader:'ts'}));
       b.onLoad({filter:/\/lib\/platform\.ts$/},()=>({
         contents:`import {state} from '${mock}';
           export const transaction=async fn=>fn({query:async(sql,values)=>{
@@ -205,6 +206,82 @@ try{
         assert.deepEqual(m.state.logs,[]);
       }
     }
+  });
+  for(const [value,expected] of [[undefined,'MISSING'],['6.1','SUPPORTED_6_1'],['2023.21','OBSERVED_2023_21'],
+    ['sensitive-version-value','OTHER_STRING'],[null,'MALFORMED'],[{},'MALFORMED']]){
+    await check(`Independent classifier: ${expected}`,async()=>{
+      const raw=JSON.stringify({SUCCESS:[{AccoutInfo:{credit:'123.123456789012',currency:'USD'}}],apiversion:value});
+      assert.deepEqual(m.classifyAccountResponse(raw),{response:'JSON',version:expected,success:'VALID',
+        account:'VALID',currency:'VALID',credit:'VALID'});
+    });
+  }
+  await check('Independent classification preserves absent/null/invalid fields and rejects invalid envelopes',async()=>{
+    const classify=info=>m.classifyAccountResponse(JSON.stringify({SUCCESS:[{AccoutInfo:info}],apiversion:'2023.21'}));
+    assert.equal(classify({}).currency,'MISSING');
+    assert.equal(classify({currency:null,credit:null}).credit,'NULL');
+    assert.equal(classify({currency:'usd',credit:'secret-balance'}).currency,'INVALID');
+    assert.equal(classify({currency:'USD',credit:'secret-balance'}).credit,'INVALID');
+    for(const body of ['[]','{}','{"SUCCESS":{}}','{"SUCCESS":[null]}','{"SUCCESS":[]}',
+      '{"ERROR":[{"MESSAGE":"Authentication Failed"}],"SUCCESS":[{"AccoutInfo":{}}]}']){
+      assert.equal(m.classifyAccountResponse(body).success,'INVALID');
+    }
+    assert.equal(m.classifyAccountResponse('{"SUCCESS":[{"AccountInfo":{}}]}').account,'INVALID');
+    assert.equal(m.classifyAccountResponse('<html>secret-body</html>').response,'HTML');
+    assert.equal(m.classifyAccountResponse('<?xml version="1.0"?>').response,'XML');
+    assert.equal(m.classifyAccountResponse('{bad').response,'MALFORMED_JSON');
+  });
+  await check('Detailed diagnostics are exact-scoped, short-lived, redacted and decision-neutral',async()=>{
+    const tenant='10000000-0000-4000-8000-000000000001',provider='20000000-0000-4000-8000-000000000001',
+      job='30000000-0000-4000-8000-000000000001';
+    const prior=process.env.BHRU_LEGACY_ACCOUNT_DIAGNOSTICS;
+    const config={tenantId:tenant,providerId:provider,jobId:job,expiresAt:new Date(Date.now()+600000).toISOString()};
+    const setup=()=>{
+      reset();m.state.workerProvider={id:provider,subscriber_id:tenant,enabled:true,config_version:1,
+        protocol:'DHRU_FUSION_LEGACY_V61',base_url:endpoint,credentials_encrypted:'synthetic-only',currency:null};
+    };
+    const record={id:job,subscriber_id:tenant,provider_id:provider,config_version:1,kind:'TEST',attempts:1,lease_token:'lease'};
+    const detailed=()=>m.state.logs.filter(l=>l.fields.diagnosticCode==='LEGACY_ACCOUNT_RESPONSE_CLASSIFICATION');
+    try{
+      for(const bad of ['', 'invalid',JSON.stringify({...config,tenantId:provider}),JSON.stringify({...config,providerId:tenant}),
+        JSON.stringify({...config,jobId:provider}),JSON.stringify({...config,expiresAt:new Date(Date.now()-1000).toISOString()}),
+        JSON.stringify({...config,expiresAt:new Date(Date.now()+3600000).toISOString()})]){
+        setup();process.env.BHRU_LEGACY_ACCOUNT_DIAGNOSTICS=bad;
+        assert.equal(m.accountDiagnosticsAuthorized(tenant,provider,job),false);
+        await m.runProviderJob(record);assert.equal(detailed().length,0);
+      }
+      process.env.BHRU_LEGACY_ACCOUNT_DIAGNOSTICS=JSON.stringify(config);
+      for(const [body,contentType,response,version,safeError] of [
+        [valid,'application/json','JSON','SUPPORTED_6_1',null],
+        [valid.replace('"6.1"','"2023.21"'),'application/json','JSON','OBSERVED_2023_21','INVALID_RESPONSE:LEGACY_VERSION_MISMATCH'],
+        ['<html>secret-body</html>','text/html','HTML','MISSING','INVALID_RESPONSE:UNEXPECTED_HTML'],
+        ['{"ERROR":[{"MESSAGE":"Authentication Failed"}]}','application/json','JSON','MISSING','AUTHENTICATION_FAILED:AUTHENTICATION_REJECTED'],
+      ]){
+        setup();m.state.body=body;m.state.contentType=contentType;await m.runProviderJob(record);
+        assert.equal(detailed().length,1);
+        const fields=detailed()[0].fields;
+        assert.equal(fields.response,response);assert.equal(fields.version,version);
+        assert.deepEqual([fields.tenantId,fields.providerId,fields.jobId],[tenant,provider,job]);
+        assert(!JSON.stringify(fields).includes('secret-body'));
+        assert(!JSON.stringify(fields).includes('123.123456789012'));
+        if(safeError)assert.equal(m.state.queries.find(q=>q.sql.includes('safe_error=$4')&&q.sql.includes('lease_token=$2')).values[3],safeError);
+        else assert(m.state.queries.some(q=>q.sql.includes("health='CONNECTED'")));
+      }
+      setup();await m.runProviderJob({...record,attempts:2});assert.equal(detailed().length,0);
+      setup();m.state.body=valid.replace('"6.1"','"2023.21"');m.state.jobUpdateRowCount=0;
+      await m.runProviderJob(record);assert.equal(detailed().length,0);
+      setup();m.state.body=valid.replace('"6.1"','"2023.21"');
+      await m.runProviderJob({...record,kind:'SYNC'});assert.equal(detailed().length,0);
+      setup();m.state.workerProvider.protocol='fusion_rest';
+      m.state.body='{"status":"success","code":200,"data":{"currency":"USD","balance":"1"}}';
+      await m.runProviderJob(record);assert.equal(detailed().length,0);
+      setup();
+      const d=m.classifyAccountResponse(valid);
+      m.logAccountResponseDiagnostic(tenant,provider,job,{...d,secret:'never-copy'});
+      assert(!JSON.stringify(detailed()).includes('never-copy'));
+      m.state.logs=[];m.logAccountResponseDiagnostic(tenant,provider,job,{...d,version:'secret-value'});
+      assert.equal(detailed().length,0);
+    }finally{if(prior===undefined)delete process.env.BHRU_LEGACY_ACCOUNT_DIAGNOSTICS;
+      else process.env.BHRU_LEGACY_ACCOUNT_DIAGNOSTICS=prior;}
   });
   for(const [status,category] of [[302,'INVALID_RESPONSE'],[400,'INVALID_RESPONSE'],[401,'AUTHENTICATION_FAILED'],
     [402,'AUTHENTICATION_FAILED'],[403,'AUTHENTICATION_FAILED'],[404,'INVALID_RESPONSE'],

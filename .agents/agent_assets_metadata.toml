@@ -98,3 +98,17 @@ mtime_ms = 1791652719666
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/63151ed9-d7bf-44ea-857e-656cba9dd044/5dff9b36-ed6d-46a3-8149-97bd30f4e1b8"
 storage_version_token = "1791652749125149"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "eo9oNI5rkqjVyrY5XTa5_"
+uri = "file://BHRU_LEGACY_RESPONSE_CLASSIFICATION.md"
+type = "text"
+title = "Scoped Legacy Response Diagnostics"
+description = "Exact diagnostic fields, authorization procedure, operational limitations and offline verification results."
+logical_id = "da4e7e6d-e07b-4358-8693-da65136e9c01"
+content_hash = "sha256:8504c30fc2719a7fe44de1d12d90b82570f087419d96b60c476d178b4c134f45"
+size = 6649
+mtime_ms = 1791653723866
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/da4e7e6d-e07b-4358-8693-da65136e9c01/c64c1a0f-f41d-4f1c-bb6b-689f6476c2a0"
+storage_version_token = "1791653759428727"
+content_type = "text/markdown"

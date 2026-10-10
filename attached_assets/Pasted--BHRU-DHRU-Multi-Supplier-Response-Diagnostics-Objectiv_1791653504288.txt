@@ -1,0 +1,73 @@
+# BHRU — DHRU Multi-Supplier Response Diagnostics
+
+## Objective
+
+Implement a minimal diagnostic-only enhancement for the existing DHRU Fusion Legacy adapter.
+
+Business goal: BHRU must eventually support multiple independent DHRU suppliers per reseller, including iFree, Unlock OK and Adyunlocker.
+
+**Critical: iFree currently works. Preserve its request handling, account parsing, catalog sync and existing provider data without behavioral changes.**
+
+## Existing findings
+
+- iFree account connection and catalog sync work.
+- Unlock OK has produced two different failures across separate tests:
+  - `LEGACY_VERSION_MISMATCH`
+  - HTML returned instead of supported JSON.
+- The authenticated Unlock OK version and full response compatibility remain unverified.
+- Existing strict Legacy version and account schema validation must remain unchanged.
+
+## Implement
+
+1. At the Legacy account-response parsing stage, add bounded, fixed diagnostic classifications:
+
+   - Version: `MISSING`, `SUPPORTED_6_1`, `OBSERVED_2023_21`, `OTHER_STRING`, `MALFORMED`
+   - SUCCESS envelope: `VALID` or `INVALID`
+   - Account container: `VALID` or `INVALID`
+   - Currency field: `VALID`, `MISSING`, `NULL`, `INVALID`
+   - Credit field: `VALID`, `MISSING`, `NULL`, `INVALID`
+
+2. Evaluate the account structure independently for diagnostic purposes even when the version is unsupported, but **never change the actual acceptance or rejection decision**.
+
+3. Report HTML responses as a separate diagnostic category. Never interpret HTML as a DHRU success envelope.
+
+4. Enable detailed diagnostics only for an explicitly authorized tenant, provider and test job, with a short UTC expiration. Keep disabled by default.
+
+5. Use existing secure logging infrastructure and preserve tenant isolation.
+
+6. Never output raw response bodies, arbitrary version strings, balances, API keys, usernames, URLs containing secrets or authentication headers.
+
+7. Do not add new compatible versions or provider-specific bypasses.
+
+8. Preserve existing HTTP-status and Legacy metadata diagnostics.
+
+## Offline verification
+
+Use synthetic fixtures covering:
+- Working iFree Legacy response
+- Legacy `"6.1"`
+- Missing version
+- Synthetic `"2023.21"`
+- Unknown and malformed versions
+- Valid and invalid account structures
+- HTML responses
+- Authentication errors
+- Tenant/provider isolation
+- Secret redaction
+- REST regression
+
+Run focused tests, TypeScript checks and builds.
+
+## Restrictions
+
+Replit Preview only.
+
+No live iFree, Unlock OK or Adyunlocker requests.
+
+No paid orders, migrations, production database access, credential changes, IP Guard changes, Git commits, pushes or deployment.
+
+## Final report
+
+Explain the exact diagnostic fields, authorization procedure, modified files, test results and how to inspect a single future authorized Unlock OK test.
+
+Stop after offline verification and await approval.

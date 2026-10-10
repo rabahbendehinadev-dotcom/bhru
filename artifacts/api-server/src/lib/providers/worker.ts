@@ -5,7 +5,9 @@ import {logger} from '../logger';
 import {providerRow} from './connections';
 import {decryptToken} from './credentials';
 import {providerAdapter,hashValue,type ReadTransport,type CatalogItem} from './adapter';
-import {ProviderError} from './transport';
+import {ProviderError,safeLegacyRead} from './transport';
+import {accountDiagnosticsAuthorized,classifyAccountResponse,logAccountResponseDiagnostic,
+  type AccountResponseDiagnostic} from './legacy-account-response-diagnostics';
 import {isLegacyAccountDiagnostic} from './legacy-diagnostics';
 import {legacyMetadataDiagnosticsAuthorized,logLegacyMetadataDiagnostic,
   type LegacyMetadataDiagnostic} from './legacy-metadata-diagnostics';
@@ -104,6 +106,10 @@ export async function stageCatalog(sub:string,id:string,job:string,items:Catalog
   return counts;
 }
 export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
+  let accountDiagnostic:AccountResponseDiagnostic|undefined;
+  const emitAccountDiagnostic=()=>{
+    if(accountDiagnostic)try{logAccountResponseDiagnostic(j.subscriber_id,j.provider_id,j.id,accountDiagnostic);}catch{}
+  };
   try{
     const p=await transaction(db=>providerRow(j.subscriber_id,j.provider_id,db));
     if(!p.enabled||p.config_version!==j.config_version)throw new ProviderError('CONFIGURATION_CHANGED');
@@ -114,7 +120,20 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
     const capture=enabled?(upstreamId:string,diagnostic:LegacyMetadataDiagnostic)=>{
       if(diagnostics.size<100)diagnostics.set(upstreamId,diagnostic);
     }:undefined;
-    const account=j.kind==='TEST'?await adapter.account(p.base_url,token,read):null;
+    const detailed=j.kind==='TEST'&&j.attempts===1&&p.protocol==='DHRU_FUSION_LEGACY_V61'&&
+      accountDiagnosticsAuthorized(p.subscriber_id,p.id,j.id);
+    const accountRead:ReadTransport|undefined=detailed?async(base,credentials,action)=>{
+      try{
+        const raw=await (read??safeLegacyRead)(base,credentials,action as 'accountinfo');
+        if(action==='accountinfo')try{accountDiagnostic=classifyAccountResponse(raw);}catch{}
+        return raw;
+      }catch(error){
+        if(error instanceof ProviderError&&error.diagnosticCode==='UNEXPECTED_HTML')
+          accountDiagnostic=classifyAccountResponse('<html>');
+        throw error;
+      }
+    }:read;
+    const account=j.kind==='TEST'?await adapter.account(p.base_url,token,accountRead):null;
     const catalog=j.kind==='SYNC'?await adapter.catalog(p.base_url,token,read,capture):null;
     const currency=account?.currency??catalog?.currency??null;
     if(p.currency&&currency&&p.currency!==currency)throw new ProviderError('INVALID_RESPONSE');
@@ -140,6 +159,7 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
         [j.id,j.lease_token,catalog?.items.some(i=>i.reviewReasons.length)?'COMPLETED_WITH_WARNINGS':'COMPLETED',counts]);
       committed=true;
     });
+    if(committed)emitAccountDiagnostic();
     if(committed)for(const {catalogId,diagnostic} of stagedDiagnostics){
       // Diagnostics are best-effort and must never turn a committed sync into a retry.
       try{logLegacyMetadataDiagnostic(p.subscriber_id,p.id,j.id,catalogId,diagnostic);}catch{}
@@ -162,6 +182,7 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
         WHERE subscriber_id=$1 AND id=$2 AND config_version=$5`,
         [j.subscriber_id,j.provider_id,['AUTH_FAILED','AUTHENTICATION_FAILED','UNSUPPORTED_PROVIDER','UNREACHABLE','INVALID_RESPONSE'].includes(category)?category:'SYNC_FAILED',safeError,j.config_version]);
     });
+    if(recorded&&legacyProvider)emitAccountDiagnostic();
     if(recorded&&legacyProvider&&error instanceof ProviderError&&isLegacyAccountDiagnostic(error.diagnosticCode)){
       try{logger.warn({providerProtocol:'DHRU_FUSION_LEGACY_V61',diagnosticCode:error.diagnosticCode,
         tenantId:j.subscriber_id,providerId:j.provider_id,jobId:j.id},
