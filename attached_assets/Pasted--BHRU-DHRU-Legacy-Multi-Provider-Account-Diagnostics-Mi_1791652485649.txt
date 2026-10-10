@@ -1,0 +1,135 @@
+# BHRU — DHRU Legacy Multi-Provider Account Diagnostics
+
+## Mission
+
+Implement a minimal, safe parser-stage diagnostic improvement for DHRU Fusion Legacy account connection tests.
+
+The goal is to determine why different DHRU Fusion suppliers may return incompatible account response envelopes, without changing existing successful integrations.
+
+## Business context
+
+BHRU is a multi-tenant SaaS platform.
+
+Each reseller must eventually be able to connect multiple external suppliers and selectively import services from each one.
+
+Examples:
+- iFree — IMEI/check services
+- Unlock OK — unlocking services
+- Adyunlocker — additional DHRU services
+
+Each provider must maintain independent credentials, catalog, source prices and service mappings.
+
+**This task is diagnostics only, not implementation of order routing or additional providers.**
+
+## Current facts
+
+### iFree
+
+- Successfully connected through DHRU Legacy.
+- Account balance retrieval works.
+- Catalog synchronization works.
+- Current implementation must remain unchanged in behavior.
+
+### Unlock OK
+
+- Endpoint: `https://www.unlock-ok.com/api/index.php`
+- An unauthenticated browser request returned a DHRUFUSION XML error envelope containing version `2023.21`.
+- An authenticated BHRU test produced `UNEXPECTED_RESPONSE_SCHEMA`.
+- The actual authenticated response structure has not yet been captured.
+
+### Existing parser behavior
+
+- Canonical success uses `SUCCESS[0].AccoutInfo`.
+- Optional `apiversion`, when present, must be `"6.1"`.
+- Other response structures may be rejected with a generic schema error.
+
+Do not assume Unlock OK uses a different version or schema until runtime evidence confirms it.
+
+## Implementation scope
+
+Improve diagnostic precision in the existing Legacy account parser.
+
+Introduce fixed, non-sensitive diagnostic codes such as:
+
+- LEGACY_VERSION_MISMATCH
+- LEGACY_SUCCESS_ENVELOPE_INVALID
+- LEGACY_ACCOUNT_CONTAINER_MISSING
+- LEGACY_ACCOUNT_CURRENCY_INVALID
+- LEGACY_ACCOUNT_CREDIT_INVALID
+- LEGACY_ERROR_ENVELOPE_INVALID
+
+Use the existing provider error and diagnostic architecture rather than introducing a parallel system.
+
+Where useful, distinguish:
+
+- Missing version
+- Supported version
+- Known alternative version
+- Other or malformed version
+
+Do not log arbitrary raw upstream version strings, response bodies, credentials or unknown field values.
+
+Keep diagnostics associated with the correct tenant, provider and job through internal identifiers.
+
+Retain existing upstream HTTP status diagnostics.
+
+## Strict compatibility requirements
+
+1. Preserve all working iFree behavior.
+2. Do not remove or loosen the current version validation.
+3. Do not accept unknown account schemas.
+4. Do not treat malformed responses as authentication success.
+5. Do not modify `requestformat=JSON`.
+6. Do not change endpoint normalization.
+7. Do not change the Legacy catalog import rules.
+8. Do not modify existing provider records or encrypted credentials.
+9. Do not affect DHRU Fusion Pro REST.
+10. Do not create provider-specific branches based on display names such as `ifree` or `unlock ok`.
+
+## Verification
+
+Use synthetic responses only.
+
+Test:
+
+- Valid current iFree-compatible account response.
+- Missing API version.
+- Version `"6.1"`.
+- Synthetic alternative version `"2023.21"`.
+- Missing `SUCCESS`.
+- Incorrect `SUCCESS` structure.
+- Missing `AccoutInfo`.
+- Unexpected `AccountInfo` spelling.
+- Invalid currency and credit.
+- Structured authentication and IP rejection.
+- Sensitive-data redaction.
+- Multiple providers and tenant isolation.
+
+Run focused offline tests, TypeScript checks and relevant builds.
+
+## Operational restrictions
+
+Replit Preview only.
+
+Do not:
+- Contact iFree, Unlock OK or Adyunlocker.
+- Execute real provider tests or syncs.
+- Send paid orders.
+- Access Dokploy, VPS or production databases.
+- Change credentials, IP restrictions or encryption keys.
+- Execute migrations.
+- Commit or push to GitHub.
+- Deploy.
+
+## Final report
+
+Provide:
+
+1. Exact files modified.
+2. New diagnostic codes and their triggering conditions.
+3. Confirmation that parser acceptance rules remain unchanged.
+4. Confirmation that iFree regression tests pass.
+5. All test and build results.
+6. Instructions for identifying the exact Unlock OK parsing failure after a separately approved production deployment.
+
+Stop after offline verification and await approval.

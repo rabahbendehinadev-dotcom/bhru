@@ -6,6 +6,7 @@ import {providerRow} from './connections';
 import {decryptToken} from './credentials';
 import {providerAdapter,hashValue,type ReadTransport,type CatalogItem} from './adapter';
 import {ProviderError} from './transport';
+import {isLegacyAccountDiagnostic} from './legacy-diagnostics';
 import {legacyMetadataDiagnosticsAuthorized,logLegacyMetadataDiagnostic,
   type LegacyMetadataDiagnostic} from './legacy-metadata-diagnostics';
 import type {PoolClient} from '@workspace/db';
@@ -147,17 +148,25 @@ export async function runProviderJob(j:Record<string,any>,read?:ReadTransport){
     const category=error instanceof ProviderError?error.category:error instanceof HttpError&&error.status===503?'CREDENTIALS_UNAVAILABLE':'INVALID_RESPONSE';
     const safeError=error instanceof ProviderError?error.safeError:category;
     const retry=error instanceof ProviderError&&error.retryable&&j.attempts<4;
+    let recorded=false,legacyProvider=false;
     await transaction(async db=>{
       // Same lock order as configuration and successful finalization.
-      await providerRow(j.subscriber_id,j.provider_id,db,true);
+      const current=await providerRow(j.subscriber_id,j.provider_id,db,true);
+      legacyProvider=current.protocol==='DHRU_FUSION_LEGACY_V61'&&current.config_version===j.config_version;
       const result=await db.query(`UPDATE external_provider_jobs SET state=$3,safe_error=$4,
         completed_at=CASE WHEN $3='FAILED' THEN now() ELSE NULL END,lease_token=NULL,lease_until=NULL,
          next_attempt_at=now()+($5::integer*interval '1 second') WHERE id=$1 AND lease_token=$2 AND state='RUNNING' AND lease_until>now()`,
         [j.id,j.lease_token,retry?'QUEUED':'FAILED',safeError,Math.min(300,5*2**j.attempts+randomInt(0,6))]);
+      recorded=!!result.rowCount;
       if(result.rowCount)await db.query(`UPDATE external_providers SET health=$3,safe_error=$4,updated_at=now()
         WHERE subscriber_id=$1 AND id=$2 AND config_version=$5`,
         [j.subscriber_id,j.provider_id,['AUTH_FAILED','AUTHENTICATION_FAILED','UNSUPPORTED_PROVIDER','UNREACHABLE','INVALID_RESPONSE'].includes(category)?category:'SYNC_FAILED',safeError,j.config_version]);
     });
+    if(recorded&&legacyProvider&&error instanceof ProviderError&&isLegacyAccountDiagnostic(error.diagnosticCode)){
+      try{logger.warn({providerProtocol:'DHRU_FUSION_LEGACY_V61',diagnosticCode:error.diagnosticCode,
+        tenantId:j.subscriber_id,providerId:j.provider_id,jobId:j.id},
+      'Legacy account response failed parser validation');}catch{}
+    }
   }
 }
 export async function runProviderWorkerOnce(read?:ReadTransport){

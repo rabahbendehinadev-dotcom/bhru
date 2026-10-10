@@ -84,3 +84,17 @@ mtime_ms = 1791651823046
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/e6551d70-1536-4327-bf14-4deed0035a10/335442f9-2cf6-4c9f-b09a-e84029e5e823"
 storage_version_token = "1791651866502070"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "sWT4C6_ohO5SKNAClLeQ3"
+uri = "file://BHRU_LEGACY_ACCOUNT_DIAGNOSTICS.md"
+type = "text"
+title = "DHRU Legacy Account Diagnostics Report"
+description = "Parser codes and conditions, unchanged compatibility rules, 85 offline checks, files modified and safe future Unlock OK diagnosis instructions."
+logical_id = "63151ed9-d7bf-44ea-857e-656cba9dd044"
+content_hash = "sha256:d085d1b9983cecd477da3719e33b728f6f5ef48b633a611a0ea7a1107b169da3"
+size = 6608
+mtime_ms = 1791652719666
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/63151ed9-d7bf-44ea-857e-656cba9dd044/5dff9b36-ed6d-46a3-8149-97bd30f4e1b8"
+storage_version_token = "1791652749125149"
+content_type = "text/markdown"

@@ -1,11 +1,18 @@
 import {ProviderError,safeLegacyRead} from './transport';
-import {legacyRejection} from './legacy-diagnostics';
+import {legacyRejection,type LegacyDiagnosticCode} from './legacy-diagnostics';
 import {unknownLegacyKeys,sanitizeLegacyMetadataKeys} from './legacy-metadata-diagnostics';
 import {exactJson,object,text,currency,decimal,hashValue,type ReadOnlyAdapter,type CatalogItem} from './adapter';
 
 // Protocol reference: dhru-fusion-api-standards-master/api/index.php (v6.1).
 // Its auth/credit helpers are demo stubs, not evidence of a real connection.
-function success(raw:string){
+function accountValue<T>(code:LegacyDiagnosticCode,parse:()=>T):T{
+  try{return parse();}catch(e){
+    if(e instanceof ProviderError&&e.category==='INVALID_RESPONSE')
+      throw new ProviderError(e.category,false,code);
+    throw e;
+  }
+}
+function success(raw:string,account=false){
   const prefix=raw.trimStart();
   if(/^(?:<!doctype\s+html\b|<html\b)/i.test(prefix))
     throw new ProviderError('INVALID_RESPONSE',false,'UNEXPECTED_HTML');
@@ -15,20 +22,24 @@ function success(raw:string){
   try{parsed=exactJson(raw);}catch{
     throw new ProviderError('INVALID_RESPONSE',false,'MALFORMED_JSON');
   }
-  const root=object(parsed);
+  const root=account?accountValue('LEGACY_SUCCESS_ENVELOPE_INVALID',()=>object(parsed)):object(parsed);
   if(root.ERROR!==undefined){
-    if(!Array.isArray(root.ERROR)||!root.ERROR.length)throw new ProviderError('INVALID_RESPONSE');
-    const messages=root.ERROR.map(e=>{
+    if(!Array.isArray(root.ERROR)||!root.ERROR.length)
+      throw new ProviderError('INVALID_RESPONSE',false,account?'LEGACY_ERROR_ENVELOPE_INVALID':undefined);
+    const readMessages=()=>root.ERROR.map((e:unknown)=>{
       const v=object(e),message=v.MESSAGE??v.message;
       return message;
     });
+    const messages=account?accountValue('LEGACY_ERROR_ENVELOPE_INVALID',readMessages):readMessages();
     const reason=legacyRejection(messages);
     throw new ProviderError(reason==='AUTHENTICATION_REJECTED'||reason==='IP_RESTRICTED'?'AUTHENTICATION_FAILED':'INVALID_RESPONSE',false,reason);
   }
-  if(root.apiversion!==undefined&&root.apiversion!=='6.1')throw new ProviderError('INVALID_RESPONSE');
-  if(!Array.isArray(root.SUCCESS)||root.SUCCESS.length!==1)throw new ProviderError('INVALID_RESPONSE');
-  if(['page','pagination','next','next_page','has_more','cursor'].some(k=>k in root))throw new ProviderError('INVALID_RESPONSE');
-  return object(root.SUCCESS[0]);
+  if(root.apiversion!==undefined&&root.apiversion!=='6.1')
+    throw new ProviderError('INVALID_RESPONSE',false,account?'LEGACY_VERSION_MISMATCH':undefined);
+  if(!Array.isArray(root.SUCCESS)||root.SUCCESS.length!==1||
+    ['page','pagination','next','next_page','has_more','cursor'].some(k=>k in root))
+    throw new ProviderError('INVALID_RESPONSE',false,account?'LEGACY_SUCCESS_ENVELOPE_INVALID':undefined);
+  return account?accountValue('LEGACY_SUCCESS_ENVELOPE_INVALID',()=>object(root.SUCCESS[0])):object(root.SUCCESS[0]);
 }
 async function withLegacySchema<T>(operation:()=>Promise<T>):Promise<T>{
   try{return await operation();}catch(e){
@@ -91,10 +102,12 @@ function requirements(p:Record<string,any>){
 export const legacyAdapter:ReadOnlyAdapter={
   async account(base,credentials,read){
     return withLegacySchema(async()=>{
-    const result=success(await (read??safeLegacyRead)(base,credentials,'accountinfo'));
-    const info=object(result.AccoutInfo); // Misspelling is part of the official contract.
-    return {currency:info.currency===undefined||info.currency===null?null:currency(info.currency),
-      balance:info.credit===undefined||info.credit===null?null:decimal(info.credit).text};
+    const result=success(await (read??safeLegacyRead)(base,credentials,'accountinfo'),true);
+    const info=accountValue('LEGACY_ACCOUNT_CONTAINER_MISSING',()=>object(result.AccoutInfo)); // Documented misspelling.
+    return {currency:info.currency===undefined||info.currency===null?null:
+      accountValue('LEGACY_ACCOUNT_CURRENCY_INVALID',()=>currency(info.currency)),
+      balance:info.credit===undefined||info.credit===null?null:
+        accountValue('LEGACY_ACCOUNT_CREDIT_INVALID',()=>decimal(info.credit).text)};
     });
   },
   async catalog(base,credentials,read,onUnknownMetadata){

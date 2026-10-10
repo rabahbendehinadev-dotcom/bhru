@@ -30,7 +30,9 @@ try{
       b.onLoad({filter:/\/lib\/platform\.ts$/},()=>({
         contents:`import {state} from '${mock}';
           export const transaction=async fn=>fn({query:async(sql,values)=>{
-            state.queries.push({sql,values});return {rowCount:1,rows:[]};}});`,loader:'ts'}));
+            state.queries.push({sql,values});
+            return {rowCount:sql.includes('safe_error=$4')&&sql.includes('lease_token=$2')?
+              state.jobUpdateRowCount??1:1,rows:[]};}});`,loader:'ts'}));
       b.onLoad({filter:/\/providers\/connections\.ts$/},()=>({
         contents:`import {state} from '${mock}';
           export const providerRow=async(sub,id)=>{
@@ -47,7 +49,7 @@ try{
   const valid='{"SUCCESS":[{"AccoutInfo":{"credit":123.123456789012,"currency":"USD"}}],"apiversion":"6.1"}';
   const reset=()=>Object.assign(m.state,{status:200,body:valid,contentType:'application/json; charset=utf-8',
     encoding:'identity',networkError:false,networkErrorCode:null,hang:false,requireJsonFormat:false,logs:[],queries:[],
-    workerProvider:null,workerCredentials:credentials,records:[{address:'8.8.8.8',family:4}]});
+    workerProvider:null,workerCredentials:credentials,jobUpdateRowCount:1,records:[{address:'8.8.8.8',family:4}]});
   const rejected=async(reason,category='INVALID_RESPONSE',status=undefined)=>{
     let error;
     try{await a.account(endpoint,credentials)}catch(e){error=e}
@@ -120,14 +122,90 @@ try{
       reset();m.state.body=JSON.stringify({ERROR:[{MESSAGE:message}]});await rejected(reason,category);
     });
   }
-  for(const body of ['[]','{"SUCCESS":[]}','{"SUCCESS":[{}]}','{"ERROR":[]}',
-    '{"ERROR":[null]}','{"SUCCESS":[{"AccoutInfo":{"credit":"1 USD","currency":"USD"}}]}',
-    '{"SUCCESS":[{"AccoutInfo":{"credit":"1","currency":"usd"}}]}',
-    '{"SUCCESS":[{"AccoutInfo":{"credit":"1","currency":"USD"}}],"apiversion":"6.0"}']){
-    await check('Unexpected account schema remains rejected',async()=>{
-      reset();m.state.body=body;await rejected('UNEXPECTED_RESPONSE_SCHEMA');
+  for(const [body,reason] of [
+    ['[]','LEGACY_SUCCESS_ENVELOPE_INVALID'],
+    ['{"SUCCESS":[]}','LEGACY_SUCCESS_ENVELOPE_INVALID'],
+    ['{"SUCCESS":[{}]}','LEGACY_ACCOUNT_CONTAINER_MISSING'],
+    ['{"ERROR":[]}','LEGACY_ERROR_ENVELOPE_INVALID'],
+    ['{"ERROR":[null]}','LEGACY_ERROR_ENVELOPE_INVALID'],
+    ['{"SUCCESS":[{"AccoutInfo":{"credit":"1 USD","currency":"USD"}}]}','LEGACY_ACCOUNT_CREDIT_INVALID'],
+    ['{"SUCCESS":[{"AccoutInfo":{"credit":"1","currency":"usd"}}]}','LEGACY_ACCOUNT_CURRENCY_INVALID'],
+    ['{"SUCCESS":[{"AccoutInfo":{"credit":"1","currency":"USD"}}],"apiversion":"6.0"}','LEGACY_VERSION_MISMATCH']]){
+    await check(`Unexpected account schema remains rejected with ${reason}`,async()=>{
+      reset();m.state.body=body;await rejected(reason);
     });
   }
+  await check('Missing and supported versions preserve iFree-compatible success and exact money',async()=>{
+    for(const version of [undefined,'6.1']){
+      reset();m.state.body=JSON.stringify({SUCCESS:[{AccoutInfo:{currency:'USD',credit:'123.123456789012'}}],
+        ...(version===undefined?{}:{apiversion:version})});
+      assert.deepEqual(await a.account(endpoint,credentials),{currency:'USD',balance:'123.123456789012'});
+      assert.deepEqual(m.state.logs,[]);
+    }
+  });
+  for(const [label,body,reason] of [
+    ['observed alternative identifier',{SUCCESS:[{AccoutInfo:{currency:'USD',credit:'1'}}],apiversion:'2023.21'},'LEGACY_VERSION_MISMATCH'],
+    ['sensitive arbitrary version',{SUCCESS:[{AccoutInfo:{currency:'USD',credit:'1'}}],apiversion:'secret-upstream-value'},'LEGACY_VERSION_MISMATCH'],
+    ['malformed version',{SUCCESS:[{AccoutInfo:{currency:'USD',credit:'1'}}],apiversion:null},'LEGACY_VERSION_MISMATCH'],
+    ['missing success',{},'LEGACY_SUCCESS_ENVELOPE_INVALID'],
+    ['object success',{SUCCESS:{AccoutInfo:{currency:'USD',credit:'1'}}},'LEGACY_SUCCESS_ENVELOPE_INVALID'],
+    ['alternative spelling',{SUCCESS:[{AccountInfo:{currency:'USD',credit:'1'}}]},'LEGACY_ACCOUNT_CONTAINER_MISSING'],
+    ['wrong container type',{SUCCESS:[{AccoutInfo:[]}]},'LEGACY_ACCOUNT_CONTAINER_MISSING'],
+    ['object error',{ERROR:{MESSAGE:'Authentication Failed'}},'LEGACY_ERROR_ENVELOPE_INVALID'],
+    ['scalar error entries',{ERROR:['Authentication Failed']},'LEGACY_ERROR_ENVELOPE_INVALID'],
+  ]){
+    await check(`Account diagnostic: ${label}`,async()=>{
+      reset();m.state.body=JSON.stringify(body);await rejected(reason);
+      assert.equal(m.providerSavedFailureMessage(`INVALID_RESPONSE:${reason}`),
+        m.providerFailureMessage('INVALID_RESPONSE',reason));
+    });
+  }
+  await check('Structured auth/IP errors precede version checks; invalid action remains upstream rejection',async()=>{
+    for(const [message,reason,category] of [
+      ['Authentication Failed','AUTHENTICATION_REJECTED','AUTHENTICATION_FAILED'],
+      ['IP access denied','IP_RESTRICTED','AUTHENTICATION_FAILED'],
+      ['Invalid Action','UPSTREAM_REJECTION','INVALID_RESPONSE'],
+    ]){
+      reset();m.state.body=JSON.stringify({ERROR:[{MESSAGE:message}],apiversion:'2023.21'});
+      await rejected(reason,category);
+    }
+  });
+  await check('Optional null/missing account fields and ERROR priority preserve existing semantics',async()=>{
+    reset();m.state.body='{"SUCCESS":[{"AccoutInfo":{}}]}';
+    assert.deepEqual(await a.account(endpoint,credentials),{currency:null,balance:null});
+    reset();m.state.body='{"SUCCESS":[{"AccoutInfo":{"currency":null,"credit":null}}]}';
+    assert.deepEqual(await a.account(endpoint,credentials),{currency:null,balance:null});
+    reset();m.state.body='{"SUCCESS":[{"AccoutInfo":{"currency":"USD","credit":"1"}}],"ERROR":[]}';
+    await rejected('LEGACY_ERROR_ENVELOPE_INVALID');
+  });
+  await check('Saved parser failures keep independent tenant/provider/job IDs and fixed redacted logs',async()=>{
+    for(const suffix of ['1','2']){
+      reset();
+      const tenant=`10000000-0000-4000-8000-00000000000${suffix}`;
+      const provider=`20000000-0000-4000-8000-00000000000${suffix}`;
+      const job=`30000000-0000-4000-8000-00000000000${suffix}`;
+      m.state.workerProvider={id:provider,subscriber_id:tenant,enabled:true,config_version:1,
+        protocol:'DHRU_FUSION_LEGACY_V61',base_url:endpoint,credentials_encrypted:'synthetic-only',currency:null};
+      m.state.body='{"SUCCESS":[{"AccoutInfo":{"currency":"USD","credit":"1"}}],"apiversion":"secret-upstream-value"}';
+      await m.runProviderJob({id:job,subscriber_id:tenant,provider_id:provider,config_version:1,
+        kind:'TEST',attempts:1,lease_token:'synthetic-lease'});
+      assert.deepEqual(m.state.logs,[{fields:{providerProtocol:'DHRU_FUSION_LEGACY_V61',
+        diagnosticCode:'LEGACY_VERSION_MISMATCH',tenantId:tenant,providerId:provider,jobId:job},
+        message:'Legacy account response failed parser validation'}]);
+      const jobUpdate=m.state.queries.find(q=>q.sql.includes('safe_error=$4')&&q.sql.includes('lease_token=$2'));
+      assert.equal(jobUpdate.values[0],job);
+      assert.equal(jobUpdate.values[3],'INVALID_RESPONSE:LEGACY_VERSION_MISMATCH');
+      const providerUpdate=m.state.queries.find(q=>q.sql.includes('UPDATE external_providers'));
+      assert.deepEqual(providerUpdate.values.slice(0,2),[tenant,provider]);
+      assert(!JSON.stringify(m.state.logs).includes('secret-upstream-value'));
+      if(suffix==='2'){
+        m.state.logs=[];m.state.queries=[];m.state.jobUpdateRowCount=0;
+        await m.runProviderJob({id:job,subscriber_id:tenant,provider_id:provider,config_version:1,
+          kind:'TEST',attempts:1,lease_token:'expired-lease'});
+        assert.deepEqual(m.state.logs,[]);
+      }
+    }
+  });
   for(const [status,category] of [[302,'INVALID_RESPONSE'],[400,'INVALID_RESPONSE'],[401,'AUTHENTICATION_FAILED'],
     [402,'AUTHENTICATION_FAILED'],[403,'AUTHENTICATION_FAILED'],[404,'INVALID_RESPONSE'],
     [405,'INVALID_RESPONSE'],[429,'UNREACHABLE'],[500,'UNREACHABLE'],[502,'UNREACHABLE'],[503,'UNREACHABLE']]){

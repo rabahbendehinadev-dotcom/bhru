@@ -8,6 +8,7 @@ import {assertProviderSchemaReady} from '../lib/providers/schema-ready';
 import {providerInput,inputCredentials,configureProvider,providerRow,providerView,policyInput,validatePolicyGroups} from '../lib/providers/connections';
 import {providerProtocols,providerAdapter} from '../lib/providers/adapter';
 import {providerUrl,ProviderError} from '../lib/providers/transport';
+import {isLegacyAccountDiagnostic} from '../lib/providers/legacy-diagnostics';
 import {enqueueProviderJob,jobView} from '../lib/providers/worker';
 import {previewImport,importServices} from '../lib/providers/import';
 import {usdText} from '../lib/client-finance/wallet';
@@ -37,6 +38,10 @@ router.post('/external-providers/test',async(req,res)=>{
   }catch(e){
     if(e instanceof ProviderError){
       if(input.protocol==='DHRU_FUSION_LEGACY_V61'){
+        if(isLegacyAccountDiagnostic(e.diagnosticCode))req.log.warn({
+          providerProtocol:input.protocol,diagnosticCode:e.diagnosticCode,
+          tenantId:owner.subscriber_id,requestId:req.id,providerId:null,jobId:null,
+        },'Legacy draft account response failed parser validation');
         res.json({health:e.category,diagnosticCode:e.diagnosticCode??null,upstreamHttpStatus:e.upstreamHttpStatus??null,currency:null,balance:null});return;
       }
       throw new HttpError(502,`Provider test failed: ${e.category}. Verify URL, credentials, currency and upstream IP permissions.`);

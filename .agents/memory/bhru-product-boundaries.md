@@ -9,6 +9,12 @@ BHRU serves unlock and digital-services server owners. A BHRU Subscriber is the 
 
 **How to apply:** Keep platform subscriber management separate from the subscriber's customer/order/service surfaces.
 
+Each reseller must eventually be able to connect multiple external suppliers and selectively import services from each. Providers must maintain independent credentials, catalogs, source prices and service mappings.
+
+**Why:** The user explicitly stated this multi-supplier business requirement.
+
+**How to apply:** Preserve supplier independence when evaluating compatibility. A diagnostics task does not authorize additional provider integrations or order routing.
+
 The user's primary BHRU business workflow is: reseller offers an unlock service, customer funds a prepaid wallet and orders it, reseller processes it manually, and rejection restores the original debit. Retail/E-Commerce checkout and orders remain completely separate.
 
 **Why:** The user explicitly called this the core BHRU use case and forbade mixing it with Retail checkout.
