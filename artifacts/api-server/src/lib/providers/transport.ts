@@ -2,8 +2,9 @@ import {BlockList,isIP} from 'node:net';
 import {lookup} from 'node:dns/promises';
 import {request} from 'node:https';
 import {HttpError} from '../auth';
+import {legacyMimeDiagnostic,type LegacyDiagnosticCode} from './legacy-diagnostics';
 export class ProviderError extends Error{
-  constructor(public category:'AUTH_FAILED'|'AUTHENTICATION_FAILED'|'UNSUPPORTED_PROVIDER'|'UNREACHABLE'|'INVALID_RESPONSE'|'CONFIGURATION_CHANGED',public retryable=false){super(category);}
+  constructor(public category:'AUTH_FAILED'|'AUTHENTICATION_FAILED'|'UNSUPPORTED_PROVIDER'|'UNREACHABLE'|'INVALID_RESPONSE'|'CONFIGURATION_CHANGED',public retryable=false,public diagnosticCode?:LegacyDiagnosticCode){super(category);}
 }
 const blocked=new BlockList();
 for(const [ip,prefix] of [
@@ -64,12 +65,20 @@ export function legacyCredentials(serialized:string):LegacyCredentials{
 export async function safeLegacyRead(base:string,serialized:string,action:'accountinfo'|'imeiservicelist'){
   if(action!=='accountinfo'&&action!=='imeiservicelist')throw new ProviderError('INVALID_RESPONSE');
   const {username,apiAccessKey}=legacyCredentials(serialized);
-  const body=new URLSearchParams({username,apiaccesskey:apiAccessKey,action}).toString();
+  // Explicit JSON negotiation from the official Legacy PHP client. The v6.1
+  // reference listener ignores this extra field and already returns JSON.
+  // This is Legacy-only, not a claim that every real provider requires it.
+  const body=new URLSearchParams({username,apiaccesskey:apiAccessKey,action,requestformat:'JSON'}).toString();
   try{return await sendRead(new URL(providerUrl(base,'DHRU_FUSION_LEGACY_V61')),'POST',
-    {'Content-Type':'application/x-www-form-urlencoded','Content-Length':String(Buffer.byteLength(body))},body);}
-  catch(e){if(e instanceof ProviderError&&e.category==='AUTH_FAILED')throw new ProviderError('AUTHENTICATION_FAILED');throw e;}
+    {'Content-Type':'application/x-www-form-urlencoded','Content-Length':String(Buffer.byteLength(body))},body,true);}
+  catch(e){
+    if(e instanceof ProviderError&&e.category==='AUTH_FAILED')throw new ProviderError('AUTHENTICATION_FAILED',e.retryable,e.diagnosticCode);
+    if(e instanceof ProviderError&&e.category==='UNREACHABLE'&&!e.diagnosticCode)
+      throw new ProviderError(e.category,e.retryable,'NETWORK_FAILURE');
+    throw e;
+  }
 }
-async function sendRead(url:URL,method:'GET'|'POST',headers:Record<string,string>,body?:string){
+async function sendRead(url:URL,method:'GET'|'POST',headers:Record<string,string>,body?:string,legacy=false){
   const host=url.hostname.replace(/^\[|\]$/g,'');
   const destination=await resolvePublic(host);
   return new Promise<string>((resolve,reject)=>{
@@ -88,12 +97,13 @@ async function sendRead(url:URL,method:'GET'|'POST',headers:Record<string,string
       headers:{...headers,Accept:'application/json','Accept-Encoding':'identity'},
     },res=>{
       const status=res.statusCode??0;
-      if(status===401||status===402||status===403){res.destroy();done(new ProviderError('AUTH_FAILED'));return;}
-      if(status<200||status>=300){res.destroy();done(new ProviderError(status>=500||status===429?'UNREACHABLE':'INVALID_RESPONSE',status>=500||status===429));return;}
-      if(!/^application\/(?:[a-z0-9.+-]*\+)?json(?:;|$)/i.test(res.headers['content-type']??'')){res.destroy();done(new ProviderError('INVALID_RESPONSE'));return;}
-      if(res.headers['content-encoding']&&res.headers['content-encoding']!=='identity'){res.destroy();done(new ProviderError('INVALID_RESPONSE'));return;}
+      if(status===401||status===402||status===403){res.destroy();done(new ProviderError('AUTH_FAILED',false,legacy?'HTTP_FAILURE':undefined));return;}
+      if(status<200||status>=300){res.destroy();done(new ProviderError(status>=500||status===429?'UNREACHABLE':'INVALID_RESPONSE',status>=500||status===429,legacy?'HTTP_FAILURE':undefined));return;}
+      const contentType=res.headers['content-type']??'';
+      if(!/^application\/(?:[a-z0-9.+-]*\+)?json(?:;|$)/i.test(contentType)){res.destroy();done(new ProviderError('INVALID_RESPONSE',false,legacy?legacyMimeDiagnostic(contentType):undefined));return;}
+      if(res.headers['content-encoding']&&res.headers['content-encoding']!=='identity'){res.destroy();done(new ProviderError('INVALID_RESPONSE',false,legacy?'UNSUPPORTED_CONTENT_ENCODING':undefined));return;}
       const chunks:Buffer[]=[];let bytes=0;
-      res.on('data',(chunk:Buffer)=>{bytes+=chunk.length;if(bytes>8*1024*1024){res.destroy();done(new ProviderError('INVALID_RESPONSE'));}else chunks.push(chunk);});
+      res.on('data',(chunk:Buffer)=>{bytes+=chunk.length;if(bytes>8*1024*1024){res.destroy();done(new ProviderError('INVALID_RESPONSE',false,legacy?'RESPONSE_TOO_LARGE':undefined));}else chunks.push(chunk);});
       res.on('end',()=>done(undefined,Buffer.concat(chunks).toString('utf8')));
       res.on('error',()=>done(new ProviderError('UNREACHABLE',true)));
       res.on('aborted',()=>done(new ProviderError('UNREACHABLE',true)));

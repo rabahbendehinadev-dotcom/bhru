@@ -1,23 +1,40 @@
 import {ProviderError,safeLegacyRead} from './transport';
+import {legacyRejection} from './legacy-diagnostics';
 import {exactJson,object,text,currency,decimal,hashValue,type ReadOnlyAdapter,type CatalogItem} from './adapter';
 
 // Protocol reference: dhru-fusion-api-standards-master/api/index.php (v6.1).
 // Its auth/credit helpers are demo stubs, not evidence of a real connection.
 function success(raw:string){
-  const root=object(exactJson(raw));
+  const prefix=raw.trimStart();
+  if(/^(?:<!doctype\s+html\b|<html\b)/i.test(prefix))
+    throw new ProviderError('INVALID_RESPONSE',false,'UNEXPECTED_HTML');
+  if(/^<\?xml\b/i.test(prefix))
+    throw new ProviderError('INVALID_RESPONSE',false,'UNEXPECTED_XML');
+  let parsed:unknown;
+  try{parsed=exactJson(raw);}catch{
+    throw new ProviderError('INVALID_RESPONSE',false,'MALFORMED_JSON');
+  }
+  const root=object(parsed);
   if(root.ERROR!==undefined){
     if(!Array.isArray(root.ERROR)||!root.ERROR.length)throw new ProviderError('INVALID_RESPONSE');
-    const auth=root.ERROR.some(e=>{
+    const messages=root.ERROR.map(e=>{
       const v=object(e),message=v.MESSAGE??v.message;
-      // Only the exact documented authentication error is classified as authentication.
-      return message==='Authentication Failed';
+      return message;
     });
-    throw new ProviderError(auth?'AUTHENTICATION_FAILED':'INVALID_RESPONSE');
+    const reason=legacyRejection(messages);
+    throw new ProviderError(reason==='AUTHENTICATION_REJECTED'||reason==='IP_RESTRICTED'?'AUTHENTICATION_FAILED':'INVALID_RESPONSE',false,reason);
   }
   if(root.apiversion!==undefined&&root.apiversion!=='6.1')throw new ProviderError('INVALID_RESPONSE');
   if(!Array.isArray(root.SUCCESS)||root.SUCCESS.length!==1)throw new ProviderError('INVALID_RESPONSE');
   if(['page','pagination','next','next_page','has_more','cursor'].some(k=>k in root))throw new ProviderError('INVALID_RESPONSE');
   return object(root.SUCCESS[0]);
+}
+async function withLegacySchema<T>(operation:()=>Promise<T>):Promise<T>{
+  try{return await operation();}catch(e){
+    if(e instanceof ProviderError&&e.category==='INVALID_RESPONSE'&&!e.diagnosticCode)
+      throw new ProviderError(e.category,e.retryable,'UNEXPECTED_RESPONSE_SCHEMA');
+    throw e;
+  }
 }
 function optionalText(v:unknown,max:number){return v===undefined||v===null?'':text(v,max);}
 function requiredFlag(v:unknown):boolean|null{
@@ -72,12 +89,15 @@ function requirements(p:Record<string,any>){
 }
 export const legacyAdapter:ReadOnlyAdapter={
   async account(base,credentials,read){
+    return withLegacySchema(async()=>{
     const result=success(await (read??safeLegacyRead)(base,credentials,'accountinfo'));
     const info=object(result.AccoutInfo); // Misspelling is part of the official contract.
     return {currency:info.currency===undefined||info.currency===null?null:currency(info.currency),
       balance:info.credit===undefined||info.credit===null?null:decimal(info.credit).text};
+    });
   },
   async catalog(base,credentials,read){
+    return withLegacySchema(async()=>{
     // The list contains no currency. Obtain it from a verified account request first.
     const account=await legacyAdapter.account(base,credentials,read);
     if(!account.currency)throw new ProviderError('INVALID_RESPONSE');
@@ -110,5 +130,6 @@ export const legacyAdapter:ReadOnlyAdapter={
       }
     }
     return {currency:c,items};
+    });
   },
 };

@@ -5,6 +5,7 @@ import { ProviderCatalog } from '@/components/subscriber/ProviderCatalog';
 import { useProviders, useProviderJobs, isJobActive } from '@/hooks/use-external-providers';
 import { useClientGroups } from '@/hooks/use-services';
 import { errorMessage } from '@/lib/store';
+import { providerFailureMessage, providerSavedFailureMessage } from '@/lib/provider-diagnostics';
 
 const DEC = /^\d{1,10}(\.\d{1,12})?$/;
 const PCT = /^\d{1,5}(\.\d{1,2})?$/;
@@ -29,7 +30,7 @@ function ProviderForm({ initial, protocols, onClose }: { initial: ProviderConnec
   const valid = name.trim().length > 0 && (legacy ? /^https:\/\/[^?#]+$/.test(baseUrl.trim()) : /^https:\/\/.+\/api\/reseller\/v1\/?$/.test(baseUrl.trim())) && (!currency.trim() || /^[A-Za-z]{3}$/.test(currency.trim())) && credentialValid;
   const test = () => { setErr(''); setMsg(''); testDraft.mutate({ data: input() }, {
     onSuccess: r => { if (r.health === 'CONNECTED') setMsg(`Account responded: ${r.health}, currency: ${r.currency ?? 'Not supplied'}, balance: ${r.balance ?? 'Not supplied'}`);
-      else setErr(`Connection test: ${r.health}. Check endpoint, credentials and provider access permissions.`); }, onError: e => setErr(errorMessage(e)) }); };
+      else setErr(`Connection test: ${providerFailureMessage(r.health,r.diagnosticCode)}`); }, onError: e => setErr(errorMessage(e)) }); };
   const save = () => { setErr(''); const done = { onSuccess: () => close(), onError: (e: unknown) => setErr(errorMessage(e)) };
     if (initial) update.mutate({ id: initial.id, data: input() }, done); else create.mutate({ data: input() }, done); };
   const pending = create.isPending || update.isPending;
@@ -108,7 +109,7 @@ function History({ p, onClose }: { p: ProviderConnection; onClose: () => void })
         : <div className="overflow-x-auto scroll-thin"><table className="tbl"><thead><tr><th>Kind</th><th>State</th><th>Attempts</th><th>Created</th><th>Completed</th><th>Detail</th></tr></thead><tbody>
           {query.data.data.map(j => (
              <tr key={j.id} data-testid={`row-job-${j.id}`}><td>{j.kind}<div className="text-[10px] text-[hsl(var(--text-secondary))]" title={j.id}>{j.id.slice(0,8)}</div></td><td><Badge tone={isJobActive(j.state) ? 'blue' : /fail/i.test(j.state) ? 'red' : 'green'}>{j.state}</Badge></td><td>{j.attempts}</td><td>{when(j.createdAt)}</td><td>{j.completedAt ? when(j.completedAt) : '—'}</td>
-              <td className="max-w-[220px] truncate" title={j.safeError ?? ''}>{j.safeError ?? Object.entries(j.counts).map(([k, v]) => `${k}: ${v}`).join(', ')}</td></tr>))}
+              <td className="max-w-[220px] truncate" title={j.safeError ? providerSavedFailureMessage(j.safeError) : ''}>{j.safeError ? providerSavedFailureMessage(j.safeError) : Object.entries(j.counts).map(([k, v]) => `${k}: ${v}`).join(', ')}</td></tr>))}
         </tbody></table></div>}
       <div className="mt-2 flex justify-end gap-2"><Btn sm disabled={page <= 1} onClick={() => setPage(x => x - 1)}>Prev</Btn><Btn sm disabled={!query.data?.hasMore} onClick={() => setPage(x => x + 1)}>Next</Btn></div>
     </Modal>
@@ -119,7 +120,7 @@ function JobWatcher({ id }: { id: string }) {
   const { query, busy } = useProviderJobs(id);
   const last = query.data?.data[0];
   if (!last) return null;
-  return <div className="text-[10.5px] text-[hsl(var(--text-secondary))]" data-testid={`text-job-${id}`}>{busy ? `${last.kind} ${last.state.toLowerCase()}…` : `${last.kind} ${last.state.toLowerCase()}`}{!busy && last.safeError ? `: ${last.safeError}` : ''}</div>;
+  return <div className="text-[10.5px] text-[hsl(var(--text-secondary))]" data-testid={`text-job-${id}`}>{busy ? `${last.kind} ${last.state.toLowerCase()}…` : `${last.kind} ${last.state.toLowerCase()}`}{!busy && last.safeError ? `: ${providerSavedFailureMessage(last.safeError)}` : ''}</div>;
 }
 
 export default function ExternalProvidersPage() {
@@ -152,7 +153,7 @@ export default function ExternalProvidersPage() {
             <tr key={p.id} data-testid={`row-provider-${p.id}`}>
               <td><div className="font-medium">{p.name}</div>{!p.enabled && <Badge tone="gray">Disabled</Badge>}<JobWatcher id={p.id} /></td>
               <td>{d.protocols.find(x => x.code === p.protocol)?.name ?? p.protocol}</td>
-              <td><Badge tone={healthTone(p.health)}>{p.health}</Badge>{p.safeError && <div className="max-w-[200px] truncate text-[10.5px]" title={p.safeError}>{p.safeError}</div>}</td>
+              <td><Badge tone={healthTone(p.health)}>{p.health}</Badge>{p.safeError && <div className="max-w-[200px] truncate text-[10.5px]" title={providerSavedFailureMessage(p.safeError)}>{providerSavedFailureMessage(p.safeError)}</div>}</td>
               <td>{p.currency ?? '—'}</td><td className="font-mono">{p.balance ?? '—'}</td><td>{p.serviceCount}</td><td>{when(p.lastSyncAt)}</td>
               <td><div className="flex gap-1">
                 <Btn sm disabled={!ready} onClick={() => setForm(p)} data-testid={`button-edit-${p.id}`}>Edit</Btn>

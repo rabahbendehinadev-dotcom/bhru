@@ -1700,6 +1700,9 @@ components:
       required: [health, currency, balance]
       properties:
         health: {type: string}
+        diagnosticCode:
+          type: [string, "null"]
+          description: Optional fixed, redacted Legacy diagnostic code. Never contains upstream text or credentials.
         currency: {type: [string, "null"]}
         balance: {type: [string, "null"]}
     ProviderJobInput:

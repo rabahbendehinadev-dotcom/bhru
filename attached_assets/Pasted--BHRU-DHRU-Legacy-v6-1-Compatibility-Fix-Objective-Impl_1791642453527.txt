@@ -1,0 +1,108 @@
+# BHRU — DHRU Legacy v6.1 Compatibility Fix
+
+## Objective
+
+Implement the smallest safe compatibility improvements identified in `BHRU_IFREE_LEGACY_API_DIAGNOSIS.md`.
+
+Read the entire diagnosis report before changing code. Follow the actual source-file references and established adapter architecture.
+
+The objective is to improve DHRU Fusion Legacy v6.1 request compatibility and response diagnostics without affecting other provider adapters or production services.
+
+## 1. Request format compatibility
+
+Investigate the documented legacy PHP client's use of:
+
+`requestformat=JSON`
+
+If it is compatible with the current DHRU Legacy request contract, add it to the correct request payload.
+
+Requirements:
+
+- Preserve existing authentication fields and their encoding.
+- Do not modify the API endpoint path automatically.
+- Do not modify DHRU Fusion Pro REST behavior.
+- Do not mix iFree PHP API credentials with DHRU credentials.
+- Do not introduce provider-specific hardcoding unless technically necessary.
+- If compatibility remains uncertain, use an appropriately scoped configuration or a documented conservative implementation, not an unsupported universal assumption.
+
+## 2. Improve response handling
+
+Refine the existing Legacy adapter so that `INVALID_RESPONSE` no longer conceals every distinct failure.
+
+Support safe, specific diagnostic classifications where evidence permits:
+
+- Unsupported response format
+- Unexpected HTML or XML
+- Malformed JSON
+- Authentication rejection
+- IP restriction
+- HTTP failure
+- Unexpected response schema
+
+Do not claim authentication or IP blocking unless the upstream response actually supports that classification.
+
+Keep all user-facing messages safe and understandable.
+
+Never expose API keys, authentication fields, upstream secrets, or raw sensitive response bodies.
+
+## 3. Preserve existing behavior
+
+Do not break:
+
+- Other DHRU Legacy providers
+- DHRU Fusion Pro REST
+- Existing provider records
+- Encrypted API credentials
+- Tenant isolation
+- Pricing configuration
+- Imported services
+- Provider enable/disable state
+
+No changes to database schema or existing encrypted credentials.
+
+## 4. Lightweight offline tests
+
+Extend the existing offline tests to cover:
+
+1. Correct Legacy request construction.
+2. JSON format negotiation.
+3. Valid DHRU JSON responses.
+4. XML and HTML responses.
+5. Invalid JSON.
+6. Authentication errors.
+7. IP restriction errors.
+8. HTTP failures.
+9. Redaction of confidential values.
+10. Regression checks for other provider types.
+
+Use mocked HTTP responses and synthetic credentials.
+
+Run relevant TypeScript checks and focused tests. Avoid expensive browser E2E tests.
+
+## 5. Strict operational boundaries
+
+- Replit development / Preview only.
+- No live requests to iFree.
+- No paid orders.
+- No real credential testing.
+- No IP Guard changes.
+- No Git commit or push.
+- No deployment or production access.
+- No migrations or database modifications.
+- Do not rotate API keys.
+
+## 6. Final report
+
+Report:
+
+- Exact files modified.
+- Exact compatibility improvements.
+- What was changed about `requestformat=JSON`.
+- How different upstream errors are now classified.
+- Test results.
+- Remaining uncertainties.
+- Any potential compatibility risks.
+
+Clearly state that no real iFree connection was validated.
+
+Stop after implementation and offline verification. Await approval before any live test or deployment.

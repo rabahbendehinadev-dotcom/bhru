@@ -42,3 +42,17 @@ mtime_ms = 1791642334197
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/3d1b4181-2dff-4fe6-bf3b-95ce20ebe74a/11578fc6-6997-4723-bcfe-966ae63bc3b9"
 storage_version_token = "1791642365683822"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "r4vHG7kQoEUBiT62XJ05U"
+uri = "file://BHRU_LEGACY_COMPATIBILITY_FIX.md"
+type = "text"
+title = "DHRU Legacy Compatibility Fix — Implementation Report"
+description = "Exact 16-file change list, JSON negotiation behavior, safe diagnostic classifications, 42 offline checks and remaining compatibility risks."
+logical_id = "b85b1fbc-c480-4098-b3b4-74962114428f"
+content_hash = "sha256:5661206f2ee78fc3ca1a73d646a2ff26186faf2847f906052f8fa3b3116bf4a6"
+size = 6203
+mtime_ms = 1791643121786
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:500c17b3-5bef-4287-8413-0a19c8ff5e92/b85b1fbc-c480-4098-b3b4-74962114428f/57abac63-beca-4094-8ea4-113ebbed58f1"
+storage_version_token = "1791643146658625"
+content_type = "text/markdown"

@@ -92,6 +92,11 @@ export interface ProviderList {
 
 export interface ProviderTestResult {
   health: string;
+  /**
+     * Optional fixed, redacted Legacy diagnostic code. Never contains upstream text or credentials.
+     * @nullable
+     */
+  diagnosticCode?: string | null;
   /** @nullable */
   currency: string | null;
   /** @nullable */

@@ -119,6 +119,7 @@ export const TestExternalProviderDraftBody = zod.object({
 
 export const TestExternalProviderDraftResponse = zod.object({
   "health": zod.string(),
+  "diagnosticCode": zod.string().nullish().describe('Optional fixed, redacted Legacy diagnostic code. Never contains upstream text or credentials.'),
   "currency": zod.string().nullable(),
   "balance": zod.string().nullable()
 })

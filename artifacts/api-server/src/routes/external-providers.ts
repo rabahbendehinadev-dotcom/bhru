@@ -37,7 +37,7 @@ router.post('/external-providers/test',async(req,res)=>{
   }catch(e){
     if(e instanceof ProviderError){
       if(input.protocol==='DHRU_FUSION_LEGACY_V61'){
-        res.json({health:e.category,currency:null,balance:null});return;
+        res.json({health:e.category,diagnosticCode:e.diagnosticCode??null,currency:null,balance:null});return;
       }
       throw new HttpError(502,`Provider test failed: ${e.category}. Verify URL, credentials, currency and upstream IP permissions.`);
     }

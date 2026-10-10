@@ -37,10 +37,12 @@ Provider code: `DHRU_FUSION_LEGACY_V61`.
 - Exact user-configured HTTPS URL on port 443; root endpoints and explicit paths
   are supported. No hostname is hardcoded. No `/api.php` suffix is appended.
 - HTTP POST, `Content-Type: application/x-www-form-urlencoded`.
-- Body: `username`, `apiaccesskey`, `action`.
+- Body: `username`, `apiaccesskey`, `action`, `requestformat=JSON`.
 - Only `action=accountinfo` and `action=imeiservicelist` are permitted at runtime.
-- No Bearer header, credentials in URL/query, guessed REST suffix, or undocumented
-  `requestformat`/request-version parameter.
+- No Bearer header, credentials in URL/query, guessed REST suffix or invented
+  request-version parameter. JSON negotiation follows the historical official
+  PHP client linked from DHRU's help article; the v6.1 listener ignores this
+  extra field. Real-provider compatibility is not established by that example.
 - The reference decodes optional `parameters` as Base64 JSON. Neither read action
   uses parameters, so these requests omit it.
 
@@ -78,13 +80,23 @@ restart and rollback preparation. That migration requires separate review.
 
 - Only a valid `SUCCESS` array with exactly one object is accepted.
 - Any `ERROR` envelope takes precedence; mixed success/error fails closed.
-- Exact documented `Authentication Failed` maps to `AUTHENTICATION_FAILED`.
-  HTTP 401/402/403 receive the same Legacy classification.
-- Other undocumented provider errors are `INVALID_RESPONSE`, not guessed codes.
-  Raw upstream error text never reaches API responses/history.
+- Exact documented `Authentication Failed` and a bounded allowlist of explicit
+  negative authentication statements map to `AUTHENTICATION_FAILED` with
+  `AUTHENTICATION_REJECTED`. Explicit negative IP-denial statements use the same
+  existing health category with `IP_RESTRICTED`; incidental IP mentions do not.
+  HTTP 401/402/403 retain their category but carry only `HTTP_FAILURE`, without
+  guessing whether credentials or IP Guard caused the rejection.
+- Other provider errors remain `INVALID_RESPONSE` with `UPSTREAM_REJECTION`.
+  Format, JSON and schema failures have separate fixed diagnostic codes. Draft
+  tests expose optional `diagnosticCode`; saved jobs use the existing text
+  `safe_error` field as `category:diagnosticCode`. Health constraints are unchanged.
+  Raw upstream error text never reaches API responses, history or logs.
 - Account data uses the reference's misspelling `AccoutInfo`, `credit`, `currency`.
 - Numeric JSON tokens are preserved as strings before parsing money.
 - Missing optional balance/currency returns null, never a synthetic zero or USD.
+
+For the later offline-only compatibility correction, exact file list, 42-check
+results and remaining risks, see `BHRU_LEGACY_COMPATIBILITY_FIX.md`.
   Catalog synchronization requires a currency from accountinfo; no guess/fallback.
 - The reference supplies no verified account-status field or numeric error-code
   table. No undocumented status/code mapping was invented.

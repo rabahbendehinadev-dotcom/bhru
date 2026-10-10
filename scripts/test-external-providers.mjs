@@ -174,7 +174,8 @@ try{
       assert.equal(s.captured.options.headers['Content-Type'],'application/x-www-form-urlencoded');
       assert.equal(s.captured.options.rejectUnauthorized,true);assert.equal(s.captured.address,'8.8.8.8');
       const form=new URLSearchParams(s.captured.body);
-      assert.deepEqual([...form.keys()].sort(),['action','apiaccesskey','username']);
+      assert.deepEqual([...form.keys()].sort(),['action','apiaccesskey','requestformat','username']);
+      assert.equal(form.get('requestformat'),'JSON');
       assert.equal(form.get('username'),'fixture-legacy-user');assert.equal(form.get('apiaccesskey'),'fixture-legacy-key');
       assert.equal(form.get('action'),'accountinfo');
       await pinned.safeLegacyRead('https://provider.example',legacyCredentials,'imeiservicelist');
